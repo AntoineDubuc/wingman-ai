@@ -24,7 +24,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.services.connection_manager import ConnectionManager
 from app.services.transcription import TranscriptionService, Transcript, SpeakerRole
-from app.services.agent import AgentService, Suggestion
+from app.services.agent import AgentService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -80,7 +80,8 @@ class SessionHandler:
         """
         Handle incoming transcript from Deepgram.
 
-        Sends transcript to client and triggers AI suggestion for questions.
+        Sends transcript to client. For final transcripts, the AI agent
+        processes the full conversation and decides whether to provide a suggestion.
         """
         if not self.is_active:
             return
@@ -103,59 +104,43 @@ class SessionHandler:
                 },
             )
 
-            # Add to agent context
-            self.agent.add_context(
-                speaker=transcript.speaker,
-                text=transcript.text,
-                is_question=False,  # Will be updated if we detect a question
-            )
+            # For final transcripts, let the AI agent process and decide
+            # whether to provide a suggestion (continuous participant mode)
+            if transcript.is_final:
+                suggestion = await self.agent.process_transcript(
+                    text=transcript.text,
+                    speaker=transcript.speaker,
+                    is_final=True,
+                )
 
-            # For final transcripts, check if it's a question and generate suggestion
-            if transcript.is_final and self.agent.is_question(transcript.text):
-                # Only generate suggestions for customer questions
-                # (or unknown speakers until we have enough data)
-                if transcript.speaker_role in [SpeakerRole.CUSTOMER, SpeakerRole.UNKNOWN]:
-                    await self._generate_and_send_suggestion(transcript)
+                if suggestion:
+                    await self._send_suggestion(suggestion, transcript.text)
 
         except Exception as e:
             logger.error(f"Session {self.session_id}: Error handling transcript: {e}")
 
-    async def _generate_and_send_suggestion(self, transcript: Transcript) -> None:
-        """Generate an AI suggestion for a detected question."""
+    async def _send_suggestion(self, suggestion, trigger_text: str) -> None:
+        """Send an AI suggestion to the client."""
         try:
+            await manager.send_message(
+                self.session_id,
+                {
+                    "type": "suggestion",
+                    "question": trigger_text,
+                    "response": suggestion.text,
+                    "confidence": suggestion.confidence,
+                    "question_type": suggestion.suggestion_type,
+                    "source": suggestion.source,
+                    "timestamp": suggestion.timestamp.isoformat(),
+                },
+            )
             logger.info(
-                f"Session {self.session_id}: Generating suggestion for: "
-                f"{transcript.text[:50]}..."
+                f"Session {self.session_id}: Sent suggestion "
+                f"(type: {suggestion.suggestion_type}, confidence: {suggestion.confidence:.2f})"
             )
-
-            # Generate suggestion
-            suggestion = await self.agent.generate_suggestion(
-                question=transcript.text,
-                speaker=transcript.speaker,
-                rag_context=None,  # TODO: Add RAG context when knowledge base is ready
-            )
-
-            if suggestion:
-                await manager.send_message(
-                    self.session_id,
-                    {
-                        "type": "suggestion",
-                        "question": transcript.text,
-                        "response": suggestion.text,
-                        "confidence": suggestion.confidence,
-                        "question_type": suggestion.question_type.value,
-                        "key_points": suggestion.key_points,
-                        "source": suggestion.source,
-                        "timestamp": suggestion.timestamp.isoformat(),
-                    },
-                )
-                logger.info(
-                    f"Session {self.session_id}: Sent suggestion "
-                    f"(confidence: {suggestion.confidence:.2f})"
-                )
 
         except Exception as e:
-            logger.error(f"Session {self.session_id}: Error generating suggestion: {e}")
+            logger.error(f"Session {self.session_id}: Error sending suggestion: {e}")
 
     async def handle_audio_chunk(self, message: dict) -> None:
         """
@@ -256,13 +241,13 @@ class SessionHandler:
             )
 
         elif control_type == "clear_context":
-            self.agent.clear_context()
+            self.agent.clear_session()
             await manager.send_message(
                 self.session_id,
                 {
                     "type": "status",
                     "status": "context_cleared",
-                    "message": "Conversation context cleared",
+                    "message": "Conversation session cleared",
                 },
             )
 
@@ -292,7 +277,7 @@ class SessionHandler:
         except Exception as e:
             logger.error(f"Session {self.session_id}: Error closing transcription: {e}")
 
-        self.agent.clear_context()
+        self.agent.clear_session()
         logger.info(f"Session {self.session_id}: Cleaned up")
 
 

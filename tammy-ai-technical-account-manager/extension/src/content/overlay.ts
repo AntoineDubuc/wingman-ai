@@ -36,6 +36,7 @@ export class AIOverlay {
     this.shadow.appendChild(this.panel);
 
     this.initDrag();
+    this.initResize();
     this.restorePosition();
   }
 
@@ -56,22 +57,45 @@ export class AIOverlay {
         position: fixed;
         right: 20px;
         top: 100px;
-        width: 320px;
-        max-height: 400px;
+        width: 350px;
+        height: 450px;
+        min-width: 280px;
+        min-height: 200px;
+        max-width: 600px;
+        max-height: 80vh;
         background: #ffffff;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        transition: all 0.2s ease;
+        transition: box-shadow 0.2s ease;
+        resize: both;
+      }
+
+      .resize-handle {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 16px;
+        height: 16px;
+        cursor: nwse-resize;
+        background: linear-gradient(135deg, transparent 50%, #ccc 50%, #ccc 60%, transparent 60%, transparent 70%, #ccc 70%, #ccc 80%, transparent 80%);
+        border-radius: 0 0 12px 0;
       }
 
       .overlay-panel.minimized {
-        width: 48px;
-        height: 48px;
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px;
+        min-height: 48px;
         border-radius: 50%;
         cursor: pointer;
+        resize: none;
+      }
+
+      .overlay-panel.minimized .resize-handle {
+        display: none;
       }
 
       .overlay-header {
@@ -135,7 +159,9 @@ export class AIOverlay {
       .overlay-content {
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 12px;
+        min-height: 0;
       }
 
       .overlay-panel.minimized .overlay-content {
@@ -227,6 +253,7 @@ export class AIOverlay {
       <div class="transcript-section">
         <span class="speaker">Waiting...</span>
       </div>
+      <div class="resize-handle" title="Resize"></div>
     `;
 
     // Add event listeners
@@ -354,14 +381,65 @@ export class AIOverlay {
   }
 
   /**
-   * Save position to storage
+   * Initialize resize functionality
+   */
+  private initResize(): void {
+    const handle = this.panel.querySelector('.resize-handle') as HTMLElement;
+    if (!handle) return;
+
+    let isResizing = false;
+    let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
+
+    handle.addEventListener('mousedown', (e) => {
+      if (this.isMinimized) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startWidth = this.panel.offsetWidth;
+      startHeight = this.panel.offsetHeight;
+
+      handle.style.cursor = 'nwse-resize';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newWidth = Math.max(280, Math.min(600, startWidth + deltaX));
+      const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
+
+      this.panel.style.width = `${newWidth}px`;
+      this.panel.style.height = `${newHeight}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        handle.style.cursor = 'nwse-resize';
+        this.savePosition();
+      }
+    });
+  }
+
+  /**
+   * Save position and size to storage
    */
   private savePosition(): void {
     try {
       if (!chrome.runtime?.id) return;
       const rect = this.panel.getBoundingClientRect();
       chrome.storage.local.set({
-        overlayPosition: { left: rect.left, top: rect.top },
+        overlayPosition: {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        },
       });
     } catch {
       // Extension context invalidated, ignore
@@ -369,7 +447,7 @@ export class AIOverlay {
   }
 
   /**
-   * Restore position from storage
+   * Restore position and size from storage
    */
   private restorePosition(): void {
     try {
@@ -379,6 +457,12 @@ export class AIOverlay {
           this.panel.style.left = `${result.overlayPosition.left}px`;
           this.panel.style.top = `${result.overlayPosition.top}px`;
           this.panel.style.right = 'auto';
+          if (result.overlayPosition.width) {
+            this.panel.style.width = `${result.overlayPosition.width}px`;
+          }
+          if (result.overlayPosition.height) {
+            this.panel.style.height = `${result.overlayPosition.height}px`;
+          }
         }
         if (result.overlayMinimized) {
           this.isMinimized = result.overlayMinimized;

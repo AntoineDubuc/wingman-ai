@@ -55,6 +55,19 @@
 5. Added track state to periodic logging (enabled, muted, readyState)
 **Status:** Testing...
 
+### Issue 9: Architecture change - Continuous Participant Mode
+**Problem:** Point-in-time LLM calls only triggered on detected questions. This misses context and doesn't let the AI decide when to help.
+**Solution:** Refactored to "Continuous Participant" architecture:
+1. Every final transcript is sent to the LLM (not just questions)
+2. LLM maintains full conversation history (last 20 turns)
+3. LLM decides when to speak vs stay silent (responds with "---" to stay quiet)
+4. 5-second cooldown between suggestions to avoid spam
+5. System prompt updated to be a "silent participant" who speaks when valuable
+**Files changed:**
+- `backend/app/services/agent.py` - Complete rewrite for continuous mode
+- `backend/app/routers/websocket.py` - Updated to use new `process_transcript()` method
+**Status:** DEPLOYED - Testing
+
 ### Issue 8: AI needs CloudGeometry-specific knowledge
 **Problem:** System prompt was generic "Technical Cloud Solutions Presales Consultant" - not specific to CloudGeometry's services.
 **Fix applied:**

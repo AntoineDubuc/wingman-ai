@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Tammy - AI Technical Account Manager",
+  "version": "1.0.0",
+  "description": "Real-time AI assistance for Technical Cloud Solutions Presales Consultants during Google Meet calls",
+  "permissions": [
+    "tabCapture",
+    "activeTab",
+    "storage",
+    "offscreen",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["src/content/content-script.ts"],
+      "css": ["src/content/content-styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "src/icons/icon-16.png",
+      "48": "src/icons/icon-48.png",
+      "128": "src/icons/icon-128.png"
+    },
+    "default_title": "Presales AI Assistant"
+  },
+  "icons": {
+    "16": "src/icons/icon-16.png",
+    "48": "src/icons/icon-48.png",
+    "128": "src/icons/icon-128.png"
+  },
+  "minimum_chrome_version": "116"
+}

@@ -1,0 +1,402 @@
+/**
+ * AI Overlay Component
+ *
+ * Floating panel that displays AI suggestions during Google Meet calls.
+ * Uses Shadow DOM for style isolation from Google Meet's styles.
+ */
+
+export interface Suggestion {
+  type: 'answer' | 'objection' | 'info';
+  question?: string;
+  text: string;
+  confidence?: number;
+  timestamp: number;
+}
+
+export interface Transcript {
+  text: string;
+  speaker: string;
+  is_final: boolean;
+}
+
+export class AIOverlay {
+  public container: HTMLDivElement;
+  private shadow: ShadowRoot;
+  private panel: HTMLDivElement;
+  private isMinimized = false;
+  private isDragging = false;
+
+  constructor() {
+    this.container = document.createElement('div');
+    this.container.id = 'presales-ai-overlay-container';
+    this.shadow = this.container.attachShadow({ mode: 'closed' });
+
+    this.loadStyles();
+    this.panel = this.createOverlayStructure();
+    this.shadow.appendChild(this.panel);
+
+    this.initDrag();
+    this.restorePosition();
+  }
+
+  /**
+   * Load styles into shadow DOM
+   */
+  private loadStyles(): void {
+    const styles = document.createElement('style');
+    styles.textContent = `
+      :host {
+        all: initial;
+        position: fixed;
+        z-index: 999999;
+        font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      }
+
+      .overlay-panel {
+        position: fixed;
+        right: 20px;
+        top: 100px;
+        width: 320px;
+        max-height: 400px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+
+      .overlay-panel.minimized {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .overlay-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+        color: white;
+        cursor: grab;
+      }
+
+      .overlay-panel.minimized .overlay-header {
+        padding: 12px;
+        justify-content: center;
+      }
+
+      .drag-handle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .title {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .overlay-panel.minimized .title,
+      .overlay-panel.minimized .controls {
+        display: none;
+      }
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #34a853;
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .controls button {
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 16px;
+        line-height: 1;
+      }
+
+      .controls button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .overlay-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+      }
+
+      .overlay-panel.minimized .overlay-content {
+        display: none;
+      }
+
+      .empty-state {
+        color: #5f6368;
+        font-size: 13px;
+        text-align: center;
+        padding: 24px;
+      }
+
+      .suggestion-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-left: 3px solid #e67e22;
+      }
+
+      .suggestion-card.objection {
+        border-left-color: #ea4335;
+      }
+
+      .suggestion-card.info {
+        border-left-color: #fbbc05;
+      }
+
+      .suggestion-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 11px;
+        color: #5f6368;
+      }
+
+      .suggestion-type {
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+
+      .suggestion-content {
+        font-size: 13px;
+        line-height: 1.5;
+        color: #202124;
+      }
+
+      .transcript-section {
+        padding: 8px 12px;
+        background: #f1f3f4;
+        font-size: 12px;
+        color: #5f6368;
+        border-top: 1px solid #e8eaed;
+      }
+
+      .transcript-section .speaker {
+        font-weight: 500;
+        color: #e67e22;
+      }
+    `;
+    this.shadow.appendChild(styles);
+  }
+
+  /**
+   * Create the overlay HTML structure
+   */
+  private createOverlayStructure(): HTMLDivElement {
+    const panel = document.createElement('div');
+    panel.className = 'overlay-panel';
+    panel.innerHTML = `
+      <div class="overlay-header">
+        <div class="drag-handle">
+          <span class="status-indicator"></span>
+          <span class="title">Tammy</span>
+        </div>
+        <div class="controls">
+          <button class="minimize-btn" title="Minimize">−</button>
+          <button class="close-btn" title="Hide">×</button>
+        </div>
+      </div>
+      <div class="overlay-content">
+        <div class="suggestions-container">
+          <div class="empty-state">
+            Listening for conversation...
+          </div>
+        </div>
+      </div>
+      <div class="transcript-section">
+        <span class="speaker">Waiting...</span>
+      </div>
+    `;
+
+    // Add event listeners
+    const minimizeBtn = panel.querySelector('.minimize-btn');
+    const closeBtn = panel.querySelector('.close-btn');
+
+    minimizeBtn?.addEventListener('click', () => this.toggleMinimize());
+    closeBtn?.addEventListener('click', () => this.hide());
+    panel.addEventListener('click', () => {
+      if (this.isMinimized) this.toggleMinimize();
+    });
+
+    return panel;
+  }
+
+  /**
+   * Initialize drag functionality
+   */
+  private initDrag(): void {
+    const header = this.panel.querySelector('.overlay-header') as HTMLElement;
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+    header.addEventListener('mousedown', (e) => {
+      if (this.isMinimized) return;
+      this.isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = this.panel.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      header.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!this.isDragging) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newLeft = Math.max(0, Math.min(window.innerWidth - this.panel.offsetWidth, startLeft + deltaX));
+      const newTop = Math.max(0, Math.min(window.innerHeight - this.panel.offsetHeight, startTop + deltaY));
+
+      this.panel.style.left = `${newLeft}px`;
+      this.panel.style.top = `${newTop}px`;
+      this.panel.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+        header.style.cursor = 'grab';
+        this.savePosition();
+      }
+    });
+  }
+
+  /**
+   * Toggle minimized state
+   */
+  toggleMinimize(): void {
+    this.isMinimized = !this.isMinimized;
+    this.panel.classList.toggle('minimized', this.isMinimized);
+    try {
+      if (chrome.runtime?.id) {
+        chrome.storage.local.set({ overlayMinimized: this.isMinimized });
+      }
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Add a suggestion to the overlay
+   */
+  addSuggestion(suggestion: Suggestion): void {
+    const container = this.panel.querySelector('.suggestions-container');
+    if (!container) return;
+
+    // Remove empty state
+    const emptyState = container.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+
+    const card = document.createElement('div');
+    card.className = `suggestion-card ${suggestion.type}`;
+    card.innerHTML = `
+      <div class="suggestion-header">
+        <span class="suggestion-type">${suggestion.type}</span>
+        <span class="suggestion-time">${this.formatTime(suggestion.timestamp)}</span>
+      </div>
+      <div class="suggestion-content">${suggestion.text}</div>
+    `;
+
+    container.insertBefore(card, container.firstChild);
+
+    // Limit visible suggestions
+    while (container.children.length > 10) {
+      container.removeChild(container.lastChild!);
+    }
+  }
+
+  /**
+   * Update transcript display
+   */
+  updateTranscript(transcript: Transcript): void {
+    const section = this.panel.querySelector('.transcript-section');
+    if (!section) return;
+
+    section.innerHTML = `
+      <span class="speaker">${transcript.speaker}:</span> ${transcript.text}
+    `;
+  }
+
+  /**
+   * Show the overlay
+   */
+  show(): void {
+    this.panel.style.display = 'flex';
+  }
+
+  /**
+   * Hide the overlay
+   */
+  hide(): void {
+    this.panel.style.display = 'none';
+  }
+
+  /**
+   * Save position to storage
+   */
+  private savePosition(): void {
+    try {
+      if (!chrome.runtime?.id) return;
+      const rect = this.panel.getBoundingClientRect();
+      chrome.storage.local.set({
+        overlayPosition: { left: rect.left, top: rect.top },
+      });
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Restore position from storage
+   */
+  private restorePosition(): void {
+    try {
+      if (!chrome.runtime?.id) return;
+      chrome.storage.local.get(['overlayPosition', 'overlayMinimized'], (result) => {
+        if (result.overlayPosition) {
+          this.panel.style.left = `${result.overlayPosition.left}px`;
+          this.panel.style.top = `${result.overlayPosition.top}px`;
+          this.panel.style.right = 'auto';
+        }
+        if (result.overlayMinimized) {
+          this.isMinimized = result.overlayMinimized;
+          this.panel.classList.toggle('minimized', this.isMinimized);
+        }
+      });
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Format timestamp
+   */
+  private formatTime(timestamp: number): string {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+}

@@ -1,0 +1,51 @@
+# Presales AI Assistant - Backend Dependencies
+# Python 3.10+ required (3.11+ recommended for async performance)
+
+# Web Framework
+fastapi[all]>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Data Validation & Configuration
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# WebSocket Support
+websockets>=12.0
+
+# Speech-to-Text (Deepgram)
+# NOTE: v5.3.x has breaking changes - send_media() requires bytes not str
+# Use client.listen.v2.connect() for streaming
+deepgram-sdk>=5.3.0
+
+# LLM (Google Gemini)
+# NOTE: google-generativeai is DEPRECATED (EOL Nov 30, 2025)
+# Use google-genai instead
+google-genai>=1.0.0
+
+# Vector Database - Development
+chromadb>=1.4.0
+
+# Vector Database - Production (optional, requires Python 3.10+)
+# Uncomment for production deployment
+# pinecone>=8.0.0
+
+# PDF Processing (optional, for document ingestion)
+# Install if you need to ingest PDF documents
+# pymupdf>=1.24.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+httpx>=0.26.0  # For testing FastAPI
+
+# Development Tools
+black>=24.1.0
+isort>=5.13.0
+mypy>=1.8.0
+ruff>=0.1.0
+
+# Monitoring & Logging (optional)
+# sentry-sdk[fastapi]>=1.39.0
+# prometheus-fastapi-instrumentator>=6.1.0

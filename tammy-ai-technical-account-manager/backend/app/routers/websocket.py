@@ -1,0 +1,428 @@
+"""
+WebSocket Endpoint
+
+Real-time bidirectional communication with the Chrome extension.
+Handles the complete audio-to-suggestion pipeline:
+1. Receives audio chunks from extension
+2. Streams to Deepgram for transcription
+3. Detects questions and generates AI suggestions
+4. Sends transcripts and suggestions back to extension
+
+Protocol:
+- Client -> Server: audio_chunk, ping, control messages
+- Server -> Client: transcript, suggestion, status, error messages
+"""
+
+import asyncio
+import base64
+import json
+import logging
+from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+from app.services.connection_manager import ConnectionManager
+from app.services.transcription import TranscriptionService, Transcript, SpeakerRole
+from app.services.agent import AgentService, Suggestion
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# Global connection manager instance (shared across all connections)
+manager = ConnectionManager()
+
+
+class SessionHandler:
+    """
+    Handles a single WebSocket session.
+
+    Manages the lifecycle of transcription and agent services for one client connection.
+    """
+
+    def __init__(self, session_id: str, websocket: WebSocket) -> None:
+        self.session_id = session_id
+        self.websocket = websocket
+
+        # Services
+        self.transcription = TranscriptionService()
+        self.agent = AgentService()
+
+        # State
+        self.is_active = True
+        self.is_listening = False
+        self._pending_transcripts: list[Transcript] = []
+
+    async def setup(self) -> bool:
+        """
+        Initialize the session services.
+
+        Returns:
+            True if setup was successful, False otherwise.
+        """
+        # Set up transcript callback
+        self.transcription.set_transcript_callback(self._handle_transcript)
+
+        # Try to connect to Deepgram
+        connected = await self.transcription.connect()
+        if connected:
+            logger.info(f"Session {self.session_id}: Connected to Deepgram")
+            self.is_listening = True
+        else:
+            logger.warning(
+                f"Session {self.session_id}: Deepgram not available - "
+                "transcription will be disabled"
+            )
+
+        return True
+
+    async def _handle_transcript(self, transcript: Transcript) -> None:
+        """
+        Handle incoming transcript from Deepgram.
+
+        Sends transcript to client and triggers AI suggestion for questions.
+        """
+        if not self.is_active:
+            return
+
+        try:
+            # Send transcript to client
+            await manager.send_message(
+                self.session_id,
+                {
+                    "type": "transcript",
+                    "text": transcript.text,
+                    "speaker": transcript.speaker,
+                    "speaker_id": transcript.speaker_id,
+                    "speaker_role": transcript.speaker_role.value,
+                    "is_final": transcript.is_final,
+                    "confidence": transcript.confidence,
+                    "start_time": transcript.start_time,
+                    "end_time": transcript.end_time,
+                    "timestamp": transcript.timestamp.isoformat(),
+                },
+            )
+
+            # Add to agent context
+            self.agent.add_context(
+                speaker=transcript.speaker,
+                text=transcript.text,
+                is_question=False,  # Will be updated if we detect a question
+            )
+
+            # For final transcripts, check if it's a question and generate suggestion
+            if transcript.is_final and self.agent.is_question(transcript.text):
+                # Only generate suggestions for customer questions
+                # (or unknown speakers until we have enough data)
+                if transcript.speaker_role in [SpeakerRole.CUSTOMER, SpeakerRole.UNKNOWN]:
+                    await self._generate_and_send_suggestion(transcript)
+
+        except Exception as e:
+            logger.error(f"Session {self.session_id}: Error handling transcript: {e}")
+
+    async def _generate_and_send_suggestion(self, transcript: Transcript) -> None:
+        """Generate an AI suggestion for a detected question."""
+        try:
+            logger.info(
+                f"Session {self.session_id}: Generating suggestion for: "
+                f"{transcript.text[:50]}..."
+            )
+
+            # Generate suggestion
+            suggestion = await self.agent.generate_suggestion(
+                question=transcript.text,
+                speaker=transcript.speaker,
+                rag_context=None,  # TODO: Add RAG context when knowledge base is ready
+            )
+
+            if suggestion:
+                await manager.send_message(
+                    self.session_id,
+                    {
+                        "type": "suggestion",
+                        "question": transcript.text,
+                        "response": suggestion.text,
+                        "confidence": suggestion.confidence,
+                        "question_type": suggestion.question_type.value,
+                        "key_points": suggestion.key_points,
+                        "source": suggestion.source,
+                        "timestamp": suggestion.timestamp.isoformat(),
+                    },
+                )
+                logger.info(
+                    f"Session {self.session_id}: Sent suggestion "
+                    f"(confidence: {suggestion.confidence:.2f})"
+                )
+
+        except Exception as e:
+            logger.error(f"Session {self.session_id}: Error generating suggestion: {e}")
+
+    async def handle_audio_chunk(self, message: dict) -> None:
+        """
+        Process an audio chunk message from the client.
+
+        Supports multiple audio formats:
+        - data: List of integers (16-bit PCM samples)
+        - audio_base64: Base64-encoded audio bytes
+        - audio_bytes: Raw bytes (when received as binary message)
+        """
+        try:
+            # Track the audio chunk
+            manager.record_audio_chunk(self.session_id)
+
+            if not self.is_listening:
+                return
+
+            # Handle different audio formats
+            if "data" in message:
+                # List of integers (16-bit PCM)
+                audio_data = message["data"]
+
+                # Calculate audio level for debugging (every ~10 chunks)
+                if hasattr(self, '_audio_debug_count'):
+                    self._audio_debug_count += 1
+                else:
+                    self._audio_debug_count = 1
+
+                if self._audio_debug_count % 10 == 0:
+                    if audio_data:
+                        max_abs = max(abs(s) for s in audio_data)
+                        rms = (sum(s*s for s in audio_data) / len(audio_data)) ** 0.5
+                        logger.info(f"Session {self.session_id}: Audio chunk #{self._audio_debug_count} - RMS={rms:.0f}, Max={max_abs}, Samples={len(audio_data)}")
+
+                await self.transcription.send_audio_chunk(audio_data)
+
+            elif "audio_base64" in message:
+                # Base64-encoded audio
+                audio_base64 = message["audio_base64"]
+                await self.transcription.send_audio_base64(audio_base64)
+
+            elif "audio_bytes" in message:
+                # Raw bytes
+                audio_bytes = message["audio_bytes"]
+                if isinstance(audio_bytes, str):
+                    audio_bytes = audio_bytes.encode()
+                await self.transcription.send_audio(audio_bytes)
+
+        except Exception as e:
+            logger.error(f"Session {self.session_id}: Error processing audio: {e}")
+
+    async def handle_binary_audio(self, audio_bytes: bytes) -> None:
+        """Process binary audio data received directly."""
+        try:
+            manager.record_audio_chunk(self.session_id)
+
+            if self.is_listening:
+                await self.transcription.send_audio(audio_bytes)
+
+        except Exception as e:
+            logger.error(f"Session {self.session_id}: Error processing binary audio: {e}")
+
+    async def handle_control_message(self, message: dict) -> None:
+        """
+        Handle control messages from the client.
+
+        Control types:
+        - start: Start listening/transcription
+        - stop: Stop listening/transcription
+        - clear_context: Clear conversation context
+        - get_status: Get session status
+        """
+        control_type = message.get("control", message.get("action"))
+
+        if control_type == "start":
+            if not self.is_listening:
+                connected = await self.transcription.connect()
+                self.is_listening = connected
+                await manager.send_message(
+                    self.session_id,
+                    {
+                        "type": "status",
+                        "status": "listening" if connected else "transcription_unavailable",
+                        "message": "Started listening" if connected else "Transcription service unavailable",
+                    },
+                )
+
+        elif control_type == "stop":
+            self.is_listening = False
+            await self.transcription.flush_buffer()
+            await manager.send_message(
+                self.session_id,
+                {
+                    "type": "status",
+                    "status": "stopped",
+                    "message": "Stopped listening",
+                },
+            )
+
+        elif control_type == "clear_context":
+            self.agent.clear_context()
+            await manager.send_message(
+                self.session_id,
+                {
+                    "type": "status",
+                    "status": "context_cleared",
+                    "message": "Conversation context cleared",
+                },
+            )
+
+        elif control_type == "get_status":
+            session = manager.get_session(self.session_id)
+            await manager.send_message(
+                self.session_id,
+                {
+                    "type": "status",
+                    "status": "active",
+                    "session": session.to_dict() if session else {},
+                    "is_listening": self.is_listening,
+                    "transcription_connected": self.transcription.is_connected(),
+                },
+            )
+
+        elif control_type == "ping":
+            await manager.send_message(self.session_id, {"type": "pong"})
+
+    async def cleanup(self) -> None:
+        """Clean up session resources."""
+        self.is_active = False
+        self.is_listening = False
+
+        try:
+            await self.transcription.close()
+        except Exception as e:
+            logger.error(f"Session {self.session_id}: Error closing transcription: {e}")
+
+        self.agent.clear_context()
+        logger.info(f"Session {self.session_id}: Cleaned up")
+
+
+@router.websocket("/ws/session")
+async def websocket_session(websocket: WebSocket) -> None:
+    """
+    WebSocket endpoint for presales assistant sessions.
+
+    Handles the complete real-time communication pipeline:
+    1. Accepts connection and creates session
+    2. Initializes transcription and agent services
+    3. Processes incoming audio and control messages
+    4. Sends transcripts and AI suggestions to client
+
+    Message Protocol:
+
+    Client -> Server:
+    - Audio: {"type": "audio_chunk", "data": [...], "timestamp": 123}
+    - Audio (base64): {"type": "audio_chunk", "audio_base64": "..."}
+    - Control: {"type": "control", "control": "start|stop|clear_context|get_status"}
+    - Ping: {"type": "ping"}
+
+    Server -> Client:
+    - Transcript: {"type": "transcript", "text": "...", "speaker": "...", "is_final": true}
+    - Suggestion: {"type": "suggestion", "question": "...", "response": "...", "confidence": 0.9}
+    - Status: {"type": "status", "status": "...", "message": "..."}
+    - Error: {"type": "error", "code": "...", "message": "..."}
+    - Pong: {"type": "pong"}
+    """
+    # Accept connection
+    session_id = await manager.connect(websocket)
+    logger.info(f"New WebSocket session: {session_id}")
+
+    # Create session handler
+    handler = SessionHandler(session_id, websocket)
+
+    try:
+        # Initialize services
+        await handler.setup()
+
+        # Send connection confirmation
+        await manager.send_message(
+            session_id,
+            {
+                "type": "status",
+                "status": "connected",
+                "session_id": session_id,
+                "message": "Connected to Presales AI Assistant",
+                "transcription_available": handler.transcription.is_connected(),
+            },
+        )
+
+        # Message processing loop
+        while True:
+            try:
+                # Try to receive either text or bytes
+                message = await websocket.receive()
+
+                if message["type"] == "websocket.receive":
+                    if "text" in message:
+                        # JSON message
+                        data = json.loads(message["text"])
+                        await _process_json_message(handler, data)
+
+                    elif "bytes" in message:
+                        # Binary audio data
+                        await handler.handle_binary_audio(message["bytes"])
+
+                elif message["type"] == "websocket.disconnect":
+                    logger.info(f"Session {session_id}: Client disconnected")
+                    break
+
+            except json.JSONDecodeError as e:
+                logger.warning(f"Session {session_id}: Invalid JSON: {e}")
+                await manager.send_message(
+                    session_id,
+                    {
+                        "type": "error",
+                        "code": "INVALID_JSON",
+                        "message": "Invalid JSON message",
+                    },
+                )
+
+    except WebSocketDisconnect:
+        logger.info(f"Session {session_id}: WebSocket disconnected")
+
+    except Exception as e:
+        logger.error(f"Session {session_id}: Unexpected error: {e}")
+        try:
+            await manager.send_message(
+                session_id,
+                {
+                    "type": "error",
+                    "code": "INTERNAL_ERROR",
+                    "message": f"Internal error: {str(e)}",
+                },
+            )
+        except Exception:
+            pass
+
+    finally:
+        # Cleanup
+        await handler.cleanup()
+        await manager.disconnect(session_id)
+
+
+async def _process_json_message(handler: SessionHandler, data: dict) -> None:
+    """Process a JSON message from the client."""
+    msg_type = data.get("type", "unknown")
+
+    if msg_type == "audio_chunk":
+        await handler.handle_audio_chunk(data)
+
+    elif msg_type in ["control", "command"]:
+        await handler.handle_control_message(data)
+
+    elif msg_type == "ping":
+        await handler.handle_control_message({"control": "ping"})
+
+    elif msg_type == "start":
+        await handler.handle_control_message({"control": "start"})
+
+    elif msg_type == "stop":
+        await handler.handle_control_message({"control": "stop"})
+
+    else:
+        logger.debug(f"Session {handler.session_id}: Unknown message type: {msg_type}")
+
+
+@router.get("/ws/status")
+async def websocket_status() -> dict:
+    """Get status of active WebSocket connections."""
+    return manager.get_status()

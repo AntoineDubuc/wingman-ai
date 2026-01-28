@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <img src="../icons/icon-48.png" alt="Logo" class="logo">
+      <h1>Tammy</h1>
+      <p class="subtitle">AI Technical Account Manager</p>
+    </header>
+
+    <section class="status-section">
+      <div class="status-row">
+        <span class="status-label">Backend</span>
+        <span class="status-indicator" id="backend-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Disconnected</span>
+        </span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Session</span>
+        <span class="status-indicator" id="session-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Inactive</span>
+        </span>
+      </div>
+    </section>
+
+    <section class="controls-section">
+      <button id="session-btn" class="primary-btn" disabled>
+        Start Session
+      </button>
+    </section>
+
+    <section class="settings-section">
+      <h2>Settings</h2>
+      <div class="form-group">
+        <label for="backend-url">Backend URL</label>
+        <input type="url" id="backend-url" placeholder="ws://localhost:8000/ws/session">
+      </div>
+      <button id="save-settings" class="secondary-btn">
+        Save Settings
+      </button>
+    </section>
+
+    <footer class="popup-footer">
+      <span class="version">v1.0.0</span>
+    </footer>
+  </div>
+  <script src="popup.ts" type="module"></script>
+</body>
+</html>

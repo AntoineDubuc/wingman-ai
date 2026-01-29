@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     max_response_tokens: int = 500
     temperature: float = 0.3
 
+    # Google OAuth (for Drive integration)
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    backend_url: str = "http://localhost:8000"  # For OAuth redirect
+
     # RAG / Knowledge Base
     rag_collection_name: str = "presales_knowledge"
     embedding_model: str = "gemini-embedding-001"

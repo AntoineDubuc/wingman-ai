@@ -9,6 +9,7 @@
 
 import { WebSocketClient } from './websocket-client';
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
+import { transcriptCollector } from '../services/transcript-collector';
 
 // Connection manager instance
 let wsClient: WebSocketClient | null = null;
@@ -134,12 +135,33 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
     // Initialize WebSocket connection
     const backendUrl = message.backendUrl || 'ws://localhost:8000/ws/session';
     wsClient = new WebSocketClient(backendUrl);
+
+    // Set up callbacks for transcript collection
+    wsClient.onTranscript((transcript) => {
+      transcriptCollector.addTranscript({
+        text: transcript.text as string,
+        speaker: transcript.speaker as string,
+        speaker_id: transcript.speaker_id as number,
+        speaker_role: transcript.speaker_role as string,
+        is_final: transcript.is_final as boolean,
+        timestamp: transcript.timestamp as string,
+        is_self: transcript.is_self as boolean | undefined,
+      });
+    });
+
+    wsClient.onSuggestion(() => {
+      transcriptCollector.incrementSuggestions();
+    });
+
     await wsClient.connect();
 
     // Send start control with system prompt and speaker filter BEFORE starting mic capture
     // This ensures the backend is configured before receiving audio
     wsClient.sendControl('start', { systemPrompt, speakerFilterEnabled });
     console.log('[ServiceWorker] Sent start control with system prompt and speaker filter');
+
+    // Start transcript collection for auto-save
+    transcriptCollector.startSession(speakerFilterEnabled);
 
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);
@@ -174,6 +196,23 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     if (activeTabId) {
       chrome.tabs.sendMessage(activeTabId, { type: 'STOP_MIC_CAPTURE' }).catch(() => {});
       chrome.tabs.sendMessage(activeTabId, { type: 'HIDE_OVERLAY' }).catch(() => {});
+    }
+
+    // End transcript collection and auto-save to Drive
+    if (transcriptCollector.hasActiveSession()) {
+      const saveResult = await transcriptCollector.endSession();
+      if (saveResult.saved) {
+        console.log('[ServiceWorker] Transcript saved to Drive:', saveResult.fileUrl);
+        // Notify user via content script (optional toast)
+        if (activeTabId) {
+          chrome.tabs.sendMessage(activeTabId, {
+            type: 'DRIVE_SAVE_RESULT',
+            data: saveResult,
+          }).catch(() => {});
+        }
+      } else if (saveResult.error) {
+        console.log('[ServiceWorker] Transcript save skipped:', saveResult.error);
+      }
     }
 
     // Disconnect WebSocket

@@ -38,6 +38,16 @@ class OptionsController {
   private themeToggle: HTMLButtonElement | null = null;
   private speakerFilterToggle: HTMLInputElement | null = null;
 
+  // Google Drive elements
+  private driveAutosaveToggle: HTMLInputElement | null = null;
+  private driveConnectBtn: HTMLButtonElement | null = null;
+  private driveDisconnectBtn: HTMLButtonElement | null = null;
+  private driveNotConnectedEl: HTMLElement | null = null;
+  private driveConnectedEl: HTMLElement | null = null;
+  private driveAccountEmailEl: HTMLElement | null = null;
+  private driveFolderNameInput: HTMLInputElement | null = null;
+  private transcriptFormatRadios: NodeListOf<HTMLInputElement> | null = null;
+
   // State
   private isDirty = false;
   private isLoading = false;
@@ -52,6 +62,7 @@ class OptionsController {
     this.attachEventListeners();
     await this.loadTheme();
     await this.loadSpeakerFilter();
+    await this.loadDriveSettings();
     await this.loadPrompt();
   }
 
@@ -72,6 +83,16 @@ class OptionsController {
     this.modalConfirmBtn = document.getElementById('modal-confirm') as HTMLButtonElement;
     this.themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
     this.speakerFilterToggle = document.getElementById('speaker-filter-toggle') as HTMLInputElement;
+
+    // Google Drive elements
+    this.driveAutosaveToggle = document.getElementById('drive-autosave-toggle') as HTMLInputElement;
+    this.driveConnectBtn = document.getElementById('drive-connect-btn') as HTMLButtonElement;
+    this.driveDisconnectBtn = document.getElementById('drive-disconnect-btn') as HTMLButtonElement;
+    this.driveNotConnectedEl = document.getElementById('drive-not-connected');
+    this.driveConnectedEl = document.getElementById('drive-connected');
+    this.driveAccountEmailEl = document.getElementById('drive-account-email');
+    this.driveFolderNameInput = document.getElementById('drive-folder-name') as HTMLInputElement;
+    this.transcriptFormatRadios = document.querySelectorAll('input[name="transcript-format"]') as NodeListOf<HTMLInputElement>;
   }
 
   /**
@@ -150,6 +171,33 @@ class OptionsController {
     // Speaker filter toggle change
     this.speakerFilterToggle?.addEventListener('change', () => {
       this.saveSpeakerFilter();
+    });
+
+    // Google Drive event listeners
+    this.driveAutosaveToggle?.addEventListener('change', () => {
+      this.saveDriveSettings();
+    });
+
+    this.driveConnectBtn?.addEventListener('click', () => {
+      this.connectGoogleDrive();
+    });
+
+    this.driveDisconnectBtn?.addEventListener('click', () => {
+      this.showConfirmModal(
+        'Disconnect Google Drive?',
+        'Transcripts will no longer be automatically saved. You can reconnect at any time.',
+        () => this.disconnectGoogleDrive()
+      );
+    });
+
+    this.driveFolderNameInput?.addEventListener('change', () => {
+      this.saveDriveSettings();
+    });
+
+    this.transcriptFormatRadios?.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        this.saveDriveSettings();
+      });
     });
   }
 
@@ -437,6 +485,196 @@ class OptionsController {
       await chrome.storage.local.set({ theme: newTheme });
     } catch (error) {
       console.error('Failed to save theme:', error);
+    }
+  }
+
+  /**
+   * Load Google Drive settings from storage
+   */
+  async loadDriveSettings(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get([
+        'driveAutosaveEnabled',
+        'driveConnected',
+        'driveAccountEmail',
+        'driveFolderName',
+        'transcriptFormat',
+      ]);
+
+      // Auto-save toggle (default: true)
+      if (this.driveAutosaveToggle) {
+        this.driveAutosaveToggle.checked = result.driveAutosaveEnabled ?? true;
+      }
+
+      // Folder name (default: "Tammy Transcripts")
+      if (this.driveFolderNameInput) {
+        this.driveFolderNameInput.value = result.driveFolderName || 'Tammy Transcripts';
+      }
+
+      // Transcript format (default: markdown)
+      const format = result.transcriptFormat || 'markdown';
+      this.transcriptFormatRadios?.forEach((radio) => {
+        radio.checked = radio.value === format;
+      });
+
+      // Connection status
+      this.updateDriveConnectionUI(
+        result.driveConnected ?? false,
+        result.driveAccountEmail
+      );
+    } catch (error) {
+      console.error('Failed to load Drive settings:', error);
+    }
+  }
+
+  /**
+   * Save Google Drive settings to storage
+   */
+  async saveDriveSettings(): Promise<void> {
+    try {
+      const autosaveEnabled = this.driveAutosaveToggle?.checked ?? true;
+      const folderName = this.driveFolderNameInput?.value?.trim() || 'Tammy Transcripts';
+
+      // Get selected format
+      let transcriptFormat = 'markdown';
+      this.transcriptFormatRadios?.forEach((radio) => {
+        if (radio.checked) {
+          transcriptFormat = radio.value;
+        }
+      });
+
+      await chrome.storage.local.set({
+        driveAutosaveEnabled: autosaveEnabled,
+        driveFolderName: folderName,
+        transcriptFormat: transcriptFormat,
+      });
+
+      this.showToast('Drive settings saved', 'success');
+    } catch (error) {
+      console.error('Failed to save Drive settings:', error);
+      this.showToast('Failed to save settings', 'error');
+    }
+  }
+
+  /**
+   * Update the Drive connection UI based on connection state
+   */
+  private updateDriveConnectionUI(connected: boolean, email?: string): void {
+    if (connected && email) {
+      // Show connected state
+      if (this.driveNotConnectedEl) {
+        this.driveNotConnectedEl.style.display = 'none';
+      }
+      if (this.driveConnectedEl) {
+        this.driveConnectedEl.style.display = 'flex';
+      }
+      if (this.driveAccountEmailEl) {
+        this.driveAccountEmailEl.textContent = `Connected as ${email}`;
+      }
+    } else {
+      // Show not connected state
+      if (this.driveNotConnectedEl) {
+        this.driveNotConnectedEl.style.display = 'flex';
+      }
+      if (this.driveConnectedEl) {
+        this.driveConnectedEl.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Initiate Google Drive OAuth connection
+   */
+  async connectGoogleDrive(): Promise<void> {
+    if (this.driveConnectBtn) {
+      this.driveConnectBtn.disabled = true;
+      this.driveConnectBtn.textContent = 'Connecting...';
+    }
+
+    try {
+      // Get backend URL from storage
+      const storage = await chrome.storage.local.get(['backendUrl']);
+      const backendUrl = storage.backendUrl || 'http://localhost:8000';
+
+      // Open OAuth flow in new tab
+      // Backend will handle OAuth and redirect back
+      const authUrl = `${backendUrl.replace('ws://', 'http://').replace('/ws/session', '')}/auth/google/login`;
+
+      // Open in popup window for better UX
+      const width = 500;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const authWindow = window.open(
+        authUrl,
+        'google-auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      // Poll for completion
+      const pollInterval = setInterval(async () => {
+        try {
+          // Check if window was closed
+          if (authWindow?.closed) {
+            clearInterval(pollInterval);
+
+            // Check if we got connected
+            const result = await chrome.storage.local.get(['driveConnected', 'driveAccountEmail']);
+            if (result.driveConnected) {
+              this.updateDriveConnectionUI(true, result.driveAccountEmail);
+              this.showToast('Google Drive connected!', 'success');
+            } else {
+              this.showToast('Connection cancelled', 'error');
+            }
+
+            // Reset button
+            if (this.driveConnectBtn) {
+              this.driveConnectBtn.disabled = false;
+              this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
+            }
+          }
+        } catch (e) {
+          // Window might be cross-origin, ignore
+        }
+      }, 500);
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        if (this.driveConnectBtn) {
+          this.driveConnectBtn.disabled = false;
+          this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
+        }
+      }, 300000);
+    } catch (error) {
+      console.error('Failed to connect Google Drive:', error);
+      this.showToast('Failed to connect', 'error');
+
+      if (this.driveConnectBtn) {
+        this.driveConnectBtn.disabled = false;
+        this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
+      }
+    }
+  }
+
+  /**
+   * Disconnect Google Drive
+   */
+  async disconnectGoogleDrive(): Promise<void> {
+    try {
+      await chrome.storage.local.set({
+        driveConnected: false,
+        driveAccountEmail: null,
+        driveAccessToken: null,
+        driveRefreshToken: null,
+      });
+
+      this.updateDriveConnectionUI(false);
+      this.showToast('Google Drive disconnected', 'success');
+    } catch (error) {
+      console.error('Failed to disconnect Google Drive:', error);
+      this.showToast('Failed to disconnect', 'error');
     }
   }
 }

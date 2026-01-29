@@ -27,6 +27,9 @@ export interface SuggestionMessage {
   confidence: number;
 }
 
+export type TranscriptCallback = (transcript: Record<string, unknown>) => void;
+export type SuggestionCallback = (suggestion: Record<string, unknown>) => void;
+
 export class WebSocketClient {
   private socket: WebSocket | null = null;
   private url: string;
@@ -35,10 +38,28 @@ export class WebSocketClient {
   private baseReconnectDelay = 1000;
   private messageQueue: WSMessage[] = [];
 
+  // Callbacks for message handling
+  private onTranscriptCallback: TranscriptCallback | null = null;
+  private onSuggestionCallback: SuggestionCallback | null = null;
+
   public isConnected = false;
 
   constructor(url: string) {
     this.url = url;
+  }
+
+  /**
+   * Set callback for transcript messages
+   */
+  onTranscript(callback: TranscriptCallback): void {
+    this.onTranscriptCallback = callback;
+  }
+
+  /**
+   * Set callback for suggestion messages
+   */
+  onSuggestion(callback: SuggestionCallback): void {
+    this.onSuggestionCallback = callback;
   }
 
   /**
@@ -143,11 +164,19 @@ export class WebSocketClient {
         case 'transcript':
           // Backend sends data at top level, not nested in 'data' property
           this.notifyContentScript('transcript', message);
+          // Call transcript callback for collection
+          if (this.onTranscriptCallback) {
+            this.onTranscriptCallback(message as unknown as Record<string, unknown>);
+          }
           break;
 
         case 'suggestion':
           // Backend sends data at top level, not nested in 'data' property
           this.notifyContentScript('suggestion', message);
+          // Call suggestion callback for counting
+          if (this.onSuggestionCallback) {
+            this.onSuggestionCallback(message as unknown as Record<string, unknown>);
+          }
           break;
 
         case 'error':

@@ -44,6 +44,78 @@
         </div>
       </div>
 
+      <!-- Google Drive Integration Card -->
+      <div class="options-card">
+        <h2 class="form-section-title">Google Drive Integration</h2>
+        <p class="form-section-description">
+          Automatically save meeting transcripts to your Google Drive after each session.
+        </p>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <label for="drive-autosave-toggle" class="toggle-label">Auto-save transcripts</label>
+            <p class="toggle-description">
+              When enabled, transcripts will be automatically saved to Google Drive when a session ends.
+            </p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="drive-autosave-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="drive-connection-section">
+          <div id="drive-not-connected" class="drive-status">
+            <button id="drive-connect-btn" class="btn-primary" type="button">
+              <span class="drive-icon">📁</span> Connect Google Account
+            </button>
+            <p class="drive-hint">Required to save transcripts to your Drive</p>
+          </div>
+
+          <div id="drive-connected" class="drive-status" style="display: none;">
+            <div class="drive-account-info">
+              <span class="drive-icon">✓</span>
+              <span id="drive-account-email">Connected</span>
+            </div>
+            <button id="drive-disconnect-btn" class="btn-secondary btn-small" type="button">
+              Disconnect
+            </button>
+          </div>
+        </div>
+
+        <div class="drive-folder-section">
+          <label for="drive-folder-name" class="input-label">Folder Name</label>
+          <div class="input-with-hint">
+            <input
+              type="text"
+              id="drive-folder-name"
+              class="text-input"
+              value="Tammy Transcripts"
+              placeholder="Tammy Transcripts"
+            >
+            <p class="input-hint">Folder will be created in your Drive root if it doesn't exist</p>
+          </div>
+        </div>
+
+        <div class="drive-format-section">
+          <label class="input-label">Transcript Format</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="transcript-format" value="markdown" checked>
+              <span class="radio-label">Markdown (.md)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="transcript-format" value="text">
+              <span class="radio-label">Plain Text (.txt)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="transcript-format" value="json">
+              <span class="radio-label">JSON (.json)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- System Prompt Card -->
       <div class="options-card">
         <!-- Section title and description -->

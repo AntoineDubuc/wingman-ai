@@ -356,13 +356,37 @@ body {
    -------------------------------------------------------------------------- */
 
 .options-footer {
-  padding: var(--spacing-md);
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .version {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+}
+
+.coffee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.coffee-link:hover {
+  background: rgba(211, 84, 0, 0.1);
+  color: var(--color-primary-hover);
+}
+
+.coffee-icon {
+  font-size: var(--font-size-base);
 }
 
 /* --------------------------------------------------------------------------

@@ -185,8 +185,27 @@ body {
 }
 
 .popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 16px;
-  text-align: center;
   color: #9aa0a6;
   font-size: 12px;
+}
+
+.coffee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #e67e22;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.coffee-link:hover {
+  background: rgba(230, 126, 34, 0.1);
 }

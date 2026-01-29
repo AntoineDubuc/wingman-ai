@@ -125,20 +125,21 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
       // Ignore errors closing offscreen document
     }
 
-    // Load custom system prompt from storage, fallback to default
-    const storage = await chrome.storage.local.get(['systemPrompt']);
+    // Load custom system prompt and speaker filter from storage
+    const storage = await chrome.storage.local.get(['systemPrompt', 'speakerFilterEnabled']);
     const systemPrompt = storage.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-    console.log(`[ServiceWorker] Using system prompt (${systemPrompt.length} chars)`);
+    const speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
+    console.log(`[ServiceWorker] Using system prompt (${systemPrompt.length} chars), speaker filter: ${speakerFilterEnabled}`);
 
     // Initialize WebSocket connection
     const backendUrl = message.backendUrl || 'ws://localhost:8000/ws/session';
     wsClient = new WebSocketClient(backendUrl);
     await wsClient.connect();
 
-    // Send start control with system prompt BEFORE starting mic capture
+    // Send start control with system prompt and speaker filter BEFORE starting mic capture
     // This ensures the backend is configured before receiving audio
-    wsClient.sendControl('start', { systemPrompt });
-    console.log('[ServiceWorker] Sent start control with system prompt');
+    wsClient.sendControl('start', { systemPrompt, speakerFilterEnabled });
+    console.log('[ServiceWorker] Sent start control with system prompt and speaker filter');
 
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);

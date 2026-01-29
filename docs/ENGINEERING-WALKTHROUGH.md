@@ -893,6 +893,68 @@ If a custom prompt is too short or vague, the AI may:
 
 **Best practice:** Copy the default prompt and modify specific sections rather than replacing it entirely.
 
+### 5.5 Speaker Filter
+
+The speaker filter feature allows Tammy to only respond to other participants (customers), not the user themselves. This is useful to prevent AI suggestions while you're speaking.
+
+**How it works:**
+
+1. User enables "Only respond to other speakers" toggle in Settings
+2. Setting is stored in `chrome.storage.local` as `speakerFilterEnabled`
+3. On session start, the extension sends this setting to the backend
+4. Backend tracks the first speaker as "self" (speaker_id)
+5. AI suggestions are only generated when other speakers talk
+
+**Flow diagram:**
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Options Page   │────►│ chrome.storage  │────►│ Service Worker  │
+│  Toggle switch  │save │ speakerFilter   │load │ (Session start) │
+└─────────────────┘     │   Enabled       │     └────────┬────────┘
+                        └─────────────────┘              │
+                                                         │ WebSocket
+                                                         │ start control
+                                                         ▼
+                                               ┌─────────────────┐
+                                               │  SessionHandler │
+                                               │ speaker_filter_ │
+                                               │    enabled      │
+                                               └────────┬────────┘
+                                                        │
+                                                        ▼
+                                               ┌─────────────────┐
+                                               │ First speaker   │
+                                               │ becomes "self"  │
+                                               │ (speaker_id=0)  │
+                                               └────────┬────────┘
+                                                        │
+                                                        ▼
+                                               ┌─────────────────┐
+                                               │ Skip AI for     │
+                                               │ self_speaker_id │
+                                               └─────────────────┘
+```
+
+**Backend implementation (websocket.py):**
+```python
+async def _handle_transcript(self, transcript: Transcript) -> None:
+    # Track first speaker as "self" when filter is enabled
+    if self.speaker_filter_enabled and self.self_speaker_id is None:
+        if transcript.speaker_id is not None:
+            self.self_speaker_id = transcript.speaker_id
+
+    # Skip AI processing for "self" speaker
+    should_process_for_ai = True
+    if self.speaker_filter_enabled and self.self_speaker_id is not None:
+        if transcript.speaker_id == self.self_speaker_id:
+            should_process_for_ai = False
+
+    # Always send transcripts to UI (so user sees all speech)
+    # Only process for AI suggestions when should_process_for_ai is True
+```
+
+**Note:** Deepgram's diarization assigns speaker IDs (0, 1, 2, ...). The first person to speak in a session gets speaker_id=0, which we assume is the user.
+
 ---
 
 ## Debugging Guide

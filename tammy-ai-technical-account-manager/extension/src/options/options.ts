@@ -36,6 +36,7 @@ class OptionsController {
   private modalCancelBtn: HTMLButtonElement | null = null;
   private modalConfirmBtn: HTMLButtonElement | null = null;
   private themeToggle: HTMLButtonElement | null = null;
+  private speakerFilterToggle: HTMLInputElement | null = null;
 
   // State
   private isDirty = false;
@@ -50,6 +51,7 @@ class OptionsController {
     this.cacheElements();
     this.attachEventListeners();
     await this.loadTheme();
+    await this.loadSpeakerFilter();
     await this.loadPrompt();
   }
 
@@ -69,6 +71,7 @@ class OptionsController {
     this.modalCancelBtn = document.getElementById('modal-cancel') as HTMLButtonElement;
     this.modalConfirmBtn = document.getElementById('modal-confirm') as HTMLButtonElement;
     this.themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
+    this.speakerFilterToggle = document.getElementById('speaker-filter-toggle') as HTMLInputElement;
   }
 
   /**
@@ -142,6 +145,11 @@ class OptionsController {
     // Theme toggle click
     this.themeToggle?.addEventListener('click', () => {
       this.toggleTheme();
+    });
+
+    // Speaker filter toggle change
+    this.speakerFilterToggle?.addEventListener('change', () => {
+      this.saveSpeakerFilter();
     });
   }
 
@@ -353,6 +361,39 @@ class OptionsController {
    */
   setDirty(dirty: boolean): void {
     this.isDirty = dirty;
+  }
+
+  /**
+   * Load speaker filter setting from storage
+   */
+  async loadSpeakerFilter(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get(['speakerFilterEnabled']);
+      if (this.speakerFilterToggle) {
+        this.speakerFilterToggle.checked = result.speakerFilterEnabled ?? false;
+      }
+    } catch (error) {
+      console.error('Failed to load speaker filter setting:', error);
+    }
+  }
+
+  /**
+   * Save speaker filter setting to storage
+   */
+  async saveSpeakerFilter(): Promise<void> {
+    if (!this.speakerFilterToggle) return;
+
+    try {
+      const enabled = this.speakerFilterToggle.checked;
+      await chrome.storage.local.set({ speakerFilterEnabled: enabled });
+      this.showToast(
+        enabled ? 'Speaker filter enabled' : 'Speaker filter disabled',
+        'success'
+      );
+    } catch (error) {
+      console.error('Failed to save speaker filter setting:', error);
+      this.showToast('Failed to save setting', 'error');
+    }
   }
 
   /**

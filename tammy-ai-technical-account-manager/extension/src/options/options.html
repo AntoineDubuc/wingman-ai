@@ -22,6 +22,29 @@
 
     <!-- Main content area -->
     <main class="options-content">
+      <!-- Speaker Filter Card -->
+      <div class="options-card">
+        <h2 class="form-section-title">Speaker Filter</h2>
+        <p class="form-section-description">
+          Control when Tammy provides suggestions based on who is speaking.
+        </p>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <label for="speaker-filter-toggle" class="toggle-label">Only respond to other speakers</label>
+            <p class="toggle-description">
+              When enabled, Tammy will only provide suggestions when customers or other participants speak,
+              not when you're talking. Tammy will automatically detect you as the first speaker.
+            </p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="speaker-filter-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- System Prompt Card -->
       <div class="options-card">
         <!-- Section title and description -->
         <h2 class="form-section-title">System Prompt</h2>

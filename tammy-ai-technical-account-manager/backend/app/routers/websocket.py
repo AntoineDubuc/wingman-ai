@@ -53,6 +53,10 @@ class SessionHandler:
         self.is_listening = False
         self._pending_transcripts: list[Transcript] = []
 
+        # Speaker filter state
+        self.speaker_filter_enabled = False
+        self.self_speaker_id: Optional[int] = None  # First speaker is assumed to be "self"
+
     async def setup(self) -> bool:
         """
         Initialize the session services.
@@ -82,12 +86,34 @@ class SessionHandler:
 
         Sends transcript to client. For final transcripts, the AI agent
         processes the full conversation and decides whether to provide a suggestion.
+
+        When speaker_filter_enabled is True, AI suggestions are only generated
+        for speakers other than the first detected speaker (assumed to be "self").
         """
         if not self.is_active:
             return
 
         try:
-            # Send transcript to client
+            # Track first speaker as "self" when speaker filter is enabled
+            if self.speaker_filter_enabled and self.self_speaker_id is None:
+                if transcript.speaker_id is not None:
+                    self.self_speaker_id = transcript.speaker_id
+                    logger.info(
+                        f"Session {self.session_id}: First speaker detected as 'self' "
+                        f"(speaker_id={self.self_speaker_id})"
+                    )
+
+            # Determine if this transcript should trigger AI response
+            should_process_for_ai = True
+            if self.speaker_filter_enabled and self.self_speaker_id is not None:
+                if transcript.speaker_id == self.self_speaker_id:
+                    should_process_for_ai = False
+                    logger.debug(
+                        f"Session {self.session_id}: Skipping AI for self "
+                        f"(speaker_id={transcript.speaker_id})"
+                    )
+
+            # Send transcript to client (always - so user sees all speech)
             await manager.send_message(
                 self.session_id,
                 {
@@ -101,12 +127,17 @@ class SessionHandler:
                     "start_time": transcript.start_time,
                     "end_time": transcript.end_time,
                     "timestamp": transcript.timestamp.isoformat(),
+                    "is_self": (
+                        self.speaker_filter_enabled
+                        and transcript.speaker_id == self.self_speaker_id
+                    ),
                 },
             )
 
             # For final transcripts, let the AI agent process and decide
             # whether to provide a suggestion (continuous participant mode)
-            if transcript.is_final:
+            # Skip if speaker filter is enabled and this is the "self" speaker
+            if transcript.is_final and should_process_for_ai:
                 suggestion = await self.agent.process_transcript(
                     text=transcript.text,
                     speaker=transcript.speaker,
@@ -226,6 +257,15 @@ class SessionHandler:
                         f"Session {self.session_id}: Custom system prompt received "
                         f"({len(custom_prompt)} chars)"
                     )
+
+            # Check for speaker filter setting
+            if params and "speakerFilterEnabled" in params:
+                self.speaker_filter_enabled = bool(params["speakerFilterEnabled"])
+                self.self_speaker_id = None  # Reset - will be set on first transcript
+                logger.info(
+                    f"Session {self.session_id}: Speaker filter "
+                    f"{'enabled' if self.speaker_filter_enabled else 'disabled'}"
+                )
 
             if not self.is_listening:
                 connected = await self.transcription.connect()

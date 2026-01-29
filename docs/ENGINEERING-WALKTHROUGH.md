@@ -11,8 +11,9 @@ A comprehensive tutorial for junior engineers joining the project.
 5. [Part 2: The Backend Server](#part-2-the-backend-server)
 6. [Part 3: The AI Pipeline](#part-3-the-ai-pipeline)
 7. [Part 4: The RAG Knowledge Base](#part-4-the-rag-knowledge-base)
-8. [Debugging Guide](#debugging-guide)
-9. [Common Gotchas](#common-gotchas)
+8. [Part 5: Customization Features](#part-5-customization-features)
+9. [Debugging Guide](#debugging-guide)
+10. [Common Gotchas](#common-gotchas)
 
 ---
 
@@ -53,10 +54,15 @@ Here's how data flows through the system:
 │  │  ┌────────┐  │    │  │ • Mic capture│   │ • WebSocket     │ │   │
 │  │  │Overlay │  │    │  │ • Overlay UI │◄──│ • Message relay │ │   │
 │  │  │ Panel  │  │    │  └─────────────┘   └────────┬─────────┘ │   │
-│  │  └────────┘  │    │                             │            │   │
-│  └──────────────┘    └─────────────────────────────┼────────────┘   │
+│  │  └────────┘  │    │                             │      ▲     │   │
+│  └──────────────┘    │  ┌─────────────┐   ┌───────┴──────┴──┐ │   │
+│                      │  │ Options Page│──►│ chrome.storage  │ │   │
+│                      │  │ (Settings)  │   │ (Custom Prompt) │ │   │
+│                      │  └─────────────┘   └─────────────────┘ │   │
+│                      └─────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────┼────────────────┘
                                                      │ WebSocket
+                                                     │ + system prompt
                                                      ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         BACKEND SERVER                               │
@@ -64,7 +70,7 @@ Here's how data flows through the system:
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────────┐│
 │  │   FastAPI    │   │  Deepgram    │   │      Google Gemini       ││
 │  │  WebSocket   │──►│  (Speech to  │──►│   (AI Suggestions)       ││
-│  │   Handler    │   │   Text)      │   │                          ││
+│  │   Handler    │   │   Text)      │   │   + Custom Prompt        ││
 │  └──────────────┘   └──────────────┘   │  ┌────────────────────┐  ││
 │                                         │  │   RAG Pipeline     │  ││
 │                                         │  │  (Knowledge Base)  │  ││
@@ -160,11 +166,13 @@ The manifest tells Chrome what permissions we need and what scripts to run:
   "permissions": [
     "activeTab",      // Access the current tab
     "scripting",      // Inject scripts into pages
-    "offscreen"       // Create hidden documents for audio processing
+    "offscreen",      // Create hidden documents for audio processing
+    "storage"         // Store settings like custom prompts
   ],
   "host_permissions": [
     "https://meet.google.com/*"  // Only runs on Google Meet
-  ]
+  ],
+  "options_page": "src/options/options.html"  // Settings page
 }
 ```
 
@@ -172,6 +180,7 @@ The manifest tells Chrome what permissions we need and what scripts to run:
 - `activeTab`: We need to know which tab is running Google Meet
 - `scripting`: We inject our overlay UI into the Meet page
 - `offscreen`: Chrome requires audio processing in a special "offscreen" document
+- `storage`: Persist user settings like custom system prompts
 
 ### 1.2 The Service Worker (`src/background/service-worker.ts`)
 
@@ -579,7 +588,7 @@ Now, the LLM sees **everything** and decides when to help.
 
 ### 3.3 The System Prompt
 
-The system prompt is crucial. It tells the LLM how to behave:
+The system prompt is crucial. It tells the LLM how to behave. Users can customize this via the Options page (see [Part 5](#part-5-customization-features)), but the default provides a solid foundation:
 
 ```python
 CONTINUOUS_SYSTEM_PROMPT = """You are TAMMY, an AI Technical Account Manager for CloudGeometry,
@@ -708,6 +717,184 @@ python -m app.rag.cli ingest
 
 ---
 
+## Part 5: Customization Features
+
+### 5.1 The Options Page (`src/options/`)
+
+Users can customize Tammy's behavior through an Options page accessible via right-clicking the extension icon → "Options".
+
+**Files involved:**
+- `src/options/options.html` - The options page markup
+- `src/options/options.css` - Styling with CloudGeometry brand colors
+- `src/options/options.ts` - Form handling and validation
+- `src/shared/default-prompt.ts` - Default system prompt constant
+
+**Key features:**
+- Custom system prompt editing with a textarea
+- Reset to default button
+- Character count and validation
+- Keyboard shortcut (Cmd/Ctrl+S to save)
+- Toast notifications for save/error feedback
+
+```typescript
+// options.ts - Saving the custom prompt
+async savePrompt(): Promise<void> {
+  const prompt = this.textarea.value.trim();
+
+  // Validate minimum length (100 chars)
+  if (prompt.length < 100) {
+    this.showToast('Prompt must be at least 100 characters', 'error');
+    return;
+  }
+
+  // Save to chrome.storage.local
+  await chrome.storage.local.set({ systemPrompt: prompt });
+  this.showToast('Prompt saved successfully!', 'success');
+}
+```
+
+### 5.2 System Prompt Flow
+
+The custom prompt flows through the system like this:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Options Page   │────►│ chrome.storage  │────►│ Service Worker  │
+│  (User edits)   │save │    .local       │load │ (Session start) │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                                                         │ WebSocket
+                                                         │ control msg
+                                                         ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Gemini API     │◄────│  AgentService   │◄────│  WebSocket      │
+│  (Uses prompt)  │     │ .set_system_    │     │  Handler        │
+└─────────────────┘     │  prompt()       │     └─────────────────┘
+                        └─────────────────┘
+```
+
+**Service Worker loading the prompt:**
+
+```typescript
+// service-worker.ts
+async function handleStartSession(message: { backendUrl?: string }) {
+  // Load custom prompt or use default
+  const storage = await chrome.storage.local.get(['systemPrompt']);
+  const systemPrompt = storage.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+
+  // Connect to backend
+  wsClient = new WebSocketClient(backendUrl);
+  await wsClient.connect();
+
+  // Send prompt with the start control message
+  wsClient.sendControl('start', { systemPrompt });
+
+  // ... rest of session setup
+}
+```
+
+**Backend receiving the prompt:**
+
+```python
+# websocket.py
+async def handle_control_message(self, message: dict) -> None:
+    control_type = message.get("control")
+    params = message.get("params", {})
+
+    if control_type == "start":
+        # Apply custom system prompt if provided
+        if params and "systemPrompt" in params:
+            custom_prompt = params["systemPrompt"]
+            self.agent.set_system_prompt(custom_prompt)
+```
+
+**AgentService validation:**
+
+```python
+# agent.py
+def set_system_prompt(self, prompt: str) -> None:
+    """Set custom prompt with validation."""
+    # Reject empty or too short prompts
+    if not prompt or len(prompt.strip()) < 50:
+        logger.warning("Prompt too short, using default")
+        return
+
+    # Truncate if too long (>20KB)
+    if len(prompt) > 20000:
+        prompt = prompt[:20000]
+
+    self._system_prompt = prompt
+    logger.info(f"Custom system prompt applied ({len(prompt)} chars)")
+```
+
+### 5.3 Overlay Enhancements
+
+The overlay panel includes several UX improvements:
+
+**Draggable positioning:**
+```typescript
+// User can drag the panel by its header
+this.initDrag();
+
+// Position is saved to chrome.storage.local
+private savePosition(): void {
+  const rect = this.panel.getBoundingClientRect();
+  chrome.storage.local.set({
+    overlayPosition: { left: rect.left, top: rect.top, width, height }
+  });
+}
+```
+
+**Resizable panel:**
+```typescript
+// Resize handle in bottom-right corner
+this.initResize();
+
+// Min/max constraints
+min-width: 280px; max-width: 600px;
+min-height: 200px; max-height: 80vh;
+```
+
+**Font size controls:**
+```typescript
+// +/- buttons in the header
+private adjustFontSize(delta: number): void {
+  this.fontSize = Math.max(10, Math.min(20, this.fontSize + delta));
+  this.applyFontSize();
+  this.saveFontSize();
+}
+```
+
+**Close callback:**
+```typescript
+// When user closes overlay, stop the entire session
+const overlay = new AIOverlay(handleOverlayClose);
+
+function handleOverlayClose(): void {
+  stopMicCapture();
+  chrome.runtime.sendMessage({ type: 'STOP_SESSION' });
+}
+```
+
+### 5.4 Important Notes on Custom Prompts
+
+**Why prompt length matters:**
+
+The default system prompt (~1800 chars) includes:
+- When to respond vs stay silent
+- Response format instructions
+- Company knowledge (CloudGeometry info)
+- Critical rules for conciseness
+
+If a custom prompt is too short or vague, the AI may:
+- Take longer to respond (more "thinking")
+- Give inconsistent output formats
+- Not know when to stay silent
+
+**Best practice:** Copy the default prompt and modify specific sections rather than replacing it entirely.
+
+---
+
 ## Debugging Guide
 
 ### Problem: No transcripts appearing
@@ -731,6 +918,43 @@ python -m app.rag.cli ingest
 4. **Deepgram connected?**
    - Look for `Connected to Deepgram` in backend logs
    - Check `DEEPGRAM_API_KEY` in `.env`
+
+### Problem: Custom prompt not being applied
+
+**Check the prompt flow:**
+
+1. **Is the prompt saved?**
+   - Open extension Options page
+   - Check if your custom text is there
+   - Open DevTools → Application → Local Storage → extension ID
+   - Look for `systemPrompt` key
+
+2. **Is the prompt being loaded?**
+   - Check service worker console for `Using system prompt (XXX chars)`
+
+3. **Is the backend receiving it?**
+   - Check backend logs for `Custom system prompt received (XXX chars)`
+   - If you see `Custom system prompt applied`, it worked
+
+4. **Is the prompt too short?**
+   - Frontend requires 100+ chars
+   - Backend requires 50+ chars (fallback validation)
+   - If too short, backend logs: `Prompt too short, using default`
+
+### Problem: AI responses are slow (20+ seconds)
+
+**Check for thinking mode:**
+
+1. Look for this warning in backend logs:
+   ```
+   Warning: there are non-text parts in the response: ['thought_signature']
+   ```
+
+2. If present, the Gemini model is using "thinking mode"
+
+3. **Solutions:**
+   - Use a faster model (change `GEMINI_MODEL` in `.env`)
+   - Or disable thinking: add `thinking_config=types.ThinkingConfig(thinking_budget=0)` to generation config
 
 ### Problem: Transcripts work but no suggestions
 

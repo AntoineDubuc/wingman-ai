@@ -116,6 +116,7 @@ class AgentService:
         self._chat_history: list[dict] = []
         self._last_suggestion_time: Optional[datetime] = None
         self._suggestion_cooldown_seconds = 5  # Don't suggest too frequently
+        self._system_prompt = CONTINUOUS_SYSTEM_PROMPT  # Custom prompt support
 
         logger.info(
             f"AgentService (Continuous) initialized - model: {self.model}, "
@@ -154,6 +155,50 @@ class AgentService:
         self._chat_history = []
         self._last_suggestion_time = None
         logger.info("Cleared conversation session")
+
+    def set_system_prompt(self, prompt: str) -> None:
+        """
+        Set a custom system prompt for this session with validation.
+
+        Validation rules (backend limits - more lenient than frontend for defense in depth):
+        - Empty/whitespace only: Keep default, log warning
+        - Too short (< 50 chars): Keep default, log warning
+        - Too long (> 20KB): Truncate to 20KB, log warning
+        - Strip leading/trailing whitespace
+        - Never crash or error out - always fall back gracefully
+        """
+        # Gracefully handle None or non-string input
+        if not prompt:
+            logger.warning("Empty prompt provided, using default")
+            return
+
+        # Handle non-string input gracefully
+        if not isinstance(prompt, str):
+            logger.warning(f"Invalid prompt type ({type(prompt).__name__}), using default")
+            return
+
+        # Strip whitespace
+        prompt = prompt.strip()
+
+        # Check for empty after stripping
+        if not prompt:
+            logger.warning("Whitespace-only prompt provided, using default")
+            return
+
+        # Check minimum length (50 chars - backend is more lenient than frontend's 100)
+        if len(prompt) < 50:
+            logger.warning(f"Prompt too short ({len(prompt)} chars, min 50), using default")
+            return
+
+        # Check maximum length and truncate if needed (20KB = 20000 chars)
+        max_length = 20000
+        if len(prompt) > max_length:
+            logger.warning(f"Prompt too long ({len(prompt)} chars), truncating to {max_length} chars")
+            prompt = prompt[:max_length]
+
+        # Apply the validated prompt
+        self._system_prompt = prompt
+        logger.info(f"Custom system prompt applied ({len(prompt)} chars)")
 
     async def process_transcript(
         self,
@@ -233,7 +278,7 @@ class AgentService:
             config = types.GenerateContentConfig(
                 max_output_tokens=self.max_tokens,
                 temperature=self.temperature,
-                system_instruction=CONTINUOUS_SYSTEM_PROMPT,
+                system_instruction=self._system_prompt,
             )
 
             # Generate response

@@ -82,6 +82,21 @@
 
 ---
 
+### Issue 10: Session management - stop on close, singleton enforcement
+**Problem:** User requested: "once the window (chat) closes it stops the session and that there is only one session"
+**Fix applied:**
+1. Added `onCloseCallback` parameter to `AIOverlay` constructor
+2. Close button (×) now calls callback to notify content script
+3. Content script sends `STOP_SESSION` message to background on overlay close
+4. Background service worker checks for active session before starting new one
+5. Stale connections are cleaned up before new session starts
+**Files changed:**
+- `extension/src/content/overlay.ts` - Added close callback
+- `extension/src/content/content-script.ts` - Added `handleOverlayClose()` function
+- `extension/src/background/service-worker.ts` - Added singleton session check
+
+---
+
 ## Key Files
 - `backend/app/services/transcription.py` - Deepgram SDK integration
 - `extension/src/content/content-script.ts` - Microphone capture

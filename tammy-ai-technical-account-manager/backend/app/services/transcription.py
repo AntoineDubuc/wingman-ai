@@ -259,6 +259,8 @@ class TranscriptionService:
             self._client = AsyncDeepgramClient(api_key=self.api_key)
 
             # Get async context manager for connection - parameters are passed as strings
+            # Endpointing: ms of silence before finalizing (higher = waits longer for speaker to continue)
+            # Utterance end: ms before an utterance is considered complete
             self._context_manager = self._client.listen.v1.connect(
                 model=self.model,
                 language="en",
@@ -269,8 +271,8 @@ class TranscriptionService:
                 encoding="linear16",
                 sample_rate=str(self.sample_rate),
                 channels=str(self.channels),
-                endpointing="1000",
-                utterance_end_ms="1500",
+                endpointing="2500",      # 2.5 seconds of silence before ending speech
+                utterance_end_ms="3000", # 3 seconds before utterance is finalized
             )
 
             # Enter the async context manager to get the socket client

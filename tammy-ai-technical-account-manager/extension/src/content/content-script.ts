@@ -234,6 +234,21 @@ function stopMicCapture(): void {
 }
 
 /**
+ * Handle user closing the overlay (stops the session)
+ */
+function handleOverlayClose(): void {
+  console.log('[ContentScript] User closed overlay, stopping session');
+  stopMicCapture();
+
+  // Notify background to stop the full session
+  try {
+    chrome.runtime.sendMessage({ type: 'STOP_SESSION' });
+  } catch {
+    // Extension context may be invalid
+  }
+}
+
+/**
  * Initialize the overlay
  */
 function initOverlay(): void {
@@ -244,7 +259,7 @@ function initOverlay(): void {
   }
 
   console.log('[ContentScript] Initializing overlay');
-  overlay = new AIOverlay();
+  overlay = new AIOverlay(handleOverlayClose);
   document.body.appendChild(overlay.container);
 }
 

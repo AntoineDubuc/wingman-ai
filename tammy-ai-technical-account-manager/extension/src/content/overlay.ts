@@ -25,8 +25,13 @@ export class AIOverlay {
   private panel: HTMLDivElement;
   private isMinimized = false;
   private isDragging = false;
+  private onCloseCallback?: () => void;
+  private fontSize = 13; // Base font size in px
+  private readonly MIN_FONT_SIZE = 10;
+  private readonly MAX_FONT_SIZE = 20;
 
-  constructor() {
+  constructor(onClose?: () => void) {
+    this.onCloseCallback = onClose;
     this.container = document.createElement('div');
     this.container.id = 'presales-ai-overlay-container';
     this.shadow = this.container.attachShadow({ mode: 'closed' });
@@ -156,6 +161,30 @@ export class AIOverlay {
         background: rgba(255, 255, 255, 0.2);
       }
 
+      .font-controls {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-right: 4px;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+        padding-right: 8px;
+      }
+
+      .font-controls button {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .overlay-panel.minimized .font-controls {
+        display: none;
+      }
+
       .overlay-content {
         flex: 1;
         overflow-y: auto;
@@ -239,7 +268,11 @@ export class AIOverlay {
           <span class="title">Tammy</span>
         </div>
         <div class="controls">
-          <button class="minimize-btn" title="Minimize">−</button>
+          <div class="font-controls">
+            <button class="font-decrease-btn" title="Decrease font size">−</button>
+            <button class="font-increase-btn" title="Increase font size">+</button>
+          </div>
+          <button class="minimize-btn" title="Minimize">_</button>
           <button class="close-btn" title="Hide">×</button>
         </div>
       </div>
@@ -259,9 +292,25 @@ export class AIOverlay {
     // Add event listeners
     const minimizeBtn = panel.querySelector('.minimize-btn');
     const closeBtn = panel.querySelector('.close-btn');
+    const fontDecreaseBtn = panel.querySelector('.font-decrease-btn');
+    const fontIncreaseBtn = panel.querySelector('.font-increase-btn');
 
     minimizeBtn?.addEventListener('click', () => this.toggleMinimize());
-    closeBtn?.addEventListener('click', () => this.hide());
+    closeBtn?.addEventListener('click', () => {
+      this.hide();
+      // Notify that user closed the overlay (stops session)
+      if (this.onCloseCallback) {
+        this.onCloseCallback();
+      }
+    });
+    fontDecreaseBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.adjustFontSize(-1);
+    });
+    fontIncreaseBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.adjustFontSize(1);
+    });
     panel.addEventListener('click', () => {
       if (this.isMinimized) this.toggleMinimize();
     });
@@ -339,11 +388,11 @@ export class AIOverlay {
     const card = document.createElement('div');
     card.className = `suggestion-card ${suggestion.type}`;
     card.innerHTML = `
-      <div class="suggestion-header">
+      <div class="suggestion-header" style="font-size: ${this.fontSize - 2}px">
         <span class="suggestion-type">${suggestion.type}</span>
         <span class="suggestion-time">${this.formatTime(suggestion.timestamp)}</span>
       </div>
-      <div class="suggestion-content">${suggestion.text}</div>
+      <div class="suggestion-content" style="font-size: ${this.fontSize}px">${suggestion.text}</div>
     `;
 
     container.insertBefore(card, container.firstChild);
@@ -452,7 +501,7 @@ export class AIOverlay {
   private restorePosition(): void {
     try {
       if (!chrome.runtime?.id) return;
-      chrome.storage.local.get(['overlayPosition', 'overlayMinimized'], (result) => {
+      chrome.storage.local.get(['overlayPosition', 'overlayMinimized', 'overlayFontSize'], (result) => {
         if (result.overlayPosition) {
           this.panel.style.left = `${result.overlayPosition.left}px`;
           this.panel.style.top = `${result.overlayPosition.top}px`;
@@ -468,7 +517,77 @@ export class AIOverlay {
           this.isMinimized = result.overlayMinimized;
           this.panel.classList.toggle('minimized', this.isMinimized);
         }
+        if (result.overlayFontSize) {
+          this.fontSize = result.overlayFontSize;
+          this.applyFontSize();
+        }
       });
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Adjust font size
+   */
+  private adjustFontSize(delta: number): void {
+    this.fontSize = Math.max(this.MIN_FONT_SIZE, Math.min(this.MAX_FONT_SIZE, this.fontSize + delta));
+    this.applyFontSize();
+    this.saveFontSize();
+  }
+
+  /**
+   * Apply current font size to all text in overlay
+   */
+  private applyFontSize(): void {
+    // Set base font size on the panel itself
+    this.panel.style.fontSize = `${this.fontSize}px`;
+
+    // Scale title (slightly larger)
+    const title = this.panel.querySelector('.title') as HTMLElement;
+    if (title) {
+      title.style.fontSize = `${this.fontSize + 1}px`;
+    }
+
+    // Scale content area
+    const content = this.panel.querySelector('.overlay-content') as HTMLElement;
+    if (content) {
+      content.style.fontSize = `${this.fontSize}px`;
+    }
+
+    // Scale suggestion cards
+    const suggestionContents = this.panel.querySelectorAll('.suggestion-content') as NodeListOf<HTMLElement>;
+    suggestionContents.forEach(el => {
+      el.style.fontSize = `${this.fontSize}px`;
+    });
+
+    // Scale suggestion headers (smaller)
+    const suggestionHeaders = this.panel.querySelectorAll('.suggestion-header') as NodeListOf<HTMLElement>;
+    suggestionHeaders.forEach(el => {
+      el.style.fontSize = `${this.fontSize - 2}px`;
+    });
+
+    // Scale empty state
+    const emptyState = this.panel.querySelector('.empty-state') as HTMLElement;
+    if (emptyState) {
+      emptyState.style.fontSize = `${this.fontSize}px`;
+    }
+
+    // Scale transcript section (slightly smaller)
+    const transcript = this.panel.querySelector('.transcript-section') as HTMLElement;
+    if (transcript) {
+      transcript.style.fontSize = `${this.fontSize - 1}px`;
+    }
+  }
+
+  /**
+   * Save font size to storage
+   */
+  private saveFontSize(): void {
+    try {
+      if (chrome.runtime?.id) {
+        chrome.storage.local.set({ overlayFontSize: this.fontSize });
+      }
     } catch {
       // Extension context invalidated, ignore
     }

@@ -208,14 +208,25 @@ class SessionHandler:
         Handle control messages from the client.
 
         Control types:
-        - start: Start listening/transcription
+        - start: Start listening/transcription (optionally with params.systemPrompt)
         - stop: Stop listening/transcription
         - clear_context: Clear conversation context
         - get_status: Get session status
         """
         control_type = message.get("control", message.get("action"))
+        params = message.get("params", {})
 
         if control_type == "start":
+            # Check for custom system prompt in params
+            if params and "systemPrompt" in params:
+                custom_prompt = params["systemPrompt"]
+                if custom_prompt and isinstance(custom_prompt, str):
+                    self.agent.set_system_prompt(custom_prompt)
+                    logger.info(
+                        f"Session {self.session_id}: Custom system prompt received "
+                        f"({len(custom_prompt)} chars)"
+                    )
+
             if not self.is_listening:
                 connected = await self.transcription.connect()
                 self.is_listening = connected

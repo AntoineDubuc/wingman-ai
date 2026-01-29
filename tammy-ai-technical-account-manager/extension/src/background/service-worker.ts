@@ -8,6 +8,7 @@
  */
 
 import { WebSocketClient } from './websocket-client';
+import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
 
 // Connection manager instance
 let wsClient: WebSocketClient | null = null;
@@ -88,6 +89,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
  */
 async function handleStartSession(message: { backendUrl?: string }): Promise<{ success: boolean; error?: string }> {
   try {
+    // SINGLETON CHECK: If a session is already active, don't start another
+    if (wsClient?.isConnected && activeTabId !== null) {
+      console.log('[ServiceWorker] Session already active, ignoring duplicate start');
+      return { success: true }; // Return success since session is already running
+    }
+
+    // If there's a stale connection, clean it up first
+    if (wsClient) {
+      console.log('[ServiceWorker] Cleaning up stale connection');
+      wsClient.disconnect();
+      wsClient = null;
+    }
+
     // Get active Meet tab
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -111,10 +125,20 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
       // Ignore errors closing offscreen document
     }
 
+    // Load custom system prompt from storage, fallback to default
+    const storage = await chrome.storage.local.get(['systemPrompt']);
+    const systemPrompt = storage.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+    console.log(`[ServiceWorker] Using system prompt (${systemPrompt.length} chars)`);
+
     // Initialize WebSocket connection
     const backendUrl = message.backendUrl || 'ws://localhost:8000/ws/session';
     wsClient = new WebSocketClient(backendUrl);
     await wsClient.connect();
+
+    // Send start control with system prompt BEFORE starting mic capture
+    // This ensures the backend is configured before receiving audio
+    wsClient.sendControl('start', { systemPrompt });
+    console.log('[ServiceWorker] Sent start control with system prompt');
 
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);

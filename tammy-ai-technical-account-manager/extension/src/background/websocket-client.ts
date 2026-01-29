@@ -111,6 +111,27 @@ export class WebSocketClient {
   }
 
   /**
+   * Send control message to backend
+   * Used for session commands like start/stop with optional params
+   */
+  sendControl(action: string, params?: Record<string, unknown>): void {
+    if (!this.isConnected || !this.socket) {
+      console.warn('[WebSocket] Cannot send control - not connected');
+      return;
+    }
+
+    const message = {
+      type: 'control',
+      control: action,
+      params,
+      timestamp: Date.now(),
+    };
+
+    console.log(`[WebSocket] Sending control: ${action}`);
+    this.socket.send(JSON.stringify(message));
+  }
+
+  /**
    * Handle incoming message from server
    */
   private handleMessage(data: string): void {

@@ -69,6 +69,69 @@
 }
 
 /* --------------------------------------------------------------------------
+   Dark Mode
+   -------------------------------------------------------------------------- */
+
+[data-theme="dark"] {
+  --color-primary: #f39c12;
+  --color-primary-hover: #e67e22;
+  --color-primary-disabled: #5d4e37;
+  --color-primary-ring: rgba(243, 156, 18, 0.25);
+
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #111827;
+
+  --color-bg-page: #111827;
+  --color-bg-surface: #1f2937;
+  --color-border: #374151;
+  --color-border-light: #4b5563;
+
+  --gradient-header: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Auto dark mode based on system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-primary: #f39c12;
+    --color-primary-hover: #e67e22;
+    --color-primary-disabled: #5d4e37;
+    --color-primary-ring: rgba(243, 156, 18, 0.25);
+
+    --color-danger: #f87171;
+    --color-danger-hover: #ef4444;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+
+    --color-text-primary: #f3f4f6;
+    --color-text-secondary: #9ca3af;
+    --color-text-muted: #6b7280;
+    --color-text-inverse: #111827;
+
+    --color-bg-page: #111827;
+    --color-bg-surface: #1f2937;
+    --color-border: #374151;
+    --color-border-light: #4b5563;
+
+    --gradient-header: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* --------------------------------------------------------------------------
    Reset & Base Styles
    -------------------------------------------------------------------------- */
 
@@ -110,6 +173,9 @@ body {
    -------------------------------------------------------------------------- */
 
 .options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: var(--gradient-header);
   padding: var(--spacing-lg) var(--spacing-md);
   box-shadow: var(--shadow-md);
@@ -119,8 +185,50 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  max-width: 800px;
-  margin: 0 auto;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.theme-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Show/hide icons based on theme */
+.theme-icon-dark {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon-light {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon-dark {
+  display: inline;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-icon-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .theme-icon-dark {
+    display: inline;
+  }
 }
 
 .header-logo {

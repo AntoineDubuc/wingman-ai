@@ -26,10 +26,22 @@ class PopupController {
   }
 
   private async init(): Promise<void> {
+    await this.loadTheme();
     await this.loadSettings();
     await this.updateStatus();
     this.attachEventListeners();
     this.startStatusPolling();
+  }
+
+  private async loadTheme(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get(['theme']);
+      if (result.theme) {
+        document.documentElement.setAttribute('data-theme', result.theme);
+      }
+    } catch (error) {
+      console.error('Failed to load theme:', error);
+    }
   }
 
   private async loadSettings(): Promise<void> {

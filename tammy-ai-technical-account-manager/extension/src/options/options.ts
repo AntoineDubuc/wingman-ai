@@ -35,6 +35,7 @@ class OptionsController {
   private modalOverlay: HTMLElement | null = null;
   private modalCancelBtn: HTMLButtonElement | null = null;
   private modalConfirmBtn: HTMLButtonElement | null = null;
+  private themeToggle: HTMLButtonElement | null = null;
 
   // State
   private isDirty = false;
@@ -48,6 +49,7 @@ class OptionsController {
   async init(): Promise<void> {
     this.cacheElements();
     this.attachEventListeners();
+    await this.loadTheme();
     await this.loadPrompt();
   }
 
@@ -66,6 +68,7 @@ class OptionsController {
     this.modalOverlay = document.getElementById('modal-overlay');
     this.modalCancelBtn = document.getElementById('modal-cancel') as HTMLButtonElement;
     this.modalConfirmBtn = document.getElementById('modal-confirm') as HTMLButtonElement;
+    this.themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
   }
 
   /**
@@ -134,6 +137,11 @@ class OptionsController {
         e.preventDefault();
         e.returnValue = '';
       }
+    });
+
+    // Theme toggle click
+    this.themeToggle?.addEventListener('click', () => {
+      this.toggleTheme();
     });
   }
 
@@ -345,6 +353,50 @@ class OptionsController {
    */
   setDirty(dirty: boolean): void {
     this.isDirty = dirty;
+  }
+
+  /**
+   * Load theme preference from storage
+   */
+  async loadTheme(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get(['theme']);
+      if (result.theme) {
+        document.documentElement.setAttribute('data-theme', result.theme);
+      }
+      // If no stored preference, let CSS handle system preference detection
+    } catch (error) {
+      console.error('Failed to load theme:', error);
+    }
+  }
+
+  /**
+   * Toggle between light and dark themes
+   */
+  async toggleTheme(): Promise<void> {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Determine the new theme
+    let newTheme: string;
+    if (currentTheme === 'dark') {
+      newTheme = 'light';
+    } else if (currentTheme === 'light') {
+      newTheme = 'dark';
+    } else {
+      // No explicit theme set, toggle from system preference
+      newTheme = prefersDark ? 'light' : 'dark';
+    }
+
+    // Apply the theme
+    document.documentElement.setAttribute('data-theme', newTheme);
+
+    // Save preference
+    try {
+      await chrome.storage.local.set({ theme: newTheme });
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
   }
 }
 

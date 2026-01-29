@@ -43,6 +43,40 @@ export class AIOverlay {
     this.initDrag();
     this.initResize();
     this.restorePosition();
+    this.loadTheme();
+  }
+
+  /**
+   * Load theme preference and apply dark mode if needed
+   */
+  private loadTheme(): void {
+    try {
+      chrome.storage.local.get(['theme'], (result) => {
+        if (result.theme === 'dark') {
+          this.container.classList.add('dark');
+        } else if (result.theme === 'light') {
+          this.container.classList.remove('dark');
+        } else {
+          // Auto-detect from system preference
+          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            this.container.classList.add('dark');
+          }
+        }
+      });
+
+      // Listen for theme changes
+      chrome.storage.onChanged.addListener((changes) => {
+        if (changes.theme) {
+          if (changes.theme.newValue === 'dark') {
+            this.container.classList.add('dark');
+          } else {
+            this.container.classList.remove('dark');
+          }
+        }
+      });
+    } catch {
+      // Extension context may be invalid
+    }
   }
 
   /**
@@ -56,6 +90,25 @@ export class AIOverlay {
         position: fixed;
         z-index: 999999;
         font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+        --overlay-bg: #ffffff;
+        --overlay-bg-secondary: #f8f9fa;
+        --overlay-bg-tertiary: #f1f3f4;
+        --overlay-text: #202124;
+        --overlay-text-secondary: #5f6368;
+        --overlay-border: #e8eaed;
+        --overlay-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        --overlay-resize-color: #ccc;
+      }
+
+      :host(.dark) {
+        --overlay-bg: #1f2937;
+        --overlay-bg-secondary: #374151;
+        --overlay-bg-tertiary: #4b5563;
+        --overlay-text: #f3f4f6;
+        --overlay-text-secondary: #9ca3af;
+        --overlay-border: #4b5563;
+        --overlay-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        --overlay-resize-color: #6b7280;
       }
 
       .overlay-panel {
@@ -68,13 +121,13 @@ export class AIOverlay {
         min-height: 200px;
         max-width: 600px;
         max-height: 80vh;
-        background: #ffffff;
+        background: var(--overlay-bg);
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--overlay-shadow);
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        transition: box-shadow 0.2s ease;
+        transition: box-shadow 0.2s ease, background 0.2s ease;
         resize: both;
       }
 
@@ -85,7 +138,7 @@ export class AIOverlay {
         width: 16px;
         height: 16px;
         cursor: nwse-resize;
-        background: linear-gradient(135deg, transparent 50%, #ccc 50%, #ccc 60%, transparent 60%, transparent 70%, #ccc 70%, #ccc 80%, transparent 80%);
+        background: linear-gradient(135deg, transparent 50%, var(--overlay-resize-color) 50%, var(--overlay-resize-color) 60%, transparent 60%, transparent 70%, var(--overlay-resize-color) 70%, var(--overlay-resize-color) 80%, transparent 80%);
         border-radius: 0 0 12px 0;
       }
 
@@ -198,14 +251,14 @@ export class AIOverlay {
       }
 
       .empty-state {
-        color: #5f6368;
+        color: var(--overlay-text-secondary);
         font-size: 13px;
         text-align: center;
         padding: 24px;
       }
 
       .suggestion-card {
-        background: #f8f9fa;
+        background: var(--overlay-bg-secondary);
         border-radius: 8px;
         padding: 12px;
         margin-bottom: 8px;
@@ -225,7 +278,7 @@ export class AIOverlay {
         justify-content: space-between;
         margin-bottom: 8px;
         font-size: 11px;
-        color: #5f6368;
+        color: var(--overlay-text-secondary);
       }
 
       .suggestion-type {
@@ -236,15 +289,15 @@ export class AIOverlay {
       .suggestion-content {
         font-size: 13px;
         line-height: 1.5;
-        color: #202124;
+        color: var(--overlay-text);
       }
 
       .transcript-section {
         padding: 8px 12px;
-        background: #f1f3f4;
+        background: var(--overlay-bg-tertiary);
         font-size: 12px;
-        color: #5f6368;
-        border-top: 1px solid #e8eaed;
+        color: var(--overlay-text-secondary);
+        border-top: 1px solid var(--overlay-border);
       }
 
       .transcript-section .speaker {

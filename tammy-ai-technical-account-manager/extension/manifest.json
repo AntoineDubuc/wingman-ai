@@ -22,7 +22,6 @@
       "https://www.googleapis.com/auth/userinfo.email"
     ]
   },
-  "key": "YOUR_EXTENSION_KEY_HERE",
   "background": {
     "service_worker": "src/background/service-worker.ts",
     "type": "module"

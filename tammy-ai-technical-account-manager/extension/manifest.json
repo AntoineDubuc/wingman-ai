@@ -8,11 +8,21 @@
     "activeTab",
     "storage",
     "offscreen",
-    "scripting"
+    "scripting",
+    "identity"
   ],
   "host_permissions": [
-    "https://meet.google.com/*"
+    "https://meet.google.com/*",
+    "https://www.googleapis.com/*"
   ],
+  "oauth2": {
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/userinfo.email"
+    ]
+  },
+  "key": "YOUR_EXTENSION_KEY_HERE",
   "background": {
     "service_worker": "src/background/service-worker.ts",
     "type": "module"

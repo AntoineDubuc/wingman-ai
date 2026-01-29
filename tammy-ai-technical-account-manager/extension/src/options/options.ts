@@ -6,6 +6,7 @@
  */
 
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
+import { driveService } from '../services/drive-service';
 
 // Constants
 const MIN_PROMPT_LENGTH = 100;
@@ -583,7 +584,7 @@ class OptionsController {
   }
 
   /**
-   * Initiate Google Drive OAuth connection
+   * Initiate Google Drive connection using Chrome Identity API
    */
   async connectGoogleDrive(): Promise<void> {
     if (this.driveConnectBtn) {
@@ -592,65 +593,19 @@ class OptionsController {
     }
 
     try {
-      // Get backend URL from storage
-      const storage = await chrome.storage.local.get(['backendUrl']);
-      const backendUrl = storage.backendUrl || 'http://localhost:8000';
+      // Use Chrome Identity API - no backend needed
+      const result = await driveService.connect();
 
-      // Open OAuth flow in new tab
-      // Backend will handle OAuth and redirect back
-      const authUrl = `${backendUrl.replace('ws://', 'http://').replace('/ws/session', '')}/auth/google/login`;
-
-      // Open in popup window for better UX
-      const width = 500;
-      const height = 600;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const authWindow = window.open(
-        authUrl,
-        'google-auth',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
-
-      // Poll for completion
-      const pollInterval = setInterval(async () => {
-        try {
-          // Check if window was closed
-          if (authWindow?.closed) {
-            clearInterval(pollInterval);
-
-            // Check if we got connected
-            const result = await chrome.storage.local.get(['driveConnected', 'driveAccountEmail']);
-            if (result.driveConnected) {
-              this.updateDriveConnectionUI(true, result.driveAccountEmail);
-              this.showToast('Google Drive connected!', 'success');
-            } else {
-              this.showToast('Connection cancelled', 'error');
-            }
-
-            // Reset button
-            if (this.driveConnectBtn) {
-              this.driveConnectBtn.disabled = false;
-              this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
-            }
-          }
-        } catch (e) {
-          // Window might be cross-origin, ignore
-        }
-      }, 500);
-
-      // Timeout after 5 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (this.driveConnectBtn) {
-          this.driveConnectBtn.disabled = false;
-          this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
-        }
-      }, 300000);
+      if (result.success && result.email) {
+        this.updateDriveConnectionUI(true, result.email);
+        this.showToast('Google Drive connected!', 'success');
+      } else {
+        this.showToast(result.error || 'Connection failed', 'error');
+      }
     } catch (error) {
       console.error('Failed to connect Google Drive:', error);
       this.showToast('Failed to connect', 'error');
-
+    } finally {
       if (this.driveConnectBtn) {
         this.driveConnectBtn.disabled = false;
         this.driveConnectBtn.innerHTML = '<span class="drive-icon">📁</span> Connect Google Account';
@@ -663,13 +618,7 @@ class OptionsController {
    */
   async disconnectGoogleDrive(): Promise<void> {
     try {
-      await chrome.storage.local.set({
-        driveConnected: false,
-        driveAccountEmail: null,
-        driveAccessToken: null,
-        driveRefreshToken: null,
-      });
-
+      await driveService.disconnect();
       this.updateDriveConnectionUI(false);
       this.showToast('Google Drive disconnected', 'success');
     } catch (error) {

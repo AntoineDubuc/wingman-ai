@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import auth, health, transcripts, websocket
+from app.routers import health, websocket
 
 
 def configure_logging() -> None:
@@ -143,8 +143,6 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(websocket.router, tags=["WebSocket"])
-app.include_router(auth.router)
-app.include_router(transcripts.router)
 
 
 @app.get("/")

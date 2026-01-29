@@ -2,8 +2,10 @@
  * Transcript Collector
  *
  * Collects transcripts during a session for saving to Google Drive.
- * Handles auto-save when session ends.
+ * Uses Chrome Identity API - no backend required.
  */
+
+import { driveService, TranscriptData, SessionMetadata } from './drive-service';
 
 export interface CollectedTranscript {
   timestamp: string;
@@ -24,7 +26,6 @@ export interface SessionData {
 
 class TranscriptCollector {
   private session: SessionData | null = null;
-  private backendUrl: string = 'http://localhost:8000';
 
   /**
    * Start a new collection session
@@ -100,77 +101,62 @@ class TranscriptCollector {
       const storage = await chrome.storage.local.get([
         'driveAutosaveEnabled',
         'driveConnected',
-        'driveAccessToken',
         'driveFolderName',
         'transcriptFormat',
-        'backendUrl',
       ]);
-
-      this.backendUrl = storage.backendUrl?.replace('ws://', 'http://').replace('/ws/session', '') || 'http://localhost:8000';
 
       if (!storage.driveAutosaveEnabled) {
         console.log('[TranscriptCollector] Auto-save disabled');
         return { saved: false, error: 'Auto-save disabled' };
       }
 
-      if (!storage.driveConnected || !storage.driveAccessToken) {
+      if (!storage.driveConnected) {
         console.log('[TranscriptCollector] Drive not connected');
         return { saved: false, error: 'Google Drive not connected' };
       }
 
-      // Save to Drive
-      const result = await this.saveToBackend({
-        accessToken: storage.driveAccessToken,
-        folderName: storage.driveFolderName || 'Tammy Transcripts',
-        fileFormat: storage.transcriptFormat || 'markdown',
-        sessionData,
-      });
+      // Convert transcripts to Drive service format
+      const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
+        timestamp: t.timestamp,
+        speaker: t.speaker,
+        speaker_id: t.speaker_id,
+        speaker_role: t.speaker_role,
+        text: t.text,
+        is_self: t.is_self,
+      }));
 
-      return result;
-    } catch (error) {
-      console.error('[TranscriptCollector] Error ending session:', error);
-      return { saved: false, error: String(error) };
-    }
-  }
+      // Build metadata
+      const endTime = sessionData.endTime || new Date();
+      const durationSeconds = Math.round((endTime.getTime() - sessionData.startTime.getTime()) / 1000);
+      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
 
-  /**
-   * Save transcript to backend for Drive upload
-   */
-  private async saveToBackend(options: {
-    accessToken: string;
-    folderName: string;
-    fileFormat: string;
-    sessionData: SessionData;
-  }): Promise<{ saved: boolean; fileUrl?: string; error?: string }> {
-    try {
-      const response = await fetch(`${this.backendUrl}/api/transcripts/save-drive`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          access_token: options.accessToken,
-          folder_name: options.folderName,
-          file_format: options.fileFormat,
-          transcripts: options.sessionData.transcripts,
-          start_time: options.sessionData.startTime.toISOString(),
-          end_time: options.sessionData.endTime?.toISOString() || new Date().toISOString(),
-          suggestions_count: options.sessionData.suggestionsCount,
-          speaker_filter_enabled: options.sessionData.speakerFilterEnabled,
-        }),
-      });
+      const metadata: SessionMetadata = {
+        startTime: sessionData.startTime,
+        endTime,
+        durationSeconds,
+        speakersCount: speakerIds.size,
+        transcriptsCount: sessionData.transcripts.length,
+        suggestionsCount: sessionData.suggestionsCount,
+        speakerFilterEnabled: sessionData.speakerFilterEnabled,
+      };
 
-      const result = await response.json();
+      // Save to Drive using Chrome Identity API
+      const result = await driveService.saveTranscript(
+        transcripts,
+        metadata,
+        storage.driveFolderName || 'Tammy Transcripts',
+        storage.transcriptFormat || 'markdown'
+      );
 
       if (result.success) {
-        console.log('[TranscriptCollector] Saved to Drive:', result.file_url);
-        return { saved: true, fileUrl: result.file_url };
+        console.log('[TranscriptCollector] Saved to Drive:', result.fileUrl);
+        return { saved: true, fileUrl: result.fileUrl };
       } else {
         console.error('[TranscriptCollector] Save failed:', result.error);
         return { saved: false, error: result.error };
       }
     } catch (error) {
-      console.error('[TranscriptCollector] API error:', error);
+      console.error('[TranscriptCollector] Error ending session:', error);
       return { saved: false, error: String(error) };
     }
   }

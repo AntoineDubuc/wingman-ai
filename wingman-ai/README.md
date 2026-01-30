@@ -1,177 +1,175 @@
-# Presales AI Assistant
+# Wingman - AI Sales Assistant for Google Meet
 
-Real-time AI assistant for Technical Cloud Solutions Presales Consultants during Google Meet calls. The system captures meeting audio, transcribes it using Deepgram, and provides contextually-aware response suggestions using Google Gemini with RAG-powered knowledge retrieval.
+Real-time AI assistant for sales professionals during Google Meet calls. Wingman captures meeting audio, transcribes it using Deepgram, and provides contextually-aware response suggestions using Google Gemini.
+
+**BYOK (Bring Your Own Keys)**: No backend server required! Users provide their own Deepgram and Gemini API keys directly in the extension settings.
 
 ## Features
 
 - **Real-time Audio Capture**: Chrome extension captures Google Meet audio via TabCapture API
 - **Live Transcription**: Deepgram Nova-3 provides accurate speech-to-text with speaker diarization
 - **AI-Powered Suggestions**: Gemini generates contextual response suggestions based on customer questions
-- **Knowledge Base Integration**: RAG pipeline retrieves relevant product documentation
+- **Speaker Identification**: Automatically identifies customer vs. consultant roles
+- **Auto-save Transcripts**: Optionally save meeting transcripts to Google Drive
 - **Unobtrusive UI**: Floating overlay displays suggestions without disrupting the meeting
+- **Zero Infrastructure**: No server to run - everything happens in your browser
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           SALESPERSON'S BROWSER                              │
+│                           YOUR BROWSER                                       │
 │                                                                              │
 │   ┌──────────────┐         ┌──────────────────────────────────────────────┐ │
 │   │ Google Meet  │         │         Chrome Extension                     │ │
-│   │              │◄────────┤  TabCapture → WebSocket → Overlay UI         │ │
+│   │              │◄────────┤  Audio Capture → Overlay UI                  │ │
 │   └──────────────┘         └─────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
-                                       │ WebSocket
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              BACKEND SERVICE                                 │
-│                                                                              │
-│   Deepgram (STT) → Gemini (LLM) → Knowledge Base (RAG)                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+                                       │
+              ┌────────────────────────┼────────────────────────┐
+              │ WebSocket              │ REST API               │
+              ▼                        ▼                        ▼
+      ┌──────────────┐        ┌──────────────┐        ┌──────────────┐
+      │   Deepgram   │        │   Gemini     │        │ Google Drive │
+      │   Nova-3     │        │   2.5 Flash  │        │  (optional)  │
+      │  (Your Key)  │        │  (Your Key)  │        │              │
+      └──────────────┘        └──────────────┘        └──────────────┘
 ```
 
-## Prerequisites
+## Getting Started
 
-- **Node.js** 18+ (for Chrome extension)
-- **Python** 3.10+ (3.11+ recommended for async performance)
-- **Chrome** 116+ (for TabCapture API with offscreen documents)
-- **API Keys**:
-  - [Deepgram](https://console.deepgram.com/) - Speech-to-text
-  - [Google AI Studio](https://aistudio.google.com/apikey) - Gemini LLM
+### 1. Get Your API Keys (Free Tiers Available)
 
-## Quick Start
+**Deepgram** (Speech-to-Text):
+1. Go to [console.deepgram.com](https://console.deepgram.com/)
+2. Create a free account ($200 free credit)
+3. Create an API key with "Member" or higher permissions
+4. Copy the API key
 
-### 1. Clone and Setup
+**Google Gemini** (AI Responses):
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the API key
 
-```bash
-# Clone the repository
-git clone https://github.com/cloudgeometry/presales-ai-assistant.git
-cd presales-ai-assistant
+### 2. Install the Extension
 
-# Copy environment template
-cp .env.example .env
-
-# Edit .env and add your API keys
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Or with development dependencies
-pip install -e ".[dev]"
-
-# Start the server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 3. Extension Setup
-
+**From Source:**
 ```bash
 cd extension
 
 # Install dependencies
 npm install
 
-# Build for development (with watch mode)
-npm run dev
-
-# Or build for production
+# Build for production
 npm run build
 ```
 
-### 4. Load Extension in Chrome
-
+**Load in Chrome:**
 1. Open Chrome and navigate to `chrome://extensions/`
 2. Enable "Developer mode" (top right toggle)
 3. Click "Load unpacked"
 4. Select the `extension/dist` folder
 5. Pin the extension to your toolbar
 
-### 5. Test the Setup
+### 3. Configure Your API Keys
 
-1. Start a Google Meet call (can be a test call with yourself)
-2. Click the Presales AI Assistant extension icon
-3. Enter your backend URL (default: `ws://localhost:8000/ws/session`)
-4. Click "Start Session"
-5. Speak a test question and watch for AI suggestions
+1. Click the Wingman extension icon
+2. Click "Options" link in the popup
+3. Enter your Deepgram API key
+4. Enter your Gemini API key
+5. Click "Save Keys"
+6. (Optional) Click "Test Keys" to verify they work
+
+### 4. Start Using Wingman
+
+1. Join a Google Meet call
+2. Click the Wingman extension icon
+3. Click "Start Session"
+4. The floating overlay will appear showing transcripts and AI suggestions
+5. Speak or let customers speak - Wingman will provide relevant suggestions
+
+## Estimated Costs
+
+Both APIs offer generous free tiers:
+
+| Service | Free Tier | Paid Rate |
+|---------|-----------|-----------|
+| Deepgram | $200 credit (~100 hours) | ~$0.01/minute |
+| Gemini | 1500 requests/day | Pay-as-you-go |
+
+**Typical 1-hour call:**
+- Deepgram: ~$0.60 (60 minutes of transcription)
+- Gemini: ~$0.05 (30-50 API calls)
+- **Total: ~$0.65/hour**
+
+## Configuration Options
+
+Access settings by clicking the extension icon and selecting "Options":
+
+### API Keys
+- **Deepgram API Key**: Required for speech-to-text
+- **Gemini API Key**: Required for AI suggestions
+
+### Speaker Filter
+- **Only respond to other speakers**: When enabled, Wingman only suggests responses when customers speak, not when you're talking
+
+### Google Drive Integration
+- **Auto-save transcripts**: Automatically save meeting transcripts to Drive
+- **Folder name**: Where transcripts are saved
+- **Format**: Markdown, Plain Text, or JSON
+
+### System Prompt
+- Customize how Wingman behaves and responds
+- Adjust personality, tone, and knowledge focus
 
 ## Project Structure
 
 ```
-presales-ai-assistant/
-├── extension/                 # Chrome Extension (Track A)
+wingman-ai/
+├── extension/                 # Chrome Extension
 │   ├── src/
 │   │   ├── background/       # Service worker
 │   │   ├── content/          # Content script & overlay
 │   │   ├── popup/            # Extension popup UI
-│   │   ├── offscreen/        # Audio processing
+│   │   ├── options/          # Settings page
+│   │   ├── services/         # API clients (Deepgram, Gemini, Drive)
 │   │   └── shared/           # Shared utilities
 │   ├── manifest.json
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── backend/                   # FastAPI Backend (Track B & C)
-│   ├── app/
-│   │   ├── routers/          # API endpoints
-│   │   ├── services/         # Business logic
-│   │   └── models/           # Pydantic schemas
-│   ├── requirements.txt
-│   └── pyproject.toml
-│
-├── docs/                      # Documentation
-├── .env.example              # Environment template
-├── .gitignore
 └── README.md
 ```
 
-## Configuration
+## Troubleshooting
 
-### Environment Variables
+### "API keys not configured"
+- Go to Options and enter both Deepgram and Gemini API keys
+- Click "Save Keys" and then "Test Keys" to verify
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DEEPGRAM_API_KEY` | Deepgram API key for transcription | Yes |
-| `GEMINI_API_KEY` | Google Gemini API key for LLM | Yes |
-| `DEEPGRAM_MODEL` | Model: `nova-3`, `nova-2-meeting`, `flux-general-en` | No (default: `nova-3`) |
-| `GEMINI_MODEL` | Model: `gemini-2.5-flash`, `gemini-2.5-pro` | No (default: `gemini-2.5-flash`) |
-| `ENABLE_DIARIZATION` | Enable speaker identification | No (default: `true`) |
+### "Failed to connect to Deepgram"
+- Verify your Deepgram API key is valid
+- Check your Deepgram account has available credits
+- Ensure you have network connectivity
 
-See `.env.example` for all configuration options.
+### "No transcripts appearing"
+- Make sure the microphone is working in Google Meet
+- Check that someone is speaking (Wingman needs audio input)
+- Look at the browser console for error messages
+
+### "No AI suggestions appearing"
+- Suggestions only appear for substantial utterances
+- There's a 5-second cooldown between suggestions
+- The AI may choose to stay silent if no suggestion is needed
+
+### Extension Issues
+
+**"TabCapture permission denied"**
+- Ensure you're on a Google Meet page
+- The extension requires a user gesture (click) to start capture
 
 ## Development
-
-### Backend Development
-
-```bash
-cd backend
-
-# Run with auto-reload
-uvicorn app.main:app --reload
-
-# Run tests
-pytest
-
-# Format code
-black app/
-isort app/
-
-# Type checking
-mypy app/
-
-# Lint
-ruff check app/
-```
-
-### Extension Development
 
 ```bash
 cd extension
@@ -189,46 +187,15 @@ npm run lint
 npm run format
 ```
 
-## API Documentation
-
-When the backend is running, access the auto-generated API docs:
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## Troubleshooting
-
-### Extension Issues
-
-**"TabCapture permission denied"**
-- Ensure you're on a Google Meet page
-- The extension requires a user gesture (click) to start capture
-
-**"WebSocket connection failed"**
-- Verify the backend is running
-- Check the WebSocket URL in extension settings
-- Ensure CORS is configured for the extension origin
-
-### Backend Issues
-
-**"Deepgram connection failed"**
-- Verify your `DEEPGRAM_API_KEY` is valid
-- Check your Deepgram account has available credits
-
-**"Gemini API error"**
-- Verify your `GEMINI_API_KEY` is valid
-- Ensure you're using the correct model name (`gemini-2.5-flash`)
-
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
 | Extension | TypeScript, Chrome Extension Manifest V3, Vite |
-| Backend | Python 3.10+, FastAPI, WebSocket |
-| Transcription | Deepgram Nova-3 |
-| LLM | Google Gemini 2.5 |
-| Vector DB | ChromaDB (dev), Pinecone (prod) |
-| Embedding | gemini-embedding-001 |
+| Speech-to-Text | Deepgram Nova-3 (WebSocket) |
+| AI | Google Gemini 2.5 Flash (REST API) |
+| Storage | Chrome Storage API |
+| Cloud Storage | Google Drive API (optional) |
 
 ## Contributing
 
@@ -246,4 +213,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - [Deepgram](https://deepgram.com/) for real-time speech-to-text
 - [Google AI](https://ai.google.dev/) for Gemini LLM
-- [ChromaDB](https://www.trychroma.com/) for vector storage

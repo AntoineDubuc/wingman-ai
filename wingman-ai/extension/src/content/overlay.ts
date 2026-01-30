@@ -460,12 +460,17 @@ export class AIOverlay {
    * Update transcript display
    */
   updateTranscript(transcript: Transcript): void {
+    console.log('[Overlay] updateTranscript called:', transcript);
     const section = this.panel.querySelector('.transcript-section');
-    if (!section) return;
+    if (!section) {
+      console.warn('[Overlay] transcript-section not found!');
+      return;
+    }
 
     section.innerHTML = `
       <span class="speaker">${transcript.speaker}:</span> ${transcript.text}
     `;
+    console.log('[Overlay] Transcript updated:', transcript.text?.substring(0, 50));
   }
 
   /**

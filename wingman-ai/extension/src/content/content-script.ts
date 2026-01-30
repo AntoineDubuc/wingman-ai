@@ -301,7 +301,12 @@ try {
         break;
 
       case 'transcript':
-        overlay?.updateTranscript(message.data);
+        console.log('[ContentScript] Transcript data:', message.data);
+        if (overlay) {
+          overlay.updateTranscript(message.data);
+        } else {
+          console.warn('[ContentScript] Overlay not initialized!');
+        }
         break;
 
       case 'suggestion':

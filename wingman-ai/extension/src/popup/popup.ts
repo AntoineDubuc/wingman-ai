@@ -1,25 +1,33 @@
 /**
- * Extension Popup - Settings and Controls
+ * Extension Popup - BYOK (Bring Your Own Keys) Architecture
+ *
+ * Shows API key configuration status and session controls.
+ * Users must configure Deepgram and Gemini API keys in Options before starting a session.
  */
 
 class PopupController {
   private elements: {
-    backendStatus: HTMLElement;
+    apiStatus: HTMLElement;
     sessionStatus: HTMLElement;
     sessionBtn: HTMLButtonElement;
-    backendUrl: HTMLInputElement;
-    saveSettings: HTMLButtonElement;
+    errorSection: HTMLElement;
+    errorMessage: HTMLElement;
+    controlsHint: HTMLElement;
+    openOptions: HTMLElement;
   };
 
   private isSessionActive = false;
+  private hasApiKeys = false;
 
   constructor() {
     this.elements = {
-      backendStatus: document.getElementById('backend-status')!,
+      apiStatus: document.getElementById('api-status')!,
       sessionStatus: document.getElementById('session-status')!,
       sessionBtn: document.getElementById('session-btn') as HTMLButtonElement,
-      backendUrl: document.getElementById('backend-url') as HTMLInputElement,
-      saveSettings: document.getElementById('save-settings') as HTMLButtonElement,
+      errorSection: document.getElementById('error-section')!,
+      errorMessage: document.getElementById('error-message')!,
+      controlsHint: document.getElementById('controls-hint')!,
+      openOptions: document.getElementById('open-options')!,
     };
 
     this.init();
@@ -27,7 +35,7 @@ class PopupController {
 
   private async init(): Promise<void> {
     await this.loadTheme();
-    await this.loadSettings();
+    await this.checkApiKeys();
     await this.updateStatus();
     this.attachEventListeners();
     this.startStatusPolling();
@@ -44,13 +52,40 @@ class PopupController {
     }
   }
 
-  private async loadSettings(): Promise<void> {
-    const settings = await chrome.storage.local.get(['backendUrl']);
+  /**
+   * Check if API keys are configured
+   */
+  private async checkApiKeys(): Promise<void> {
+    try {
+      const storage = await chrome.storage.local.get(['deepgramApiKey', 'geminiApiKey']);
+      this.hasApiKeys = !!(storage.deepgramApiKey && storage.geminiApiKey);
+      this.updateApiKeyStatus();
+    } catch (error) {
+      console.error('Failed to check API keys:', error);
+      this.hasApiKeys = false;
+    }
+  }
 
-    if (settings.backendUrl) {
-      this.elements.backendUrl.value = settings.backendUrl;
+  /**
+   * Update the API key status indicator
+   */
+  private updateApiKeyStatus(): void {
+    const apiDot = this.elements.apiStatus.querySelector('.status-dot') as HTMLElement;
+    const apiText = this.elements.apiStatus.querySelector('.status-text') as HTMLElement;
+
+    if (this.hasApiKeys) {
+      apiDot.className = 'status-dot connected';
+      apiText.textContent = 'Configured';
+      this.elements.controlsHint.style.display = 'none';
     } else {
-      this.elements.backendUrl.value = 'ws://localhost:8000/ws/session';
+      apiDot.className = 'status-dot';
+      apiText.textContent = 'Not Configured';
+      this.elements.controlsHint.style.display = 'block';
+    }
+
+    // Enable/disable button based on API key status
+    if (!this.isSessionActive) {
+      this.elements.sessionBtn.disabled = !this.hasApiKeys;
     }
   }
 
@@ -58,23 +93,11 @@ class PopupController {
     // Get status from background
     const response = await chrome.runtime.sendMessage({ type: 'GET_STATUS' });
 
-    // Update backend status
-    const backendDot = this.elements.backendStatus.querySelector('.status-dot') as HTMLElement;
-    const backendText = this.elements.backendStatus.querySelector('.status-text') as HTMLElement;
-
-    if (response?.isConnected) {
-      backendDot.className = 'status-dot connected';
-      backendText.textContent = 'Connected';
-    } else {
-      backendDot.className = 'status-dot';
-      backendText.textContent = 'Disconnected';
-    }
-
     // Update session status
     const sessionDot = this.elements.sessionStatus.querySelector('.status-dot') as HTMLElement;
     const sessionText = this.elements.sessionStatus.querySelector('.status-text') as HTMLElement;
 
-    if (response?.isCapturing) {
+    if (response?.isSessionActive || response?.isCapturing) {
       sessionDot.className = 'status-dot connected';
       sessionText.textContent = 'Active';
       this.isSessionActive = true;
@@ -88,30 +111,34 @@ class PopupController {
     this.elements.sessionBtn.textContent = this.isSessionActive ? 'Stop Session' : 'Start Session';
     this.elements.sessionBtn.classList.toggle('active', this.isSessionActive);
 
-    // Enable button if we have a URL
-    this.elements.sessionBtn.disabled = !this.elements.backendUrl.value.trim();
+    // Enable button if session is active (to allow stopping) or if we have API keys
+    this.elements.sessionBtn.disabled = !this.isSessionActive && !this.hasApiKeys;
+
+    // Hide controls hint when session is active
+    if (this.isSessionActive) {
+      this.elements.controlsHint.style.display = 'none';
+    } else if (!this.hasApiKeys) {
+      this.elements.controlsHint.style.display = 'block';
+    }
   }
 
   private attachEventListeners(): void {
     this.elements.sessionBtn.addEventListener('click', () => this.toggleSession());
-    this.elements.saveSettings.addEventListener('click', () => this.saveSettings());
-
-    this.elements.backendUrl.addEventListener('input', () => {
-      this.elements.sessionBtn.disabled = !this.elements.backendUrl.value.trim();
+    this.elements.openOptions.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.openOptionsPage();
     });
   }
 
   private async toggleSession(): Promise<void> {
     this.elements.sessionBtn.disabled = true;
+    this.hideError();
 
     try {
       if (this.isSessionActive) {
         await chrome.runtime.sendMessage({ type: 'STOP_SESSION' });
       } else {
-        const response = await chrome.runtime.sendMessage({
-          type: 'START_SESSION',
-          backendUrl: this.elements.backendUrl.value.trim(),
-        });
+        const response = await chrome.runtime.sendMessage({ type: 'START_SESSION' });
 
         if (!response.success) {
           this.showError(response.error || 'Failed to start session');
@@ -122,44 +149,26 @@ class PopupController {
     }
 
     // Update status after action
-    setTimeout(() => this.updateStatus(), 500);
-  }
-
-  private async saveSettings(): Promise<void> {
-    const backendUrl = this.elements.backendUrl.value.trim();
-
-    if (!backendUrl) {
-      this.showError('Please enter a backend URL');
-      return;
-    }
-
-    try {
-      new URL(backendUrl);
-    } catch {
-      this.showError('Please enter a valid URL');
-      return;
-    }
-
-    await chrome.storage.local.set({ backendUrl });
-    this.showSuccess('Settings saved!');
+    setTimeout(() => {
+      this.checkApiKeys();
+      this.updateStatus();
+    }, 500);
   }
 
   private showError(message: string): void {
-    // Simple error display - could be enhanced with toast
-    alert(message);
+    this.elements.errorMessage.textContent = message;
+    this.elements.errorSection.style.display = 'block';
   }
 
-  private showSuccess(message: string): void {
-    const btn = this.elements.saveSettings;
-    const originalText = btn.textContent;
-    btn.textContent = message;
-    setTimeout(() => {
-      btn.textContent = originalText;
-    }, 2000);
+  private hideError(): void {
+    this.elements.errorSection.style.display = 'none';
   }
 
   private startStatusPolling(): void {
-    setInterval(() => this.updateStatus(), 2000);
+    setInterval(() => {
+      this.checkApiKeys();
+      this.updateStatus();
+    }, 2000);
   }
 }
 

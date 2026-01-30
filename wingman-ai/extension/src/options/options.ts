@@ -43,6 +43,7 @@ class OptionsController {
   private deepgramApiKeyInput: HTMLInputElement | null = null;
   private geminiApiKeyInput: HTMLInputElement | null = null;
   private saveKeysBtn: HTMLButtonElement | null = null;
+  private testKeysBtn: HTMLButtonElement | null = null;
   private apiStatusEl: HTMLElement | null = null;
   private visibilityToggleBtns: NodeListOf<HTMLButtonElement> | null = null;
 
@@ -97,6 +98,7 @@ class OptionsController {
     this.deepgramApiKeyInput = document.getElementById('deepgram-api-key') as HTMLInputElement;
     this.geminiApiKeyInput = document.getElementById('gemini-api-key') as HTMLInputElement;
     this.saveKeysBtn = document.getElementById('save-keys-btn') as HTMLButtonElement;
+    this.testKeysBtn = document.getElementById('test-keys-btn') as HTMLButtonElement;
     this.apiStatusEl = document.getElementById('api-status');
     this.visibilityToggleBtns = document.querySelectorAll('.toggle-visibility-btn') as NodeListOf<HTMLButtonElement>;
 
@@ -192,6 +194,10 @@ class OptionsController {
     // API Keys event listeners
     this.saveKeysBtn?.addEventListener('click', () => {
       this.saveApiKeys();
+    });
+
+    this.testKeysBtn?.addEventListener('click', () => {
+      this.testApiKeys();
     });
 
     this.visibilityToggleBtns?.forEach((btn) => {
@@ -485,6 +491,83 @@ class OptionsController {
     } catch (error) {
       console.error('Failed to save API keys:', error);
       this.showToast('Failed to save API keys', 'error');
+    }
+  }
+
+  /**
+   * Test API keys by making validation requests
+   */
+  async testApiKeys(): Promise<void> {
+    const deepgramKey = this.deepgramApiKeyInput?.value?.trim() || '';
+    const geminiKey = this.geminiApiKeyInput?.value?.trim() || '';
+
+    if (!deepgramKey && !geminiKey) {
+      this.showToast('Please enter API keys first', 'error');
+      return;
+    }
+
+    if (this.testKeysBtn) {
+      this.testKeysBtn.disabled = true;
+      this.testKeysBtn.textContent = 'Testing...';
+    }
+
+    const results: string[] = [];
+    let hasError = false;
+
+    // Test Deepgram key
+    if (deepgramKey) {
+      try {
+        const response = await fetch('https://api.deepgram.com/v1/projects', {
+          method: 'GET',
+          headers: {
+            Authorization: `Token ${deepgramKey}`,
+          },
+        });
+
+        if (response.ok) {
+          results.push('Deepgram: Valid');
+        } else if (response.status === 401 || response.status === 403) {
+          results.push('Deepgram: Invalid key');
+          hasError = true;
+        } else {
+          results.push('Deepgram: Error');
+          hasError = true;
+        }
+      } catch (error) {
+        results.push('Deepgram: Network error');
+        hasError = true;
+      }
+    }
+
+    // Test Gemini key
+    if (geminiKey) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}`,
+          { method: 'GET' }
+        );
+
+        if (response.ok) {
+          results.push('Gemini: Valid');
+        } else if (response.status === 400 || response.status === 401 || response.status === 403) {
+          results.push('Gemini: Invalid key');
+          hasError = true;
+        } else {
+          results.push('Gemini: Error');
+          hasError = true;
+        }
+      } catch (error) {
+        results.push('Gemini: Network error');
+        hasError = true;
+      }
+    }
+
+    // Show results
+    this.showToast(results.join(' | '), hasError ? 'error' : 'success');
+
+    if (this.testKeysBtn) {
+      this.testKeysBtn.disabled = false;
+      this.testKeysBtn.textContent = 'Test Keys';
     }
   }
 

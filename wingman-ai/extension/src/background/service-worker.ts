@@ -1,20 +1,26 @@
 /**
- * Wingman AI - Background Service Worker
+ * Wingman AI - Background Service Worker (BYOK Architecture)
  *
  * Handles:
- * - TabCapture stream ID acquisition
- * - WebSocket connection management
+ * - Direct Deepgram WebSocket connection for speech-to-text
+ * - Direct Gemini API calls for AI suggestions
+ * - TabCapture and audio routing
  * - Message routing between components
+ *
+ * Users provide their own Deepgram and Gemini API keys.
  */
 
-import { WebSocketClient } from './websocket-client';
-import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
+import { deepgramClient, Transcript } from '../services/deepgram-client';
+import { geminiClient } from '../services/gemini-client';
 import { transcriptCollector } from '../services/transcript-collector';
 
-// Connection manager instance
-let wsClient: WebSocketClient | null = null;
+// Session state
+let isSessionActive = false;
 let isCapturing = false;
 let activeTabId: number | null = null;
+
+// Speaker filter state
+let speakerFilterEnabled = false;
 
 // Extension lifecycle
 chrome.runtime.onInstalled.addListener((details) => {
@@ -33,9 +39,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (tabId === activeTabId && changeInfo.url) {
     // Check if URL is no longer a Google Meet meeting
-    const isStillMeeting = changeInfo.url.startsWith('https://meet.google.com/') &&
-                           !changeInfo.url.includes('/landing') &&
-                           changeInfo.url.match(/\/[a-z]{3}-[a-z]{4}-[a-z]{3}/i);
+    const isStillMeeting =
+      changeInfo.url.startsWith('https://meet.google.com/') &&
+      !changeInfo.url.includes('/landing') &&
+      changeInfo.url.match(/\/[a-z]{3}-[a-z]{4}-[a-z]{3}/i);
 
     if (!isStillMeeting) {
       console.log('[ServiceWorker] Left Google Meet meeting, stopping session');
@@ -50,7 +57,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   switch (message.type) {
     case 'START_SESSION':
-      handleStartSession(message).then(sendResponse);
+      handleStartSession().then(sendResponse);
       return true; // Keep channel open for async response
 
     case 'STOP_SESSION':
@@ -59,9 +66,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
     case 'GET_STATUS':
       sendResponse({
-        isConnected: wsClient?.isConnected ?? false,
+        isConnected: deepgramClient.getIsConnected(),
         isCapturing,
         activeTabId,
+        isSessionActive,
       });
       return false;
 
@@ -75,8 +83,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
 
     case 'AUDIO_CHUNK':
-      // Forward audio chunk to WebSocket
-      wsClient?.sendAudioChunk(message.data);
+      // Forward audio chunk directly to Deepgram
+      if (isSessionActive) {
+        deepgramClient.sendAudio(message.data);
+      }
       return false;
 
     default:
@@ -86,21 +96,44 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 /**
- * Start a capture session
+ * Start a capture session with BYOK (Bring Your Own Keys)
  */
-async function handleStartSession(message: { backendUrl?: string }): Promise<{ success: boolean; error?: string }> {
+async function handleStartSession(): Promise<{ success: boolean; error?: string }> {
   try {
     // SINGLETON CHECK: If a session is already active, don't start another
-    if (wsClient?.isConnected && activeTabId !== null) {
+    if (isSessionActive && activeTabId !== null) {
       console.log('[ServiceWorker] Session already active, ignoring duplicate start');
-      return { success: true }; // Return success since session is already running
+      return { success: true };
     }
 
-    // If there's a stale connection, clean it up first
-    if (wsClient) {
-      console.log('[ServiceWorker] Cleaning up stale connection');
-      wsClient.disconnect();
-      wsClient = null;
+    // If there's a stale session, clean it up first
+    if (isSessionActive) {
+      console.log('[ServiceWorker] Cleaning up stale session');
+      await deepgramClient.disconnect();
+      geminiClient.clearSession();
+      isSessionActive = false;
+    }
+
+    // Step 1: Validate API keys exist
+    const storage = await chrome.storage.local.get([
+      'deepgramApiKey',
+      'geminiApiKey',
+      'systemPrompt',
+      'speakerFilterEnabled',
+    ]);
+
+    if (!storage.deepgramApiKey) {
+      return {
+        success: false,
+        error: 'Deepgram API key not configured. Go to Options to add your key.',
+      };
+    }
+
+    if (!storage.geminiApiKey) {
+      return {
+        success: false,
+        error: 'Gemini API key not configured. Go to Options to add your key.',
+      };
     }
 
     // Get active Meet tab
@@ -126,39 +159,36 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
       // Ignore errors closing offscreen document
     }
 
-    // Load custom system prompt and speaker filter from storage
-    const storage = await chrome.storage.local.get(['systemPrompt', 'speakerFilterEnabled']);
-    const systemPrompt = storage.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-    const speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
-    console.log(`[ServiceWorker] Using system prompt (${systemPrompt.length} chars), speaker filter: ${speakerFilterEnabled}`);
+    // Configure speaker filter
+    speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
+    console.log(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
 
-    // Initialize WebSocket connection
-    const backendUrl = message.backendUrl || 'ws://localhost:8000/ws/session';
-    wsClient = new WebSocketClient(backendUrl);
+    // Step 2: Initialize Gemini client with system prompt
+    geminiClient.startSession();
+    if (storage.systemPrompt) {
+      geminiClient.setSystemPrompt(storage.systemPrompt);
+    } else {
+      await geminiClient.loadSystemPrompt();
+    }
+    console.log('[ServiceWorker] Gemini client initialized');
 
-    // Set up callbacks for transcript collection
-    wsClient.onTranscript((transcript) => {
-      transcriptCollector.addTranscript({
-        text: transcript.text as string,
-        speaker: transcript.speaker as string,
-        speaker_id: transcript.speaker_id as number,
-        speaker_role: transcript.speaker_role as string,
-        is_final: transcript.is_final as boolean,
-        timestamp: transcript.timestamp as string,
-        is_self: transcript.is_self as boolean | undefined,
-      });
+    // Step 3: Set up transcript callback before connecting
+    deepgramClient.setTranscriptCallback((transcript: Transcript) => {
+      handleTranscript(transcript);
     });
 
-    wsClient.onSuggestion(() => {
-      transcriptCollector.incrementSuggestions();
-    });
+    // Step 4: Connect to Deepgram
+    const connected = await deepgramClient.connect();
+    if (!connected) {
+      return {
+        success: false,
+        error: 'Failed to connect to Deepgram. Check your API key.',
+      };
+    }
+    console.log('[ServiceWorker] Connected to Deepgram');
 
-    await wsClient.connect();
-
-    // Send start control with system prompt and speaker filter BEFORE starting mic capture
-    // This ensures the backend is configured before receiving audio
-    wsClient.sendControl('start', { systemPrompt, speakerFilterEnabled });
-    console.log('[ServiceWorker] Sent start control with system prompt and speaker filter');
+    // Mark session as active
+    isSessionActive = true;
 
     // Start transcript collection for auto-save
     transcriptCollector.startSession(speakerFilterEnabled);
@@ -166,7 +196,7 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);
 
-    // Start microphone capture via content script (has page mic permission)
+    // Start microphone capture via content script
     console.log('[ServiceWorker] Sending START_MIC_CAPTURE to content script');
     try {
       const response = await chrome.tabs.sendMessage(tab.id, { type: 'START_MIC_CAPTURE' });
@@ -176,7 +206,7 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
       }
     } catch (e) {
       console.error('[ServiceWorker] START_MIC_CAPTURE failed:', e);
-      // Don't fail the session - WebSocket is connected, mic might work later
+      // Don't fail the session - Deepgram is connected, mic might work later
     }
 
     activeTabId = tab.id;
@@ -184,6 +214,68 @@ async function handleStartSession(message: { backendUrl?: string }): Promise<{ s
   } catch (error) {
     console.error('[ServiceWorker] Failed to start session:', error);
     return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Handle transcript from Deepgram and process through Gemini
+ */
+async function handleTranscript(transcript: Transcript): Promise<void> {
+  // Add to transcript collector
+  transcriptCollector.addTranscript({
+    text: transcript.text,
+    speaker: transcript.speaker,
+    speaker_id: transcript.speaker_id,
+    speaker_role: transcript.speaker_role,
+    is_final: transcript.is_final,
+    timestamp: transcript.timestamp,
+    is_self: false, // BYOK doesn't have self-identification yet
+  });
+
+  // Send transcript to content script for display
+  if (activeTabId) {
+    chrome.tabs
+      .sendMessage(activeTabId, {
+        type: 'transcript',
+        data: transcript,
+      })
+      .catch(() => {});
+  }
+
+  // Apply speaker filter if enabled (only process customer utterances)
+  if (speakerFilterEnabled && transcript.speaker_role === 'consultant') {
+    console.debug('[ServiceWorker] Skipping consultant transcript (speaker filter)');
+    return;
+  }
+
+  // Process through Gemini for AI suggestions (only final transcripts)
+  if (transcript.is_final) {
+    try {
+      const suggestion = await geminiClient.processTranscript(
+        transcript.text,
+        transcript.speaker,
+        transcript.is_final
+      );
+
+      if (suggestion) {
+        // Track suggestion count
+        transcriptCollector.incrementSuggestions();
+
+        // Send suggestion to content script for display
+        if (activeTabId) {
+          chrome.tabs
+            .sendMessage(activeTabId, {
+              type: 'suggestion',
+              data: suggestion,
+            })
+            .catch(() => {});
+        }
+
+        console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
+      }
+    } catch (error) {
+      console.error('[ServiceWorker] Gemini processing error:', error);
+    }
   }
 }
 
@@ -205,24 +297,30 @@ async function handleStopSession(): Promise<{ success: boolean }> {
         console.log('[ServiceWorker] Transcript saved to Drive:', saveResult.fileUrl);
         // Notify user via content script (optional toast)
         if (activeTabId) {
-          chrome.tabs.sendMessage(activeTabId, {
-            type: 'DRIVE_SAVE_RESULT',
-            data: saveResult,
-          }).catch(() => {});
+          chrome.tabs
+            .sendMessage(activeTabId, {
+              type: 'DRIVE_SAVE_RESULT',
+              data: saveResult,
+            })
+            .catch(() => {});
         }
       } else if (saveResult.error) {
         console.log('[ServiceWorker] Transcript save skipped:', saveResult.error);
       }
     }
 
-    // Disconnect WebSocket
-    wsClient?.disconnect();
-    wsClient = null;
+    // Disconnect Deepgram
+    await deepgramClient.disconnect();
+
+    // Clear Gemini session
+    geminiClient.clearSession();
 
     // Reset state
+    isSessionActive = false;
     isCapturing = false;
     activeTabId = null;
 
+    console.log('[ServiceWorker] Session stopped');
     return { success: true };
   } catch (error) {
     console.error('[ServiceWorker] Failed to stop session:', error);

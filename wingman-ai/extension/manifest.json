@@ -53,5 +53,11 @@
     "128": "src/icons/icon-128.png"
   },
   "options_page": "src/options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["src/content/audio-processor.worklet.js"],
+      "matches": ["https://meet.google.com/*"]
+    }
+  ],
   "minimum_chrome_version": "116"
 }

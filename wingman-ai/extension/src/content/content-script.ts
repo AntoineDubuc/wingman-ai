@@ -12,40 +12,9 @@ import { AIOverlay } from './overlay';
 let overlay: AIOverlay | null = null;
 let audioContext: AudioContext | null = null;
 let mediaStream: MediaStream | null = null;
-let scriptProcessor: ScriptProcessorNode | null = null;
+let audioWorkletNode: AudioWorkletNode | null = null;
 let isCapturingMic = false;
 let extensionValid = true;
-
-const TARGET_SAMPLE_RATE = 16000;  // What Deepgram expects
-const BUFFER_SIZE = 4096;
-
-/**
- * Simple linear interpolation resampling
- * Downsamples from sourceSampleRate to targetSampleRate
- */
-function resample(inputData: Float32Array, sourceSampleRate: number, targetSampleRate: number): Float32Array {
-  if (sourceSampleRate === targetSampleRate) {
-    return inputData;
-  }
-
-  const ratio = sourceSampleRate / targetSampleRate;
-  const outputLength = Math.floor(inputData.length / ratio);
-  const output = new Float32Array(outputLength);
-
-  for (let i = 0; i < outputLength; i++) {
-    const srcIndex = i * ratio;
-    const srcIndexFloor = Math.floor(srcIndex);
-    const srcIndexCeil = Math.min(srcIndexFloor + 1, inputData.length - 1);
-    const fraction = srcIndex - srcIndexFloor;
-
-    // Linear interpolation
-    const sample1 = inputData[srcIndexFloor] ?? 0;
-    const sample2 = inputData[srcIndexCeil] ?? 0;
-    output[i] = sample1 + fraction * (sample2 - sample1);
-  }
-
-  return output;
-}
 
 /**
  * Check if extension context is still valid
@@ -69,16 +38,16 @@ function handleExtensionInvalidated(): void {
 }
 
 /**
- * Start microphone capture
+ * Start microphone capture using AudioWorklet (modern API)
  */
 async function startMicCapture(): Promise<void> {
   if (isCapturingMic) return;
 
   try {
-    console.log('[ContentScript] Starting microphone capture');
+    console.log('[ContentScript] Starting microphone capture (AudioWorklet)');
 
     // Get microphone - DON'T specify sampleRate (Mac mics don't support 16kHz)
-    // We'll resample later if needed
+    // We'll resample in the worklet
     mediaStream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: false,  // Don't process - we want raw audio
@@ -111,12 +80,11 @@ async function startMicCapture(): Promise<void> {
       console.warn('[ContentScript] ⚠️ Track ENDED! Another app may have taken the mic.');
     });
 
-    // Use device's native sample rate, not forced 16kHz
-    // The backend can handle resampling or we resample here
+    // Use device's native sample rate
     const deviceSampleRate = settings.sampleRate || 48000;
     console.log('[ContentScript] Device sample rate:', deviceSampleRate);
 
-    // Create AudioContext at device's native rate to avoid issues
+    // Create AudioContext at device's native rate
     audioContext = new AudioContext({ sampleRate: deviceSampleRate });
     console.log('[ContentScript] AudioContext created, state:', audioContext.state, 'sampleRate:', audioContext.sampleRate);
 
@@ -127,83 +95,67 @@ async function startMicCapture(): Promise<void> {
       console.log('[ContentScript] AudioContext resumed, state:', audioContext.state);
     }
 
+    // Load AudioWorklet module
+    const workletUrl = chrome.runtime.getURL('src/content/audio-processor.worklet.js');
+    console.log('[ContentScript] Loading AudioWorklet from:', workletUrl);
+    await audioContext.audioWorklet.addModule(workletUrl);
+    console.log('[ContentScript] AudioWorklet module loaded');
+
     const source = audioContext.createMediaStreamSource(mediaStream);
 
-    // Use ScriptProcessor for compatibility - request 2 input channels to handle stereo
-    const inputChannels = 2;  // Request stereo to handle Mac stereo mics
-    scriptProcessor = audioContext.createScriptProcessor(BUFFER_SIZE, inputChannels, 1);
-    const actualSampleRate = audioContext.sampleRate;
+    // Create AudioWorkletNode with sample rate info
+    audioWorkletNode = new AudioWorkletNode(audioContext, 'audio-processor', {
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+      channelCount: 2,  // Handle stereo mics
+      processorOptions: {
+        sampleRate: audioContext.sampleRate
+      }
+    });
 
-    let chunkCount = 0;
-    scriptProcessor.onaudioprocess = (event) => {
+    // Handle messages from the worklet
+    audioWorkletNode.port.onmessage = (event) => {
       // Check if extension context is still valid
       if (!extensionValid || !isExtensionValid()) {
         handleExtensionInvalidated();
         return;
       }
 
-      // Get both channels and mix them (handles stereo mics)
-      const channel0 = event.inputBuffer.getChannelData(0);
-      const channel1 = event.inputBuffer.numberOfChannels > 1
-        ? event.inputBuffer.getChannelData(1)
-        : channel0;
+      const { type, pcmData, chunkCount, maxAmplitude } = event.data;
 
-      // Mix stereo to mono by averaging both channels
-      const inputData = new Float32Array(channel0.length);
-      for (let i = 0; i < channel0.length; i++) {
-        inputData[i] = ((channel0[i] ?? 0) + (channel1[i] ?? 0)) / 2;
-      }
-
-      // Calculate max amplitude from both channels for debugging
-      let maxCh0 = 0, maxCh1 = 0, maxMixed = 0;
-      for (let i = 0; i < channel0.length; i++) {
-        maxCh0 = Math.max(maxCh0, Math.abs(channel0[i] ?? 0));
-        maxCh1 = Math.max(maxCh1, Math.abs(channel1[i] ?? 0));
-        maxMixed = Math.max(maxMixed, Math.abs(inputData[i] ?? 0));
-      }
-
-      // Resample to 16kHz for Deepgram
-      const resampledData = resample(inputData, actualSampleRate, TARGET_SAMPLE_RATE);
-
-      // Convert Float32 to Int16 PCM
-      const pcmData = new Int16Array(resampledData.length);
-      for (let i = 0; i < resampledData.length; i++) {
-        const sample = Math.max(-1, Math.min(1, resampledData[i] ?? 0));
-        pcmData[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-      }
-
-      chunkCount++;
-      // Log audio level every 10 chunks
-      if (chunkCount % 10 === 0) {
-        // Calculate RMS for debugging
-        let sumSq = 0;
-        for (let i = 0; i < pcmData.length; i++) {
-          const val = pcmData[i] ?? 0;
-          sumSq += val * val;
+      if (type === 'audio') {
+        // Log audio level every 10 chunks
+        if (chunkCount % 10 === 0) {
+          // Calculate RMS for debugging
+          let sumSq = 0;
+          for (let i = 0; i < pcmData.length; i++) {
+            const val = pcmData[i] ?? 0;
+            sumSq += val * val;
+          }
+          const rms = Math.sqrt(sumSq / pcmData.length);
+          const trackState = track ? `enabled=${track.enabled},muted=${track.muted},state=${track.readyState}` : 'NO_TRACK';
+          console.log(`[ContentScript] Audio #${chunkCount}: amp=${maxAmplitude.toFixed(4)}, RMS=${rms.toFixed(0)}, ${trackState}`);
         }
-        const rms = Math.sqrt(sumSq / pcmData.length);
-        // Check track status
-        const trackState = track ? `enabled=${track.enabled},muted=${track.muted},state=${track.readyState}` : 'NO_TRACK';
-        console.log(`[ContentScript] Audio #${chunkCount}: ch0=${maxCh0.toFixed(4)}, ch1=${maxCh1.toFixed(4)}, mixed=${maxMixed.toFixed(4)}, RMS=${rms.toFixed(0)}, ${trackState}`);
-      }
 
-      // Send to background script with error handling
-      try {
-        chrome.runtime.sendMessage({
-          type: 'AUDIO_CHUNK',
-          data: Array.from(pcmData),
-          timestamp: Date.now(),
-        });
-      } catch {
-        handleExtensionInvalidated();
+        // Send to background script with error handling
+        try {
+          chrome.runtime.sendMessage({
+            type: 'AUDIO_CHUNK',
+            data: Array.from(pcmData),
+            timestamp: Date.now(),
+          });
+        } catch {
+          handleExtensionInvalidated();
+        }
       }
     };
 
-    source.connect(scriptProcessor);
-    scriptProcessor.connect(audioContext.destination);
+    // Connect the audio graph
+    source.connect(audioWorkletNode);
+    // Note: We don't connect to destination since we only need to process, not play back
 
     isCapturingMic = true;
-    console.log('[ContentScript] Microphone capture started');
+    console.log('[ContentScript] Microphone capture started (AudioWorklet)');
   } catch (error) {
     console.error('[ContentScript] Failed to start mic capture:', error);
   }
@@ -215,9 +167,9 @@ async function startMicCapture(): Promise<void> {
 function stopMicCapture(): void {
   console.log('[ContentScript] Stopping microphone capture');
 
-  if (scriptProcessor) {
-    scriptProcessor.disconnect();
-    scriptProcessor = null;
+  if (audioWorkletNode) {
+    audioWorkletNode.disconnect();
+    audioWorkletNode = null;
   }
 
   if (audioContext) {

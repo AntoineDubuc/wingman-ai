@@ -4,121 +4,120 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tammy AI Technical Account Manager - A real-time AI assistant for presales consultants during Google Meet calls. Captures meeting audio, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini with RAG-powered knowledge retrieval.
+Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini.
 
-## Repository Structure
+**BYOK (Bring Your Own Keys)**: No backend server required. Users provide their own Deepgram and Gemini API keys directly in the extension settings. All API calls run in the browser.
 
-```
-tammy-ai-technical-account-manager/
-├── extension/          # Chrome Extension (TypeScript, Vite, Manifest V3)
-├── backend/            # FastAPI Backend (Python 3.10+)
-└── data/knowledge/     # RAG knowledge base markdown files
+## GitHub CLI
+
+This repo uses the **AntoineDubuc** GitHub profile. Before any `gh` operations (PRs, issues, etc.), ensure the correct profile is active:
+
+```bash
+gh auth switch --user AntoineDubuc
 ```
 
 ## Common Commands
 
-### Backend (Python/FastAPI)
+All commands run from `wingman-ai/extension/`:
 
 ```bash
-cd tammy-ai-technical-account-manager/backend
-
-# Setup
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-
-# Run server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Testing & Quality
-pytest                          # Run all tests
-pytest tests/test_agent.py -v   # Run single test file
-black app/ && isort app/        # Format code
-mypy app/                       # Type check
-ruff check app/                 # Lint
-
-# RAG Knowledge Base CLI
-python -m app.rag.cli ingest --dir ./data/knowledge
-python -m app.rag.cli query "question here"
-python -m app.rag.cli stats
-python -m app.rag.cli clear --confirm
-```
-
-### Extension (TypeScript/Vite)
-
-```bash
-cd tammy-ai-technical-account-manager/extension
-
 npm install
 npm run dev          # Development build with watch
-npm run build        # Production build
-npm run typecheck    # TypeScript check
-npm run lint         # ESLint
-npm run format       # Prettier
+npm run build        # TypeScript check + Vite build (tsc && vite build)
+npm run build:prod   # Production build with mode flag
+npm run typecheck    # TypeScript --noEmit check only
+npm run lint         # ESLint (src/**/*.{ts,tsx})
+npm run lint:fix     # ESLint with auto-fix
+npm run format       # Prettier (src/**/*.{ts,tsx,css,html})
+npm run clean        # Remove dist/
 ```
 
-Load the extension in Chrome: `chrome://extensions/` → Developer mode → Load unpacked → select `extension/dist`
+No test framework is configured. Validation tests in `src/validation/` run inside the extension context via message `{ type: 'RUN_VALIDATION' }`.
+
+Load extension: `chrome://extensions/` → Developer mode → Load unpacked → `wingman-ai/extension/dist`
 
 ## Architecture
 
 ### Data Flow
 
 ```
-[Google Meet Tab] → [Content Script: Mic Capture] → [Service Worker: WebSocket]
-                                                              ↓
-[Overlay UI] ← [Content Script] ← [Service Worker] ← [Backend WebSocket]
-                                                              ↓
-                                      [Deepgram STT] → [Gemini LLM + RAG]
+Content Script (Google Meet tab)
+  ├── Mic capture via AudioWorklet → resamples to 16kHz PCM16
+  ├── Sends AUDIO_CHUNK messages to Service Worker
+  └── Renders overlay UI (Shadow DOM)
+
+Service Worker (background)
+  ├── Forwards audio → Deepgram WebSocket (STT)
+  ├── Receives transcripts → Gemini REST API (suggestions)
+  ├── Sends lowercase 'transcript' / 'suggestion' messages → Content Script
+  └── Manages session lifecycle (singleton)
+
+Offscreen Document
+  └── Tab audio capture via TabCapture API + AudioWorklet
 ```
 
-### Backend Components
+### Key Components
 
-- **`app/main.py`**: FastAPI entry point, CORS, lifespan events
-- **`app/routers/websocket.py`**: WebSocket endpoint (`/ws/session`), `SessionHandler` orchestrates transcription + AI
-- **`app/services/agent.py`**: "Continuous Participant" AI - Gemini processes all transcripts and decides when to suggest
-- **`app/services/transcription.py`**: Deepgram SDK v5.3+ integration, async streaming
-- **`app/rag/`**: ChromaDB vector store, document ingestion, retrieval pipeline
-- **`app/config.py`**: Pydantic settings from `.env`
+- **`src/background/service-worker.ts`**: Session lifecycle, Deepgram/Gemini orchestration, TabCapture management
+- **`src/content/content-script.ts`**: Mic capture via AudioWorklet, message bridge, overlay injection
+- **`src/content/overlay.ts`**: Shadow DOM (closed) floating panel — transcripts and suggestion cards
+- **`src/content/audio-processor.worklet.js`**: AudioWorklet processor — stereo-to-mono, linear interpolation resampling, Float32→Int16
+- **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
+- **`src/services/deepgram-client.ts`**: WebSocket client for Deepgram Nova-3 STT
+- **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash with conversation history
+- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript saving
+- **`src/services/transcript-collector.ts`**: Collects transcripts during session, triggers Drive auto-save
+- **`src/options/options.ts`**: Settings page for API keys, preferences, system prompt
 
-### Extension Components
+## Critical Conventions
 
-- **`src/background/service-worker.ts`**: WebSocket client, session lifecycle, singleton enforcement
-- **`src/content/content-script.ts`**: Mic capture (getUserMedia → resample 16kHz → PCM16), overlay management
-- **`src/content/overlay.ts`**: Shadow DOM UI panel with drag/resize, displays transcripts + suggestions
-- **`src/popup/popup.ts`**: Extension popup for starting sessions
+### Message types must be lowercase
 
-### Key Design Patterns
+Content script expects **lowercase** message types. The service worker must send `transcript` and `suggestion` — never `TRANSCRIPT` or `SUGGESTION`. Service worker *receives* uppercase types (`START_SESSION`, `STOP_SESSION`, `AUDIO_CHUNK`, etc.).
 
-1. **Continuous Participant Mode**: Every final transcript goes to Gemini. LLM maintains 20-turn history and decides when to respond (returns `---` to stay silent).
+### Deepgram WebSocket authentication
 
-2. **Audio Pipeline**: Content script captures mic at native sample rate (44.1/48kHz) → linear interpolation resample to 16kHz → Int16 PCM → WebSocket → Deepgram.
+Browser WebSocket API cannot set custom `Authorization` headers. Deepgram rejects `?token=` query params. The only working approach uses `Sec-WebSocket-Protocol`:
 
-3. **Session Singleton**: Background service worker enforces one active session. Tab close/navigate away auto-stops session.
-
-## Environment Variables
-
-Required in `tammy-ai-technical-account-manager/.env`:
-
-```
-DEEPGRAM_API_KEY=...    # console.deepgram.com
-GEMINI_API_KEY=...      # aistudio.google.com/apikey
+```typescript
+new WebSocket(url, ['token', apiKey]);
 ```
 
-See `.env.example` for all options including `DEEPGRAM_MODEL`, `GEMINI_MODEL`, `ENABLE_DIARIZATION`.
+Never use: `wss://api.deepgram.com/v1/listen?token=xxx` (returns 401).
 
-## WebSocket Protocol
+### Service clients are singletons
 
-Client → Server:
-- `{"type": "audio_chunk", "data": [int16...], "timestamp": ms}`
-- `{"type": "control", "control": "start|stop|clear_context|get_status"}`
+`deepgramClient`, `geminiClient`, `transcriptCollector`, and `driveService` are all exported as singleton instances from their respective modules.
 
-Server → Client:
-- `{"type": "transcript", "text": "...", "speaker": "...", "is_final": bool}`
-- `{"type": "suggestion", "response": "...", "question_type": "...", "confidence": float}`
-- `{"type": "status", ...}` / `{"type": "error", ...}`
+### Gemini suggestion cooldown
+
+The Gemini client enforces a 15-second cooldown between suggestions to manage API quota. The LLM decides whether to provide a suggestion or respond with `---` to stay silent.
+
+### AudioWorklet files are plain JavaScript
+
+`audio-processor.worklet.js` and `audio-processor.js` are plain JS (not TypeScript). They run in a separate AudioWorklet thread and cannot import modules. They are listed as web-accessible resources in `manifest.json`.
+
+### Shadow DOM isolation
+
+The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from Google Meet. All CSS is injected inline into the shadow root.
+
+## Build & TypeScript
+
+- **Vite** with `@crxjs/vite-plugin` reads `manifest.json` directly for Chrome Extension bundling
+- **Path aliases**: `@/` → `src/`, `@shared/` → `src/shared/` (configured in both `vite.config.ts` and `tsconfig.json`)
+- **Strict TypeScript**: `strict: true`, `noUnusedLocals`, `noUnusedParameters`, `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch`
+- **Target**: ES2022, module resolution `bundler`
+- No ESLint or Prettier config files — uses default settings via npm scripts
 
 ## Debugging
 
-Check `extension/LOG.md` for known issues and fixes. Key logging points:
-- Backend: Audio RMS levels every 10 chunks
-- Content script: `[ContentScript]` prefixed logs with channel levels, track state
-- Service worker: `[ServiceWorker]` session lifecycle events
+1. **Service worker logs**: `chrome://extensions/` → click "Service worker" link
+2. **Content script logs**: F12 on the Google Meet page
+3. **Popup logs**: Right-click popup → Inspect
+4. **Offscreen logs**: `chrome://extensions/` → service worker console
+
+## After Any Code Change
+
+1. Run `npm run build` in `wingman-ai/extension`
+2. Reload extension in `chrome://extensions/` (click refresh icon)
+3. Refresh the Google Meet tab

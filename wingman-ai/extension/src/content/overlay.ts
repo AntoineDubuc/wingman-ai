@@ -11,6 +11,7 @@ export interface Suggestion {
   text: string;
   confidence?: number;
   timestamp: number;
+  kbSource?: string;
 }
 
 export interface Transcript {
@@ -292,6 +293,15 @@ export class AIOverlay {
         color: var(--overlay-text);
       }
 
+      .suggestion-source {
+        font-size: 11px;
+        color: var(--overlay-text-secondary);
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--overlay-border);
+        font-style: italic;
+      }
+
       .transcript-section {
         padding: 8px 12px;
         background: var(--overlay-bg-tertiary);
@@ -446,6 +456,7 @@ export class AIOverlay {
         <span class="suggestion-time">${this.formatTime(suggestion.timestamp)}</span>
       </div>
       <div class="suggestion-content" style="font-size: ${this.fontSize}px">${suggestion.text}</div>
+      ${suggestion.kbSource ? `<div class="suggestion-source" style="font-size: ${this.fontSize - 2}px">📚 Based on: ${suggestion.kbSource}</div>` : ''}
     `;
 
     container.insertBefore(card, container.firstChild);

@@ -264,15 +264,17 @@ try {
       case 'suggestion':
         // Map backend response format to overlay's Suggestion interface
         if (message.data) {
+          const rawType = message.data.suggestion_type || message.data.question_type || '';
           const suggestionType: 'answer' | 'objection' | 'info' =
-            message.data.question_type === 'technical' ? 'answer' :
-            message.data.question_type === 'comparison' ? 'objection' : 'info';
+            rawType === 'answer' || rawType === 'technical' ? 'answer' :
+            rawType === 'objection' || rawType === 'comparison' ? 'objection' : 'info';
           const suggestion = {
             type: suggestionType,
             text: message.data.response || message.data.text || 'No suggestion available',
             question: message.data.question,
             confidence: message.data.confidence,
             timestamp: message.data.timestamp ? new Date(message.data.timestamp).getTime() : Date.now(),
+            kbSource: message.data.kbSource as string | undefined,
           };
           console.log('[ContentScript] Adding suggestion:', suggestion.text.substring(0, 50) + '...');
           overlay?.addSuggestion(suggestion);

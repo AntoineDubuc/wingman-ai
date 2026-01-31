@@ -184,6 +184,50 @@
         </div>
       </div>
 
+      <!-- Knowledge Base Card -->
+      <div class="options-card">
+        <h2 class="form-section-title">Knowledge Base</h2>
+        <p class="form-section-description">
+          Upload your sales docs for personalized suggestions during calls.
+        </p>
+
+        <!-- Drop Zone -->
+        <div id="kb-drop-zone" class="kb-drop-zone">
+          <span class="kb-drop-icon">📄</span>
+          <span class="kb-drop-text">Drag files here or click to browse</span>
+          <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+          <input type="file" id="kb-file-input" multiple accept=".pdf,.md,.txt,.markdown" hidden>
+        </div>
+
+        <!-- Progress (hidden by default) -->
+        <div id="kb-progress" class="kb-progress" hidden>
+          <div class="kb-progress-bar"><div id="kb-progress-fill" class="kb-progress-fill"></div></div>
+          <span id="kb-progress-text" class="kb-progress-text">Processing...</span>
+        </div>
+
+        <!-- Document List (populated by JS) -->
+        <div id="kb-doc-list" class="kb-doc-list"></div>
+
+        <!-- Empty State -->
+        <div id="kb-empty" class="kb-empty">
+          <p>No documents yet.</p>
+          <p class="kb-empty-hint">Start with a battle card, FAQ, or product sheet.</p>
+        </div>
+
+        <!-- Test Query -->
+        <div id="kb-test-section" class="kb-test-section" hidden>
+          <label class="input-label">Test your knowledge base</label>
+          <div class="kb-test-row">
+            <input type="text" id="kb-test-input" class="text-input kb-test-input" placeholder="e.g. What security certifications do we have?">
+            <button id="kb-test-btn" class="btn-secondary btn-small" type="button">Test</button>
+          </div>
+          <div id="kb-test-results" class="kb-test-results"></div>
+        </div>
+
+        <!-- Stats -->
+        <div id="kb-stats" class="kb-stats"></div>
+      </div>
+
       <!-- System Prompt Card -->
       <div class="options-card">
         <!-- Section title and description -->

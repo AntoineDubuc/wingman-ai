@@ -13,6 +13,7 @@
 import { deepgramClient, Transcript } from '../services/deepgram-client';
 import { geminiClient } from '../services/gemini-client';
 import { transcriptCollector } from '../services/transcript-collector';
+import { runAllTests, runTest, getAvailableTests } from '../validation/index';
 
 // Session state
 let isSessionActive = false;
@@ -88,6 +89,21 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         deepgramClient.sendAudio(message.data);
       }
       return false;
+
+    case 'RUN_VALIDATION':
+      // Run KB technical validation tests
+      (async () => {
+        if (message.test === 'all') {
+          const results = await runAllTests();
+          sendResponse({ success: true, results });
+        } else if (message.test === 'list') {
+          sendResponse({ success: true, tests: getAvailableTests() });
+        } else {
+          const result = await runTest(message.test);
+          sendResponse({ success: true, result });
+        }
+      })();
+      return true; // Keep channel open for async
 
     default:
       console.warn('[ServiceWorker] Unknown message type:', message.type);

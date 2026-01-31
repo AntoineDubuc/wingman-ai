@@ -24,6 +24,7 @@ export default defineConfig({
         content: resolve(__dirname, 'src/content/content-script.ts'),
         popup: resolve(__dirname, 'src/popup/popup.ts'),
         offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
+        validation: resolve(__dirname, 'src/validation/validation.html'),
       },
       output: {
         entryFileNames: '[name].js',

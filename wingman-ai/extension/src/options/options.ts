@@ -7,6 +7,8 @@
 
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
 import { driveService } from '../services/drive-service';
+import { kbDatabase, ingestDocument, isIngesting } from '../services/kb/kb-database';
+import { searchKB } from '../services/kb/kb-search';
 
 // Constants
 const MIN_PROMPT_LENGTH = 100;
@@ -57,6 +59,20 @@ class OptionsController {
   private driveFolderNameInput: HTMLInputElement | null = null;
   private transcriptFormatRadios: NodeListOf<HTMLInputElement> | null = null;
 
+  // Knowledge Base elements
+  private kbDropZone: HTMLElement | null = null;
+  private kbFileInput: HTMLInputElement | null = null;
+  private kbProgress: HTMLElement | null = null;
+  private kbProgressFill: HTMLElement | null = null;
+  private kbProgressText: HTMLElement | null = null;
+  private kbDocList: HTMLElement | null = null;
+  private kbEmpty: HTMLElement | null = null;
+  private kbTestSection: HTMLElement | null = null;
+  private kbTestInput: HTMLInputElement | null = null;
+  private kbTestBtn: HTMLButtonElement | null = null;
+  private kbTestResults: HTMLElement | null = null;
+  private kbStats: HTMLElement | null = null;
+
   // State
   private isDirty = false;
   private isLoading = false;
@@ -74,6 +90,7 @@ class OptionsController {
     await this.loadSpeakerFilter();
     await this.loadDriveSettings();
     await this.loadPrompt();
+    await this.initKB();
   }
 
   /**
@@ -101,6 +118,20 @@ class OptionsController {
     this.testKeysBtn = document.getElementById('test-keys-btn') as HTMLButtonElement;
     this.apiStatusEl = document.getElementById('api-status');
     this.visibilityToggleBtns = document.querySelectorAll('.toggle-visibility-btn') as NodeListOf<HTMLButtonElement>;
+
+    // Knowledge Base elements
+    this.kbDropZone = document.getElementById('kb-drop-zone');
+    this.kbFileInput = document.getElementById('kb-file-input') as HTMLInputElement;
+    this.kbProgress = document.getElementById('kb-progress');
+    this.kbProgressFill = document.getElementById('kb-progress-fill');
+    this.kbProgressText = document.getElementById('kb-progress-text');
+    this.kbDocList = document.getElementById('kb-doc-list');
+    this.kbEmpty = document.getElementById('kb-empty');
+    this.kbTestSection = document.getElementById('kb-test-section');
+    this.kbTestInput = document.getElementById('kb-test-input') as HTMLInputElement;
+    this.kbTestBtn = document.getElementById('kb-test-btn') as HTMLButtonElement;
+    this.kbTestResults = document.getElementById('kb-test-results');
+    this.kbStats = document.getElementById('kb-stats');
 
     // Google Drive elements
     this.driveAutosaveToggle = document.getElementById('drive-autosave-toggle') as HTMLInputElement;
@@ -234,6 +265,41 @@ class OptionsController {
       radio.addEventListener('change', () => {
         this.saveDriveSettings();
       });
+    });
+
+    // Knowledge Base event listeners
+    this.kbDropZone?.addEventListener('click', () => {
+      this.kbFileInput?.click();
+    });
+
+    this.kbDropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.kbDropZone?.classList.add('drag-over');
+    });
+
+    this.kbDropZone?.addEventListener('dragleave', () => {
+      this.kbDropZone?.classList.remove('drag-over', 'drag-invalid');
+    });
+
+    this.kbDropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.kbDropZone?.classList.remove('drag-over', 'drag-invalid');
+      const files = (e as DragEvent).dataTransfer?.files;
+      if (files) this.handleKBFiles(files);
+    });
+
+    this.kbFileInput?.addEventListener('change', () => {
+      const files = this.kbFileInput?.files;
+      if (files) this.handleKBFiles(files);
+      if (this.kbFileInput) this.kbFileInput.value = '';
+    });
+
+    this.kbTestBtn?.addEventListener('click', () => {
+      this.testKBQuery();
+    });
+
+    this.kbTestInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.testKBQuery();
     });
   }
 
@@ -820,6 +886,228 @@ class OptionsController {
       console.error('Failed to disconnect Google Drive:', error);
       this.showToast('Failed to disconnect', 'error');
     }
+  }
+
+  // =========================================================================
+  // Knowledge Base
+  // =========================================================================
+
+  /**
+   * Initialize KB: open database, cleanup incomplete docs, render list
+   */
+  async initKB(): Promise<void> {
+    try {
+      await kbDatabase.init();
+
+      // Crash recovery: cleanup incomplete uploads
+      const incomplete = await kbDatabase.getIncompleteDocuments();
+      for (const doc of incomplete) {
+        await kbDatabase.deleteDocument(doc.id);
+        console.log(`[KB] Cleaned up incomplete: ${doc.filename}`);
+      }
+      if (incomplete.length > 0) {
+        this.showToast(`Cleaned up ${incomplete.length} incomplete upload(s)`, 'success');
+      }
+
+      await this.renderKBDocList();
+    } catch (error) {
+      console.error('Failed to init KB:', error);
+    }
+  }
+
+  /**
+   * Handle files from drop or browse
+   */
+  async handleKBFiles(files: FileList): Promise<void> {
+    if (isIngesting()) {
+      this.showToast('Processing in progress. Please wait.', 'error');
+      return;
+    }
+
+    for (const file of Array.from(files)) {
+      await this.processKBFile(file);
+    }
+  }
+
+  /**
+   * Process a single KB file through ingestion pipeline
+   */
+  private async processKBFile(file: File): Promise<void> {
+    // Show progress
+    if (this.kbProgress) this.kbProgress.hidden = false;
+    this.kbDropZone?.classList.add('disabled');
+
+    const result = await ingestDocument(file, (_stage, percent) => {
+      if (this.kbProgressFill) this.kbProgressFill.style.width = `${percent}%`;
+      if (this.kbProgressText) this.kbProgressText.textContent = `Processing: ${file.name}...`;
+    });
+
+    // Hide progress
+    if (this.kbProgress) this.kbProgress.hidden = true;
+    if (this.kbProgressFill) this.kbProgressFill.style.width = '0%';
+    this.kbDropZone?.classList.remove('disabled');
+
+    if (result.success) {
+      this.showToast(`${file.name} added (${result.chunkCount} sections)`, 'success');
+    } else {
+      this.showToast(result.error ?? 'Failed to process file', 'error');
+    }
+
+    await this.renderKBDocList();
+  }
+
+  /**
+   * Render the KB document list
+   */
+  async renderKBDocList(): Promise<void> {
+    const docs = await kbDatabase.getDocuments();
+    const completeDocs = docs.filter((d) => d.status === 'complete');
+
+    // Toggle empty state
+    if (this.kbEmpty) {
+      this.kbEmpty.style.display = completeDocs.length === 0 ? 'block' : 'none';
+    }
+
+    // Toggle test section
+    if (this.kbTestSection) {
+      this.kbTestSection.hidden = completeDocs.length === 0;
+    }
+
+    // Render list
+    if (this.kbDocList) {
+      this.kbDocList.innerHTML = '';
+      for (const doc of completeDocs) {
+        const item = document.createElement('div');
+        item.className = 'kb-doc-item';
+        item.dataset.id = doc.id;
+
+        const ago = this.timeAgo(doc.uploadedAt);
+        const size = this.formatFileSize(doc.fileSize);
+
+        item.innerHTML = `
+          <span class="kb-doc-icon">📄</span>
+          <div class="kb-doc-info">
+            <span class="kb-doc-name" title="${doc.filename}">${doc.filename}</span>
+            <span class="kb-doc-meta">${doc.chunkCount} sections · ${size} · Added ${ago}</span>
+          </div>
+          <button class="kb-doc-delete" title="Delete">🗑️</button>
+        `;
+
+        const deleteBtn = item.querySelector('.kb-doc-delete') as HTMLButtonElement;
+        deleteBtn.addEventListener('click', () => {
+          this.showConfirmModal(
+            'Delete document?',
+            `Remove "${doc.filename}" from your knowledge base? This cannot be undone.`,
+            () => this.deleteKBDocument(doc.id, doc.filename)
+          );
+        });
+
+        this.kbDocList.appendChild(item);
+      }
+    }
+
+    // Update stats
+    await this.updateKBStats();
+  }
+
+  /**
+   * Delete a KB document
+   */
+  async deleteKBDocument(docId: string, filename: string): Promise<void> {
+    try {
+      await kbDatabase.deleteDocument(docId);
+      this.showToast(`Deleted ${filename}`, 'success');
+      await this.renderKBDocList();
+    } catch (error) {
+      console.error('Failed to delete KB document:', error);
+      this.showToast('Failed to delete document', 'error');
+    }
+  }
+
+  /**
+   * Update KB stats display
+   */
+  async updateKBStats(): Promise<void> {
+    if (!this.kbStats) return;
+
+    const stats = await kbDatabase.getStats();
+    if (stats.docCount === 0) {
+      this.kbStats.textContent = '';
+      return;
+    }
+
+    const storageStr = this.formatFileSize(stats.storageUsed);
+    this.kbStats.textContent = `${stats.docCount} document${stats.docCount !== 1 ? 's' : ''} · ${stats.chunkCount} sections · ${storageStr} used`;
+  }
+
+  /**
+   * Test a KB query and show results
+   */
+  async testKBQuery(): Promise<void> {
+    const query = this.kbTestInput?.value?.trim();
+    if (!query) {
+      this.showToast('Enter a test query', 'error');
+      return;
+    }
+
+    if (this.kbTestBtn) {
+      this.kbTestBtn.disabled = true;
+      this.kbTestBtn.textContent = 'Searching...';
+    }
+
+    try {
+      const results = await searchKB(query);
+
+      if (this.kbTestResults) {
+        if (results.length === 0) {
+          this.kbTestResults.innerHTML = '<p class="kb-empty">No matching sections found. Try a different query.</p>';
+        } else {
+          this.kbTestResults.innerHTML = results
+            .map(
+              (r) => `
+              <div class="kb-test-result">
+                <div class="kb-test-result-source">📄 ${r.documentName}</div>
+                <div class="kb-test-result-text">${r.chunk.text.slice(0, 300)}${r.chunk.text.length > 300 ? '...' : ''}</div>
+              </div>
+            `
+            )
+            .join('');
+          this.kbTestResults.innerHTML += `<p class="kb-stats">This is what Wingman will use to answer similar questions.</p>`;
+        }
+      }
+    } catch (error) {
+      console.error('KB test query failed:', error);
+      this.showToast('Test query failed. Check your API key.', 'error');
+    } finally {
+      if (this.kbTestBtn) {
+        this.kbTestBtn.disabled = false;
+        this.kbTestBtn.textContent = 'Test';
+      }
+    }
+  }
+
+  /**
+   * Format bytes to human-readable size
+   */
+  private formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  /**
+   * Format timestamp to relative time
+   */
+  private timeAgo(timestamp: number): string {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'yesterday';
+    return `${days} days ago`;
   }
 }
 

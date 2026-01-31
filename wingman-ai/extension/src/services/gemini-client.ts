@@ -13,6 +13,10 @@ import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
 // Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.5-flash';
+const EMBEDDING_MODEL = 'gemini-embedding-001';
+const EMBEDDING_DIMENSIONS = 768;
+const EMBEDDING_BATCH_SIZE = 100;
+const MAX_RETRIES = 3;
 
 /**
  * Suggestion data structure
@@ -23,6 +27,7 @@ export interface Suggestion {
   suggestion_type: 'answer' | 'question' | 'objection' | 'info';
   source: string;
   timestamp: string;
+  kbSource?: string | null;
 }
 
 /**
@@ -191,6 +196,22 @@ export class GeminiClient {
     }
 
     try {
+      // KB retrieval: search for relevant context (graceful degradation on failure)
+      let kbSource: string | null = null;
+      let systemPromptWithKB = this.systemPrompt;
+
+      try {
+        const { getKBContext } = await import('./kb/kb-search');
+        const kbResult = await getKBContext(currentText);
+        if (kbResult.matched && kbResult.context) {
+          systemPromptWithKB = `KNOWLEDGE BASE CONTEXT (from ${kbResult.source}):\n${kbResult.context}\n\n${this.systemPrompt}`;
+          kbSource = kbResult.source;
+          console.log(`[GeminiClient] KB context injected from: ${kbSource}`);
+        }
+      } catch (kbError) {
+        console.warn('[GeminiClient] KB retrieval failed, proceeding without KB:', kbError);
+      }
+
       // Build conversation messages
       const contents = this.buildConversationMessages(currentText, currentSpeaker);
       console.log('[GeminiClient] Making API request...');
@@ -206,7 +227,7 @@ export class GeminiClient {
           body: JSON.stringify({
             contents,
             systemInstruction: {
-              parts: [{ text: this.systemPrompt }],
+              parts: [{ text: systemPromptWithKB }],
             },
             generationConfig: {
               maxOutputTokens: this.maxTokens,
@@ -247,6 +268,7 @@ export class GeminiClient {
         suggestion_type: this.classifySuggestion(responseText),
         source: 'gemini',
         timestamp: new Date().toISOString(),
+        kbSource,
       };
     } catch (error) {
       console.error('[GeminiClient] Failed to generate response:', error);
@@ -322,6 +344,108 @@ export class GeminiClient {
     }
 
     return 'info';
+  }
+
+  /**
+   * Get the Gemini API key from storage
+   */
+  private async getApiKey(): Promise<string> {
+    const storage = await chrome.storage.local.get(['geminiApiKey']);
+    if (!storage.geminiApiKey) {
+      throw new Error('ENOKEY');
+    }
+    return storage.geminiApiKey;
+  }
+
+  /**
+   * Generate embedding for a single text
+   */
+  async generateEmbedding(
+    text: string,
+    taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'
+  ): Promise<number[]> {
+    const apiKey = await this.getApiKey();
+
+    const response = await this.fetchWithRetry(
+      `${GEMINI_API_BASE}/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: `models/${EMBEDDING_MODEL}`,
+          content: { parts: [{ text }] },
+          taskType,
+          outputDimensionality: EMBEDDING_DIMENSIONS,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    return data.embedding.values;
+  }
+
+  /**
+   * Generate embeddings for multiple texts in batch
+   */
+  async generateEmbeddings(
+    texts: string[],
+    taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'
+  ): Promise<number[][]> {
+    const apiKey = await this.getApiKey();
+    const allEmbeddings: number[][] = [];
+
+    for (let i = 0; i < texts.length; i += EMBEDDING_BATCH_SIZE) {
+      const batch = texts.slice(i, i + EMBEDDING_BATCH_SIZE);
+
+      const response = await this.fetchWithRetry(
+        `${GEMINI_API_BASE}/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requests: batch.map((t) => ({
+              model: `models/${EMBEDDING_MODEL}`,
+              content: { parts: [{ text: t }] },
+              taskType,
+              outputDimensionality: EMBEDDING_DIMENSIONS,
+            })),
+          }),
+        }
+      );
+
+      const data = await response.json();
+      for (const emb of data.embeddings) {
+        allEmbeddings.push(emb.values);
+      }
+    }
+
+    return allEmbeddings;
+  }
+
+  /**
+   * Fetch with exponential backoff on 429 rate limit errors
+   */
+  private async fetchWithRetry(
+    url: string,
+    init: RequestInit
+  ): Promise<Response> {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const response = await fetch(url, init);
+
+      if (response.ok) return response;
+
+      if (response.status === 429 && attempt < MAX_RETRIES - 1) {
+        const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+        console.warn(`[GeminiClient] Rate limited, retrying in ${delay}ms`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      const errorText = await response.text();
+      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+    }
+
+    throw new Error('Max retries exceeded');
   }
 
   /**

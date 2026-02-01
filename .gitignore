@@ -1,0 +1,12 @@
+# Secrets & OAuth credentials
+client_secret*.json
+.env
+.env.local
+.env.*.local
+
+# Playwright MCP cache
+.playwright-mcp/
+
+# OS files
+.DS_Store
+Thumbs.db

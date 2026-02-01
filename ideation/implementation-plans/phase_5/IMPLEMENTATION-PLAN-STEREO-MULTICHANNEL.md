@@ -86,8 +86,8 @@ This implementation moves audio capture from the content script to Chrome's offs
 | [ ] | 1 | Rewrite offscreen AudioWorklet for stereo interleaving | | | | 60 | |
 | [ ] | 2 | Add dual-capture function to offscreen document | | | | 45 | |
 | [ ] | 3 | Orchestrate offscreen + tab capture in service worker | | | | 50 | |
-| [ ] | 4 | Update Deepgram client for multichannel | | | | 30 | |
-| [ ] | 5 | Strip audio code from content script | | | | 20 | |
+| [ ] | 4 | Update Deepgram client and call summary for multichannel | | | | 40 | |
+| [ ] | 5 | Strip audio code from content script + fix overlay for multichannel | | | | 30 | |
 | [ ] | 6 | Update build config for offscreen worklet | | | | 10 | |
 | [ ] | 7 | Build and validate end-to-end | | | | 15 | |
 
@@ -95,7 +95,7 @@ This implementation moves audio capture from the content script to Chrome's offs
 - Total tasks: 7
 - Completed: 0
 - Total time spent: 0 minutes
-- Total human estimate: 230 minutes
+- Total human estimate: 250 minutes
 - Overall multiplier: --
 
 ---
@@ -173,9 +173,19 @@ The rewritten `AudioProcessor` worklet class:
    merger.connect(worklet)
    ```
 
-5. **Handle worklet messages** — same as existing: forward `audioData` to service worker via `AUDIO_CHUNK` message.
+5. **Resume AudioContext** — offscreen documents may create AudioContexts in a suspended state. Add defensive resume after creation:
+   ```
+   if (audioContext.state === 'suspended') {
+     await audioContext.resume();
+   }
+   ```
+   This matches the pattern used in `content-script.ts` (lines 92-97) and prevents silent failure where the audio graph is built but no samples flow.
 
-6. **Store both streams** for cleanup — update `cleanup()` to stop tracks from both streams.
+6. **Handle worklet messages** — same as existing: forward `audioData` to service worker via `AUDIO_CHUNK` message.
+
+7. **Store both streams** for cleanup — update `cleanup()` to stop tracks from both streams.
+
+8. **Send CAPTURE_STATUS** — after successful setup, send `chrome.runtime.sendMessage({ type: 'CAPTURE_STATUS', status: 'started' })` to keep the service worker's `isCapturing` flag in sync. On error, ensure `CAPTURE_STATUS: stopped` is sent so the service worker doesn't get stuck with a stale flag.
 
 **Message handler** — add `case 'START_DUAL_CAPTURE':` that calls `startDualCapture(message.streamId)`.
 
@@ -183,6 +193,8 @@ The rewritten `AudioProcessor` worklet class:
 - `src/offscreen/offscreen.ts` — add `startDualCapture()`, add message handler, update cleanup
 
 **Notes:** Keep `startMicrophoneCapture()` and `startTabCapture()` intact as fallbacks. Store both `micStream` and `tabStream` in module-level variables (rename `mediaStream` or add a second variable). The `cleanup()` function must stop tracks on both streams. Pass `processorOptions: { sampleRate }` to the worklet so it knows the resampling ratio.
+
+**Message routing note:** `chrome.runtime.sendMessage()` from the offscreen document is a broadcast — the content script also receives these messages. This is harmless because the content script's message handler has no cases for `AUDIO_CHUNK`, `CAPTURE_STATUS`, or `START_DUAL_CAPTURE` — they fall through to the default case which just logs a warning. Do NOT add cases for these types in the content script.
 
 ---
 
@@ -238,7 +250,8 @@ The rewritten `AudioProcessor` worklet class:
 
 **In `handleStopSession()`, replace `STOP_MIC_CAPTURE` (line 313) with:**
 - Send `STOP_AUDIO_CAPTURE` to offscreen document: `chrome.runtime.sendMessage({ type: 'STOP_AUDIO_CAPTURE' })`
-- Close offscreen document after capture stops: `await chrome.offscreen.closeDocument()`
+- **Do NOT close the offscreen document here.** Summary generation and Drive save happen asynchronously after this point (lines 359-424). Although those operations run in the service worker (not the offscreen doc), closing the offscreen too early could drop in-flight AUDIO_CHUNK messages.
+- Close offscreen document **at line 447** (alongside `deepgramClient.disconnect()` and `geminiClient.clearSession()`): `await chrome.offscreen.closeDocument().catch(() => {})`
 
 **CRITICAL — Fix `is_self` pass-through in `handleTranscript()` (line 250):**
 The current code hardcodes `is_self: false` when calling `transcriptCollector.addTranscript()`. After Task 4 adds `is_self` to the `Transcript` interface, this line MUST change to pass through the value:
@@ -258,9 +271,9 @@ Without this fix, `is_self` will always be `false` regardless of channel index, 
 
 ---
 
-### Task 4: Update Deepgram client for multichannel
+### Task 4: Update Deepgram client and call summary for multichannel
 
-**Intent:** Configure the Deepgram WebSocket connection for stereo multichannel mode and replace the speaker heuristic system with deterministic channel-index-based speaker identification.
+**Intent:** Configure the Deepgram WebSocket connection for stereo multichannel mode, replace the speaker heuristic system with deterministic channel-index-based speaker identification, and update the call summary prompt to use the new speaker labels.
 
 **Context:** Depends on Task 1 (stereo audio format) and Task 3 (audio now arrives as interleaved stereo). The Deepgram API returns `channel_index: [channelNumber, totalChannels]` in each `Results` message when `multichannel=true`.
 
@@ -293,16 +306,59 @@ Without this fix, `is_self` will always be `false` regardless of channel index, 
 
 **`sendAudio()` — no changes needed.** It already accepts `number[]` and sends as `Int16Array.buffer`. The data is now interleaved stereo, which Deepgram handles since we set `channels=2`.
 
+**CRITICAL — Update call summary prompt (`src/services/call-summary.ts`):**
+
+The summary prompt has hardcoded "Speaker 0"/"Speaker 1" references that must align with the new labels:
+
+1. **Update speaker attribution section (lines 85-87):**
+   ```
+   // BEFORE:
+   - Speaker 0 is the Wingman user (the sales rep). Label their actions as "you".
+   - All other speakers (Speaker 1, Speaker 2, etc.) are prospects/customers. Label their actions as "them".
+
+   // AFTER:
+   - "You" is the Wingman user (the sales rep). Label their actions as "you".
+   - "Participant" is the prospect/customer. Label their actions as "them".
+   ```
+
+2. **Update action item instruction (line 111):**
+   ```
+   // BEFORE:
+   "owner": "you" if the sales rep (Speaker 0) committed to it, "them" if the prospect/customer committed to it
+
+   // AFTER:
+   "owner": "you" if the sales rep ("You") committed to it, "them" if the prospect/customer ("Participant") committed to it
+   ```
+
+3. **Update `formatTranscriptLine()` (line 119-121):**
+   ```typescript
+   // BEFORE:
+   return `[Speaker ${t.speaker_id}]: ${t.text}`;
+
+   // AFTER:
+   return `[${t.speaker}]: ${t.text}`;
+   ```
+   This uses `t.speaker` directly ("You" or "Participant") instead of constructing from speaker_id.
+
+4. **Update docstring comment (lines 46-48):**
+   ```
+   // BEFORE: Speaker 0 is the Wingman user ("you")
+   // AFTER: "You" speaker is the Wingman user, "Participant" is the customer
+   ```
+
 **Key components:**
 - `src/services/deepgram-client.ts` — update params, rewrite `processTranscriptResult()`, delete heuristic code, update `Transcript` interface
+- `src/services/call-summary.ts` — update speaker attribution prompt, formatTranscriptLine(), docstring
 
 **Notes:** The `bufferThreshold` of 4096 refers to Int16 samples. For stereo, 4096 interleaved samples = 2048 frames = 128ms at 16kHz. This is fine. Deepgram's per-channel endpointing and `utterance_end_ms` work independently in multichannel mode, so existing timing settings (`endpointing: 2500`, `utterance_end_ms: 3000`) remain valid. The `UtteranceEnd` message in multichannel uses `channel: [index, total]` (not `channel_index`) — handle this in the UtteranceEnd log if desired.
 
+**Gemini conversation history (`gemini-client.ts`) — no changes needed.** The format `[${turn.speaker}]: ${turn.text}` at line 300 automatically picks up the new "You"/"Participant" labels from the speaker field. The default system prompt (`shared/default-prompt.ts`) does not reference speaker names or IDs — it's speaker-agnostic.
+
 ---
 
-### Task 5: Strip audio code from content script
+### Task 5: Strip audio code from content script + fix overlay for multichannel
 
-**Intent:** Remove all microphone capture code from `content-script.ts`, making it a pure UI bridge (overlay management + message routing).
+**Intent:** Remove all microphone capture code from `content-script.ts` (making it a pure UI bridge), and update the overlay's transcript display to handle two simultaneous channels without flickering.
 
 **Context:** Depends on Task 3 (audio now handled by offscreen document). The content script currently imports AudioWorklet, manages microphone streams, and sends AUDIO_CHUNK messages. All of this moves to the offscreen document. The content script retains overlay UI, transcript/suggestion display, and summary display.
 
@@ -334,8 +390,45 @@ Without this fix, `is_self` will always be `false` regardless of channel index, 
 - `overlayDismissedByUser` tracking
 - Extension validity checking
 
+**CRITICAL — Fix overlay transcript display for multichannel (`src/content/overlay.ts`):**
+
+The current `updateTranscript()` (line 659-671) does a full `innerHTML` replacement on each call:
+```typescript
+section.innerHTML = `
+  <span class="speaker">${transcript.speaker}:</span> ${transcript.text}
+`;
+```
+
+With multichannel, Deepgram sends separate interim/final results for EACH channel independently. Both channels' results arrive at the overlay in rapid succession. The current single-replacement approach causes:
+- **Flickering**: Channel 0 text immediately overwritten by channel 1 text (and vice versa)
+- **Context loss**: User can never see both speakers' current text simultaneously
+
+**Fix: Dual-line display by speaker.** Maintain two DOM elements — one per channel — so both speakers' latest text is visible simultaneously:
+
+```typescript
+updateTranscript(transcript: Transcript): void {
+  const section = this.panel.querySelector('.transcript-section');
+  if (!section) return;
+
+  // Use speaker name as a stable key for the DOM element
+  const speakerKey = transcript.speaker === 'You' ? 'self' : 'other';
+  let line = section.querySelector(`[data-speaker="${speakerKey}"]`) as HTMLElement;
+
+  if (!line) {
+    line = document.createElement('div');
+    line.setAttribute('data-speaker', speakerKey);
+    section.appendChild(line);
+  }
+
+  line.innerHTML = `<span class="speaker">${transcript.speaker}:</span> ${transcript.text}`;
+}
+```
+
+This way, "You" and "Participant" each have their own line that updates independently. The user sees both sides of the conversation in real time without flickering.
+
 **Key components:**
 - `src/content/content-script.ts` — remove audio code, update handlers
+- `src/content/overlay.ts` — rewrite `updateTranscript()` for dual-channel display
 
 **Notes:** The `audio-processor.worklet.js` file in `src/content/` is no longer loaded but can stay in the codebase (removing it is optional cleanup). The content script's `web_accessible_resources` entry for the worklet can be removed from manifest.json but is harmless if left.
 
@@ -430,3 +523,45 @@ No new npm packages. No new Chrome permissions (tabCapture and offscreen already
 - **Configurable multichannel toggle** — Always use multichannel when starting a session. No user setting for mono-only mode. If needed later, add a fallback path.
 - **Deepgram Flux (v2/listen)** — Multichannel is not available on Flux. Stick with Nova-3 on v1/listen.
 - **Content script mic fallback** — If offscreen document fails, we don't fall back to content script mic capture. The session fails with an error. Clean architecture over defensive complexity.
+
+### Review Notes
+
+Two review passes were performed against the actual source code to validate plan assumptions.
+
+**Review 1 — Found 2 issues (both fixed in plan):**
+1. **BUG: `is_self` hardcoded to `false`** — `service-worker.ts:250` overwrites the channel-based `is_self` value. Fix added to Task 3 as a critical pass-through change.
+2. **BUILD: offscreen `audio-processor.js` not in dist** — crxjs merges `web_accessible_resources` entries, making `<all_urls>` unsafe. Task 6 rewritten to use `vite-plugin-static-copy` instead.
+
+**Review 2 — All assumptions validated, 1 defensive addition:**
+1. `getUserMedia()` confirmed working in offscreen documents (existing `startMicrophoneCapture()` proves it).
+2. `chromeMediaSource: 'tab'` confirmed working in offscreen documents (existing `startTabCapture()` proves it).
+3. `ChannelMergerNode(2)` produces correct 2-channel output for AudioWorkletNode — `inputs[0][0]` and `inputs[0][1]`.
+4. Adding `is_self` to `Transcript` interface is safe — only one construction site in `processTranscriptResult()`.
+5. Audio math verified: 4096 @ 48kHz → 1365 @ 16kHz/channel → 2730 interleaved → 5460 bytes (frame-aligned, divisible by 4).
+6. Message sizes fine: ~13.65KB per stereo chunk, well under Chrome's 64MB `sendMessage` limit.
+7. Web Audio API auto-resamples tab audio to match AudioContext sample rate — no manual handling needed.
+8. Deepgram reconnection rebuilds WebSocket URL from `DEEPGRAM_PARAMS` each time — stereo settings persist.
+9. **Added defensive `audioContext.resume()`** to Task 2 — offscreen AudioContexts may start suspended.
+
+**Review 3 — Found 1 critical gap, 2 minor issues (all fixed in plan):**
+1. **CRITICAL: `call-summary.ts` has hardcoded "Speaker 0"/"Speaker 1" references.** The summary prompt (lines 85-87), action item instruction (line 111), and `formatTranscriptLine()` (line 120) all use "Speaker N" labels that would mismatch the new "You"/"Participant" labels from Deepgram. Gemini would see `[You]: text` in conversation history but `[Speaker 0]: text` in the summary prompt, causing confusion. **Fix: Added call-summary.ts updates to Task 4.**
+2. **CAPTURE_STATUS must be sent from `startDualCapture()`.** The service worker's `isCapturing` flag relies on `CAPTURE_STATUS` messages from the offscreen document. The new `startDualCapture()` function must send these on success and failure. **Fix: Added step 8 to Task 2.**
+3. **`chrome.runtime.sendMessage()` broadcast from offscreen.** Messages from the offscreen document (AUDIO_CHUNK, CAPTURE_STATUS) are received by all listeners including the content script. This is harmless — the content script has no matching cases and falls through to default. **Added documentation note to Task 2.**
+
+**Review 4 — Found 1 significant UX issue, clarified 2 timing/behavior details (all fixed in plan):**
+1. **SIGNIFICANT: Overlay transcript display flickers with multichannel.** `overlay.ts` line 667 does `section.innerHTML = ...` (full replacement) on every transcript update. With two channels sending independent interim results, channel 0's text is immediately overwritten by channel 1's text and vice versa — causing rapid flickering and context loss. **Fix: Added dual-line display approach to Task 5** — each speaker gets their own DOM element that updates independently.
+2. **Offscreen close timing clarified in Task 3.** The offscreen document must NOT be closed immediately after `STOP_AUDIO_CAPTURE` (line 313). Summary generation and Drive save happen asynchronously afterward (lines 359-424). Although those operations run in the service worker, closing the offscreen too early could drop in-flight audio chunks. **Fix: Specified close at line 447** alongside Deepgram disconnect.
+3. **Transcript collector is safe with multichannel.** `addTranscript()` (line 54) has early return `if (!transcript.is_final) return` — only final transcripts are stored. Interim results from both channels are discarded. No deduplication needed, no storage bloat.
+4. **UtteranceEnd handling won't break.** Current code (line 203-204) just logs "Utterance end detected" without parsing any fields. Multichannel UtteranceEnd includes `channel: [index, total]` but since nothing reads it, no breakage.
+5. **No remaining "Speaker" string references.** Full codebase search confirmed only `deepgram-client.ts:245` and `call-summary.ts:120` construct speaker labels from IDs — both already covered by Task 4.
+
+**Files confirmed as NOT needing changes:**
+- `popup.ts` — no speaker references
+- `transcript-collector.ts` — role-agnostic pass-through, only stores finals
+- `shared/default-prompt.ts` — no speaker name references
+- `gemini-client.ts` — `[${turn.speaker}]` format auto-picks up new labels
+- `services/kb/kb-search.ts` — no speaker dependency
+- Speaker filter in service worker — checks `speaker_role`, not speaker name
+
+**Files that DO need changes (moved from "no changes" after Review 4):**
+- `overlay.ts` — `updateTranscript()` must handle dual-channel display (added to Task 5)

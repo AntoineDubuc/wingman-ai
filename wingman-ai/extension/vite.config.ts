@@ -15,6 +15,7 @@ export default defineConfig({
         { src: 'src/tutorials/summary-settings', dest: 'src/tutorials' },
         { src: 'src/tutorials/summary-overlay.html', dest: 'src/tutorials' },
         { src: 'src/tutorials/summary-overlay', dest: 'src/tutorials' },
+        { src: 'src/offscreen/audio-processor.js', dest: 'src/offscreen' },
       ],
     }),
   ],

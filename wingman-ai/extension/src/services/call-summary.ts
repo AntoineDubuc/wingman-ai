@@ -43,9 +43,8 @@ const KEEP_LAST = 400;
 /**
  * Build the Gemini prompt for call summary generation.
  *
- * Speaker attribution heuristic: Speaker 0 is the Wingman user ("you"),
- * all other speakers are "them". This matches the existing speaker filter
- * behavior where the first detected speaker is treated as the consultant.
+ * Speaker attribution: "You" is the Wingman user (sales rep),
+ * "Participant" is the prospect/customer. Determined by audio channel index.
  */
 export function buildSummaryPrompt(
   transcripts: CollectedTranscript[],
@@ -83,8 +82,8 @@ If there are no notable moments, return an empty array [].`
   return `You are analyzing a sales call transcript to produce a structured summary.
 
 ## Speaker Attribution
-- Speaker 0 is the Wingman user (the sales rep). Label their actions as "you".
-- All other speakers (Speaker 1, Speaker 2, etc.) are prospects/customers. Label their actions as "them".
+- "You" is the Wingman user (the sales rep). Label their actions as "you".
+- "Participant" is the prospect/customer. Label their actions as "them".
 
 ## Call Metadata
 - Duration: ${metadata.durationMinutes} minutes
@@ -108,7 +107,7 @@ Field requirements:
 "summary": An array of 1-5 topic-organized bullet points summarizing what was discussed. Focus on topics and outcomes, not chronological events. Each bullet should be a complete sentence.
 
 "actionItems": An array of commitments or follow-ups identified in the call. Each object has:
-  - "owner": "you" if the sales rep (Speaker 0) committed to it, "them" if the prospect/customer committed to it
+  - "owner": "you" if the sales rep ("You") committed to it, "them" if the prospect/customer ("Participant") committed to it
   - "text": A concise description of the action item
 If no action items were identified, return an empty array [].
 ${keyMomentsInstruction}
@@ -117,7 +116,7 @@ Return ONLY valid JSON. Do not wrap in markdown code blocks. Do not include any 
 }
 
 function formatTranscriptLine(t: CollectedTranscript): string {
-  return `[Speaker ${t.speaker_id}]: ${t.text}`;
+  return `[${t.speaker}]: ${t.text}`;
 }
 
 // --- Markdown Formatter ---

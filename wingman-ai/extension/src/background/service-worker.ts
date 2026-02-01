@@ -214,17 +214,58 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);
 
-    // Start microphone capture via content script
-    console.log('[ServiceWorker] Sending START_MIC_CAPTURE to content script');
+    // Create offscreen document for dual audio capture
     try {
-      const response = await chrome.tabs.sendMessage(tab.id, { type: 'START_MIC_CAPTURE' });
-      console.log('[ServiceWorker] START_MIC_CAPTURE response:', response);
-      if (response?.success) {
-        isCapturing = true;
+      const existingContexts = await chrome.runtime.getContexts({
+        contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
+      });
+      if (existingContexts.length === 0) {
+        await chrome.offscreen.createDocument({
+          url: chrome.runtime.getURL('src/offscreen/offscreen.html'),
+          reasons: [chrome.offscreen.Reason.USER_MEDIA],
+          justification: 'Microphone and tab audio capture for transcription',
+        });
+        console.log('[ServiceWorker] Created offscreen document');
       }
     } catch (e) {
-      console.error('[ServiceWorker] START_MIC_CAPTURE failed:', e);
-      // Don't fail the session - Deepgram is connected, mic might work later
+      console.error('[ServiceWorker] Failed to create offscreen document:', e);
+      return { success: false, error: 'Failed to create audio capture context' };
+    }
+
+    // Get tab capture stream ID
+    let streamId: string;
+    try {
+      streamId = await new Promise<string>((resolve, reject) => {
+        chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (id) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(id);
+          }
+        });
+      });
+      console.log('[ServiceWorker] Got tab capture stream ID');
+    } catch (e) {
+      console.error('[ServiceWorker] Failed to get tab capture stream:', e);
+      return { success: false, error: 'Failed to capture tab audio. Make sure the Meet tab is active.' };
+    }
+
+    // Start dual capture (mic + tab) in offscreen document
+    try {
+      const captureResponse = await chrome.runtime.sendMessage({
+        type: 'START_DUAL_CAPTURE',
+        streamId,
+      });
+      if (captureResponse?.success) {
+        isCapturing = true;
+        console.log('[ServiceWorker] Dual capture started');
+      } else {
+        console.error('[ServiceWorker] Dual capture failed:', captureResponse?.error);
+        return { success: false, error: captureResponse?.error || 'Failed to start audio capture' };
+      }
+    } catch (e) {
+      console.error('[ServiceWorker] START_DUAL_CAPTURE failed:', e);
+      return { success: false, error: 'Failed to start audio capture' };
     }
 
     activeTabId = tab.id;
@@ -247,7 +288,7 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
     speaker_role: transcript.speaker_role,
     is_final: transcript.is_final,
     timestamp: transcript.timestamp,
-    is_self: false, // BYOK doesn't have self-identification yet
+    is_self: transcript.is_self,
   });
 
   // Send transcript to content script for display
@@ -308,10 +349,8 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     // 1. Capture tabId before any async work (prevents race condition on state reset)
     const tabId = activeTabId;
 
-    // 2. Stop mic capture
-    if (tabId) {
-      chrome.tabs.sendMessage(tabId, { type: 'STOP_MIC_CAPTURE' }).catch(() => {});
-    }
+    // 2. Stop audio capture in offscreen document
+    chrome.runtime.sendMessage({ type: 'STOP_AUDIO_CAPTURE' }).catch(() => {});
 
     // 3. Show loading state (replaces HIDE_OVERLAY)
     if (tabId) {
@@ -446,6 +485,13 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     // 8. Cleanup
     await deepgramClient.disconnect();
     geminiClient.clearSession();
+
+    // Close offscreen document to free resources
+    try {
+      await chrome.offscreen.closeDocument();
+    } catch {
+      // Ignore — may already be closed
+    }
 
     // 9. Reset state
     isSessionActive = false;

@@ -654,20 +654,30 @@ export class AIOverlay {
   }
 
   /**
-   * Update transcript display
+   * Update transcript display — dual-channel aware.
+   *
+   * Each speaker ("You" / "Participant") gets their own DOM element so
+   * both sides of the conversation are visible simultaneously without flickering.
    */
   updateTranscript(transcript: Transcript): void {
-    console.log('[Overlay] updateTranscript called:', transcript);
     const section = this.panel.querySelector('.transcript-section');
     if (!section) {
       console.warn('[Overlay] transcript-section not found!');
       return;
     }
 
-    section.innerHTML = `
-      <span class="speaker">${transcript.speaker}:</span> ${transcript.text}
-    `;
-    console.log('[Overlay] Transcript updated:', transcript.text?.substring(0, 50));
+    // Use speaker name as a stable key for the DOM element
+    const speakerKey = transcript.speaker === 'You' ? 'self' : 'other';
+    let line = section.querySelector(`[data-speaker="${speakerKey}"]`) as HTMLElement | null;
+
+    if (!line) {
+      line = document.createElement('div');
+      line.setAttribute('data-speaker', speakerKey);
+      line.style.marginBottom = '4px';
+      section.appendChild(line);
+    }
+
+    line.innerHTML = `<span class="speaker">${transcript.speaker}:</span> ${transcript.text}`;
   }
 
   /**

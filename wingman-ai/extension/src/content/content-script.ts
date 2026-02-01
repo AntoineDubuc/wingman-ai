@@ -4,16 +4,13 @@
  * Handles:
  * - Overlay UI injection and management
  * - Message routing from background to overlay
- * - Microphone capture (runs in page context with mic permission)
+ *
+ * Audio capture is handled by the offscreen document.
  */
 
 import { AIOverlay } from './overlay';
 
 let overlay: AIOverlay | null = null;
-let audioContext: AudioContext | null = null;
-let mediaStream: MediaStream | null = null;
-let audioWorkletNode: AudioWorkletNode | null = null;
-let isCapturingMic = false;
 let extensionValid = true;
 let overlayDismissedByUser = false;
 
@@ -35,155 +32,6 @@ function handleExtensionInvalidated(): void {
   if (!extensionValid) return;
   extensionValid = false;
   console.log('[ContentScript] Extension context invalidated, cleaning up');
-  stopMicCapture();
-}
-
-/**
- * Start microphone capture using AudioWorklet (modern API)
- */
-async function startMicCapture(): Promise<void> {
-  if (isCapturingMic) return;
-
-  try {
-    console.log('[ContentScript] Starting microphone capture (AudioWorklet)');
-
-    // Get microphone - DON'T specify sampleRate (Mac mics don't support 16kHz)
-    // We'll resample in the worklet
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: false,  // Don't process - we want raw audio
-        noiseSuppression: false,
-        autoGainControl: true,    // Help with quiet mics
-        channelCount: 1,
-      },
-      video: false,
-    });
-
-    console.log('[ContentScript] Got microphone stream, tracks:', mediaStream.getAudioTracks().length);
-    const track = mediaStream.getAudioTracks()[0];
-    if (!track) {
-      console.error('[ContentScript] No audio track available!');
-      return;
-    }
-
-    const settings = track.getSettings();
-    console.log('[ContentScript] Track settings:', JSON.stringify(settings));
-    console.log('[ContentScript] Track enabled:', track.enabled, 'muted:', track.muted, 'readyState:', track.readyState);
-
-    // Monitor track state changes
-    track.addEventListener('mute', () => {
-      console.warn('[ContentScript] ⚠️ Track MUTED by external source!');
-    });
-    track.addEventListener('unmute', () => {
-      console.log('[ContentScript] Track unmuted');
-    });
-    track.addEventListener('ended', () => {
-      console.warn('[ContentScript] ⚠️ Track ENDED! Another app may have taken the mic.');
-    });
-
-    // Use device's native sample rate
-    const deviceSampleRate = settings.sampleRate || 48000;
-    console.log('[ContentScript] Device sample rate:', deviceSampleRate);
-
-    // Create AudioContext at device's native rate
-    audioContext = new AudioContext({ sampleRate: deviceSampleRate });
-    console.log('[ContentScript] AudioContext created, state:', audioContext.state, 'sampleRate:', audioContext.sampleRate);
-
-    // Resume AudioContext if suspended (Chrome autoplay policy)
-    if (audioContext.state === 'suspended') {
-      console.log('[ContentScript] AudioContext suspended, resuming...');
-      await audioContext.resume();
-      console.log('[ContentScript] AudioContext resumed, state:', audioContext.state);
-    }
-
-    // Load AudioWorklet module
-    const workletUrl = chrome.runtime.getURL('src/content/audio-processor.worklet.js');
-    console.log('[ContentScript] Loading AudioWorklet from:', workletUrl);
-    await audioContext.audioWorklet.addModule(workletUrl);
-    console.log('[ContentScript] AudioWorklet module loaded');
-
-    const source = audioContext.createMediaStreamSource(mediaStream);
-
-    // Create AudioWorkletNode with sample rate info
-    audioWorkletNode = new AudioWorkletNode(audioContext, 'audio-processor', {
-      numberOfInputs: 1,
-      numberOfOutputs: 1,
-      channelCount: 2,  // Handle stereo mics
-      processorOptions: {
-        sampleRate: audioContext.sampleRate
-      }
-    });
-
-    // Handle messages from the worklet
-    audioWorkletNode.port.onmessage = (event) => {
-      // Check if extension context is still valid
-      if (!extensionValid || !isExtensionValid()) {
-        handleExtensionInvalidated();
-        return;
-      }
-
-      const { type, pcmData, chunkCount, maxAmplitude } = event.data;
-
-      if (type === 'audio') {
-        // Log audio level every 10 chunks
-        if (chunkCount % 10 === 0) {
-          // Calculate RMS for debugging
-          let sumSq = 0;
-          for (let i = 0; i < pcmData.length; i++) {
-            const val = pcmData[i] ?? 0;
-            sumSq += val * val;
-          }
-          const rms = Math.sqrt(sumSq / pcmData.length);
-          const trackState = track ? `enabled=${track.enabled},muted=${track.muted},state=${track.readyState}` : 'NO_TRACK';
-          console.log(`[ContentScript] Audio #${chunkCount}: amp=${maxAmplitude.toFixed(4)}, RMS=${rms.toFixed(0)}, ${trackState}`);
-        }
-
-        // Send to background script with error handling
-        try {
-          chrome.runtime.sendMessage({
-            type: 'AUDIO_CHUNK',
-            data: Array.from(pcmData),
-            timestamp: Date.now(),
-          });
-        } catch {
-          handleExtensionInvalidated();
-        }
-      }
-    };
-
-    // Connect the audio graph
-    source.connect(audioWorkletNode);
-    // Note: We don't connect to destination since we only need to process, not play back
-
-    isCapturingMic = true;
-    console.log('[ContentScript] Microphone capture started (AudioWorklet)');
-  } catch (error) {
-    console.error('[ContentScript] Failed to start mic capture:', error);
-  }
-}
-
-/**
- * Stop microphone capture
- */
-function stopMicCapture(): void {
-  console.log('[ContentScript] Stopping microphone capture');
-
-  if (audioWorkletNode) {
-    audioWorkletNode.disconnect();
-    audioWorkletNode = null;
-  }
-
-  if (audioContext) {
-    audioContext.close();
-    audioContext = null;
-  }
-
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-  }
-
-  isCapturingMic = false;
 }
 
 /**
@@ -192,7 +40,6 @@ function stopMicCapture(): void {
 function handleOverlayClose(): void {
   console.log('[ContentScript] User closed overlay, stopping session');
   overlayDismissedByUser = true;
-  stopMicCapture();
 
   // Notify background to stop the full session
   try {
@@ -237,24 +84,6 @@ try {
         sendResponse({ success: true });
         break;
 
-      case 'START_MIC_CAPTURE':
-        console.log('[ContentScript] Starting mic capture...');
-        startMicCapture()
-          .then(() => {
-            console.log('[ContentScript] Mic capture started successfully');
-            sendResponse({ success: true });
-          })
-          .catch((err) => {
-            console.error('[ContentScript] Mic capture failed:', err);
-            sendResponse({ success: false, error: String(err) });
-          });
-        return true; // Keep channel open for async
-
-      case 'STOP_MIC_CAPTURE':
-        stopMicCapture();
-        sendResponse({ success: true });
-        break;
-
       case 'transcript':
         console.log('[ContentScript] Transcript data:', message.data);
         if (overlay) {
@@ -286,7 +115,6 @@ try {
 
       case 'HIDE_OVERLAY':
         overlay?.hide();
-        stopMicCapture(); // Stop capture when hiding
         break;
 
       case 'SHOW_OVERLAY':
@@ -318,7 +146,8 @@ try {
         break;
 
       default:
-        console.warn('[ContentScript] Unknown message type:', message.type);
+        // Ignore messages not meant for content script (e.g., AUDIO_CHUNK, CAPTURE_STATUS)
+        break;
     }
 
     return false;

@@ -10,6 +10,8 @@
 
 let audioContext: AudioContext | null = null;
 let mediaStream: MediaStream | null = null;
+let micStream: MediaStream | null = null;
+let tabStream: MediaStream | null = null;
 let audioWorklet: AudioWorkletNode | null = null;
 let scriptProcessor: ScriptProcessorNode | null = null;
 let isCapturing = false;
@@ -122,6 +124,107 @@ async function startTabCapture(streamId: string): Promise<void> {
     console.log('[Offscreen] Tab capture started successfully');
   } catch (error) {
     console.error('[Offscreen] Failed to start tab capture:', error);
+    cleanup();
+    throw error;
+  }
+}
+
+/**
+ * Start dual capture: microphone (user) + tab audio (participants) merged into stereo.
+ *
+ * Produces interleaved stereo Int16 PCM via the stereo AudioWorklet.
+ * Channel 0 = mic (user), Channel 1 = tab (participants).
+ */
+async function startDualCapture(streamId: string): Promise<void> {
+  if (isCapturing) {
+    console.warn('[Offscreen] Already capturing audio');
+    return;
+  }
+
+  try {
+    console.log('[Offscreen] Starting dual capture (mic + tab)');
+
+    // 1. Get microphone stream
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: true,
+        channelCount: 1,
+      },
+      video: false,
+    });
+    console.log('[Offscreen] Got microphone stream');
+
+    // 2. Get tab audio stream
+    tabStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        // @ts-expect-error - Chrome-specific constraints for tab capture
+        mandatory: {
+          chromeMediaSource: 'tab',
+          chromeMediaSourceId: streamId,
+        },
+      },
+      video: false,
+    });
+    console.log('[Offscreen] Got tab audio stream');
+
+    // 3. Create AudioContext at mic's native sample rate
+    const micTrack = micStream.getAudioTracks()[0];
+    const nativeSampleRate = micTrack?.getSettings().sampleRate || 48000;
+    audioContext = new AudioContext({ sampleRate: nativeSampleRate });
+    console.log(`[Offscreen] AudioContext created at ${audioContext.sampleRate}Hz`);
+
+    // Defensive resume — offscreen AudioContexts may start suspended
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+      console.log('[Offscreen] AudioContext resumed from suspended state');
+    }
+
+    // 4. Build audio graph: mic + tab → ChannelMerger → stereo AudioWorklet
+    const micSource = audioContext.createMediaStreamSource(micStream);
+    const tabSource = audioContext.createMediaStreamSource(tabStream);
+    const merger = audioContext.createChannelMerger(2);
+
+    micSource.connect(merger, 0, 0); // mic → merger channel 0
+    tabSource.connect(merger, 0, 1); // tab → merger channel 1
+
+    // 5. Load and connect stereo AudioWorklet
+    await audioContext.audioWorklet.addModule(
+      chrome.runtime.getURL('src/offscreen/audio-processor.js')
+    );
+
+    audioWorklet = new AudioWorkletNode(audioContext, 'audio-processor', {
+      channelCount: 2,
+      channelCountMode: 'explicit',
+      processorOptions: { sampleRate: audioContext.sampleRate },
+    });
+
+    audioWorklet.port.onmessage = (event) => {
+      if (event.data.type === 'audio') {
+        sendAudioChunk(event.data.audioData);
+      }
+    };
+
+    merger.connect(audioWorklet);
+
+    isCapturing = true;
+
+    // 6. Notify service worker
+    chrome.runtime.sendMessage({
+      type: 'CAPTURE_STATUS',
+      status: 'started',
+      sampleRate: SAMPLE_RATE,
+    });
+
+    console.log('[Offscreen] Dual capture started successfully (stereo)');
+  } catch (error) {
+    console.error('[Offscreen] Failed to start dual capture:', error);
+    // Notify service worker of failure
+    chrome.runtime.sendMessage({
+      type: 'CAPTURE_STATUS',
+      status: 'stopped',
+    });
     cleanup();
     throw error;
   }
@@ -254,13 +357,18 @@ function cleanup(): void {
     audioContext = null;
   }
 
-  if (mediaStream) {
-    mediaStream.getTracks().forEach((track) => {
-      track.stop();
-      console.log('[Offscreen] Stopped track:', track.label);
-    });
-    mediaStream = null;
+  // Stop all media streams (mono or dual capture)
+  for (const stream of [mediaStream, micStream, tabStream]) {
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        track.stop();
+        console.log('[Offscreen] Stopped track:', track.label);
+      });
+    }
   }
+  mediaStream = null;
+  micStream = null;
+  tabStream = null;
 
   isCapturing = false;
 }
@@ -274,6 +382,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   switch (message.type) {
     case 'START_MIC_CAPTURE':
       startMicrophoneCapture()
+        .then(() => sendResponse({ success: true }))
+        .catch((error) => sendResponse({ success: false, error: String(error) }));
+      return true; // Keep channel open for async response
+
+    case 'START_DUAL_CAPTURE':
+      startDualCapture(message.streamId)
         .then(() => sendResponse({ success: true }))
         .catch((error) => sendResponse({ success: false, error: String(error) }));
       return true; // Keep channel open for async response

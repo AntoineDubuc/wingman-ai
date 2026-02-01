@@ -8,17 +8,17 @@
 // Deepgram WebSocket endpoint
 const DEEPGRAM_WS_BASE = 'wss://api.deepgram.com/v1/listen';
 
-// Connection parameters matching backend configuration
+// Connection parameters — stereo multichannel for dual-capture
 const DEEPGRAM_PARAMS = {
   model: 'nova-3',
   language: 'en',
   punctuate: 'true',
-  diarize: 'true',
+  multichannel: 'true',
+  channels: '2',
   interim_results: 'true',
   smart_format: 'true',
   encoding: 'linear16',
   sample_rate: '16000',
-  channels: '1',
   endpointing: '2500',
   utterance_end_ms: '3000',
 };
@@ -37,6 +37,7 @@ export interface Transcript {
   speaker_id: number;
   speaker_role: SpeakerRole;
   is_final: boolean;
+  is_self: boolean;
   confidence: number;
   timestamp: string;
 }
@@ -47,25 +48,12 @@ export interface Transcript {
 export type TranscriptCallback = (transcript: Transcript) => void;
 
 /**
- * Speaker statistics for role identification
- */
-interface SpeakerStats {
-  utteranceCount: number;
-  questionCount: number;
-  wordCount: number;
-}
-
-/**
  * DeepgramClient class - manages WebSocket connection to Deepgram
  */
 export class DeepgramClient {
   private socket: WebSocket | null = null;
   private isConnected = false;
   private onTranscriptCallback: TranscriptCallback | null = null;
-
-  // Speaker tracking
-  private speakerStats: Map<number, SpeakerStats> = new Map();
-  private roleAssignments: Map<number, SpeakerRole> = new Map();
 
   // Reconnection settings
   private reconnectAttempts = 0;
@@ -213,7 +201,10 @@ export class DeepgramClient {
   }
 
   /**
-   * Process transcript result from Deepgram
+   * Process transcript result from Deepgram multichannel response.
+   *
+   * In multichannel mode, each Results message includes channel_index: [channelNum, totalChannels].
+   * Channel 0 = mic (user), Channel 1 = tab (participants).
    */
   private processTranscriptResult(data: Record<string, unknown>): void {
     try {
@@ -228,30 +219,29 @@ export class DeepgramClient {
 
       const isFinal = (data.is_final as boolean) ?? false;
 
-      // Extract speaker from words
-      let speakerId = 0;
-      const words = (alternative.words as Array<Record<string, unknown>>) || [];
-      const firstWord = words[0];
+      // Determine channel from multichannel response
+      const channelIndex = data.channel_index as number[] | undefined;
+      const channelNum = channelIndex?.[0] ?? 0;
 
-      if (firstWord && firstWord.speaker !== undefined) {
-        speakerId = firstWord.speaker as number;
-      }
-
-      // Track speaker and get role
-      const speakerRole = this.trackSpeaker(speakerId, transcriptText, words.length);
+      // Deterministic speaker identification via channel index
+      const isSelf = channelNum === 0;
+      const speaker = isSelf ? 'You' : 'Participant';
+      const speakerId = channelNum;
+      const speakerRole: SpeakerRole = isSelf ? 'consultant' : 'customer';
 
       const transcript: Transcript = {
         text: transcriptText,
-        speaker: `Speaker ${speakerId}`,
+        speaker,
         speaker_id: speakerId,
         speaker_role: speakerRole,
         is_final: isFinal,
+        is_self: isSelf,
         confidence: (alternative.confidence as number) ?? 0,
         timestamp: new Date().toISOString(),
       };
 
       console.log(
-        `[DeepgramClient] Transcript: "${transcriptText}" (speaker=${speakerId}, final=${isFinal})`
+        `[DeepgramClient] Transcript: "${transcriptText}" (ch=${channelNum}, ${speaker}, final=${isFinal})`
       );
 
       // Emit transcript to callback
@@ -260,87 +250,6 @@ export class DeepgramClient {
       }
     } catch (error) {
       console.error('[DeepgramClient] Error processing transcript:', error);
-    }
-  }
-
-  /**
-   * Track speaker utterances and determine role
-   */
-  private trackSpeaker(speakerId: number, text: string, wordCount: number): SpeakerRole {
-    // Initialize stats for new speaker
-    if (!this.speakerStats.has(speakerId)) {
-      this.speakerStats.set(speakerId, {
-        utteranceCount: 0,
-        questionCount: 0,
-        wordCount: 0,
-      });
-    }
-
-    const stats = this.speakerStats.get(speakerId)!;
-    stats.utteranceCount += 1;
-    stats.wordCount += wordCount;
-
-    // Check if this is a question
-    const textLower = text.toLowerCase().trim();
-    const questionWords = [
-      'what',
-      'how',
-      'why',
-      'when',
-      'where',
-      'who',
-      'which',
-      'can',
-      'could',
-      'would',
-      'should',
-      'is',
-      'are',
-      'do',
-      'does',
-      'did',
-      'tell me',
-    ];
-    const isQuestion =
-      textLower.endsWith('?') || questionWords.some((qw) => textLower.startsWith(qw));
-
-    if (isQuestion) {
-      stats.questionCount += 1;
-    }
-
-    // Update role assignments if we have enough data
-    this.updateRoleAssignments();
-
-    return this.roleAssignments.get(speakerId) || 'unknown';
-  }
-
-  /**
-   * Update speaker role assignments based on question patterns
-   */
-  private updateRoleAssignments(): void {
-    if (this.speakerStats.size < 2) return;
-
-    // Find speaker with most questions - likely the customer
-    const speakerQuestions: Array<[number, number]> = [];
-    this.speakerStats.forEach((stats, speakerId) => {
-      speakerQuestions.push([speakerId, stats.questionCount]);
-    });
-
-    speakerQuestions.sort((a, b) => b[1] - a[1]);
-
-    const first = speakerQuestions[0];
-    const second = speakerQuestions[1];
-
-    if (first && second) {
-      const [mostQuestionsSpeaker, q1] = first;
-      const [leastQuestionsSpeaker, q2] = second;
-      const totalQuestions = q1 + q2;
-
-      // Only assign if there's meaningful data
-      if (totalQuestions >= 3 && q1 > q2) {
-        this.roleAssignments.set(mostQuestionsSpeaker, 'customer');
-        this.roleAssignments.set(leastQuestionsSpeaker, 'consultant');
-      }
     }
   }
 
@@ -416,10 +325,6 @@ export class DeepgramClient {
     this.isConnected = false;
     this.reconnectAttempts = this.maxReconnectAttempts; // Prevent auto-reconnect
 
-    // Reset speaker tracking
-    this.speakerStats.clear();
-    this.roleAssignments.clear();
-
     console.log('[DeepgramClient] Disconnected');
   }
 
@@ -428,13 +333,6 @@ export class DeepgramClient {
    */
   getIsConnected(): boolean {
     return this.isConnected && this.socket?.readyState === WebSocket.OPEN;
-  }
-
-  /**
-   * Get the role for a specific speaker
-   */
-  getSpeakerRole(speakerId: number): SpeakerRole {
-    return this.roleAssignments.get(speakerId) || 'unknown';
   }
 }
 

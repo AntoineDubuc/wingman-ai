@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini.
+Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini. Includes a Knowledge Base for semantic search over sales documents and post-call summaries with action items.
 
 **BYOK (Bring Your Own Keys)**: No backend server required. Users provide their own Deepgram and Gemini API keys directly in the extension settings. All API calls run in the browser.
 
@@ -45,29 +45,46 @@ Content Script (Google Meet tab)
   ├── Mic capture via AudioWorklet → resamples to 16kHz PCM16
   ├── Sends AUDIO_CHUNK messages to Service Worker
   └── Renders overlay UI (Shadow DOM)
+        ├── Transcripts + suggestion cards (live)
+        └── Summary card with copy/Drive save (post-call)
 
 Service Worker (background)
   ├── Forwards audio → Deepgram WebSocket (STT)
   ├── Receives transcripts → Gemini REST API (suggestions)
-  ├── Sends lowercase 'transcript' / 'suggestion' messages → Content Script
+  │     └── Injects KB context into system prompt when available
+  ├── Sends lowercase messages → Content Script
+  ├── On session stop → generates call summary via Gemini
+  │     └── Auto-saves summary + transcript to Google Drive
   └── Manages session lifecycle (singleton)
 
 Offscreen Document
   └── Tab audio capture via TabCapture API + AudioWorklet
+
+Knowledge Base (IndexedDB)
+  ├── Documents uploaded via options page (PDF, Markdown, text)
+  ├── Text extracted → chunked → embedded via Gemini Embedding API
+  └── Cosine similarity search at suggestion time
 ```
 
 ### Key Components
 
-- **`src/background/service-worker.ts`**: Session lifecycle, Deepgram/Gemini orchestration, TabCapture management
+- **`src/background/service-worker.ts`**: Session lifecycle, Deepgram/Gemini orchestration, TabCapture, call summary generation
 - **`src/content/content-script.ts`**: Mic capture via AudioWorklet, message bridge, overlay injection
-- **`src/content/overlay.ts`**: Shadow DOM (closed) floating panel — transcripts and suggestion cards
+- **`src/content/overlay.ts`**: Shadow DOM (closed) floating panel — transcripts, suggestion cards, and summary display
 - **`src/content/audio-processor.worklet.js`**: AudioWorklet processor — stereo-to-mono, linear interpolation resampling, Float32→Int16
 - **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
 - **`src/services/deepgram-client.ts`**: WebSocket client for Deepgram Nova-3 STT
-- **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash with conversation history
-- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript saving
+- **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash — suggestions, embeddings, and call summaries
+- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript/summary saving
 - **`src/services/transcript-collector.ts`**: Collects transcripts during session, triggers Drive auto-save
-- **`src/options/options.ts`**: Settings page for API keys, preferences, system prompt
+- **`src/services/call-summary.ts`**: Prompt builder and markdown formatter for post-call summaries
+- **`src/services/kb/kb-database.ts`**: IndexedDB wrapper for documents and 768-dim embedding vectors
+- **`src/services/kb/kb-search.ts`**: Semantic search using cosine similarity over Gemini embeddings
+- **`src/services/kb/extractors.ts`**: Text extraction from PDF (`pdfjs-dist`), Markdown (`marked`), and plain text
+- **`src/options/options.ts`**: Thin controller composing section modules (see below)
+- **`src/options/sections/`**: Modular options sections — `api-keys`, `drive`, `system-prompt`, `knowledge-base`, `call-summary`, `theme`, `speaker-filter`, plus `shared` utilities (`ToastManager`, `ModalManager`)
+- **`src/tutorials/`**: Interactive HTML tutorials for KB and call summary features
+- **`src/validation/`**: In-extension validation tests for KB pipeline (embeddings, extraction, IndexedDB, cosine search, e2e)
 
 ## Critical Conventions
 
@@ -87,7 +104,7 @@ Never use: `wss://api.deepgram.com/v1/listen?token=xxx` (returns 401).
 
 ### Service clients are singletons
 
-`deepgramClient`, `geminiClient`, `transcriptCollector`, and `driveService` are all exported as singleton instances from their respective modules.
+`deepgramClient`, `geminiClient`, `transcriptCollector`, `driveService`, and `kbDatabase` are all exported as singleton instances from their respective modules.
 
 ### Gemini suggestion cooldown
 
@@ -101,13 +118,28 @@ The Gemini client enforces a 15-second cooldown between suggestions to manage AP
 
 The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from Google Meet. All CSS is injected inline into the shadow root.
 
+### Options page is section-based
+
+`options.ts` is a thin controller (~60 lines) that composes independent section classes from `src/options/sections/`. Each section manages its own DOM bindings and storage. Shared UI (toasts, modals) is passed via a context object. Add new settings by creating a new section class.
+
+### KB context is injected gracefully
+
+When generating suggestions, the Gemini client dynamically imports KB search and prepends matching context to the system prompt (with source filename attribution). KB failures are caught silently — suggestions still work without KB.
+
+### Call summary truncation strategy
+
+For long conversations, `buildSummaryPrompt()` keeps the first 50 + last 400 transcript entries. This fits within Gemini's context window while preserving conversation framing and recent detail.
+
 ## Build & TypeScript
 
 - **Vite** with `@crxjs/vite-plugin` reads `manifest.json` directly for Chrome Extension bundling
+- **`viteStaticCopy`** copies tutorial HTML/assets to `dist/src/tutorials/`
+- **Build inputs**: `background`, `content`, `popup`, `offscreen`, `validation`, `tutorials`
 - **Path aliases**: `@/` → `src/`, `@shared/` → `src/shared/` (configured in both `vite.config.ts` and `tsconfig.json`)
 - **Strict TypeScript**: `strict: true`, `noUnusedLocals`, `noUnusedParameters`, `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch`
 - **Target**: ES2022, module resolution `bundler`
 - No ESLint or Prettier config files — uses default settings via npm scripts
+- **Runtime dependencies**: `idb` (IndexedDB), `marked` (Markdown parsing), `pdfjs-dist` (PDF extraction), `reconnecting-websocket`
 
 ## Debugging
 

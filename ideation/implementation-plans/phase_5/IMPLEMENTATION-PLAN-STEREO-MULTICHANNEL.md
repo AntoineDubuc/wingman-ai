@@ -85,17 +85,17 @@ This implementation moves audio capture from the content script to Chrome's offs
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
 | [ ] | 1 | Rewrite offscreen AudioWorklet for stereo interleaving | | | | 60 | |
 | [ ] | 2 | Add dual-capture function to offscreen document | | | | 45 | |
-| [ ] | 3 | Orchestrate offscreen + tab capture in service worker | | | | 45 | |
+| [ ] | 3 | Orchestrate offscreen + tab capture in service worker | | | | 50 | |
 | [ ] | 4 | Update Deepgram client for multichannel | | | | 30 | |
 | [ ] | 5 | Strip audio code from content script | | | | 20 | |
-| [ ] | 6 | Update manifest.json for offscreen worklet | | | | 5 | |
+| [ ] | 6 | Update build config for offscreen worklet | | | | 10 | |
 | [ ] | 7 | Build and validate end-to-end | | | | 15 | |
 
 **Summary:**
 - Total tasks: 7
 - Completed: 0
 - Total time spent: 0 minutes
-- Total human estimate: 220 minutes
+- Total human estimate: 230 minutes
 - Overall multiplier: --
 
 ---
@@ -240,8 +240,19 @@ The rewritten `AudioProcessor` worklet class:
 - Send `STOP_AUDIO_CAPTURE` to offscreen document: `chrome.runtime.sendMessage({ type: 'STOP_AUDIO_CAPTURE' })`
 - Close offscreen document after capture stops: `await chrome.offscreen.closeDocument()`
 
+**CRITICAL — Fix `is_self` pass-through in `handleTranscript()` (line 250):**
+The current code hardcodes `is_self: false` when calling `transcriptCollector.addTranscript()`. After Task 4 adds `is_self` to the `Transcript` interface, this line MUST change to pass through the value:
+```typescript
+// BEFORE (line 250):
+is_self: false, // BYOK doesn't have self-identification yet
+
+// AFTER:
+is_self: transcript.is_self,
+```
+Without this fix, `is_self` will always be `false` regardless of channel index, breaking Drive transcript "(You)" labels and degrading summary attribution.
+
 **Key components:**
-- `src/background/service-worker.ts` — rewrite audio capture section in `handleStartSession()` and `handleStopSession()`
+- `src/background/service-worker.ts` — rewrite audio capture in `handleStartSession()` and `handleStopSession()`, fix `is_self` pass-through in `handleTranscript()`
 
 **Notes:** `chrome.tabCapture.getMediaStreamId()` uses a callback API, not promises — must wrap in `new Promise`. The offscreen document already has `STOP_AUDIO_CAPTURE` handler. After stopping, close the offscreen document to free resources. Error handling: if offscreen creation fails or tabCapture fails, return `{ success: false, error: ... }` — don't leave session in a half-started state.
 
@@ -330,36 +341,34 @@ The rewritten `AudioProcessor` worklet class:
 
 ---
 
-### Task 6: Update manifest.json for offscreen worklet
+### Task 6: Update build config for offscreen worklet
 
-**Intent:** Add the offscreen document's `audio-processor.js` to `web_accessible_resources` so it can be loaded by the AudioWorklet.
+**Intent:** Ensure the offscreen `audio-processor.js` file is copied to the dist folder so the AudioWorklet can load it at runtime.
 
-**Context:** AudioWorklet modules must be loaded via URL, and Chrome requires them to be listed as web-accessible resources. The offscreen audio-processor.js needs this to be loadable via `chrome.runtime.getURL()`.
+**Context:** The offscreen document loads `audio-processor.js` via `chrome.runtime.getURL('src/offscreen/audio-processor.js')`. This file is plain JS (not TypeScript, not bundled by Vite). It currently exists in source at `src/offscreen/audio-processor.js` but is **NOT** in `dist/` after build — verified by inspecting the dist folder. Without this fix, `audioContext.audioWorklet.addModule()` will fail with a 404.
+
+**Why the content worklet works but this won't:** The content script's `audio-processor.worklet.js` IS in dist because it's listed in `manifest.json`'s `web_accessible_resources`, and `@crxjs/vite-plugin` copies those files. But using `web_accessible_resources` for the offscreen worklet is problematic: crxjs merges all entries into a single block, which could change the match pattern for existing resources from `https://meet.google.com/*` to `<all_urls>`.
 
 **Expected behavior:**
 
-Add a second entry to `web_accessible_resources`:
-```json
-{
-  "resources": ["src/offscreen/audio-processor.js"],
-  "matches": ["<all_urls>"]
-}
+Add a static copy target in `vite.config.ts`:
+```typescript
+viteStaticCopy({
+  targets: [
+    // ... existing tutorial entries ...
+    { src: 'src/offscreen/audio-processor.js', dest: 'src/offscreen' },
+  ],
+}),
 ```
 
-The `<all_urls>` match is needed because offscreen documents don't have a fixed origin matching a specific host pattern.
+This copies the file to `dist/src/offscreen/audio-processor.js`. The offscreen document runs in the extension context and can access all bundled files directly — no `web_accessible_resources` entry needed.
 
-Optionally remove the old content worklet entry (but leaving it is harmless):
-```json
-{
-  "resources": ["src/content/audio-processor.worklet.js"],
-  "matches": ["https://meet.google.com/*"]
-}
-```
+**No changes to manifest.json needed.** The existing `web_accessible_resources` entry for the content worklet remains unchanged.
 
 **Key components:**
-- `manifest.json` — update `web_accessible_resources`
+- `vite.config.ts` — add static copy target for offscreen audio-processor.js
 
-**Notes:** Minimal change. If the offscreen worklet URL fails to load, `audioContext.audioWorklet.addModule()` will throw, and the `startDualCapture()` function will propagate the error back to the service worker.
+**Notes:** If the file fails to load, `audioContext.audioWorklet.addModule()` will throw and `startDualCapture()` will propagate the error. Verify after build: `ls dist/src/offscreen/audio-processor.js` should exist.
 
 ---
 

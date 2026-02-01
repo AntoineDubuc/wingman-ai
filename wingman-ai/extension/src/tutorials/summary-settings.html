@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configure Call Summary - Wingman AI</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+    .step:nth-child(7) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="back-link">&larr; All Tutorials</a>
+    <h1>Configure Call Summary</h1>
+    <p>Set up automatic AI-generated summaries with action items after every call</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open Settings</div>
+      </div>
+      <p class="step-description">
+        Open the Wingman settings page. You'll see all configuration sections including API Keys, Speaker Filter, Google Drive, Call Summary, Knowledge Base, and System Prompt.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/01-options-page.png" target="_blank">
+          <img src="summary-settings/01-options-page.png" alt="Full settings page" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Find the Call Summary Card</div>
+      </div>
+      <p class="step-description">
+        Scroll down to the "Call Summary" settings card. Both toggles &mdash; "Auto-generate call summary" and "Include key moments" &mdash; are enabled by default.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/02-summary-card-visible.png" target="_blank">
+          <img src="summary-settings/02-summary-card-visible.png" alt="Call Summary card with both toggles enabled" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>What it does:</strong> When enabled, Wingman automatically generates a structured summary with action items when your call ends. It uses one additional Gemini API call per session.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Disable Auto-Summary</div>
+      </div>
+      <p class="step-description">
+        Click the "Auto-generate call summary" toggle to turn it off. The toggle switches to the gray/OFF position.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/03-summary-disabled.png" target="_blank">
+          <img src="summary-settings/03-summary-disabled.png" alt="Auto-generate toggle disabled" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Note:</strong> When auto-summary is off, no summary will be generated at the end of your calls. The "Include key moments" option becomes unavailable.
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Key Moments Toggle Grays Out</div>
+      </div>
+      <p class="step-description">
+        With auto-summary disabled, the "Include key moments" toggle is grayed out and non-interactive. Key moments is a sub-feature that requires auto-summary to be enabled.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/04-moments-toggle-state.png" target="_blank">
+          <img src="summary-settings/04-moments-toggle-state.png" alt="Key moments toggle grayed out" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Re-enable Auto-Summary</div>
+      </div>
+      <p class="step-description">
+        Click the toggle again to re-enable auto-summary. Both toggles return to their active state.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/05-summary-re-enabled.png" target="_blank">
+          <img src="summary-settings/05-summary-re-enabled.png" alt="Both toggles active again" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Disable Key Moments Only</div>
+      </div>
+      <p class="step-description">
+        You can keep auto-summary enabled but turn off key moments independently. This gives you the summary and action items without the notable quotes section.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/06-moments-disabled.png" target="_blank">
+          <img src="summary-settings/06-moments-disabled.png" alt="Key moments off, auto-summary on" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>When to disable key moments:</strong> If you prefer a shorter, more concise summary focused on action items rather than quoted highlights from the conversation.
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <div class="step-title">Settings Are Saved Automatically</div>
+      </div>
+      <p class="step-description">
+        Your settings are saved automatically when you toggle them. If you reload the page or restart the browser, your preferences will be preserved.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="summary-settings/07-settings-persisted.png" target="_blank">
+          <img src="summary-settings/07-settings-persisted.png" alt="Settings persisted after reload" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Next:</strong> Start a Google Meet call and end it normally. If auto-summary is enabled, you'll see the summary overlay appear automatically.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI &mdash; Call Summary Settings Tutorial
+  </footer>
+
+
+</body>
+</html>

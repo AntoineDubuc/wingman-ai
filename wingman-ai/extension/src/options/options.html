@@ -184,6 +184,40 @@
         </div>
       </div>
 
+      <!-- Call Summary Card -->
+      <div class="options-card">
+        <h2 class="form-section-title">Call Summary</h2>
+        <p class="form-section-description">
+          Get an AI-generated summary with action items when your calls end.
+        </p>
+
+        <div class="toggle-row" id="summary-enabled-row">
+          <div class="toggle-info">
+            <label for="summary-enabled-toggle" class="toggle-label">Auto-generate call summary</label>
+            <p class="toggle-description">
+              Uses one additional Gemini API call per session.
+            </p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="summary-enabled-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="toggle-row" id="summary-moments-row">
+          <div class="toggle-info">
+            <label for="summary-moments-toggle" class="toggle-label">Include key moments</label>
+            <p class="toggle-description">
+              Surfaces notable quotes and buying signals.
+            </p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="summary-moments-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
       <!-- Knowledge Base Card -->
       <div class="options-card">
         <h2 class="form-section-title">Knowledge Base</h2>
@@ -270,6 +304,7 @@
     <!-- Footer with version -->
     <footer class="options-footer">
       <span class="version">v1.0.0</span>
+      <a href="#" id="open-tutorials" class="tutorials-link">View Tutorials</a>
     </footer>
 
     <!-- Toast notification component -->

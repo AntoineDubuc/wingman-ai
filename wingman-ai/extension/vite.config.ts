@@ -1,11 +1,22 @@
 import { defineConfig } from 'vite';
 import { crx } from '@crxjs/vite-plugin';
 import { resolve } from 'path';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import manifest from './manifest.json';
 
 export default defineConfig({
   plugins: [
     crx({ manifest }),
+    viteStaticCopy({
+      targets: [
+        { src: 'src/tutorials/kb-upload-search.html', dest: 'src/tutorials' },
+        { src: 'src/tutorials/kb-upload-search', dest: 'src/tutorials' },
+        { src: 'src/tutorials/summary-settings.html', dest: 'src/tutorials' },
+        { src: 'src/tutorials/summary-settings', dest: 'src/tutorials' },
+        { src: 'src/tutorials/summary-overlay.html', dest: 'src/tutorials' },
+        { src: 'src/tutorials/summary-overlay', dest: 'src/tutorials' },
+      ],
+    }),
   ],
   base: './',
   resolve: {
@@ -25,6 +36,7 @@ export default defineConfig({
         popup: resolve(__dirname, 'src/popup/popup.ts'),
         offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
         validation: resolve(__dirname, 'src/validation/validation.html'),
+        tutorials: resolve(__dirname, 'src/tutorials/index.html'),
       },
       output: {
         entryFileNames: '[name].js',

@@ -103,22 +103,22 @@ This phase adds an intelligent post-call layer to Wingman. When a session ends, 
 
 | Done | # | Task Name | Start | End | Total (min) | Human Est. (min) | Multiplier |
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
-| [ ] | 1 | Define summary types, prompt builder, and markdown formatter | | | | | |
-| [ ] | 2 | Add generateCallSummary() to GeminiClient | | | | | |
-| [ ] | 3 | Orchestrate summary generation in service worker | | | | | |
-| [ ] | 4 | Build summary overlay UI with styles | | | | | |
-| [ ] | 5 | Wire summary display into content script | | | | | |
-| [ ] | 6 | Implement copy-to-clipboard | | | | | |
-| [ ] | 7 | Append summary to Drive transcript | | | | | |
-| [ ] | 8 | Add summary settings to Options page | | | | | |
-| [ ] | 9 | Build and validate end-to-end | | | | | |
+| [x] | 1 | Define summary types, prompt builder, and markdown formatter | 18:42 | 18:48 | 6 | 30 | 5x |
+| [x] | 2 | Add generateCallSummary() to GeminiClient | 18:48 | 18:53 | 5 | 25 | 5x |
+| [x] | 3 | Orchestrate summary generation in service worker | 18:53 | 19:05 | 12 | 45 | 3.8x |
+| [x] | 4 | Build summary overlay UI with styles | 19:05 | 19:16 | 11 | 45 | 4.1x |
+| [x] | 5 | Wire summary display into content script | 19:16 | 19:20 | 4 | 20 | 5x |
+| [x] | 6 | Implement copy-to-clipboard | -- | -- | 0 | 15 | -- |
+| [x] | 7 | Append summary to Drive transcript | 19:20 | 19:26 | 6 | 25 | 4.2x |
+| [x] | 8 | Add summary settings to Options page | 19:26 | 19:32 | 6 | 30 | 5x |
+| [x] | 9 | Build and validate end-to-end | 19:32 | 19:36 | 4 | 20 | 5x |
 
 **Summary:**
 - Total tasks: 9
-- Completed: 0
-- Total time spent: 0 minutes
-- Total human estimate: 0 minutes
-- Overall multiplier: --
+- Completed: 9
+- Total time spent: 54 minutes
+- Total human estimate: 255 minutes
+- Overall multiplier: 4.7x
 
 ---
 

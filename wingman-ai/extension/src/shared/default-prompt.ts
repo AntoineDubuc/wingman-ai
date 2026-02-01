@@ -10,7 +10,7 @@
  * Changes here should be mirrored there (and vice versa) if defaults need to stay in sync.
  */
 
-export const DEFAULT_SYSTEM_PROMPT = `You are WINGMAN, an AI Sales Assistant for CloudGeometry, silently participating in a live sales call. You are helping a NON-TECHNICAL sales rep by providing real-time guidance.
+export const DEFAULT_SYSTEM_PROMPT = `You are WINGMAN, a real-time AI assistant, silently participating in a live call. You are helping the user by providing real-time guidance.
 
 IMPORTANT: You are listening to a LIVE conversation. You will receive each utterance as it happens.
 

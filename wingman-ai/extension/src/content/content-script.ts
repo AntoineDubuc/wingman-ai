@@ -15,6 +15,7 @@ let mediaStream: MediaStream | null = null;
 let audioWorkletNode: AudioWorkletNode | null = null;
 let isCapturingMic = false;
 let extensionValid = true;
+let overlayDismissedByUser = false;
 
 /**
  * Check if extension context is still valid
@@ -190,6 +191,7 @@ function stopMicCapture(): void {
  */
 function handleOverlayClose(): void {
   console.log('[ContentScript] User closed overlay, stopping session');
+  overlayDismissedByUser = true;
   stopMicCapture();
 
   // Notify background to stop the full session
@@ -230,6 +232,7 @@ try {
 
     switch (message.type) {
       case 'INIT_OVERLAY':
+        overlayDismissedByUser = false;
         initOverlay();
         sendResponse({ success: true });
         break;
@@ -288,6 +291,30 @@ try {
 
       case 'SHOW_OVERLAY':
         overlay?.show();
+        break;
+
+      case 'summary_loading':
+        if (!overlayDismissedByUser && overlay) {
+          overlay.showLoading();
+        }
+        break;
+
+      case 'call_summary':
+        if (!overlayDismissedByUser && overlay) {
+          overlay.showSummary(message.data);
+        }
+        break;
+
+      case 'summary_error':
+        if (!overlayDismissedByUser && overlay) {
+          overlay.showSummaryError(message.data.message);
+        }
+        break;
+
+      case 'drive_save_result':
+        if (overlay) {
+          overlay.updateDriveStatus(message.data);
+        }
         break;
 
       default:

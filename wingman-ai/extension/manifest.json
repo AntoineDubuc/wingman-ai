@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvI155kvoBeiLenkMDnDT1c4rEuZAOJqJiZZ9GXYG9NaAW/sgdvoCftBJVlLbmnsjQzdCG9BXntTELOVXdDuJ66Np5pb289H3tZJMaDKrp0nCQwD+u6GZs4GMAlIbCLQ9GpvzQtUaQzozmJHpLqedDeRDoFfp6kAxfLMNFcoR0jxIxaXKcVXs3Pj94vT7TegZx4OjTBRT0fi3hZrC25kBksjO3FFmRxDo0CBt5qSjthtmvVApma+mApjKTGWWEOTsARM9NvT7UxD4Se+JJvqoPZgPsWaKaXO0YDfi5/zn5GgoO9fD5JoV7b5cgMaZJj6QPic7+8yR2kudkObPtTRjsQIDAQAB",
-  "name": "Wingman - AI Sales Assistant",
+  "name": "Wingman - Real-Time AI Assistant",
   "version": "1.0.0",
   "description": "Your AI co-pilot for Google Meet. Get real-time suggestions, talking points, and smart responses during video calls.",
   "permissions": [

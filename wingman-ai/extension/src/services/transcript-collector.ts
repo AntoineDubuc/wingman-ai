@@ -5,7 +5,6 @@
  * Uses Chrome Identity API - no backend required.
  */
 
-import { driveService, TranscriptData, SessionMetadata } from './drive-service';
 
 export interface CollectedTranscript {
   timestamp: string;
@@ -77,11 +76,13 @@ class TranscriptCollector {
   }
 
   /**
-   * End the session and trigger auto-save if enabled
+   * End the session and return the frozen session data.
+   * The service worker handles Drive save and summary generation.
    */
-  async endSession(): Promise<{ saved: boolean; fileUrl?: string; error?: string }> {
+  endSession(): SessionData | null {
     if (!this.session) {
-      return { saved: false, error: 'No active session' };
+      console.log('[TranscriptCollector] No active session to end');
+      return null;
     }
 
     this.session.endTime = new Date();
@@ -90,75 +91,12 @@ class TranscriptCollector {
     // Clear session
     this.session = null;
 
-    // Check if we have transcripts to save
-    if (sessionData.transcripts.length === 0) {
-      console.log('[TranscriptCollector] No transcripts to save');
-      return { saved: false, error: 'No transcripts collected' };
-    }
+    console.log(
+      `[TranscriptCollector] Session ended: ${sessionData.transcripts.length} transcripts, ` +
+      `${sessionData.suggestionsCount} suggestions`
+    );
 
-    // Check if auto-save is enabled and Drive is connected
-    try {
-      const storage = await chrome.storage.local.get([
-        'driveAutosaveEnabled',
-        'driveConnected',
-        'driveFolderName',
-        'transcriptFormat',
-      ]);
-
-      if (!storage.driveAutosaveEnabled) {
-        console.log('[TranscriptCollector] Auto-save disabled');
-        return { saved: false, error: 'Auto-save disabled' };
-      }
-
-      if (!storage.driveConnected) {
-        console.log('[TranscriptCollector] Drive not connected');
-        return { saved: false, error: 'Google Drive not connected' };
-      }
-
-      // Convert transcripts to Drive service format
-      const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
-        timestamp: t.timestamp,
-        speaker: t.speaker,
-        speaker_id: t.speaker_id,
-        speaker_role: t.speaker_role,
-        text: t.text,
-        is_self: t.is_self,
-      }));
-
-      // Build metadata
-      const endTime = sessionData.endTime || new Date();
-      const durationSeconds = Math.round((endTime.getTime() - sessionData.startTime.getTime()) / 1000);
-      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
-
-      const metadata: SessionMetadata = {
-        startTime: sessionData.startTime,
-        endTime,
-        durationSeconds,
-        speakersCount: speakerIds.size,
-        transcriptsCount: sessionData.transcripts.length,
-        suggestionsCount: sessionData.suggestionsCount,
-        speakerFilterEnabled: sessionData.speakerFilterEnabled,
-      };
-
-      // Save to Drive using Chrome Identity API
-      const result = await driveService.saveTranscript(
-        transcripts,
-        metadata,
-        storage.driveFolderName || 'Wingman Transcripts',
-        storage.transcriptFormat || 'markdown'
-      );
-
-      if (result.success) {
-        console.log('[TranscriptCollector] Saved to Drive:', result.fileUrl);
-        return { saved: true, fileUrl: result.fileUrl };
-      } else {
-        console.error('[TranscriptCollector] Save failed:', result.error);
-        return { saved: false, error: result.error };
-      }
-    } catch (error) {
-      console.error('[TranscriptCollector] Error ending session:', error);
-      return { saved: false, error: String(error) };
-    }
+    return sessionData;
   }
 
   /**

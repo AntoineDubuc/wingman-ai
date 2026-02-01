@@ -270,6 +270,28 @@ body {
   font-size: 12px;
 }
 
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.footer-link:hover {
+  background: var(--color-bg-secondary);
+}
+
 .coffee-link {
   display: inline-flex;
   align-items: center;

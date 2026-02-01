@@ -5,6 +5,8 @@
  * No backend required - calls Drive API directly from extension.
  */
 
+import { type CallSummary, formatSummaryAsMarkdown } from './call-summary';
+
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
@@ -136,7 +138,8 @@ class DriveService {
     transcripts: TranscriptData[],
     metadata: SessionMetadata,
     folderName: string = 'Wingman Transcripts',
-    fileFormat: string = 'markdown'
+    fileFormat: string = 'markdown',
+    summary?: CallSummary | null
   ): Promise<DriveSaveResult> {
     try {
       // Get auth token
@@ -155,7 +158,8 @@ class DriveService {
       const { filename, content, mimeType } = this.formatTranscript(
         transcripts,
         metadata,
-        fileFormat
+        fileFormat,
+        summary ?? null
       );
 
       // Upload file
@@ -323,7 +327,8 @@ class DriveService {
   private formatTranscript(
     transcripts: TranscriptData[],
     metadata: SessionMetadata,
-    fileFormat: string
+    fileFormat: string,
+    summary: CallSummary | null
   ): { filename: string; content: string; mimeType: string } {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -337,25 +342,25 @@ class DriveService {
     if (fileFormat === 'json') {
       return {
         filename: `Transcript - ${dateStr} (${durationMins} min).json`,
-        content: this.formatJson(transcripts, metadata),
+        content: this.formatJson(transcripts, metadata, summary),
         mimeType: 'application/json',
       };
     } else if (fileFormat === 'text') {
       return {
         filename: `Transcript - ${dateStr} (${durationMins} min).txt`,
-        content: this.formatText(transcripts, metadata),
+        content: this.formatText(transcripts, metadata, summary),
         mimeType: 'text/plain',
       };
     } else {
       return {
         filename: `Transcript - ${dateStr} (${durationMins} min).md`,
-        content: this.formatMarkdown(transcripts, metadata),
+        content: this.formatMarkdown(transcripts, metadata, summary),
         mimeType: 'text/markdown',
       };
     }
   }
 
-  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata): string {
+  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -373,11 +378,19 @@ class DriveService {
       `**Duration:** ${durationMins} minutes`,
       `**Speakers:** ${metadata.speakersCount}`,
       '',
-      '---',
-      '',
-      '## Conversation',
-      '',
     ];
+
+    // Prepend call summary if available
+    if (summary) {
+      lines.push('---');
+      lines.push('');
+      lines.push(formatSummaryAsMarkdown(summary));
+    }
+
+    lines.push('---');
+    lines.push('');
+    lines.push('## Conversation');
+    lines.push('');
 
     let currentSpeaker = '';
     for (const t of transcripts) {
@@ -409,7 +422,7 @@ class DriveService {
     return lines.join('\n');
   }
 
-  private formatText(transcripts: TranscriptData[], metadata: SessionMetadata): string {
+  private formatText(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -427,9 +440,37 @@ class DriveService {
       `Duration: ${durationMins} minutes`,
       `Speakers: ${metadata.speakersCount}`,
       '',
-      '-'.repeat(50),
-      '',
     ];
+
+    // Prepend call summary if available
+    if (summary) {
+      lines.push('-'.repeat(50));
+      lines.push('');
+      lines.push('CALL SUMMARY');
+      lines.push('');
+      for (const bullet of summary.summary) {
+        lines.push(`  - ${bullet}`);
+      }
+      if (summary.actionItems.length > 0) {
+        lines.push('');
+        lines.push('ACTION ITEMS:');
+        for (const item of summary.actionItems) {
+          const owner = item.owner === 'you' ? 'You' : 'Them';
+          lines.push(`  [ ] ${owner}: ${item.text}`);
+        }
+      }
+      if (summary.keyMoments.length > 0) {
+        lines.push('');
+        lines.push('KEY MOMENTS:');
+        for (const moment of summary.keyMoments) {
+          lines.push(`  - "${moment.text}"`);
+        }
+      }
+      lines.push('');
+    }
+
+    lines.push('-'.repeat(50));
+    lines.push('');
 
     for (const t of transcripts) {
       const roleLabel = t.speaker_role === 'customer' ? ' (Customer)' : t.is_self ? ' (You)' : '';
@@ -447,7 +488,7 @@ class DriveService {
     return lines.join('\n');
   }
 
-  private formatJson(transcripts: TranscriptData[], metadata: SessionMetadata): string {
+  private formatJson(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
     return JSON.stringify(
       {
         metadata: {
@@ -459,6 +500,18 @@ class DriveService {
           suggestions_count: metadata.suggestionsCount,
           speaker_filter_enabled: metadata.speakerFilterEnabled,
         },
+        summary: summary ? {
+          summary: summary.summary,
+          action_items: summary.actionItems.map((item) => ({
+            owner: item.owner,
+            text: item.text,
+          })),
+          key_moments: summary.keyMoments.map((moment) => ({
+            text: moment.text,
+            type: moment.type,
+            timestamp: moment.timestamp ?? null,
+          })),
+        } : null,
         transcripts: transcripts.map((t) => ({
           timestamp: t.timestamp,
           speaker: t.speaker,

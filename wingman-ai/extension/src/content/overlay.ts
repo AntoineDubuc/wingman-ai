@@ -5,6 +5,9 @@
  * Uses Shadow DOM for style isolation from Google Meet's styles.
  */
 
+import type { CallSummary } from '../services/call-summary';
+import { formatSummaryAsMarkdown } from '../services/call-summary';
+
 export interface Suggestion {
   type: 'answer' | 'objection' | 'info';
   question?: string;
@@ -30,6 +33,8 @@ export class AIOverlay {
   private fontSize = 13; // Base font size in px
   private readonly MIN_FONT_SIZE = 10;
   private readonly MAX_FONT_SIZE = 20;
+  private summaryShown = false;
+  private currentSummary: CallSummary | null = null;
 
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
@@ -314,6 +319,187 @@ export class AIOverlay {
         font-weight: 500;
         color: #e67e22;
       }
+
+      /* Summary styles */
+      .summary-section {
+        margin-bottom: 12px;
+      }
+
+      .summary-section h3 {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--overlay-text-secondary);
+        margin: 0 0 8px 0;
+      }
+
+      .summary-bullets {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .summary-bullets li {
+        color: var(--overlay-text);
+        padding: 4px 0;
+        line-height: 1.5;
+      }
+
+      .summary-bullets li::before {
+        content: "\\2022";
+        color: var(--overlay-text-secondary);
+        margin-right: 8px;
+      }
+
+      .action-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 6px 0;
+      }
+
+      .owner-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .owner-badge.you {
+        background: #e67e22;
+        color: #fff;
+      }
+
+      .owner-badge.them {
+        background: #3b82f6;
+        color: #fff;
+      }
+
+      .action-text {
+        color: var(--overlay-text);
+        line-height: 1.5;
+      }
+
+      .key-moments-toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+        padding: 4px 0;
+      }
+
+      .key-moments-toggle h3 {
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .key-moments-arrow {
+        font-size: 10px;
+        transition: transform 0.2s ease;
+        color: var(--overlay-text-secondary);
+      }
+
+      .key-moments-arrow.expanded {
+        transform: rotate(90deg);
+      }
+
+      .key-moments-list {
+        display: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .key-moments-list.expanded {
+        display: block;
+      }
+
+      .key-moment {
+        padding: 8px 12px;
+        margin: 4px 0;
+        border-radius: 6px;
+        background: var(--overlay-bg-secondary);
+        border-left: 3px solid #9ca3af;
+        color: var(--overlay-text);
+        font-style: italic;
+        line-height: 1.5;
+      }
+
+      .key-moment.signal { border-left-color: #22c55e; }
+      .key-moment.objection { border-left-color: #ef4444; }
+      .key-moment.decision { border-left-color: #3b82f6; }
+      .key-moment.quote { border-left-color: #9ca3af; }
+
+      .summary-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px;
+        border-top: 1px solid var(--overlay-border);
+        background: var(--overlay-bg);
+      }
+
+      .overlay-panel.minimized .summary-footer {
+        display: none;
+      }
+
+      .summary-footer .copy-btn {
+        background: var(--overlay-bg-secondary);
+        border: 1px solid var(--overlay-border);
+        color: var(--overlay-text);
+        padding: 6px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .summary-footer .copy-btn:hover {
+        background: var(--overlay-bg-tertiary);
+      }
+
+      .summary-footer .drive-status {
+        font-size: 12px;
+        color: var(--overlay-text-secondary);
+      }
+
+      .loading-pulse {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        color: var(--overlay-text-secondary);
+        font-size: 14px;
+      }
+
+      .loading-pulse::after {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-left: 8px;
+        border-radius: 50%;
+        background: var(--overlay-text-secondary);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+      }
+
+      .summary-error {
+        color: var(--overlay-text-secondary);
+        font-size: 13px;
+        text-align: center;
+        padding: 24px;
+      }
     `;
     this.shadow.appendChild(styles);
   }
@@ -485,6 +671,192 @@ export class AIOverlay {
   }
 
   /**
+   * Show loading state while summary is being generated.
+   */
+  showLoading(): void {
+    // Auto-expand if minimized
+    if (this.isMinimized) {
+      this.toggleMinimize();
+    }
+
+    // Clear suggestions
+    const container = this.panel.querySelector('.suggestions-container');
+    if (container) {
+      container.innerHTML = '<div class="loading-pulse">Generating Summary...</div>';
+    }
+
+    // Hide transcript section
+    const transcript = this.panel.querySelector('.transcript-section') as HTMLElement;
+    if (transcript) transcript.style.display = 'none';
+
+    // Remove any existing footer
+    this.panel.querySelector('.summary-footer')?.remove();
+
+    // Update header
+    const title = this.panel.querySelector('.title');
+    if (title) title.textContent = 'Generating Summary...';
+    const status = this.panel.querySelector('.status-indicator') as HTMLElement;
+    if (status) status.style.background = '#f59e0b'; // amber
+
+    this.panel.style.display = 'flex';
+  }
+
+  /**
+   * Display the full summary card.
+   */
+  showSummary(summary: CallSummary): void {
+    this.currentSummary = summary;
+    this.summaryShown = true;
+
+    // Update header
+    const title = this.panel.querySelector('.title');
+    if (title) title.textContent = 'Call Summary';
+    const status = this.panel.querySelector('.status-indicator') as HTMLElement;
+    if (status) status.style.background = '#8b5cf6'; // purple
+
+    // Hide transcript section
+    const transcript = this.panel.querySelector('.transcript-section') as HTMLElement;
+    if (transcript) transcript.style.display = 'none';
+
+    // Build summary content
+    const container = this.panel.querySelector('.suggestions-container');
+    if (!container) return;
+
+    let html = '';
+
+    // Summary bullets
+    html += '<div class="summary-section"><h3>Summary</h3><ul class="summary-bullets">';
+    if (summary.summary.length === 0) {
+      html += '<li>No summary available</li>';
+    } else {
+      for (const bullet of summary.summary) {
+        html += `<li>${this.escapeHtml(bullet)}</li>`;
+      }
+    }
+    html += '</ul></div>';
+
+    // Action items (omit if empty)
+    if (summary.actionItems.length > 0) {
+      html += '<div class="summary-section"><h3>Action Items</h3>';
+      for (const item of summary.actionItems) {
+        const badgeClass = item.owner === 'you' ? 'you' : 'them';
+        const badgeLabel = item.owner === 'you' ? 'YOU' : 'THEM';
+        html += `<div class="action-item">
+          <span class="owner-badge ${badgeClass}">${badgeLabel}</span>
+          <span class="action-text">${this.escapeHtml(item.text)}</span>
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    // Key moments (omit if empty, collapsed by default)
+    if (summary.keyMoments.length > 0) {
+      html += `<div class="summary-section">
+        <div class="key-moments-toggle">
+          <span class="key-moments-arrow">&#9654;</span>
+          <h3>Key Moments (${summary.keyMoments.length})</h3>
+        </div>
+        <div class="key-moments-list">`;
+      for (const moment of summary.keyMoments) {
+        html += `<div class="key-moment ${moment.type}">"${this.escapeHtml(moment.text)}"</div>`;
+      }
+      html += '</div></div>';
+    }
+
+    container.innerHTML = html;
+
+    // Wire key moments toggle
+    const toggle = container.querySelector('.key-moments-toggle');
+    const list = container.querySelector('.key-moments-list');
+    const arrow = container.querySelector('.key-moments-arrow');
+    if (toggle && list && arrow) {
+      toggle.addEventListener('click', () => {
+        list.classList.toggle('expanded');
+        arrow.classList.toggle('expanded');
+      });
+    }
+
+    // Add footer with copy button and drive status
+    this.panel.querySelector('.summary-footer')?.remove();
+    const footer = document.createElement('div');
+    footer.className = 'summary-footer';
+    footer.innerHTML = `
+      <button class="copy-btn">Copy</button>
+      <span class="drive-status"></span>
+    `;
+    // Insert before resize handle
+    const resizeHandle = this.panel.querySelector('.resize-handle');
+    this.panel.insertBefore(footer, resizeHandle);
+
+    // Wire copy button (Task 6 will finalize, but basic wiring here)
+    const copyBtn = footer.querySelector('.copy-btn') as HTMLButtonElement;
+    copyBtn.addEventListener('click', () => this.handleCopy(copyBtn));
+
+    this.panel.style.display = 'flex';
+  }
+
+  /**
+   * Show a brief error message then auto-hide after 3 seconds.
+   */
+  showSummaryError(message: string): void {
+    // Clear loading state
+    const container = this.panel.querySelector('.suggestions-container');
+    if (container) {
+      container.innerHTML = `<div class="summary-error">${this.escapeHtml(message)}</div>`;
+    }
+
+    // Update header
+    const title = this.panel.querySelector('.title');
+    if (title) title.textContent = 'Call Summary';
+
+    // Hide transcript
+    const transcript = this.panel.querySelector('.transcript-section') as HTMLElement;
+    if (transcript) transcript.style.display = 'none';
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => this.hide(), 3000);
+  }
+
+  /**
+   * Update the Drive save status indicator in the summary footer.
+   */
+  updateDriveStatus(result: { saved: boolean; fileUrl?: string }): void {
+    const driveStatus = this.panel.querySelector('.drive-status');
+    if (!driveStatus) return; // no-op if summary footer not showing
+    if (result.saved) {
+      driveStatus.textContent = 'Saved to Drive';
+    }
+  }
+
+  /**
+   * Handle copy-to-clipboard for the summary.
+   */
+  private async handleCopy(btn: HTMLButtonElement): Promise<void> {
+    if (!this.currentSummary) return;
+
+    try {
+      const markdown = formatSummaryAsMarkdown(this.currentSummary);
+      await navigator.clipboard.writeText(markdown);
+      btn.textContent = 'Copied!';
+    } catch {
+      btn.textContent = 'Failed';
+    }
+
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+    }, 2000);
+  }
+
+  /**
+   * Escape HTML to prevent XSS in summary content.
+   */
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
    * Show the overlay
    */
   show(): void {
@@ -496,6 +868,10 @@ export class AIOverlay {
    */
   hide(): void {
     this.panel.style.display = 'none';
+    if (this.summaryShown) {
+      this.summaryShown = false;
+      this.currentSummary = null;
+    }
   }
 
   /**

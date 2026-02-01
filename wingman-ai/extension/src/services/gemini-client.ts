@@ -9,6 +9,12 @@
  */
 
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
+import type { CollectedTranscript } from './transcript-collector';
+import {
+  type CallSummary,
+  type SummaryMetadata,
+  buildSummaryPrompt,
+} from './call-summary';
 
 // Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -446,6 +452,89 @@ export class GeminiClient {
     }
 
     throw new Error('Max retries exceeded');
+  }
+
+  /**
+   * Generate a structured call summary from the full transcript.
+   * Runs once at session end. Returns null on any failure (logged, not thrown).
+   */
+  async generateCallSummary(
+    transcripts: CollectedTranscript[],
+    metadata: SummaryMetadata,
+    options: { includeKeyMoments: boolean }
+  ): Promise<CallSummary | null> {
+    let apiKey: string;
+    try {
+      apiKey = await this.getApiKey();
+    } catch {
+      console.error('[GeminiClient] No API key for summary generation');
+      return null;
+    }
+
+    try {
+      const prompt = buildSummaryPrompt(transcripts, metadata, options);
+
+      const response = await this.fetchWithRetry(
+        `${GEMINI_API_BASE}/${this.model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              maxOutputTokens: 2000,
+              temperature: 0.2,
+            },
+          }),
+        }
+      );
+
+      const data = await response.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!rawText) {
+        console.error('[GeminiClient] Empty summary response from Gemini');
+        return null;
+      }
+
+      // Parse JSON response
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        console.error('[GeminiClient] Malformed JSON in summary response:', rawText.slice(0, 200));
+        return null;
+      }
+
+      // Validate shape
+      const obj = parsed as Record<string, unknown>;
+      if (
+        !Array.isArray(obj.summary) ||
+        !Array.isArray(obj.actionItems) ||
+        !Array.isArray(obj.keyMoments)
+      ) {
+        console.error('[GeminiClient] Invalid summary shape:', Object.keys(obj));
+        return null;
+      }
+
+      const summary: CallSummary = {
+        summary: obj.summary as string[],
+        actionItems: obj.actionItems as CallSummary['actionItems'],
+        keyMoments: obj.keyMoments as CallSummary['keyMoments'],
+        metadata,
+      };
+
+      console.log(
+        `[GeminiClient] Summary generated: ${summary.summary.length} bullets, ` +
+        `${summary.actionItems.length} actions, ${summary.keyMoments.length} moments`
+      );
+
+      return summary;
+    } catch (error) {
+      console.error('[GeminiClient] Summary generation failed:', error);
+      return null;
+    }
   }
 
   /**

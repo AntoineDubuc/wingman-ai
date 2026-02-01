@@ -13,6 +13,8 @@
 import { deepgramClient, Transcript } from '../services/deepgram-client';
 import { geminiClient } from '../services/gemini-client';
 import { transcriptCollector } from '../services/transcript-collector';
+import { driveService, type TranscriptData, type SessionMetadata } from '../services/drive-service';
+import type { SummaryMetadata } from '../services/call-summary';
 import { runAllTests, runTest, getAvailableTests } from '../validation/index';
 
 // Session state
@@ -296,42 +298,156 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
 }
 
 /**
- * Stop the capture session
+ * Stop the capture session and orchestrate summary generation + Drive save.
+ *
+ * Critical: All async work completes before sendResponse() returns,
+ * keeping the service worker alive via the STOP_SESSION message lifecycle.
  */
 async function handleStopSession(): Promise<{ success: boolean }> {
   try {
-    // Stop mic capture and hide overlay via content script
-    if (activeTabId) {
-      chrome.tabs.sendMessage(activeTabId, { type: 'STOP_MIC_CAPTURE' }).catch(() => {});
-      chrome.tabs.sendMessage(activeTabId, { type: 'HIDE_OVERLAY' }).catch(() => {});
+    // 1. Capture tabId before any async work (prevents race condition on state reset)
+    const tabId = activeTabId;
+
+    // 2. Stop mic capture
+    if (tabId) {
+      chrome.tabs.sendMessage(tabId, { type: 'STOP_MIC_CAPTURE' }).catch(() => {});
     }
 
-    // End transcript collection and auto-save to Drive
-    if (transcriptCollector.hasActiveSession()) {
-      const saveResult = await transcriptCollector.endSession();
-      if (saveResult.saved) {
-        console.log('[ServiceWorker] Transcript saved to Drive:', saveResult.fileUrl);
-        // Notify user via content script (optional toast)
-        if (activeTabId) {
-          chrome.tabs
-            .sendMessage(activeTabId, {
-              type: 'DRIVE_SAVE_RESULT',
-              data: saveResult,
-            })
-            .catch(() => {});
-        }
-      } else if (saveResult.error) {
-        console.log('[ServiceWorker] Transcript save skipped:', saveResult.error);
+    // 3. Show loading state (replaces HIDE_OVERLAY)
+    if (tabId) {
+      chrome.tabs.sendMessage(tabId, { type: 'summary_loading' }).catch(() => {});
+    }
+
+    // End transcript collection — returns frozen session data
+    const sessionData = transcriptCollector.endSession();
+
+    // 4. Read settings
+    const storage = await chrome.storage.local.get([
+      'summaryEnabled',
+      'summaryKeyMomentsEnabled',
+      'geminiApiKey',
+      'driveAutosaveEnabled',
+      'driveConnected',
+      'driveFolderName',
+      'transcriptFormat',
+    ]);
+
+    // 5. Generate summary — four distinct outcomes
+    type SummaryOutcome = 'disabled' | 'skipped' | 'success' | 'error';
+    let summary: import('../services/call-summary').CallSummary | null = null;
+    let summaryOutcome: SummaryOutcome = 'disabled';
+
+    if (!storage.summaryEnabled || !storage.geminiApiKey) {
+      summaryOutcome = 'disabled';
+    } else if (!sessionData || sessionData.transcripts.length < 5) {
+      summaryOutcome = 'skipped';
+    } else {
+      // Build metadata for summary
+      const endTime = sessionData.endTime ?? new Date();
+      const durationMinutes = Math.round(
+        (endTime.getTime() - sessionData.startTime.getTime()) / 60000
+      );
+      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
+
+      const summaryMeta: SummaryMetadata = {
+        generatedAt: new Date().toISOString(),
+        durationMinutes,
+        speakerCount: speakerIds.size,
+        transcriptCount: sessionData.transcripts.length,
+      };
+
+      const result = await geminiClient.generateCallSummary(
+        sessionData.transcripts,
+        summaryMeta,
+        { includeKeyMoments: storage.summaryKeyMomentsEnabled !== false }
+      );
+
+      if (result) {
+        summary = result;
+        summaryOutcome = 'success';
+      } else {
+        summaryOutcome = 'error';
       }
     }
 
-    // Disconnect Deepgram
-    await deepgramClient.disconnect();
+    console.log(`[ServiceWorker] Summary outcome: ${summaryOutcome}`);
 
-    // Clear Gemini session
+    // 6. Save to Drive
+    let driveResult: { saved: boolean; fileUrl?: string; error?: string } = { saved: false };
+
+    if (
+      sessionData &&
+      sessionData.transcripts.length > 0 &&
+      storage.driveAutosaveEnabled &&
+      storage.driveConnected
+    ) {
+      const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
+        timestamp: t.timestamp,
+        speaker: t.speaker,
+        speaker_id: t.speaker_id,
+        speaker_role: t.speaker_role,
+        text: t.text,
+        is_self: t.is_self,
+      }));
+
+      const endTime = sessionData.endTime ?? new Date();
+      const durationSeconds = Math.round(
+        (endTime.getTime() - sessionData.startTime.getTime()) / 1000
+      );
+      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
+
+      const metadata: SessionMetadata = {
+        startTime: sessionData.startTime,
+        endTime,
+        durationSeconds,
+        speakersCount: speakerIds.size,
+        transcriptsCount: sessionData.transcripts.length,
+        suggestionsCount: sessionData.suggestionsCount,
+        speakerFilterEnabled: sessionData.speakerFilterEnabled,
+      };
+
+      const result = await driveService.saveTranscript(
+        transcripts,
+        metadata,
+        storage.driveFolderName || 'Wingman Transcripts',
+        storage.transcriptFormat || 'markdown',
+        summary
+      );
+
+      driveResult = { saved: result.success, fileUrl: result.fileUrl, error: result.error };
+
+      if (result.success) {
+        console.log('[ServiceWorker] Transcript saved to Drive:', result.fileUrl);
+      } else {
+        console.warn('[ServiceWorker] Drive save failed:', result.error);
+      }
+    }
+
+    // 7. Send results to content script
+    if (tabId) {
+      if (summaryOutcome === 'success') {
+        chrome.tabs.sendMessage(tabId, { type: 'call_summary', data: summary }).catch(() => {});
+        if (driveResult.saved) {
+          chrome.tabs.sendMessage(tabId, { type: 'drive_save_result', data: driveResult }).catch(() => {});
+        }
+      } else if (summaryOutcome === 'error') {
+        chrome.tabs
+          .sendMessage(tabId, {
+            type: 'summary_error',
+            data: { message: 'Summary generation failed. Your transcript was still saved.' },
+          })
+          .catch(() => {});
+      } else {
+        // disabled or skipped — hide overlay (existing behavior)
+        chrome.tabs.sendMessage(tabId, { type: 'HIDE_OVERLAY' }).catch(() => {});
+      }
+    }
+
+    // 8. Cleanup
+    await deepgramClient.disconnect();
     geminiClient.clearSession();
 
-    // Reset state
+    // 9. Reset state
     isSessionActive = false;
     isCapturing = false;
     activeTabId = null;
@@ -340,6 +456,12 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     return { success: true };
   } catch (error) {
     console.error('[ServiceWorker] Failed to stop session:', error);
+
+    // Reset state even on error
+    isSessionActive = false;
+    isCapturing = false;
+    activeTabId = null;
+
     return { success: false };
   }
 }

@@ -41,6 +41,11 @@ class OptionsController {
   private themeToggle: HTMLButtonElement | null = null;
   private speakerFilterToggle: HTMLInputElement | null = null;
 
+  // Call Summary elements
+  private summaryEnabledToggle: HTMLInputElement | null = null;
+  private summaryMomentsToggle: HTMLInputElement | null = null;
+  private summaryMomentsRow: HTMLElement | null = null;
+
   // API Keys elements
   private deepgramApiKeyInput: HTMLInputElement | null = null;
   private geminiApiKeyInput: HTMLInputElement | null = null;
@@ -89,6 +94,7 @@ class OptionsController {
     await this.loadApiKeys();
     await this.loadSpeakerFilter();
     await this.loadDriveSettings();
+    await this.loadSummarySettings();
     await this.loadPrompt();
     await this.initKB();
   }
@@ -110,6 +116,11 @@ class OptionsController {
     this.modalConfirmBtn = document.getElementById('modal-confirm') as HTMLButtonElement;
     this.themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement;
     this.speakerFilterToggle = document.getElementById('speaker-filter-toggle') as HTMLInputElement;
+
+    // Call Summary elements
+    this.summaryEnabledToggle = document.getElementById('summary-enabled-toggle') as HTMLInputElement;
+    this.summaryMomentsToggle = document.getElementById('summary-moments-toggle') as HTMLInputElement;
+    this.summaryMomentsRow = document.getElementById('summary-moments-row');
 
     // API Keys elements
     this.deepgramApiKeyInput = document.getElementById('deepgram-api-key') as HTMLInputElement;
@@ -220,6 +231,22 @@ class OptionsController {
     // Speaker filter toggle change
     this.speakerFilterToggle?.addEventListener('change', () => {
       this.saveSpeakerFilter();
+    });
+
+    // Call Summary toggle change
+    this.summaryEnabledToggle?.addEventListener('change', () => {
+      this.updateSummaryMomentsAvailability();
+      this.saveSummarySettings();
+    });
+
+    this.summaryMomentsToggle?.addEventListener('change', () => {
+      this.saveSummarySettings();
+    });
+
+    // Tutorials link
+    document.getElementById('open-tutorials')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: chrome.runtime.getURL('src/tutorials/index.html') });
     });
 
     // API Keys event listeners
@@ -885,6 +912,80 @@ class OptionsController {
     } catch (error) {
       console.error('Failed to disconnect Google Drive:', error);
       this.showToast('Failed to disconnect', 'error');
+    }
+  }
+
+  // =========================================================================
+  // Call Summary Settings
+  // =========================================================================
+
+  /**
+   * Load call summary settings from storage
+   */
+  async loadSummarySettings(): Promise<void> {
+    try {
+      const result = await chrome.storage.local.get([
+        'summaryEnabled',
+        'summaryKeyMomentsEnabled',
+      ]);
+
+      if (this.summaryEnabledToggle) {
+        this.summaryEnabledToggle.checked = result.summaryEnabled ?? true;
+      }
+
+      if (this.summaryMomentsToggle) {
+        this.summaryMomentsToggle.checked = result.summaryKeyMomentsEnabled ?? true;
+      }
+
+      this.updateSummaryMomentsAvailability();
+    } catch (error) {
+      console.error('Failed to load summary settings:', error);
+    }
+  }
+
+  /**
+   * Save call summary settings to storage
+   */
+  async saveSummarySettings(): Promise<void> {
+    try {
+      const summaryEnabled = this.summaryEnabledToggle?.checked ?? true;
+      const keyMomentsEnabled = this.summaryMomentsToggle?.checked ?? true;
+
+      await chrome.storage.local.set({
+        summaryEnabled,
+        summaryKeyMomentsEnabled: keyMomentsEnabled,
+      });
+
+      this.showToast(
+        summaryEnabled ? 'Summary settings saved' : 'Call summary disabled',
+        'success'
+      );
+    } catch (error) {
+      console.error('Failed to save summary settings:', error);
+      this.showToast('Failed to save settings', 'error');
+    }
+  }
+
+  /**
+   * Update the key moments toggle availability based on summary enabled state.
+   * When summary is disabled, the moments toggle is visually disabled but
+   * retains its stored value so re-enabling summary restores the preference.
+   */
+  private updateSummaryMomentsAvailability(): void {
+    const enabled = this.summaryEnabledToggle?.checked ?? true;
+
+    if (this.summaryMomentsToggle) {
+      this.summaryMomentsToggle.disabled = !enabled;
+    }
+
+    if (this.summaryMomentsRow) {
+      if (enabled) {
+        this.summaryMomentsRow.style.opacity = '';
+        this.summaryMomentsRow.style.pointerEvents = '';
+      } else {
+        this.summaryMomentsRow.style.opacity = '0.5';
+        this.summaryMomentsRow.style.pointerEvents = 'none';
+      }
     }
   }
 

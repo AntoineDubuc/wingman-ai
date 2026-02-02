@@ -75,7 +75,7 @@ Knowledge Base (IndexedDB)
 - **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
 - **`src/services/deepgram-client.ts`**: WebSocket client for Deepgram Nova-3 STT
 - **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash — suggestions, embeddings, and call summaries
-- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript/summary saving
+- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript/summary saving. Supports four formats: native Google Doc (default, rich HTML→Doc conversion), Markdown, plain text, and JSON
 - **`src/services/transcript-collector.ts`**: Collects transcripts during session, triggers Drive auto-save
 - **`src/services/call-summary.ts`**: Prompt builder and markdown formatter for post-call summaries
 - **`src/services/kb/kb-database.ts`**: IndexedDB wrapper for documents and 768-dim embedding vectors
@@ -125,6 +125,10 @@ The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from G
 ### KB context is injected gracefully
 
 When generating suggestions, the Gemini client dynamically imports KB search and prepends matching context to the system prompt (with source filename attribution). KB failures are caught silently — suggestions still work without KB.
+
+### Google Docs rich formatting via HTML conversion
+
+The Drive service creates native Google Docs by uploading HTML with `mimeType: 'application/vnd.google-apps.document'` in the file metadata and `Content-Type: text/html` for the body. The Drive API converts HTML → native Google Doc automatically. No additional OAuth scopes needed beyond `drive.file`. All styling must use **inline styles** (not `<style>` blocks) — the conversion strips CSS classes and external styles. Supported: headings, bold/italic, tables with cell backgrounds, colored text, lists, links, horizontal rules. Not supported: flexbox, grid, border-radius, page breaks. Google Docs use `https://docs.google.com/document/d/{id}/edit` URLs (not `drive.google.com/file/d/`).
 
 ### Call summary truncation strategy
 

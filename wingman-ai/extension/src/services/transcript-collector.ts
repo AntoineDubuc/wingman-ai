@@ -13,6 +13,8 @@ export interface CollectedTranscript {
   speaker_role: string;
   text: string;
   is_self: boolean;
+  is_suggestion?: boolean;
+  suggestion_type?: string;
 }
 
 export interface SessionData {
@@ -67,12 +69,28 @@ class TranscriptCollector {
   }
 
   /**
-   * Increment suggestion counter
+   * Add an AI suggestion to the collection (unified timeline with speech)
    */
-  incrementSuggestions(): void {
-    if (this.session) {
-      this.session.suggestionsCount++;
-    }
+  addSuggestion(suggestion: {
+    text: string;
+    suggestion_type: string;
+    timestamp: string;
+  }): void {
+    if (!this.session) return;
+
+    this.session.transcripts.push({
+      timestamp: suggestion.timestamp,
+      speaker: 'Wingman AI',
+      speaker_id: -1,
+      speaker_role: 'assistant',
+      text: suggestion.text,
+      is_self: false,
+      is_suggestion: true,
+      suggestion_type: suggestion.suggestion_type,
+    });
+
+    this.session.suggestionsCount++;
+    console.log(`[TranscriptCollector] Collected suggestion #${this.session.suggestionsCount}`);
   }
 
   /**

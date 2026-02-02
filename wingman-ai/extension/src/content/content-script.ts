@@ -76,20 +76,6 @@ function initOverlay(): void {
   overlay = new AIOverlay(handleOverlayClose);
   // Append to <html> instead of <body> — less likely to be removed by Google Meet's framework
   document.documentElement.appendChild(overlay.container);
-  console.log('[ContentScript] Overlay appended, isConnected:', overlay.container.isConnected);
-
-  // DEBUG: Add a plain DOM diagnostic banner (no shadow DOM) to verify content script can render
-  const diag = document.createElement('div');
-  diag.id = 'wingman-debug-banner';
-  diag.textContent = 'WINGMAN OVERLAY LOADED';
-  diag.style.cssText =
-    'position:fixed!important;top:0!important;left:50%!important;transform:translateX(-50%)!important;' +
-    'z-index:2147483647!important;background:red!important;color:white!important;' +
-    'padding:8px 24px!important;font-size:18px!important;font-weight:bold!important;' +
-    'border-radius:0 0 8px 8px!important;pointer-events:none!important;font-family:sans-serif!important;';
-  document.documentElement.appendChild(diag);
-  // Auto-remove after 5 seconds
-  setTimeout(() => diag.remove(), 5000);
 }
 
 /**

@@ -61,7 +61,7 @@ export class DriveSection {
         this.folderNameInput.value = result.driveFolderName || 'Wingman Transcripts';
       }
 
-      const format = result.transcriptFormat || 'markdown';
+      const format = result.transcriptFormat || 'googledoc';
       this.formatRadios?.forEach((radio) => {
         radio.checked = radio.value === format;
       });
@@ -77,7 +77,7 @@ export class DriveSection {
       const autosaveEnabled = this.autosaveToggle?.checked ?? true;
       const folderName = this.folderNameInput?.value?.trim() || 'Wingman Transcripts';
 
-      let transcriptFormat = 'markdown';
+      let transcriptFormat = 'googledoc';
       this.formatRadios?.forEach((radio) => {
         if (radio.checked) transcriptFormat = radio.value;
       });

@@ -11,6 +11,14 @@ const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export interface DriveAuthResult {
   success: boolean;
   email?: string;
@@ -30,6 +38,8 @@ export interface TranscriptData {
   speaker_role: string;
   text: string;
   is_self: boolean;
+  is_suggestion?: boolean;
+  suggestion_type?: string;
 }
 
 export interface SessionMetadata {
@@ -155,7 +165,7 @@ class DriveService {
       }
 
       // Generate file content
-      const { filename, content, mimeType } = this.formatTranscript(
+      const formatted = this.formatTranscript(
         transcripts,
         metadata,
         fileFormat,
@@ -163,7 +173,10 @@ class DriveService {
       );
 
       // Upload file
-      const fileUrl = await this.uploadFile(token, folderId, filename, content, mimeType);
+      const fileUrl = await this.uploadFile(
+        token, folderId, formatted.filename, formatted.content,
+        formatted.mimeType, formatted.convertToGoogleDoc
+      );
       if (!fileUrl) {
         return { success: false, error: 'Failed to upload file' };
       }
@@ -282,13 +295,19 @@ class DriveService {
     folderId: string,
     filename: string,
     content: string,
-    mimeType: string
+    mimeType: string,
+    convertToGoogleDoc: boolean = false
   ): Promise<string | null> {
     // Use multipart upload
-    const metadata = {
+    const fileMetadata: Record<string, unknown> = {
       name: filename,
       parents: [folderId],
     };
+
+    // Set target mimeType for HTML→Google Doc conversion
+    if (convertToGoogleDoc) {
+      fileMetadata.mimeType = 'application/vnd.google-apps.document';
+    }
 
     const boundary = '-------314159265358979323846';
     const delimiter = `\r\n--${boundary}\r\n`;
@@ -297,7 +316,7 @@ class DriveService {
     const body =
       delimiter +
       'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-      JSON.stringify(metadata) +
+      JSON.stringify(fileMetadata) +
       delimiter +
       `Content-Type: ${mimeType}\r\n\r\n` +
       content +
@@ -314,6 +333,9 @@ class DriveService {
 
     if (response.ok) {
       const file = await response.json();
+      if (convertToGoogleDoc) {
+        return `https://docs.google.com/document/d/${file.id}/edit`;
+      }
       return `https://drive.google.com/file/d/${file.id}/view`;
     }
 
@@ -329,7 +351,7 @@ class DriveService {
     metadata: SessionMetadata,
     fileFormat: string,
     summary: CallSummary | null
-  ): { filename: string; content: string; mimeType: string } {
+  ): { filename: string; content: string; mimeType: string; convertToGoogleDoc: boolean } {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -338,26 +360,161 @@ class DriveService {
       minute: '2-digit',
     });
     const durationMins = Math.round(metadata.durationSeconds / 60);
+    const baseName = `Transcript - ${dateStr} (${durationMins} min)`;
 
-    if (fileFormat === 'json') {
+    if (fileFormat === 'googledoc') {
       return {
-        filename: `Transcript - ${dateStr} (${durationMins} min).json`,
+        filename: baseName,
+        content: this.formatGoogleDoc(transcripts, metadata, summary),
+        mimeType: 'text/html',
+        convertToGoogleDoc: true,
+      };
+    } else if (fileFormat === 'json') {
+      return {
+        filename: `${baseName}.json`,
         content: this.formatJson(transcripts, metadata, summary),
         mimeType: 'application/json',
+        convertToGoogleDoc: false,
       };
     } else if (fileFormat === 'text') {
       return {
-        filename: `Transcript - ${dateStr} (${durationMins} min).txt`,
+        filename: `${baseName}.txt`,
         content: this.formatText(transcripts, metadata, summary),
         mimeType: 'text/plain',
+        convertToGoogleDoc: false,
       };
     } else {
       return {
-        filename: `Transcript - ${dateStr} (${durationMins} min).md`,
+        filename: `${baseName}.md`,
         content: this.formatMarkdown(transcripts, metadata, summary),
         mimeType: 'text/markdown',
+        convertToGoogleDoc: false,
       };
     }
+  }
+
+  private formatGoogleDoc(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
+    const dateStr = metadata.startTime.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const shortDateStr = metadata.startTime.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timeStr = metadata.startTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const endTimeStr = metadata.endTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const durationMins = Math.round(metadata.durationSeconds / 60);
+
+    const h: string[] = [];
+
+    // Document wrapper
+    h.push('<html><body style="font-family: Arial, sans-serif; color: #3c4043; line-height: 1.6;">');
+
+    // Title
+    h.push(`<h1 style="color: #1a73e8; font-size: 24px; border-bottom: 2px solid #1a73e8; padding-bottom: 10px;">Meeting Transcript &mdash; ${escapeHtml(dateStr)}</h1>`);
+
+    // Metadata table
+    const tdLabel = 'padding: 8px 12px; border: 1px solid #dadce0; background-color: #f8f9fa; font-weight: bold; width: 180px;';
+    const tdValue = 'padding: 8px 12px; border: 1px solid #dadce0;';
+    h.push('<table style="width: 100%; border-collapse: collapse; margin: 16px 0;">');
+    h.push(`<tr><td style="${tdLabel}">Time</td><td style="${tdValue}">${escapeHtml(timeStr)} &ndash; ${escapeHtml(endTimeStr)} (${durationMins} min)</td></tr>`);
+    h.push(`<tr><td style="${tdLabel}">Speakers</td><td style="${tdValue}">${metadata.speakersCount}</td></tr>`);
+    h.push(`<tr><td style="${tdLabel}">Transcript entries</td><td style="${tdValue}">${metadata.transcriptsCount}</td></tr>`);
+    h.push(`<tr><td style="${tdLabel}">AI suggestions</td><td style="${tdValue}">${metadata.suggestionsCount}</td></tr>`);
+    h.push('</table>');
+
+    // Call summary
+    if (summary) {
+      h.push(`<h2 style="color: #3c4043; margin-top: 24px;">Call Summary &mdash; ${escapeHtml(shortDateStr)}</h2>`);
+      h.push(`<p><strong>Duration:</strong> ${durationMins} min | <strong>Speakers:</strong> ${metadata.speakersCount}</p>`);
+
+      // Summary bullets
+      h.push('<h3 style="color: #5f6368;">Summary</h3>');
+      if (summary.summary.length === 0) {
+        h.push('<ul><li>No summary available</li></ul>');
+      } else {
+        h.push('<ul>');
+        for (const bullet of summary.summary) {
+          h.push(`<li>${escapeHtml(bullet)}</li>`);
+        }
+        h.push('</ul>');
+      }
+
+      // Action Items
+      if (summary.actionItems.length > 0) {
+        h.push('<h3 style="color: #5f6368;">Action Items</h3>');
+        h.push('<ul>');
+        for (const item of summary.actionItems) {
+          const owner = item.owner === 'you' ? 'You' : 'Them';
+          h.push(`<li>&#9744; <strong>${owner}:</strong> ${escapeHtml(item.text)}</li>`);
+        }
+        h.push('</ul>');
+      }
+
+      // Key Moments
+      if (summary.keyMoments.length > 0) {
+        h.push('<h3 style="color: #5f6368;">Key Moments</h3>');
+        h.push('<ul>');
+        for (const moment of summary.keyMoments) {
+          const timestamp = moment.timestamp ? ` (${escapeHtml(moment.timestamp)})` : '';
+          h.push(`<li><em>&ldquo;${escapeHtml(moment.text)}&rdquo;</em>${timestamp}</li>`);
+        }
+        h.push('</ul>');
+      }
+    }
+
+    // Separator — use a table-based rule since <hr> may become a page break
+    h.push('<table style="width: 100%; border-collapse: collapse; margin: 24px 0;"><tr><td style="border-bottom: 2px solid #dadce0;"></td></tr></table>');
+
+    // Transcript heading
+    h.push('<h2 style="color: #3c4043;">Transcript</h2>');
+
+    // Transcript entries
+    let currentSpeaker = '';
+    for (const t of transcripts) {
+      if (t.is_suggestion) {
+        // AI suggestion — two-cell table: narrow amber accent + content cell
+        h.push('<table style="width: 100%; border-collapse: collapse; margin: 12px 0;">');
+        h.push('<tr>');
+        h.push('<td style="width: 4px; background-color: #fbbc04; padding: 0;"></td>');
+        h.push(`<td style="padding: 10px 14px; background-color: #fef7e0;">`);
+        h.push(`<strong style="color: #e37400;">Wingman AI</strong> <span style="color: #80868b; font-size: 12px;">(${escapeHtml(t.suggestion_type || 'suggestion')}) &mdash; ${escapeHtml(t.timestamp)}</span><br>`);
+        h.push(`<span style="color: #5f6368;">${escapeHtml(t.text)}</span>`);
+        h.push('</td></tr></table>');
+        currentSpeaker = '';
+        continue;
+      }
+
+      // Speaker color: blue for user, green for customer, gray for other
+      const speakerColor = t.is_self ? '#1a73e8' : t.speaker_role === 'customer' ? '#34a853' : '#5f6368';
+      const roleLabel = t.speaker_role === 'customer' ? ' (Customer)' : t.is_self ? ' (You)' : '';
+      const speakerLabel = `${t.speaker}${roleLabel}`;
+
+      if (speakerLabel !== currentSpeaker) {
+        currentSpeaker = speakerLabel;
+        h.push(`<p style="margin-top: 16px; margin-bottom: 2px;"><strong style="color: ${speakerColor};">${escapeHtml(speakerLabel)}</strong> <span style="color: #80868b; font-size: 12px;">&mdash; ${escapeHtml(t.timestamp)}</span></p>`);
+      }
+
+      h.push(`<p style="margin-left: 16px; margin-top: 2px; color: #3c4043;">${escapeHtml(t.text)}</p>`);
+    }
+
+    // Footer
+    h.push('<table style="width: 100%; border-collapse: collapse; margin: 24px 0;"><tr><td style="border-bottom: 2px solid #dadce0;"></td></tr></table>');
+    h.push(`<p style="text-align: center; color: #9aa0a6; font-size: 11px;">Generated by <a href="https://github.com/AntoineDubuc/wingman-ai" style="color: #1a73e8;">Wingman AI</a> &mdash; ${escapeHtml(dateStr)}</p>`);
+
+    h.push('</body></html>');
+
+    return h.join('\n');
   }
 
   private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
@@ -404,6 +561,14 @@ class DriveService {
 
     let currentSpeaker = '';
     for (const t of transcripts) {
+      if (t.is_suggestion) {
+        lines.push(`> **Wingman AI** *(${t.suggestion_type || 'suggestion'})* — ${t.timestamp}`);
+        lines.push(`> ${t.text}`);
+        lines.push('');
+        currentSpeaker = '';
+        continue;
+      }
+
       const roleLabel = t.speaker_role === 'customer' ? ' (Customer)' : t.is_self ? ' (You)' : '';
       const speakerLabel = `${t.speaker}${roleLabel}`;
 
@@ -476,6 +641,13 @@ class DriveService {
     lines.push('');
 
     for (const t of transcripts) {
+      if (t.is_suggestion) {
+        lines.push(`[${t.timestamp}] ** WINGMAN AI (${t.suggestion_type || 'suggestion'}) **`);
+        lines.push(`  >> ${t.text}`);
+        lines.push('');
+        continue;
+      }
+
       const roleLabel = t.speaker_role === 'customer' ? ' (Customer)' : t.is_self ? ' (You)' : '';
       lines.push(`[${t.timestamp}] ${t.speaker}${roleLabel}:`);
       lines.push(t.text);
@@ -522,6 +694,10 @@ class DriveService {
           speaker_role: t.speaker_role,
           text: t.text,
           is_self: t.is_self,
+          ...(t.is_suggestion && {
+            is_suggestion: true,
+            suggestion_type: t.suggestion_type,
+          }),
         })),
       },
       null,

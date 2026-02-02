@@ -329,10 +329,7 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
         type: 'transcript',
         data: transcript,
       })
-      .then((resp) => console.debug('[ServiceWorker] Transcript delivered to tab', activeTabId, resp))
-      .catch((err) => console.error('[ServiceWorker] Failed to send transcript to tab:', err));
-  } else {
-    console.warn('[ServiceWorker] No activeTabId — transcript not sent to content script');
+      .catch(() => {});
   }
 
   // Apply speaker filter if enabled (only process customer utterances)
@@ -351,8 +348,12 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
       );
 
       if (suggestion) {
-        // Track suggestion count
-        transcriptCollector.incrementSuggestions();
+        // Store full suggestion text for Drive transcript
+        transcriptCollector.addSuggestion({
+          text: suggestion.text,
+          suggestion_type: suggestion.suggestion_type,
+          timestamp: suggestion.timestamp,
+        });
 
         // Send suggestion to content script for display
         if (activeTabId) {
@@ -361,10 +362,7 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
               type: 'suggestion',
               data: suggestion,
             })
-            .then((resp) => console.log('[ServiceWorker] Suggestion delivered to tab', activeTabId, resp))
-            .catch((err) => console.error('[ServiceWorker] Failed to send suggestion to tab:', err));
-        } else {
-          console.warn('[ServiceWorker] No activeTabId — suggestion not sent to content script');
+            .catch(() => {});
         }
 
         console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
@@ -397,6 +395,11 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     // End transcript collection — returns frozen session data
     const sessionData = transcriptCollector.endSession();
 
+    // Separate speech from suggestions for counts and summary generation
+    const speechTranscripts = sessionData
+      ? sessionData.transcripts.filter((t) => !t.is_suggestion)
+      : [];
+
     // 4. Read settings
     const storage = await chrome.storage.local.get([
       'summaryEnabled',
@@ -415,25 +418,25 @@ async function handleStopSession(): Promise<{ success: boolean }> {
 
     if (!storage.summaryEnabled || !storage.geminiApiKey) {
       summaryOutcome = 'disabled';
-    } else if (!sessionData || sessionData.transcripts.length < 5) {
+    } else if (!sessionData || speechTranscripts.length < 5) {
       summaryOutcome = 'skipped';
     } else {
-      // Build metadata for summary
+      // Build metadata for summary (speech only — exclude suggestions)
       const endTime = sessionData.endTime ?? new Date();
       const durationMinutes = Math.round(
         (endTime.getTime() - sessionData.startTime.getTime()) / 60000
       );
-      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
+      const speakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
 
       const summaryMeta: SummaryMetadata = {
         generatedAt: new Date().toISOString(),
         durationMinutes,
         speakerCount: speakerIds.size,
-        transcriptCount: sessionData.transcripts.length,
+        transcriptCount: speechTranscripts.length,
       };
 
       const result = await geminiClient.generateCallSummary(
-        sessionData.transcripts,
+        speechTranscripts,
         summaryMeta,
         { includeKeyMoments: storage.summaryKeyMomentsEnabled !== false }
       );
@@ -457,6 +460,7 @@ async function handleStopSession(): Promise<{ success: boolean }> {
       storage.driveAutosaveEnabled &&
       storage.driveConnected
     ) {
+      // Full array (speech + suggestions) goes to Drive for complete record
       const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
         timestamp: t.timestamp,
         speaker: t.speaker,
@@ -464,20 +468,23 @@ async function handleStopSession(): Promise<{ success: boolean }> {
         speaker_role: t.speaker_role,
         text: t.text,
         is_self: t.is_self,
+        is_suggestion: t.is_suggestion,
+        suggestion_type: t.suggestion_type,
       }));
 
       const endTime = sessionData.endTime ?? new Date();
       const durationSeconds = Math.round(
         (endTime.getTime() - sessionData.startTime.getTime()) / 1000
       );
-      const speakerIds = new Set(sessionData.transcripts.map((t) => t.speaker_id));
+      // Metadata counts use speech-only (exclude suggestions)
+      const driveSpeakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
 
       const metadata: SessionMetadata = {
         startTime: sessionData.startTime,
         endTime,
         durationSeconds,
-        speakersCount: speakerIds.size,
-        transcriptsCount: sessionData.transcripts.length,
+        speakersCount: driveSpeakerIds.size,
+        transcriptsCount: speechTranscripts.length,
         suggestionsCount: sessionData.suggestionsCount,
         speakerFilterEnabled: sessionData.speakerFilterEnabled,
       };
@@ -486,7 +493,7 @@ async function handleStopSession(): Promise<{ success: boolean }> {
         transcripts,
         metadata,
         storage.driveFolderName || 'Wingman Transcripts',
-        storage.transcriptFormat || 'markdown',
+        storage.transcriptFormat || 'googledoc',
         summary
       );
 

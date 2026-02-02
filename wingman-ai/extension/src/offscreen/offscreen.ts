@@ -196,6 +196,9 @@ async function startDualCapture(streamId: string): Promise<void> {
     micSource.connect(merger, 0, 0); // mic → merger channel 0
     tabSource.connect(merger, 0, 1); // tab → merger channel 1
 
+    // Route tab audio back to speakers so the user can still hear participants
+    tabSource.connect(audioContext.destination);
+
     // 5. Load and connect stereo AudioWorklet
     await audioContext.audioWorklet.addModule(
       chrome.runtime.getURL('src/offscreen/audio-processor.js')

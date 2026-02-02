@@ -8,6 +8,13 @@
  * Falls back to ScriptProcessorNode if AudioWorklet is unavailable.
  */
 
+/** Extract a useful error message — DOMException.toString() gives '[object DOMException]' */
+function errorMessage(error: unknown): string {
+  if (error instanceof DOMException) return `${error.name}: ${error.message}`;
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
 let audioContext: AudioContext | null = null;
 let mediaStream: MediaStream | null = null;
 let micStream: MediaStream | null = null;
@@ -219,7 +226,7 @@ async function startDualCapture(streamId: string): Promise<void> {
 
     console.log('[Offscreen] Dual capture started successfully (stereo)');
   } catch (error) {
-    console.error('[Offscreen] Failed to start dual capture:', error);
+    console.error('[Offscreen] Failed to start dual capture:', errorMessage(error));
     // Notify service worker of failure
     chrome.runtime.sendMessage({
       type: 'CAPTURE_STATUS',
@@ -383,20 +390,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     case 'START_MIC_CAPTURE':
       startMicrophoneCapture()
         .then(() => sendResponse({ success: true }))
-        .catch((error) => sendResponse({ success: false, error: String(error) }));
+        .catch((error) => sendResponse({ success: false, error: errorMessage(error) }));
       return true; // Keep channel open for async response
 
     case 'START_DUAL_CAPTURE':
       startDualCapture(message.streamId)
         .then(() => sendResponse({ success: true }))
-        .catch((error) => sendResponse({ success: false, error: String(error) }));
+        .catch((error) => sendResponse({ success: false, error: errorMessage(error) }));
       return true; // Keep channel open for async response
 
     case 'START_AUDIO_CAPTURE':
     case 'START_TAB_CAPTURE':
       startTabCapture(message.streamId)
         .then(() => sendResponse({ success: true }))
-        .catch((error) => sendResponse({ success: false, error: String(error) }));
+        .catch((error) => sendResponse({ success: false, error: errorMessage(error) }));
       return true; // Keep channel open for async response
 
     case 'STOP_AUDIO_CAPTURE':

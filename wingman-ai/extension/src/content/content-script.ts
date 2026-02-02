@@ -50,18 +50,46 @@ function handleOverlayClose(): void {
 }
 
 /**
+ * Ensure overlay container is attached to the document.
+ * Google Meet's framework may remove unknown DOM elements during reconciliation.
+ */
+function ensureOverlayAttached(): void {
+  if (!overlay) return;
+  if (!overlay.container.isConnected) {
+    console.warn('[ContentScript] Overlay was detached from DOM — re-attaching');
+    document.documentElement.appendChild(overlay.container);
+  }
+}
+
+/**
  * Initialize the overlay
  */
 function initOverlay(): void {
   if (overlay) {
-    // Already initialized, just show it
-    overlay.show();
+    // Already initialized — ensure it's attached and visible
+    ensureOverlayAttached();
+    overlay.forceShow();
     return;
   }
 
   console.log('[ContentScript] Initializing overlay');
   overlay = new AIOverlay(handleOverlayClose);
-  document.body.appendChild(overlay.container);
+  // Append to <html> instead of <body> — less likely to be removed by Google Meet's framework
+  document.documentElement.appendChild(overlay.container);
+  console.log('[ContentScript] Overlay appended, isConnected:', overlay.container.isConnected);
+
+  // DEBUG: Add a plain DOM diagnostic banner (no shadow DOM) to verify content script can render
+  const diag = document.createElement('div');
+  diag.id = 'wingman-debug-banner';
+  diag.textContent = 'WINGMAN OVERLAY LOADED';
+  diag.style.cssText =
+    'position:fixed!important;top:0!important;left:50%!important;transform:translateX(-50%)!important;' +
+    'z-index:2147483647!important;background:red!important;color:white!important;' +
+    'padding:8px 24px!important;font-size:18px!important;font-weight:bold!important;' +
+    'border-radius:0 0 8px 8px!important;pointer-events:none!important;font-family:sans-serif!important;';
+  document.documentElement.appendChild(diag);
+  // Auto-remove after 5 seconds
+  setTimeout(() => diag.remove(), 5000);
 }
 
 /**
@@ -87,11 +115,14 @@ try {
       case 'transcript':
         console.log('[ContentScript] Transcript data:', message.data);
         if (overlay) {
+          ensureOverlayAttached();
           overlay.updateTranscript(message.data);
+          sendResponse({ received: true, connected: overlay.container.isConnected });
         } else {
           console.warn('[ContentScript] Overlay not initialized!');
+          sendResponse({ received: false, error: 'overlay null' });
         }
-        break;
+        return true;
 
       case 'suggestion':
         // Map backend response format to overlay's Suggestion interface
@@ -110,8 +141,9 @@ try {
           };
           console.log('[ContentScript] Adding suggestion:', suggestion.text.substring(0, 50) + '...');
           overlay?.addSuggestion(suggestion);
+          sendResponse({ received: true });
         }
-        break;
+        return true;
 
       case 'HIDE_OVERLAY':
         overlay?.hide();

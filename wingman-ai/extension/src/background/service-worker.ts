@@ -107,6 +107,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       })();
       return true; // Keep channel open for async
 
+    case 'MIC_PERMISSION_RESULT':
+      // Handled by requestMicPermission() temporary listener
+      return false;
+
     default:
       console.warn('[ServiceWorker] Unknown message type:', message.type);
       return false;
@@ -252,10 +256,37 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
     // Start dual capture (mic + tab) in offscreen document
     try {
-      const captureResponse = await chrome.runtime.sendMessage({
+      let captureResponse = await chrome.runtime.sendMessage({
         type: 'START_DUAL_CAPTURE',
         streamId,
-      });
+      }).catch(() => ({ success: false, error: 'Message failed' }));
+
+      // If mic permission was denied (offscreen can't show prompts), open a real window
+      if (
+        !captureResponse?.success &&
+        typeof captureResponse?.error === 'string' &&
+        captureResponse.error.includes('NotAllowedError')
+      ) {
+        console.log('[ServiceWorker] Mic permission needed, opening permission window');
+        const granted = await requestMicPermission();
+        if (!granted) {
+          return { success: false, error: 'Microphone access is required. Please allow the permission and try again.' };
+        }
+
+        // Get fresh tab capture stream ID for retry
+        const freshStreamId = await new Promise<string>((resolve, reject) => {
+          chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (id) => {
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else resolve(id);
+          });
+        });
+
+        captureResponse = await chrome.runtime.sendMessage({
+          type: 'START_DUAL_CAPTURE',
+          streamId: freshStreamId,
+        }).catch(() => ({ success: false, error: 'Message failed' }));
+      }
+
       if (captureResponse?.success) {
         isCapturing = true;
         console.log('[ServiceWorker] Dual capture started');
@@ -298,7 +329,10 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
         type: 'transcript',
         data: transcript,
       })
-      .catch(() => {});
+      .then((resp) => console.debug('[ServiceWorker] Transcript delivered to tab', activeTabId, resp))
+      .catch((err) => console.error('[ServiceWorker] Failed to send transcript to tab:', err));
+  } else {
+    console.warn('[ServiceWorker] No activeTabId — transcript not sent to content script');
   }
 
   // Apply speaker filter if enabled (only process customer utterances)
@@ -327,7 +361,10 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
               type: 'suggestion',
               data: suggestion,
             })
-            .catch(() => {});
+            .then((resp) => console.log('[ServiceWorker] Suggestion delivered to tab', activeTabId, resp))
+            .catch((err) => console.error('[ServiceWorker] Failed to send suggestion to tab:', err));
+        } else {
+          console.warn('[ServiceWorker] No activeTabId — suggestion not sent to content script');
         }
 
         console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
@@ -513,35 +550,112 @@ async function handleStopSession(): Promise<{ success: boolean }> {
 }
 
 /**
- * Ensure content script is injected and initialize overlay
+ * Open a popup window to request microphone permission.
+ *
+ * Offscreen documents are hidden and can't show permission prompts.
+ * This opens a real browser window at the same chrome-extension:// origin,
+ * so the permission grant carries over to the offscreen document.
+ * Only needed once — permission persists across sessions.
+ */
+async function requestMicPermission(): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const timeoutId = setTimeout(() => {
+      chrome.runtime.onMessage.removeListener(listener);
+      resolve(false);
+    }, 30000);
+
+    const listener = (message: { type: string; granted?: boolean }) => {
+      if (message.type === 'MIC_PERMISSION_RESULT') {
+        clearTimeout(timeoutId);
+        chrome.runtime.onMessage.removeListener(listener);
+        resolve(!!message.granted);
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+
+    chrome.windows.create({
+      url: chrome.runtime.getURL('src/mic-permission.html'),
+      type: 'popup',
+      width: 420,
+      height: 220,
+      focused: true,
+    });
+  });
+}
+
+/**
+ * Ensure content script is injected and initialize overlay.
+ * Non-fatal — audio capture proceeds even if overlay init fails.
+ *
+ * Strategy: inject the crxjs loader (classic IIFE) which dynamically imports
+ * the ESM content.js. Falls back to func-based dynamic import if loader fails.
  */
 async function ensureContentScriptAndInitOverlay(tabId: number): Promise<void> {
   try {
-    // Try to send message to content script
+    // Try to send message to existing content script
     await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
     console.log('[ServiceWorker] Content script responded, overlay initialized');
-  } catch (error) {
-    // Content script not loaded, inject it
+  } catch {
     console.log('[ServiceWorker] Content script not found, injecting...');
 
-    // Inject CSS first
-    await chrome.scripting.insertCSS({
-      target: { tabId },
-      files: ['src/content/content-styles.css'],
-    });
+    // Inject CSS
+    const manifest = chrome.runtime.getManifest();
+    const cssFiles = manifest.content_scripts?.[0]?.css ?? [];
+    if (cssFiles.length > 0) {
+      await chrome.scripting.insertCSS({ target: { tabId }, files: cssFiles });
+    }
 
-    // Inject JS
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content.js'],
-    });
+    // Strategy 1: Inject the crxjs loader from the manifest
+    const jsFiles = manifest.content_scripts?.[0]?.js ?? [];
+    if (jsFiles.length > 0) {
+      console.log('[ServiceWorker] Injecting loader:', jsFiles[0]);
+      try {
+        await chrome.scripting.executeScript({ target: { tabId }, files: jsFiles });
+      } catch (e) {
+        console.error('[ServiceWorker] Loader injection failed:', e);
+      }
+    }
 
-    // Wait a moment for script to initialize
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Wait and check if content script is now responsive
+    for (const delay of [300, 700, 1500]) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
+        console.log('[ServiceWorker] Content script ready after loader injection');
+        return;
+      } catch {
+        console.log(`[ServiceWorker] Not ready after ${delay}ms...`);
+      }
+    }
 
-    // Now send the init message
-    await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
-    console.log('[ServiceWorker] Content script injected and overlay initialized');
+    // Strategy 2: Direct dynamic import via func (fallback)
+    console.log('[ServiceWorker] Loader did not work, trying direct dynamic import');
+    const contentUrl = chrome.runtime.getURL('content.js');
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId },
+        func: (url: string) => {
+          import(url).catch((err: unknown) => console.error('[ContentScript] Import failed:', err));
+        },
+        args: [contentUrl],
+      });
+    } catch (e) {
+      console.error('[ServiceWorker] Func injection failed:', e);
+    }
+
+    // Final retry
+    for (const delay of [500, 1500]) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      try {
+        await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
+        console.log('[ServiceWorker] Content script ready after func injection');
+        return;
+      } catch {
+        console.log(`[ServiceWorker] Still not ready after ${delay}ms...`);
+      }
+    }
+
+    console.warn('[ServiceWorker] Overlay init failed — please refresh the Google Meet tab');
   }
 }
 

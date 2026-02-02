@@ -16,6 +16,8 @@ export default defineConfig({
         { src: 'src/tutorials/summary-overlay.html', dest: 'src/tutorials' },
         { src: 'src/tutorials/summary-overlay', dest: 'src/tutorials' },
         { src: 'src/offscreen/audio-processor.js', dest: 'src/offscreen' },
+        { src: 'src/mic-permission.html', dest: 'src' },
+        { src: 'src/mic-permission.js', dest: 'src' },
       ],
     }),
   ],

@@ -40,10 +40,21 @@ export class AIOverlay {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
     this.container.id = 'presales-ai-overlay-container';
+
+    // Set critical inline styles on the host element itself.
+    // :host CSS can be overridden by external stylesheets, but inline styles cannot.
+    // This ensures the container is positioned and visible regardless of page CSS.
+    this.container.style.cssText =
+      'position:fixed!important;z-index:999999!important;top:0!important;left:0!important;' +
+      'width:0!important;height:0!important;overflow:visible!important;' +
+      'pointer-events:none!important;display:block!important;';
+
     this.shadow = this.container.attachShadow({ mode: 'closed' });
 
     this.loadStyles();
     this.panel = this.createOverlayStructure();
+    // Panel needs its own pointer-events since container has none
+    this.panel.style.pointerEvents = 'auto';
     this.shadow.appendChild(this.panel);
 
     this.initDrag();
@@ -874,6 +885,19 @@ export class AIOverlay {
   }
 
   /**
+   * Force-show the overlay: un-minimize, reset display, and ensure visibility.
+   * Called at session start to guarantee the overlay is visible.
+   */
+  forceShow(): void {
+    // Un-minimize if minimized
+    if (this.isMinimized) {
+      this.isMinimized = false;
+      this.panel.classList.remove('minimized');
+    }
+    this.panel.style.display = 'flex';
+  }
+
+  /**
    * Hide the overlay
    */
   hide(): void {
@@ -958,14 +982,24 @@ export class AIOverlay {
       if (!chrome.runtime?.id) return;
       chrome.storage.local.get(['overlayPosition', 'overlayMinimized', 'overlayFontSize'], (result) => {
         if (result.overlayPosition) {
-          this.panel.style.left = `${result.overlayPosition.left}px`;
-          this.panel.style.top = `${result.overlayPosition.top}px`;
+          const pos = result.overlayPosition;
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const w = pos.width || 350;
+          const h = pos.height || 450;
+
+          // Ensure the panel stays within the viewport
+          const left = Math.max(0, Math.min(pos.left, vw - Math.min(w, 100)));
+          const top = Math.max(0, Math.min(pos.top, vh - Math.min(h, 60)));
+
+          this.panel.style.left = `${left}px`;
+          this.panel.style.top = `${top}px`;
           this.panel.style.right = 'auto';
-          if (result.overlayPosition.width) {
-            this.panel.style.width = `${result.overlayPosition.width}px`;
+          if (pos.width) {
+            this.panel.style.width = `${pos.width}px`;
           }
-          if (result.overlayPosition.height) {
-            this.panel.style.height = `${result.overlayPosition.height}px`;
+          if (pos.height) {
+            this.panel.style.height = `${pos.height}px`;
           }
         }
         if (result.overlayMinimized) {

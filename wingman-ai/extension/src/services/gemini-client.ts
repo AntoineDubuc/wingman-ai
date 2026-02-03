@@ -62,12 +62,20 @@ export class GeminiClient {
   private lastSuggestionTime: number | null = null;
   private suggestionCooldownMs = 15000; // 15 seconds
 
+  // Rate-limit backoff: suppress all calls until this timestamp
+  private rateLimitedUntil = 0;
+
+  // Concurrency guard: only one suggestion call in-flight at a time
+  private isGenerating = false;
+
   /**
    * Start a new conversation session
    */
   startSession(): void {
     this.chatHistory = [];
     this.lastSuggestionTime = null;
+    this.rateLimitedUntil = 0;
+    this.isGenerating = false;
     console.log('[GeminiClient] Started new session');
   }
 
@@ -77,6 +85,8 @@ export class GeminiClient {
   clearSession(): void {
     this.chatHistory = [];
     this.lastSuggestionTime = null;
+    this.rateLimitedUntil = 0;
+    this.isGenerating = false;
     console.log('[GeminiClient] Cleared session');
   }
 
@@ -160,6 +170,13 @@ export class GeminiClient {
       this.chatHistory = this.chatHistory.slice(-this.maxHistoryTurns);
     }
 
+    // Check rate-limit backoff
+    if (Date.now() < this.rateLimitedUntil) {
+      const waitSec = Math.ceil((this.rateLimitedUntil - Date.now()) / 1000);
+      console.debug(`[GeminiClient] Rate-limited, backing off (${waitSec}s remaining)`);
+      return null;
+    }
+
     // Check cooldown
     if (this.lastSuggestionTime) {
       const elapsed = Date.now() - this.lastSuggestionTime;
@@ -169,12 +186,15 @@ export class GeminiClient {
       }
     }
 
-    // Generate response
-    const suggestion = await this.generateResponse(text, speaker);
-
-    if (suggestion) {
-      this.lastSuggestionTime = Date.now();
+    // Concurrency guard: skip if another call is already in-flight
+    if (this.isGenerating) {
+      console.debug('[GeminiClient] Skipping — another request in-flight');
+      return null;
     }
+
+    // Generate response — cooldown starts now regardless of outcome
+    this.lastSuggestionTime = Date.now();
+    const suggestion = await this.generateResponse(text, speaker);
 
     return suggestion;
   }
@@ -201,6 +221,7 @@ export class GeminiClient {
       return null;
     }
 
+    this.isGenerating = true;
     try {
       // KB retrieval: search for relevant context (graceful degradation on failure)
       let kbSource: string | null = null;
@@ -244,6 +265,14 @@ export class GeminiClient {
       );
 
       if (!response.ok) {
+        // Handle rate limiting with backoff
+        if (response.status === 429) {
+          const backoffSeconds = this.parseRetryDelay(await response.text());
+          this.rateLimitedUntil = Date.now() + backoffSeconds * 1000;
+          console.warn(`[GeminiClient] Rate limited — backing off ${backoffSeconds}s`);
+          return null;
+        }
+
         const errorText = await response.text();
         console.error(`[GeminiClient] API error: ${response.status} ${errorText}`);
         return null;
@@ -279,7 +308,35 @@ export class GeminiClient {
     } catch (error) {
       console.error('[GeminiClient] Failed to generate response:', error);
       return null;
+    } finally {
+      this.isGenerating = false;
     }
+  }
+
+  /**
+   * Parse retryDelay from a Gemini 429 error response body.
+   * Returns seconds to wait; defaults to 60s if parsing fails.
+   */
+  private parseRetryDelay(errorBody: string): number {
+    const DEFAULT_BACKOFF = 60;
+    try {
+      const data = JSON.parse(errorBody);
+      const details = data?.error?.details as Array<Record<string, unknown>> | undefined;
+      if (details) {
+        for (const detail of details) {
+          if (detail['@type'] === 'type.googleapis.com/google.rpc.RetryInfo') {
+            const delayStr = detail.retryDelay as string | undefined;
+            if (delayStr) {
+              const seconds = parseFloat(delayStr);
+              if (!isNaN(seconds) && seconds > 0) return Math.ceil(seconds);
+            }
+          }
+        }
+      }
+    } catch {
+      // JSON parse failed — use default
+    }
+    return DEFAULT_BACKOFF;
   }
 
   /**

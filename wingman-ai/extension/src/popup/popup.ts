@@ -128,6 +128,10 @@ class PopupController {
       e.preventDefault();
       chrome.runtime.openOptionsPage();
     });
+    document.getElementById('open-options-footer')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.openOptionsPage();
+    });
     document.getElementById('open-tutorials')?.addEventListener('click', (e) => {
       e.preventDefault();
       chrome.tabs.create({ url: chrome.runtime.getURL('src/tutorials/index.html') });

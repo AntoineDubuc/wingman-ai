@@ -120,6 +120,27 @@
 
       <!-- ==================== CALL SETTINGS TAB ==================== -->
       <div class="tab-panel" id="panel-calls" data-panel="calls" role="tabpanel" aria-labelledby="tab-calls">
+        <!-- Transcription Sensitivity Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Transcription Sensitivity</h2>
+          <p class="form-section-description">
+            Controls how long Wingman waits for a speaker to pause before finalizing a transcript segment.
+            Higher values produce fewer, longer bubbles and fewer API calls.
+          </p>
+
+          <div class="form-group">
+            <label for="endpointing-select" class="form-label">Pause threshold</label>
+            <select id="endpointing-select" class="form-select">
+              <option value="2500">Responsive (2.5s) — more bubbles, faster updates</option>
+              <option value="5000" selected>Balanced (5s) — recommended</option>
+              <option value="8000">Relaxed (8s) — fewer bubbles, lower API cost</option>
+            </select>
+            <p class="toggle-description" style="margin-top: 0.5rem;">
+              Takes effect on the next session. Balanced is recommended for most meetings.
+            </p>
+          </div>
+        </div>
+
         <!-- Speaker Filter Card -->
         <div class="options-card">
           <h2 class="form-section-title">Speaker Filter</h2>

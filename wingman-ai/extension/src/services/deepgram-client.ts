@@ -19,8 +19,7 @@ const DEEPGRAM_PARAMS = {
   smart_format: 'true',
   encoding: 'linear16',
   sample_rate: '16000',
-  endpointing: '2500',
-  utterance_end_ms: '3000',
+  endpointing: '5000',
 };
 
 /**
@@ -91,15 +90,20 @@ export class DeepgramClient {
   }
 
   private async _connect(): Promise<boolean> {
-    // Get API key from storage
+    // Get API key and settings from storage
     try {
-      const storage = await chrome.storage.local.get(['deepgramApiKey']);
+      const storage = await chrome.storage.local.get(['deepgramApiKey', 'endpointingMs']);
       this.apiKey = storage.deepgramApiKey;
 
       if (!this.apiKey) {
         console.error('[DeepgramClient] No API key configured');
         return false;
       }
+
+      // Apply user-configured endpointing threshold
+      const endpointingMs = storage.endpointingMs ?? '5000';
+      DEEPGRAM_PARAMS.endpointing = endpointingMs;
+      console.log(`[DeepgramClient] Endpointing: ${endpointingMs}ms`);
     } catch (error) {
       console.error('[DeepgramClient] Failed to get API key:', error);
       return false;
@@ -185,6 +189,7 @@ export class DeepgramClient {
 
       // Handle transcript results
       if (data.type === 'Results') {
+        console.log('[DeepgramClient] Received Results message, channel:', JSON.stringify(data.channel_index));
         this.processTranscriptResult(data);
       } else if (data.type === 'Metadata') {
         console.debug('[DeepgramClient] Received metadata:', data);
@@ -212,7 +217,10 @@ export class DeepgramClient {
       const alternatives = (channel?.alternatives as Array<Record<string, unknown>>) || [];
 
       const alternative = alternatives[0];
-      if (!alternative) return;
+      if (!alternative) {
+        console.log('[DeepgramClient] No alternatives in Results');
+        return;
+      }
 
       const transcriptText = alternative.transcript as string;
       if (!transcriptText) return;

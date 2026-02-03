@@ -1,6 +1,7 @@
 import { ToastManager, ModalManager } from './sections/shared';
 import { ThemeSection } from './sections/theme';
 import { SpeakerFilterSection } from './sections/speaker-filter';
+import { TranscriptionSection } from './sections/transcription';
 import { CallSummarySection } from './sections/call-summary';
 import { ApiKeysSection } from './sections/api-keys';
 import { DriveSection } from './sections/drive';
@@ -44,6 +45,7 @@ class OptionsController {
     await Promise.all([
       new TabManager().init(),
       new ThemeSection().init(),
+      new TranscriptionSection().init(ctx),
       new SpeakerFilterSection().init(ctx),
       new CallSummarySection().init(ctx),
       new ApiKeysSection().init(ctx),

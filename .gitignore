@@ -10,3 +10,11 @@ client_secret*.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Markdown files (internal docs, plans, templates)
+*.md
+!wingman-ai/LICENSE
+!ideation/implementation-plans/phase_8_chrome_web_store/WINGMAN-PRIVACY-POLICY.md
+!ideation/implementation-plans/phase_8_chrome_web_store/WINGMAN-TERMS-OF-SERVICE.md
+!ideation/implementation-plans/phase_8_chrome_web_store/UPDATE-PROCESS.md
+!ideation/implementation-plans/phase_10/IMPLEMENTATION-PLAN-OVERLAY-UNIFIED-TIMELINE.md

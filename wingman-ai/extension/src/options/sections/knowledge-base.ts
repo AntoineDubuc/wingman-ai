@@ -1,6 +1,7 @@
 import type { OptionsContext } from './shared';
 import { kbDatabase, ingestDocument, isIngesting } from '../../services/kb/kb-database';
 import { searchKB } from '../../services/kb/kb-search';
+import { icon } from './icons';
 
 export class KnowledgeBaseSection {
   private ctx!: OptionsContext;
@@ -142,12 +143,12 @@ export class KnowledgeBaseSection {
         const size = this.formatFileSize(doc.fileSize);
 
         item.innerHTML = `
-          <span class="kb-doc-icon">\uD83D\uDCC4</span>
+          <span class="kb-doc-icon">${icon('document', 24)}</span>
           <div class="kb-doc-info">
             <span class="kb-doc-name" title="${doc.filename}">${doc.filename}</span>
             <span class="kb-doc-meta">${doc.chunkCount} sections \u00B7 ${size} \u00B7 Added ${ago}</span>
           </div>
-          <button class="kb-doc-delete" title="Delete">\uD83D\uDDD1\uFE0F</button>
+          <button class="kb-doc-delete" title="Delete">${icon('trash', 18)}</button>
         `;
 
         const deleteBtn = item.querySelector('.kb-doc-delete') as HTMLButtonElement;
@@ -214,7 +215,7 @@ export class KnowledgeBaseSection {
             .map(
               (r) => `
               <div class="kb-test-result">
-                <div class="kb-test-result-source">\uD83D\uDCC4 ${r.documentName}</div>
+                <div class="kb-test-result-source">${icon('document', 14)} ${r.documentName}</div>
                 <div class="kb-test-result-text">${r.chunk.text.slice(0, 300)}${r.chunk.text.length > 300 ? '...' : ''}</div>
               </div>
             `

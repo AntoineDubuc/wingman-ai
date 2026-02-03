@@ -1,5 +1,6 @@
 import type { OptionsContext } from './shared';
 import { driveService } from '../../services/drive-service';
+import { icon } from './icons';
 
 export class DriveSection {
   private ctx!: OptionsContext;
@@ -128,7 +129,7 @@ export class DriveSection {
       if (this.connectBtn) {
         this.connectBtn.disabled = false;
         this.connectBtn.innerHTML =
-          '<span class="drive-icon">\uD83D\uDCC1</span> Connect Google Account';
+          `${icon('folder', 18)} Connect Google Account`;
       }
     }
   }

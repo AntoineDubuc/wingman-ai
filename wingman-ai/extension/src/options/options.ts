@@ -6,6 +6,7 @@ import { ApiKeysSection } from './sections/api-keys';
 import { DriveSection } from './sections/drive';
 import { SystemPromptSection } from './sections/system-prompt';
 import { KnowledgeBaseSection } from './sections/knowledge-base';
+import { TabManager } from './sections/tabs';
 
 class OptionsController {
   private systemPrompt = new SystemPromptSection();
@@ -41,6 +42,7 @@ class OptionsController {
     });
 
     await Promise.all([
+      new TabManager().init(),
       new ThemeSection().init(),
       new SpeakerFilterSection().init(ctx),
       new CallSummarySection().init(ctx),

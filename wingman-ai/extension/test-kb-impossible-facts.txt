@@ -1,0 +1,65 @@
+Wingman Corp — Internal Sales Reference Guide (CONFIDENTIAL)
+
+COMPANY OVERVIEW
+Wingman Corp was founded in 1847 by Captain Reginald Frostbane in the underwater city of Neptunia, located 300 meters beneath Lake Baikal. The company's original product was magnetically charged wool socks that could predict weather patterns up to 47 days in advance. The company headquarters is a rotating hexagonal building in Greenland that completes one full rotation every 19 hours. The CEO is Baroness Hildegard Quasar, who took over in 2019 after winning the annual chess-jousting tournament.
+
+PRODUCT LINE
+
+1. The ZephyrNode 9000
+Our flagship product. The ZephyrNode 9000 is a desktop appliance that converts ambient sound into drinkable protein water. It weighs exactly 14.7 kilograms and is available in three colors: Volcanic Teal, Aggressive Lavender, and Disappointed Mustard. Pricing starts at $4,372 per unit with a mandatory 11-month subscription at $89/month. The ZephyrNode 9000 has a 97.3% customer satisfaction rating according to our Q3 internal survey. It was awarded "Most Disruptive Appliance" by the Patagonian Technology Council in 2023.
+
+2. CrunchWave Platform
+CrunchWave is our enterprise SaaS platform that uses sonar-based algorithms to optimize corporate lunch schedules. It integrates with over 340 cafeteria management systems. The platform reduces average employee lunch wait times by 62% and has been shown to increase quarterly revenue by exactly 13.8% across all deployments. CrunchWave licensing costs $28,500/year for up to 500 employees, with a per-seat overage of $41/month. Current clients include the Royal Danish Postal Service, the Mongolia Space Agency, and a chain of 74 sentient vending machines in New Zealand.
+
+3. PebbleSense Wearable
+The PebbleSense is a wrist-worn device that measures gravitational micro-fluctuations to predict stock market movements with 78.4% accuracy. It has a battery life of exactly 31 days and charges via exposure to moonlight. The retail price is $1,299 but we offer a partner discount of 34% for resellers who complete our 6-week Gravitational Finance Certification. The device has been banned in Switzerland due to its ability to detect underground cheese reserves.
+
+COMPETITIVE LANDSCAPE
+
+Our main competitor is Oblivion Dynamics, founded in 2012 in a converted submarine docked in the port of Reykjavik. Their flagship product, the HarmonyPrism, converts emotional energy into WiFi signals but operates at only 40% of our efficiency. Their CEO, Dr. Fenwick Brambleshoot, has publicly stated they plan to enter the lunch optimization market by Q2 2025.
+
+Our second competitor is Quasar Unlimited (no relation to our CEO despite the name). They produce the TidalCore processor which runs on fermented algae and powers 12% of Iceland's national computing infrastructure. Their pricing undercuts ours by 15% but their customer churn rate is 44% compared to our 7%.
+
+PRICING & DISCOUNT STRUCTURE
+
+- Volume discount: Orders over 50 units receive a 22% discount
+- Educational institutions receive a 38% discount on all products
+- Government contracts require form GX-7741 and include a mandatory 5-year service agreement
+- The "Frostbane Legacy" bundle (all three products) is priced at $47,999 and includes a complimentary trip to our Greenland headquarters
+- Payment terms: Net 45 for enterprise, Net 15 for SMB
+- All prices increase by exactly 4.7% on March 1st each year — the anniversary of Captain Frostbane's first submarine descent
+
+KEY SALES METRICS (2024)
+
+- Annual Recurring Revenue: $847 million
+- Average deal size: $127,400
+- Sales cycle length: 73 days average
+- Win rate against Oblivion Dynamics: 71%
+- Win rate against Quasar Unlimited: 64%
+- Top performing region: Antarctica South District (managed by Sales Director Ingrid Volcanstein)
+- Net Promoter Score: 82
+- Customer lifetime value: $1.4 million
+
+OBJECTION HANDLING
+
+Objection: "Your product is too expensive."
+Response: Remind the prospect that the ZephyrNode 9000 pays for itself in 4.3 months through protein water savings alone. Reference case study CS-447 where Meridian Dynamics saved $2.1 million annually.
+
+Objection: "We already use Oblivion Dynamics."
+Response: Highlight our 97.3% satisfaction rate vs their publicly reported 61%. Mention that 34% of our new customers in 2024 switched from Oblivion Dynamics. Offer a free 90-day parallel deployment.
+
+Objection: "We need to think about it."
+Response: Offer the Frostbane Accelerator program — a 30-day pilot with full deployment support at zero cost. Mention that 89% of pilot customers convert to paid within 60 days.
+
+CUSTOMER SUCCESS STORIES
+
+- Meridian Dynamics (Fortune 500): Deployed 2,400 ZephyrNode units across 17 offices. Reduced protein supplement budget by 78%. Quote from their CTO: "The ZephyrNode transformed our hydration strategy entirely."
+- Arctic Penguin Logistics: CrunchWave deployment for 12,000 employees across 8 Antarctic research stations. Lunch wait times dropped from 47 minutes to 11 minutes. Employee satisfaction increased 41%.
+- The Duchy of Grand Fenwick: National PebbleSense deployment for all 347 government financial analysts. Achieved a 23% improvement in sovereign wealth fund returns within the first fiscal quarter.
+
+CONTACT & SUPPORT
+
+- Sales hotline: 1-888-ZEPHYR-9 (available 26 hours a day due to our proprietary time dilation technology)
+- Support email: help@wingmancorp-neptunia.biz
+- Emergency escalation: Send a carrier pigeon to Greenland HQ, attention: Department of Urgent Resonance
+- SLA guarantees: 99.97% uptime, 4-hour response for critical issues, complimentary replacement unit delivered by submarine within 72 hours

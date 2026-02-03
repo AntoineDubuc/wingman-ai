@@ -14,6 +14,9 @@ class PopupController {
     errorMessage: HTMLElement;
     controlsHint: HTMLElement;
     openOptions: HTMLElement;
+    personaSection: HTMLElement;
+    personaSelect: HTMLSelectElement;
+    personaHint: HTMLElement;
   };
 
   private isSessionActive = false;
@@ -28,6 +31,9 @@ class PopupController {
       errorMessage: document.getElementById('error-message')!,
       controlsHint: document.getElementById('controls-hint')!,
       openOptions: document.getElementById('open-options')!,
+      personaSection: document.getElementById('persona-section')!,
+      personaSelect: document.getElementById('persona-select') as HTMLSelectElement,
+      personaHint: document.getElementById('persona-hint')!,
     };
 
     this.init();
@@ -37,6 +43,7 @@ class PopupController {
     await this.loadTheme();
     await this.checkApiKeys();
     await this.updateStatus();
+    await this.loadPersonas();
     this.attachEventListeners();
     this.startStatusPolling();
   }
@@ -136,6 +143,8 @@ class PopupController {
       e.preventDefault();
       chrome.tabs.create({ url: chrome.runtime.getURL('src/tutorials/index.html') });
     });
+
+    this.elements.personaSelect.addEventListener('change', () => this.switchPersona());
   }
 
   private async toggleSession(): Promise<void> {
@@ -172,10 +181,57 @@ class PopupController {
     this.elements.errorSection.style.display = 'none';
   }
 
+  /**
+   * Load personas and populate the dropdown
+   */
+  private async loadPersonas(): Promise<void> {
+    try {
+      const storage = await chrome.storage.local.get(['personas', 'activePersonaId']);
+      const personas = (storage.personas as { id: string; name: string }[] | undefined) ?? [];
+      const activeId = storage.activePersonaId as string | undefined;
+
+      if (personas.length === 0) {
+        this.elements.personaSection.style.display = 'none';
+        return;
+      }
+
+      this.elements.personaSection.style.display = 'block';
+      this.elements.personaSelect.innerHTML = '';
+
+      for (const persona of personas) {
+        const option = document.createElement('option');
+        option.value = persona.id;
+        option.textContent = persona.name;
+        if (persona.id === activeId) option.selected = true;
+        this.elements.personaSelect.appendChild(option);
+      }
+
+      // Show mid-session hint
+      this.elements.personaHint.style.display = this.isSessionActive ? 'block' : 'none';
+    } catch (error) {
+      console.error('Failed to load personas:', error);
+      this.elements.personaSection.style.display = 'none';
+    }
+  }
+
+  /**
+   * Handle persona selection change
+   */
+  private async switchPersona(): Promise<void> {
+    const selectedId = this.elements.personaSelect.value;
+    if (!selectedId) return;
+
+    await chrome.storage.local.set({ activePersonaId: selectedId });
+
+    // Show hint if session is active
+    this.elements.personaHint.style.display = this.isSessionActive ? 'block' : 'none';
+  }
+
   private startStatusPolling(): void {
     setInterval(() => {
       this.checkApiKeys();
       this.updateStatus();
+      this.loadPersonas();
     }, 2000);
   }
 }

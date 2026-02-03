@@ -24,17 +24,24 @@ function cosineSimilarity(a: number[], b: number[]): number {
 
 /**
  * Search the KB for chunks most similar to the query.
+ * When documentIds is provided, only chunks from those documents are searched.
  */
 export async function searchKB(
   query: string,
   topK: number = DEFAULT_TOP_K,
-  threshold: number = DEFAULT_THRESHOLD
+  threshold: number = DEFAULT_THRESHOLD,
+  documentIds?: string[]
 ): Promise<KBSearchResult[]> {
   const docs = await kbDatabase.getDocuments();
   if (docs.length === 0) return [];
 
   // Build document name lookup
   const docNames = new Map(docs.map((d) => [d.id, d.filename]));
+
+  // Build filter set for persona-scoped search
+  const filterSet = documentIds && documentIds.length > 0
+    ? new Set(documentIds)
+    : null;
 
   // Get query embedding
   const queryEmbedding = await geminiClient.generateEmbedding(query, 'RETRIEVAL_QUERY');
@@ -46,6 +53,7 @@ export async function searchKB(
     // Stream via cursor for large datasets
     await kbDatabase.getAllChunksWithCursor((batch) => {
       for (const chunk of batch) {
+        if (filterSet && !filterSet.has(chunk.documentId)) continue;
         const score = cosineSimilarity(queryEmbedding, chunk.embedding);
         if (score >= threshold) {
           results.push({
@@ -60,6 +68,7 @@ export async function searchKB(
     // Load all chunks for small datasets
     const chunks = await kbDatabase.getAllChunks();
     for (const chunk of chunks) {
+      if (filterSet && !filterSet.has(chunk.documentId)) continue;
       const score = cosineSimilarity(queryEmbedding, chunk.embedding);
       if (score >= threshold) {
         results.push({
@@ -79,20 +88,31 @@ export async function searchKB(
 /**
  * High-level retrieval for the suggestion flow.
  * Returns formatted context string and source filename, or null if no match.
+ * When documentIds is provided, only those documents are considered.
  */
-export async function getKBContext(utterance: string): Promise<{
+export async function getKBContext(
+  utterance: string,
+  documentIds?: string[]
+): Promise<{
   context: string | null;
   source: string | null;
   matched: boolean;
 }> {
   try {
     const docs = await kbDatabase.getDocuments();
-    if (docs.filter((d) => d.status === 'complete').length === 0) {
+    const completeDocs = docs.filter((d) => d.status === 'complete');
+
+    // If filtering by persona, only count docs in the persona's set
+    const relevantDocs = documentIds && documentIds.length > 0
+      ? completeDocs.filter((d) => documentIds.includes(d.id))
+      : completeDocs;
+
+    if (relevantDocs.length === 0) {
       return { context: null, source: null, matched: false };
     }
 
     const start = performance.now();
-    const results = await searchKB(utterance);
+    const results = await searchKB(utterance, DEFAULT_TOP_K, DEFAULT_THRESHOLD, documentIds);
     const elapsed = Math.round(performance.now() - start);
     console.log(`[KB] Retrieval took ${elapsed}ms, found ${results.length} results`);
 

@@ -132,6 +132,15 @@ export class KnowledgeBaseSection {
       this.testSection.hidden = completeDocs.length === 0;
     }
 
+    // Load personas to show color dots
+    let personas: { id: string; name: string; color: string; kbDocumentIds: string[] }[] = [];
+    try {
+      const storage = await chrome.storage.local.get(['personas']);
+      personas = (storage.personas ?? []) as typeof personas;
+    } catch {
+      // Ignore
+    }
+
     if (this.docList) {
       this.docList.innerHTML = '';
       for (const doc of completeDocs) {
@@ -142,10 +151,28 @@ export class KnowledgeBaseSection {
         const ago = this.timeAgo(doc.uploadedAt);
         const size = this.formatFileSize(doc.fileSize);
 
+        // Find personas that reference this doc
+        const referencingPersonas = personas.filter((p) =>
+          p.kbDocumentIds.includes(doc.id)
+        );
+        let dotsHtml = '';
+        if (referencingPersonas.length > 0) {
+          const maxDots = 4;
+          const shown = referencingPersonas.slice(0, maxDots);
+          dotsHtml = '<span class="persona-dots">';
+          for (const p of shown) {
+            dotsHtml += `<span class="persona-dot" style="background:${p.color}" title="${p.name}"></span>`;
+          }
+          if (referencingPersonas.length > maxDots) {
+            dotsHtml += `<span class="persona-dot-more">+${referencingPersonas.length - maxDots}</span>`;
+          }
+          dotsHtml += '</span>';
+        }
+
         item.innerHTML = `
           <span class="kb-doc-icon">${icon('document', 24)}</span>
           <div class="kb-doc-info">
-            <span class="kb-doc-name" title="${doc.filename}">${doc.filename}</span>
+            <span class="kb-doc-name" title="${doc.filename}">${doc.filename}${dotsHtml}</span>
             <span class="kb-doc-meta">${doc.chunkCount} sections \u00B7 ${size} \u00B7 Added ${ago}</span>
           </div>
           <button class="kb-doc-delete" title="Delete">${icon('trash', 18)}</button>
@@ -170,6 +197,26 @@ export class KnowledgeBaseSection {
   private async deleteDocument(docId: string, filename: string): Promise<void> {
     try {
       await kbDatabase.deleteDocument(docId);
+
+      // Remove doc reference from all personas
+      try {
+        const storage = await chrome.storage.local.get(['personas']);
+        const personas = (storage.personas ?? []) as { id: string; kbDocumentIds: string[] }[];
+        let changed = false;
+        for (const p of personas) {
+          const idx = p.kbDocumentIds.indexOf(docId);
+          if (idx >= 0) {
+            p.kbDocumentIds.splice(idx, 1);
+            changed = true;
+          }
+        }
+        if (changed) {
+          await chrome.storage.local.set({ personas });
+        }
+      } catch {
+        // Non-critical — persona refs will be stale but won't crash
+      }
+
       this.ctx.showToast(`Deleted ${filename}`, 'success');
       await this.renderDocList();
     } catch (error) {

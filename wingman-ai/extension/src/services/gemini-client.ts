@@ -68,6 +68,9 @@ export class GeminiClient {
   // Concurrency guard: only one suggestion call in-flight at a time
   private isGenerating = false;
 
+  // Persona-scoped KB filter: restrict search to these document IDs
+  private kbDocumentFilter: string[] | null = null;
+
   /**
    * Start a new conversation session
    */
@@ -76,6 +79,7 @@ export class GeminiClient {
     this.lastSuggestionTime = null;
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
+    this.kbDocumentFilter = null;
     console.log('[GeminiClient] Started new session');
   }
 
@@ -87,6 +91,7 @@ export class GeminiClient {
     this.lastSuggestionTime = null;
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
+    this.kbDocumentFilter = null;
     console.log('[GeminiClient] Cleared session');
   }
 
@@ -114,6 +119,15 @@ export class GeminiClient {
     }
 
     console.log(`[GeminiClient] Custom system prompt set (${this.systemPrompt.length} chars)`);
+  }
+
+  /**
+   * Set the KB document filter for persona-scoped search.
+   * Pass null or empty array to search all documents.
+   */
+  setKBDocumentFilter(documentIds: string[] | null): void {
+    this.kbDocumentFilter = documentIds && documentIds.length > 0 ? documentIds : null;
+    console.log(`[GeminiClient] KB filter set: ${this.kbDocumentFilter ? this.kbDocumentFilter.length + ' docs' : 'all'}`);
   }
 
   /**
@@ -229,7 +243,7 @@ export class GeminiClient {
 
       try {
         const { getKBContext } = await import('./kb/kb-search');
-        const kbResult = await getKBContext(currentText);
+        const kbResult = await getKBContext(currentText, this.kbDocumentFilter ?? undefined);
         if (kbResult.matched && kbResult.context) {
           systemPromptWithKB = `KNOWLEDGE BASE CONTEXT (from ${kbResult.source}):\n${kbResult.context}\n\n${this.systemPrompt}`;
           kbSource = kbResult.source;

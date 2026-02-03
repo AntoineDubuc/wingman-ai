@@ -33,6 +33,10 @@
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
         <span class="tab-label">Call Settings</span>
       </button>
+      <button class="tab" id="tab-personas" data-tab="personas" role="tab" aria-selected="false" aria-controls="panel-personas">
+        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="tab-label">Personas</span>
+      </button>
       <button class="tab" id="tab-kb" data-tab="kb" role="tab" aria-selected="false" aria-controls="panel-kb">
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         <span class="tab-label">Knowledge Base</span>
@@ -198,6 +202,98 @@
         </div>
       </div>
 
+      <!-- ==================== PERSONAS TAB ==================== -->
+      <div class="tab-panel" id="panel-personas" data-panel="personas" role="tabpanel" aria-labelledby="tab-personas">
+        <div class="options-card">
+          <div class="persona-header-row">
+            <div>
+              <h2 class="form-section-title">Personas</h2>
+              <p class="form-section-description">
+                Bundle a system prompt with specific Knowledge Base documents into switchable presets.
+              </p>
+            </div>
+            <div class="button-group">
+              <label class="btn-secondary btn-small persona-import-label">
+                Import
+                <input type="file" id="persona-import-input" accept=".json" hidden>
+              </label>
+              <button id="persona-new-btn" class="btn-primary btn-small" type="button">
+                + New Persona
+              </button>
+            </div>
+          </div>
+
+          <!-- Persona list (populated by JS) -->
+          <div id="persona-list" class="persona-list"></div>
+
+          <!-- Empty state -->
+          <div id="persona-empty" class="persona-empty">
+            <p>Create your first persona to bundle a system prompt with specific Knowledge Base documents.</p>
+          </div>
+        </div>
+
+        <!-- Persona editor (hidden until editing) -->
+        <div id="persona-editor" class="options-card persona-editor" hidden>
+          <h2 class="form-section-title" id="persona-editor-title">Edit Persona</h2>
+
+          <!-- Name -->
+          <div class="form-group">
+            <label for="persona-name-input" class="input-label">Name</label>
+            <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" maxlength="60">
+          </div>
+
+          <!-- Color picker -->
+          <div class="form-group">
+            <label class="input-label">Color tag</label>
+            <div id="persona-color-picker" class="persona-color-picker"></div>
+          </div>
+
+          <!-- System prompt -->
+          <div class="form-group">
+            <label for="persona-prompt-textarea" class="input-label">System Prompt</label>
+            <div class="prompt-container">
+              <textarea
+                id="persona-prompt-textarea"
+                class="prompt-textarea"
+                placeholder="Enter your system prompt..."
+                spellcheck="false"
+              ></textarea>
+              <div class="char-count" id="persona-char-count">
+                <span id="persona-char-current">0</span> / <span>10,000</span> chars
+              </div>
+            </div>
+          </div>
+
+          <!-- KB document picker -->
+          <div class="form-group">
+            <label class="input-label">Knowledge Base Documents</label>
+            <div id="persona-kb-list" class="persona-kb-list">
+              <p class="persona-kb-empty">No documents uploaded yet. Go to the Knowledge Base tab to add documents.</p>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="button-row">
+            <button id="persona-cancel-btn" class="btn-secondary" type="button">Cancel</button>
+            <div class="button-group">
+              <button id="persona-export-btn" class="btn-secondary" type="button">Export</button>
+              <button id="persona-duplicate-btn" class="btn-secondary" type="button">Duplicate</button>
+              <button id="persona-delete-btn" class="btn-secondary btn-danger" type="button">Delete</button>
+              <button id="persona-save-btn" class="btn-primary" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Import progress (hidden by default) -->
+        <div id="persona-import-progress" class="options-card" hidden>
+          <h2 class="form-section-title">Importing Persona...</h2>
+          <div class="kb-progress">
+            <div class="kb-progress-bar"><div id="persona-import-fill" class="kb-progress-fill"></div></div>
+            <span id="persona-import-text" class="kb-progress-text">Processing...</span>
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== KNOWLEDGE BASE TAB ==================== -->
       <div class="tab-panel" id="panel-kb" data-panel="kb" role="tabpanel" aria-labelledby="tab-kb">
         <!-- Knowledge Base Card -->
@@ -252,17 +348,18 @@
           <!-- Section title and description -->
           <h2 class="form-section-title">System Prompt</h2>
           <p class="form-section-description">
-            Customize how Wingman behaves during sales calls. This prompt controls her personality,
-            response format, and knowledge base.
+            This is the system prompt from your active persona (read-only).
+            To edit it, go to the <a href="#" id="goto-personas-tab" style="color:var(--color-primary);text-decoration:underline;">Personas tab</a>.
           </p>
 
-          <!-- Textarea for prompt editing -->
+          <!-- Textarea (read-only preview) -->
           <div class="prompt-container">
             <textarea
               id="prompt-textarea"
               class="prompt-textarea"
-              placeholder="Enter your custom system prompt..."
+              placeholder="No active persona..."
               spellcheck="false"
+              readonly
             ></textarea>
             <div class="char-count" id="char-count">
               <span id="char-current">0</span> / <span id="char-max">10,000</span> chars
@@ -276,11 +373,8 @@
               Buy me a coffee
             </a>
             <div class="button-group">
-              <button id="reset-btn" class="btn-secondary" type="button">
-                Reset to Default
-              </button>
-              <button id="save-btn" class="btn-primary" type="button">
-                Save Changes
+              <button id="goto-personas-btn" class="btn-primary" type="button">
+                Edit in Personas
               </button>
             </div>
           </div>

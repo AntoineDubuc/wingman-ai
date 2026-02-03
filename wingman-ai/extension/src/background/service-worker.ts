@@ -16,6 +16,7 @@ import { transcriptCollector } from '../services/transcript-collector';
 import { driveService, type TranscriptData, type SessionMetadata } from '../services/drive-service';
 import type { SummaryMetadata } from '../services/call-summary';
 import { runAllTests, runTest, getAvailableTests } from '../validation/index';
+import { migrateToPersonas, getActivePersona } from '../shared/persona';
 
 // Session state
 let isSessionActive = false;
@@ -140,7 +141,6 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     const storage = await chrome.storage.local.get([
       'deepgramApiKey',
       'geminiApiKey',
-      'systemPrompt',
       'speakerFilterEnabled',
     ]);
 
@@ -185,10 +185,16 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
     console.log(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
 
-    // Step 2: Initialize Gemini client with system prompt
+    // Step 2: Initialize Gemini client with active persona
     geminiClient.startSession();
-    if (storage.systemPrompt) {
-      geminiClient.setSystemPrompt(storage.systemPrompt);
+
+    // Ensure personas are migrated, then load the active one
+    await migrateToPersonas();
+    const persona = await getActivePersona();
+    if (persona) {
+      geminiClient.setSystemPrompt(persona.systemPrompt);
+      geminiClient.setKBDocumentFilter(persona.kbDocumentIds);
+      console.log(`[ServiceWorker] Loaded persona: ${persona.name}`);
     } else {
       await geminiClient.loadSystemPrompt();
     }

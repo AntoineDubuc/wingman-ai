@@ -279,9 +279,6 @@ flowchart TB
     Sender -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>drive_save_result| ContentListener
     ContentListener --> OverlayRender
 
-    style Listener fill:#E74C3C,color:#fff
-    style Sender fill:#34A853,color:#fff
-    style OverlayRender fill:#4A90D9,color:#fff
 ```
 
 ## KB Search with Persona Scoping

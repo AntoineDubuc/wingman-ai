@@ -77,15 +77,6 @@ graph TB
     %% Messages back to UI
     SW -->|transcript<br/>suggestion<br/>call_summary| ContentScript
     ContentScript -->|display| Overlay
-
-    style SW fill:#4A90D9,color:#fff
-    style Deepgram fill:#34A853,color:#fff
-    style Gemini fill:#F5A623,color:#fff
-    style Drive fill:#E74C3C,color:#fff
-    style KB fill:#9B59B6,color:#fff
-    style DeepgramAPI fill:#34A853,color:#fff,stroke:#000,stroke-width:2px
-    style GeminiAPI fill:#F5A623,color:#fff,stroke:#000,stroke-width:2px
-    style DriveAPI fill:#E74C3C,color:#fff,stroke:#000,stroke-width:2px
 ```
 
 ## Message Type Convention
@@ -113,8 +104,6 @@ graph LR
 
     SW2 -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading| Content2
 
-    style SW1 fill:#E74C3C,color:#fff
-    style SW2 fill:#34A853,color:#fff
 ```
 
 ## Data Flow: Audio to Transcript
@@ -155,9 +144,6 @@ flowchart TD
 
     Callback --> Display[Overlay displays<br/>transcript bubble]
 
-    style Deepgram fill:#34A853,color:#fff,stroke:#000,stroke-width:2px
-    style WS fill:#4A90D9,color:#fff
-    style Callback fill:#F5A623,color:#fff
 ```
 
 ## Persona System Architecture
@@ -204,9 +190,6 @@ graph TB
 
     Personas --> Overlay2
 
-    style Load fill:#4A90D9,color:#fff
-    style GeminiClient fill:#F5A623,color:#fff
-    style KBSearch fill:#9B59B6,color:#fff
 ```
 
 ## Key Conventions

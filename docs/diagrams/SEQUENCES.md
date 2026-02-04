@@ -3,6 +3,7 @@
 ## Session Start Flow
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant User
     participant Popup
@@ -67,6 +68,7 @@ sequenceDiagram
 ## Transcript to Suggestion Flow
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant Deepgram as Deepgram API
     participant DC as deepgramClient
@@ -134,6 +136,7 @@ sequenceDiagram
 ## Session Stop and Summary Flow
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant User
     participant Popup
@@ -211,6 +214,7 @@ sequenceDiagram
 ## Audio Chunk Flow
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant Mic as Microphone
     participant Worklet as AudioWorklet
@@ -284,6 +288,7 @@ flowchart TB
 ## KB Search with Persona Scoping
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant Gemini as geminiClient
     participant KB as KB Search
@@ -331,6 +336,7 @@ sequenceDiagram
 ## Drive OAuth Flow (Cross-Browser)
 
 ```mermaid
+%%{init: {'theme':'base'}}%%
 sequenceDiagram
     participant Drive as driveService
     participant ChromeID as chrome.identity

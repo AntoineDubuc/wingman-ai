@@ -21,6 +21,15 @@ Comprehensive documentation for junior engineers working on Wingman AI.
 | **[CODE-PATTERNS.md](CODE-PATTERNS.md)** | Copy-paste code patterns | Implementing similar features |
 | **[CODE-DISCOVERY-PATTERN.md](../CODE-DISCOVERY-PATTERN.md)** | Safe codebase exploration with Claude Code | Working with AI assistants |
 
+### Visual Diagrams
+
+Architecture and sequence diagrams (Mermaid format, render on GitHub).
+
+| Diagram | File | Description |
+|---------|------|-------------|
+| **System Architecture** | [ARCHITECTURE.md](diagrams/ARCHITECTURE.md) | Component relationships, message flows, data storage |
+| **Sequence Diagrams** | [SEQUENCES.md](diagrams/SEQUENCES.md) | Session start, transcript flow, audio pipeline, Drive OAuth |
+
 ### Flow Diagrams
 
 End-to-end traces of critical features with code references.

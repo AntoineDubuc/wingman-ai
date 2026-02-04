@@ -79,9 +79,11 @@ Real-time AI assistant for sales calls on Google Meet. Listens to conversation, 
 
 **Start here:**
 
-1. **FILE-STRUCTURE-MAP.md** → Understand what each file does
-2. **CODE-PATTERNS.md** → Copy-paste patterns for common tasks
-3. **flows/** directory → Understand how features work end-to-end
+1. **diagrams/ARCHITECTURE.md** → Visual overview of system components
+2. **diagrams/SEQUENCES.md** → Sequence diagrams for key flows
+3. **FILE-STRUCTURE-MAP.md** → Understand what each file does
+4. **CODE-PATTERNS.md** → Copy-paste patterns for common tasks
+5. **flows/** directory → Detailed traces with code references
    - `SESSION-START-FLOW.md`
    - `AUDIO-CAPTURE-PIPELINE.md`
    - `TRANSCRIPT-TO-SUGGESTION-FLOW.md`
@@ -314,12 +316,13 @@ Real-time AI assistant for sales calls on Google Meet. Listens to conversation, 
 
 | What | Read This |
 |------|-----------|
-| **How session starts** | [SESSION-START-FLOW.md](flows/SESSION-START-FLOW.md) |
-| **How audio gets to Deepgram** | [AUDIO-CAPTURE-PIPELINE.md](flows/AUDIO-CAPTURE-PIPELINE.md) |
-| **How suggestions work** | [TRANSCRIPT-TO-SUGGESTION-FLOW.md](flows/TRANSCRIPT-TO-SUGGESTION-FLOW.md) |
-| **How call summaries work** | [SESSION-STOP-AND-SUMMARY-FLOW.md](flows/SESSION-STOP-AND-SUMMARY-FLOW.md) |
+| **System architecture** | [ARCHITECTURE.md](diagrams/ARCHITECTURE.md) (visual) |
+| **How session starts** | [SEQUENCES.md - Session Start](diagrams/SEQUENCES.md#session-start-flow) (visual) → [SESSION-START-FLOW.md](flows/SESSION-START-FLOW.md) (detailed) |
+| **How audio gets to Deepgram** | [SEQUENCES.md - Audio Chunk](diagrams/SEQUENCES.md#audio-chunk-flow) (visual) → [AUDIO-CAPTURE-PIPELINE.md](flows/AUDIO-CAPTURE-PIPELINE.md) (detailed) |
+| **How suggestions work** | [SEQUENCES.md - Transcript Flow](diagrams/SEQUENCES.md#transcript-to-suggestion-flow) (visual) → [TRANSCRIPT-TO-SUGGESTION-FLOW.md](flows/TRANSCRIPT-TO-SUGGESTION-FLOW.md) (detailed) |
+| **How call summaries work** | [SEQUENCES.md - Summary Flow](diagrams/SEQUENCES.md#session-stop-and-summary-flow) (visual) → [SESSION-STOP-AND-SUMMARY-FLOW.md](flows/SESSION-STOP-AND-SUMMARY-FLOW.md) (detailed) |
 | **Singleton pattern** | [CODE-PATTERNS.md#singleton-services-pattern](CODE-PATTERNS.md#singleton-services-pattern) |
-| **Message types** | [CODE-PATTERNS.md#message-handling-pattern](CODE-PATTERNS.md#message-handling-pattern) |
+| **Message types** | [ARCHITECTURE.md - Message Convention](diagrams/ARCHITECTURE.md#message-type-convention) (visual) → [CODE-PATTERNS.md#message-handling-pattern](CODE-PATTERNS.md#message-handling-pattern) (code) |
 
 ---
 

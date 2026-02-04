@@ -2,6 +2,8 @@
 
 Complete trace from user clicking "Start" to active session with live transcription.
 
+> **Visual Diagram:** See [SEQUENCES.md - Session Start Flow](../diagrams/SEQUENCES.md#session-start-flow) for sequence diagram.
+
 ## Flow Diagram
 
 ```

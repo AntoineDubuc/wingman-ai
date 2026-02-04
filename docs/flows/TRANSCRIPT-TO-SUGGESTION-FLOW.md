@@ -2,6 +2,10 @@
 
 Complete trace from Deepgram transcript through KB search and Gemini API to overlay suggestion display.
 
+> **Visual Diagrams:**
+> - [SEQUENCES.md - Transcript to Suggestion Flow](../diagrams/SEQUENCES.md#transcript-to-suggestion-flow)
+> - [SEQUENCES.md - KB Search with Persona Scoping](../diagrams/SEQUENCES.md#kb-search-with-persona-scoping)
+
 ## Flow Diagram
 
 ```

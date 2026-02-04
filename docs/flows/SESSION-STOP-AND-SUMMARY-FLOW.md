@@ -2,6 +2,10 @@
 
 Complete trace from user clicking "Stop" through call summary generation to Drive save and overlay display.
 
+> **Visual Diagrams:**
+> - [SEQUENCES.md - Session Stop and Summary Flow](../diagrams/SEQUENCES.md#session-stop-and-summary-flow)
+> - [SEQUENCES.md - Drive OAuth Flow](../diagrams/SEQUENCES.md#drive-oauth-flow-cross-browser)
+
 ## Flow Diagram
 
 ```

@@ -2,6 +2,10 @@
 
 Complete data flow from microphone/tab capture through AudioWorklet processing to Deepgram WebSocket.
 
+> **Visual Diagrams:**
+> - [ARCHITECTURE.md - Data Flow: Audio to Transcript](../diagrams/ARCHITECTURE.md#data-flow-audio-to-transcript)
+> - [SEQUENCES.md - Audio Chunk Flow](../diagrams/SEQUENCES.md#audio-chunk-flow)
+
 ## Pipeline Overview
 
 ```

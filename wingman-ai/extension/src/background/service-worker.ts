@@ -17,6 +17,7 @@ import { driveService, type TranscriptData, type SessionMetadata } from '../serv
 import type { SummaryMetadata } from '../services/call-summary';
 import { runAllTests, runTest, getAvailableTests } from '../validation/index';
 import { migrateToPersonas, getActivePersona } from '../shared/persona';
+import { langBuilderClient } from '../services/langbuilder-client';
 
 // Session state
 let isSessionActive = false;
@@ -57,7 +58,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 
 // Handle messages from popup, content script, and offscreen document
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log('[ServiceWorker] Received message:', message.type);
+  const quietMessages = ['AUDIO_CHUNK', 'GET_STATUS', 'CAPTURE_STATUS'];
+  if (!quietMessages.includes(message.type)) {
+    console.log('[ServiceWorker] Received:', message.type);
+  }
 
   switch (message.type) {
     case 'START_SESSION':
@@ -107,6 +111,53 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
       })();
       return true; // Keep channel open for async
+
+    case 'RUN_LANGBUILDER_FLOW':
+      (async () => {
+        try {
+          const storage = await chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey', 'langbuilderFlows']);
+          if (!storage.langbuilderUrl || !storage.langbuilderApiKey) {
+            console.warn('[ServiceWorker] LangBuilder not configured');
+            sendResponse({ success: false, error: 'LangBuilder not configured' });
+            return;
+          }
+          // Look up cached inputType for this flow (chat vs text)
+          const flows = storage.langbuilderFlows as Array<{ id: string; inputType?: string }> | undefined;
+          const flowMeta = flows?.find((f) => f.id === message.flowId);
+          const inputType = (flowMeta?.inputType === 'text' ? 'text' : 'chat') as 'chat' | 'text';
+          console.log('[ServiceWorker] Running LangBuilder flow:', message.flowId, 'inputType:', inputType);
+          const result = await langBuilderClient.runFlow(
+            storage.langbuilderUrl as string,
+            storage.langbuilderApiKey as string,
+            message.flowId as string,
+            message.inputValue as string,
+            inputType,
+          );
+          console.log('[ServiceWorker] LangBuilder flow completed, result length:', result.length);
+          sendResponse({ success: true, result });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : 'Flow execution failed';
+          console.error('[ServiceWorker] LangBuilder flow error:', msg);
+          sendResponse({ success: false, error: msg });
+
+          // Auto-diagnose if the error looks credential-related
+          if (/api.?key|401|credential|auth/i.test(msg)) {
+            const s = await chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey']);
+            if (s.langbuilderUrl && s.langbuilderApiKey) {
+              langBuilderClient.diagnoseFlow(
+                s.langbuilderUrl as string,
+                s.langbuilderApiKey as string,
+                message.flowId as string,
+              ).catch(() => { /* ignore diagnostic errors */ });
+            }
+          }
+        }
+      })();
+      return true; // Keep channel open for async response
+
+    case 'CANCEL_LANGBUILDER_FLOW':
+      langBuilderClient.abort();
+      return false;
 
     case 'MIC_PERMISSION_RESULT':
       // Handled by requestMicPermission() temporary listener
@@ -175,7 +226,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       });
       if (existingContexts.length > 0) {
         await chrome.offscreen.closeDocument();
-        console.log('[ServiceWorker] Closed existing offscreen document');
+        // Closed existing offscreen document
       }
     } catch (e) {
       // Ignore errors closing offscreen document
@@ -183,7 +234,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
     // Configure speaker filter
     speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
-    console.log(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
+    console.debug(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
 
     // Step 2: Initialize Gemini client with active persona
     geminiClient.startSession();
@@ -198,7 +249,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     } else {
       await geminiClient.loadSystemPrompt();
     }
-    console.log('[ServiceWorker] Gemini client initialized');
+    // Gemini client initialized
 
     // Step 3: Set up transcript callback before connecting
     deepgramClient.setTranscriptCallback((transcript: Transcript) => {
@@ -213,7 +264,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
         error: 'Failed to connect to Deepgram. Check your API key.',
       };
     }
-    console.log('[ServiceWorker] Connected to Deepgram');
+    // Connected to Deepgram
 
     // Mark session as active
     isSessionActive = true;
@@ -235,7 +286,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
           reasons: [chrome.offscreen.Reason.USER_MEDIA],
           justification: 'Microphone and tab audio capture for transcription',
         });
-        console.log('[ServiceWorker] Created offscreen document');
+        // Created offscreen document
       }
     } catch (e) {
       console.error('[ServiceWorker] Failed to create offscreen document:', e);
@@ -254,7 +305,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
           }
         });
       });
-      console.log('[ServiceWorker] Got tab capture stream ID');
+      // Got tab capture stream ID
     } catch (e) {
       console.error('[ServiceWorker] Failed to get tab capture stream:', e);
       return { success: false, error: 'Failed to capture tab audio. Make sure the Meet tab is active.' };
@@ -273,7 +324,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
         typeof captureResponse?.error === 'string' &&
         captureResponse.error.includes('NotAllowedError')
       ) {
-        console.log('[ServiceWorker] Mic permission needed, opening permission window');
+        console.debug('[ServiceWorker] Mic permission needed, opening permission window');
         const granted = await requestMicPermission();
         if (!granted) {
           return { success: false, error: 'Microphone access is required. Please allow the permission and try again.' };
@@ -295,7 +346,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
       if (captureResponse?.success) {
         isCapturing = true;
-        console.log('[ServiceWorker] Dual capture started');
+        // Dual capture started
       } else {
         console.error('[ServiceWorker] Dual capture failed:', captureResponse?.error);
         return { success: false, error: captureResponse?.error || 'Failed to start audio capture' };
@@ -422,9 +473,9 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     let summary: import('../services/call-summary').CallSummary | null = null;
     let summaryOutcome: SummaryOutcome = 'disabled';
 
-    if (!storage.summaryEnabled || !storage.geminiApiKey) {
+    if (storage.summaryEnabled === false || !storage.geminiApiKey) {
       summaryOutcome = 'disabled';
-    } else if (!sessionData || speechTranscripts.length < 5) {
+    } else if (!sessionData || speechTranscripts.length < 2) {
       summaryOutcome = 'skipped';
     } else {
       // Build metadata for summary (speech only — exclude suggestions)
@@ -607,9 +658,9 @@ async function ensureContentScriptAndInitOverlay(tabId: number): Promise<void> {
   try {
     // Try to send message to existing content script
     await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
-    console.log('[ServiceWorker] Content script responded, overlay initialized');
+    // Content script responded, overlay initialized
   } catch {
-    console.log('[ServiceWorker] Content script not found, injecting...');
+    console.debug('[ServiceWorker] Injecting content script...');
 
     // Inject CSS
     const manifest = chrome.runtime.getManifest();
@@ -621,7 +672,7 @@ async function ensureContentScriptAndInitOverlay(tabId: number): Promise<void> {
     // Strategy 1: Inject the crxjs loader from the manifest
     const jsFiles = manifest.content_scripts?.[0]?.js ?? [];
     if (jsFiles.length > 0) {
-      console.log('[ServiceWorker] Injecting loader:', jsFiles[0]);
+      console.debug('[ServiceWorker] Injecting loader:', jsFiles[0]);
       try {
         await chrome.scripting.executeScript({ target: { tabId }, files: jsFiles });
       } catch (e) {
@@ -634,15 +685,14 @@ async function ensureContentScriptAndInitOverlay(tabId: number): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, delay));
       try {
         await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
-        console.log('[ServiceWorker] Content script ready after loader injection');
         return;
       } catch {
-        console.log(`[ServiceWorker] Not ready after ${delay}ms...`);
+        console.debug(`[ServiceWorker] Content script not ready after ${delay}ms`);
       }
     }
 
     // Strategy 2: Direct dynamic import via func (fallback)
-    console.log('[ServiceWorker] Loader did not work, trying direct dynamic import');
+    console.debug('[ServiceWorker] Trying fallback dynamic import');
     const contentUrl = chrome.runtime.getURL('content.js');
     try {
       await chrome.scripting.executeScript({
@@ -661,10 +711,9 @@ async function ensureContentScriptAndInitOverlay(tabId: number): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, delay));
       try {
         await chrome.tabs.sendMessage(tabId, { type: 'INIT_OVERLAY' });
-        console.log('[ServiceWorker] Content script ready after func injection');
         return;
       } catch {
-        console.log(`[ServiceWorker] Still not ready after ${delay}ms...`);
+        console.debug(`[ServiceWorker] Still not ready after ${delay}ms`);
       }
     }
 

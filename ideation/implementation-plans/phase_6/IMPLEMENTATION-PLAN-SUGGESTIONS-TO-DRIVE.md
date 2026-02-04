@@ -76,7 +76,7 @@ When a user ends a Wingman session, the transcript auto-saved to Google Drive cu
 | [ ] | 1 | Add suggestion fields to CollectedTranscript and addSuggestion() | | | | 20 | |
 | [ ] | 2 | Wire service worker to store suggestion text | | | | 15 | |
 | [ ] | 3 | Update DriveService TranscriptData and formatters | | | | 30 | |
-| [ ] | 4 | Fix metadata counts to exclude suggestions | | | | 10 | |
+| [ ] | 4 | Filter suggestions from summary + fix metadata counts | | | | 15 | |
 | [ ] | 5 | Remove debug artifacts from content script | | | | 5 | |
 | [ ] | 6 | Build and validate end-to-end | | | | 10 | |
 
@@ -84,7 +84,7 @@ When a user ends a Wingman session, the transcript auto-saved to Google Drive cu
 - Total tasks: 6
 - Completed: 0
 - Total time spent: 0 minutes
-- Total human estimate: 90 minutes
+- Total human estimate: 95 minutes
 - Overall multiplier: --
 
 ---
@@ -254,54 +254,84 @@ transcripts: transcripts.map((t) => ({
 
 ---
 
-### Task 4: Fix metadata counts to exclude suggestions
+### Task 4: Filter suggestions from summary generation and fix metadata counts
 
-**Intent:** Ensure `transcriptsCount` and `speakersCount` in `SessionMetadata` reflect only speech entries, not suggestions.
+**Intent:** Prevent suggestion entries from contaminating summary generation and ensure metadata counts reflect speech only.
 
-**Context:** In `handleStopSession()`, the code builds `SessionMetadata` from `sessionData.transcripts`. Now that suggestions are in the same array, counting all entries would inflate `transcriptsCount` and `speakersCount` (the "Wingman AI" pseudo-speaker with `speaker_id: -1` would be counted).
+**Context:** In `handleStopSession()`, `sessionData.transcripts` is now a mixed array of speech and suggestion entries. Three areas use this array and must filter suggestions out:
+1. **Summary guard** (line 418): `sessionData.transcripts.length < 5` would count suggestions
+2. **Summary generation** (lines 426-438): `buildSummaryPrompt()` formats every entry as `[speaker]: text` — suggestions would appear as `[Wingman AI]: <text>`, confusing the AI
+3. **Drive metadata** (lines 473-480): `speakersCount` and `transcriptsCount` would include suggestions
 
 **Expected behavior:**
 
-In `handleStopSession()` (~line 460 of `service-worker.ts`):
+**Step 1: Compute `speechTranscripts` early** — right after `sessionData` is obtained (~line 398), before both the summary and Drive sections:
+```typescript
+const sessionData = transcriptCollector.endSession();
 
-1. **Update TranscriptData mapping** to include new fields:
-   ```typescript
-   const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
-     timestamp: t.timestamp,
-     speaker: t.speaker,
-     speaker_id: t.speaker_id,
-     speaker_role: t.speaker_role,
-     text: t.text,
-     is_self: t.is_self,
-     is_suggestion: t.is_suggestion,
-     suggestion_type: t.suggestion_type,
-   }));
-   ```
+// Separate speech from suggestions for counts and summary generation
+const speechTranscripts = sessionData
+  ? sessionData.transcripts.filter((t) => !t.is_suggestion)
+  : [];
+```
 
-2. **Filter for speech-only when computing counts:**
-   ```typescript
-   const speechTranscripts = sessionData.transcripts.filter((t) => !t.is_suggestion);
-   const speakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
-
-   const metadata: SessionMetadata = {
-     startTime: sessionData.startTime,
-     endTime,
-     durationSeconds,
-     speakersCount: speakerIds.size,
-     transcriptsCount: speechTranscripts.length,
-     suggestionsCount: sessionData.suggestionsCount,
-     speakerFilterEnabled: sessionData.speakerFilterEnabled,
-   };
-   ```
-
-**Key components:**
-- `src/background/service-worker.ts` — `handleStopSession()` function
-
-**Notes:** Also update the summary guard on line 418 to use `speechTranscripts.length` instead of `sessionData.transcripts.length`:
+**Step 2: Update summary guard** (line 418) to count speech only:
 ```typescript
 } else if (!sessionData || speechTranscripts.length < 5) {
+  summaryOutcome = 'skipped';
 ```
-This ensures the "< 5 transcripts" check counts speech only, not suggestions.
+
+**Step 3: Pass speech-only to summary generation** (lines 426-438):
+```typescript
+const speakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
+
+const summaryMeta: SummaryMetadata = {
+  generatedAt: new Date().toISOString(),
+  durationMinutes,
+  speakerCount: speakerIds.size,
+  transcriptCount: speechTranscripts.length,
+};
+
+const result = await geminiClient.generateCallSummary(
+  speechTranscripts,  // NOT sessionData.transcripts
+  summaryMeta,
+  { includeKeyMoments: storage.summaryKeyMomentsEnabled !== false }
+);
+```
+
+**Step 4: Update Drive TranscriptData mapping** (~line 460) to include new fields. Note: the full array (including suggestions) goes to Drive — only metadata counts are filtered:
+```typescript
+const transcripts: TranscriptData[] = sessionData.transcripts.map((t) => ({
+  timestamp: t.timestamp,
+  speaker: t.speaker,
+  speaker_id: t.speaker_id,
+  speaker_role: t.speaker_role,
+  text: t.text,
+  is_self: t.is_self,
+  is_suggestion: t.is_suggestion,
+  suggestion_type: t.suggestion_type,
+}));
+```
+
+**Step 5: Fix Drive metadata counts** (~line 473) — reuse `speechTranscripts`:
+```typescript
+const driveSpeakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
+
+const metadata: SessionMetadata = {
+  startTime: sessionData.startTime,
+  endTime,
+  durationSeconds,
+  speakersCount: driveSpeakerIds.size,
+  transcriptsCount: speechTranscripts.length,
+  suggestionsCount: sessionData.suggestionsCount,
+  speakerFilterEnabled: sessionData.speakerFilterEnabled,
+};
+```
+
+**Key components:**
+- `src/background/service-worker.ts` — `handleStopSession()` function (summary section + Drive section)
+
+**Notes:** The critical insight is that `buildSummaryPrompt()` in `call-summary.ts:118` formats every `CollectedTranscript` as `[${t.speaker}]: ${t.text}`. If suggestions are included, the summary AI sees `[Wingman AI]: <suggestion>` entries and tries to attribute them as speech. Filtering to speech-only before passing to `generateCallSummary()` is essential. No changes needed to `call-summary.ts` itself.
 
 ---
 
@@ -361,6 +391,7 @@ No new dependencies. All changes are internal to existing modules.
 ### Out of Scope
 
 - **Suggestion formatting in the overlay** — Already working, no changes needed
+- **Changes to `call-summary.ts`** — No modifications needed. Suggestions are filtered out before being passed to `generateCallSummary()`, so `buildSummaryPrompt()` and `formatTranscriptLine()` only ever see speech entries
 - **Knowledge Base source attribution in Drive exports** — The `kbSource` field from suggestions could be included but adds complexity; defer to a future phase
 - **Retroactive backfill** — Existing Drive transcripts won't be updated; only new sessions get suggestions
 - **Suggestion confidence/source in Drive exports** — Could include `confidence` and `source` fields but would clutter the transcript; defer unless requested

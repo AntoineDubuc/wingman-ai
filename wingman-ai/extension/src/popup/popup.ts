@@ -16,7 +16,7 @@ class PopupController {
     openOptions: HTMLElement;
     personaSection: HTMLElement;
     personaSelect: HTMLSelectElement;
-    personaHint: HTMLElement;
+    personaDot: HTMLElement;
   };
 
   private isSessionActive = false;
@@ -33,7 +33,7 @@ class PopupController {
       openOptions: document.getElementById('open-options')!,
       personaSection: document.getElementById('persona-section')!,
       personaSelect: document.getElementById('persona-select') as HTMLSelectElement,
-      personaHint: document.getElementById('persona-hint')!,
+      personaDot: document.getElementById('persona-dot')!,
     };
 
     this.init();
@@ -187,7 +187,7 @@ class PopupController {
   private async loadPersonas(): Promise<void> {
     try {
       const storage = await chrome.storage.local.get(['personas', 'activePersonaId']);
-      const personas = (storage.personas as { id: string; name: string }[] | undefined) ?? [];
+      const personas = (storage.personas as { id: string; name: string; color: string }[] | undefined) ?? [];
       const activeId = storage.activePersonaId as string | undefined;
 
       if (personas.length === 0) {
@@ -202,12 +202,13 @@ class PopupController {
         const option = document.createElement('option');
         option.value = persona.id;
         option.textContent = persona.name;
+        option.dataset.color = persona.color;
         if (persona.id === activeId) option.selected = true;
         this.elements.personaSelect.appendChild(option);
       }
 
-      // Show mid-session hint
-      this.elements.personaHint.style.display = this.isSessionActive ? 'block' : 'none';
+      // Update the color dot to match active persona
+      this.updatePersonaDot();
     } catch (error) {
       console.error('Failed to load personas:', error);
       this.elements.personaSection.style.display = 'none';
@@ -222,9 +223,15 @@ class PopupController {
     if (!selectedId) return;
 
     await chrome.storage.local.set({ activePersonaId: selectedId });
+    this.updatePersonaDot();
+  }
 
-    // Show hint if session is active
-    this.elements.personaHint.style.display = this.isSessionActive ? 'block' : 'none';
+  private updatePersonaDot(): void {
+    const selected = this.elements.personaSelect.selectedOptions[0];
+    const color = selected?.dataset.color;
+    if (color) {
+      this.elements.personaDot.style.background = color;
+    }
   }
 
   private startStatusPolling(): void {

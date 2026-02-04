@@ -132,7 +132,12 @@ try {
         return true;
 
       case 'HIDE_OVERLAY':
-        overlay?.hide();
+        if (overlay?.hasTimelineEntries()) {
+          // Session ended without summary — reset to timeline view
+          overlay.showTimelineView();
+        } else {
+          overlay?.hide();
+        }
         break;
 
       case 'SHOW_OVERLAY':

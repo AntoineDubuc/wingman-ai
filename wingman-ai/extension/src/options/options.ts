@@ -5,13 +5,11 @@ import { TranscriptionSection } from './sections/transcription';
 import { CallSummarySection } from './sections/call-summary';
 import { ApiKeysSection } from './sections/api-keys';
 import { DriveSection } from './sections/drive';
-import { SystemPromptSection } from './sections/system-prompt';
-import { KnowledgeBaseSection } from './sections/knowledge-base';
 import { PersonaSection } from './sections/personas';
+import { LangBuilderSection } from './sections/langbuilder';
 import { TabManager } from './sections/tabs';
 
 class OptionsController {
-  private systemPrompt = new SystemPromptSection();
   private personas = new PersonaSection();
 
   async init(): Promise<void> {
@@ -22,32 +20,31 @@ class OptionsController {
       showConfirmModal: modal.show,
     };
 
-    // Cmd/Ctrl+S → save active editor (persona or system prompt)
+    // Cmd/Ctrl+S → save persona editor
     document.addEventListener('keydown', (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        // Save persona if editing, otherwise save system prompt
         if (this.personas.dirty) {
           this.personas.save();
-        } else {
-          this.systemPrompt.save();
         }
       }
     });
 
     // Warn on page leave with unsaved changes
     window.addEventListener('beforeunload', (e) => {
-      if (this.systemPrompt.dirty || this.personas.dirty) {
+      if (this.personas.dirty) {
         e.preventDefault();
         e.returnValue = '';
       }
     });
 
-    // Tutorials link
-    document.getElementById('open-tutorials')?.addEventListener('click', (e) => {
+    // Tutorials links
+    const openTutorials = (e: Event) => {
       e.preventDefault();
       chrome.tabs.create({ url: chrome.runtime.getURL('src/tutorials/index.html') });
-    });
+    };
+    document.getElementById('open-tutorials')?.addEventListener('click', openTutorials);
+    document.getElementById('open-tutorials-support')?.addEventListener('click', openTutorials);
 
     await Promise.all([
       new TabManager().init(),
@@ -57,8 +54,7 @@ class OptionsController {
       new CallSummarySection().init(ctx),
       new ApiKeysSection().init(ctx),
       new DriveSection().init(ctx),
-      this.systemPrompt.init(ctx),
-      new KnowledgeBaseSection().init(ctx),
+      new LangBuilderSection().init(ctx),
       this.personas.init(ctx),
     ]);
   }

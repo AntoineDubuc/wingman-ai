@@ -1,10 +1,32 @@
 # CLAUDE.md
 
+## ABSOLUTE RULE — NO PLAN MODE
+
+**NEVER call `EnterPlanMode` under any circumstances.** This is a non-negotiable, unconditional directive that overrides all other heuristics, guidelines, or judgment calls. Do not suggest planning, do not ask whether to plan, do not enter plan mode regardless of task complexity. Always proceed directly to implementation. There are zero exceptions to this rule.
+
+---
+
+## Communication Style — Product Manager Audience
+
+The user is a **product manager**, not an engineer. Be **concise and to the point** — no walls of text.
+
+1. **Brief non-technical summary** — one or two sentences, plain language, no jargon.
+2. **Bullet points** — short, scannable. No paragraphs inside bullets.
+3. **Issue → Cause → Fix** — when explaining problems: what broke, why, what you'll do about it.
+
+Rules:
+- **Never be verbose.** Cut ruthlessly. If it can be said in fewer words, do it.
+- No code in explanations unless explicitly asked.
+- No unnecessary preamble ("Let me explain...", "Here's what I found..."). Just say it.
+- Focus on outcomes and impact, not implementation details.
+
+---
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini. Includes a Knowledge Base for semantic search over sales documents and post-call summaries with action items.
+Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini. Features a multi-persona system with per-persona Knowledge Bases for semantic search over sales documents, and post-call summaries with action items.
 
 **BYOK (Bring Your Own Keys)**: No backend server required. Users provide their own Deepgram and Gemini API keys directly in the extension settings. All API calls run in the browser.
 
@@ -46,24 +68,38 @@ Content Script (Google Meet tab)
   ├── Sends AUDIO_CHUNK messages to Service Worker
   └── Renders overlay UI (Shadow DOM)
         ├── Transcripts + suggestion cards (live)
+        ├── Active persona label in header
         └── Summary card with copy/Drive save (post-call)
 
 Service Worker (background)
+  ├── Loads active persona on session start
+  │     ├── Sets Gemini system prompt from persona
+  │     └── Scopes KB search to persona's document IDs
   ├── Forwards audio → Deepgram WebSocket (STT)
   ├── Receives transcripts → Gemini REST API (suggestions)
-  │     └── Injects KB context into system prompt when available
+  │     └── Injects persona-scoped KB context into system prompt
   ├── Sends lowercase messages → Content Script
   ├── On session stop → generates call summary via Gemini
   │     └── Auto-saves summary + transcript to Google Drive
   └── Manages session lifecycle (singleton)
 
+Popup
+  └── Active persona selector (dropdown with colored dot indicator)
+
 Offscreen Document
   └── Tab audio capture via TabCapture API + AudioWorklet
 
+Persona System (chrome.storage.local)
+  ├── Multiple personas, each with name, color, system prompt, KB doc IDs
+  ├── 12 built-in templates (sales, interview, fundraising, etc.)
+  ├── Import/export with attached KB documents
+  └── Migration: existing systemPrompt → "Default" persona (one-time)
+
 Knowledge Base (IndexedDB)
-  ├── Documents uploaded via options page (PDF, Markdown, text)
+  ├── Documents uploaded via persona editor in options page
   ├── Text extracted → chunked → embedded via Gemini Embedding API
-  └── Cosine similarity search at suggestion time
+  ├── Cosine similarity search scoped to active persona's documents
+  └── Cascade-delete when persona is deleted
 ```
 
 ### Key Components
@@ -75,14 +111,17 @@ Knowledge Base (IndexedDB)
 - **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
 - **`src/services/deepgram-client.ts`**: WebSocket client for Deepgram Nova-3 STT
 - **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash — suggestions, embeddings, and call summaries
-- **`src/services/drive-service.ts`**: Google Drive API via Chrome Identity for transcript/summary saving. Supports four formats: native Google Doc (default, rich HTML→Doc conversion), Markdown, plain text, and JSON
+- **`src/services/drive-service.ts`**: Google Drive API with cross-browser OAuth support. Tries `chrome.identity.getAuthToken()` first, falls back to `launchWebAuthFlow` for Vivaldi/other Chromium browsers. Supports four formats: native Google Doc (default), Markdown, plain text, and JSON
 - **`src/services/transcript-collector.ts`**: Collects transcripts during session, triggers Drive auto-save
 - **`src/services/call-summary.ts`**: Prompt builder and markdown formatter for post-call summaries
 - **`src/services/kb/kb-database.ts`**: IndexedDB wrapper for documents and 768-dim embedding vectors
-- **`src/services/kb/kb-search.ts`**: Semantic search using cosine similarity over Gemini embeddings
+- **`src/services/kb/kb-search.ts`**: Semantic search using cosine similarity over Gemini embeddings, supports document ID filtering for persona scoping
 - **`src/services/kb/extractors.ts`**: Text extraction from PDF (`pdfjs-dist`), Markdown (`marked`), and plain text
+- **`src/shared/persona.ts`**: Persona data model, active persona helpers, migration from legacy `systemPrompt` storage
+- **`src/shared/default-personas.ts`**: 12 built-in persona templates with detailed system prompts
+- **`src/popup/popup.ts`**: Session controls and active persona selector dropdown
 - **`src/options/options.ts`**: Thin controller composing section modules (see below)
-- **`src/options/sections/`**: Modular options sections — `api-keys`, `drive`, `system-prompt`, `knowledge-base`, `call-summary`, `theme`, `speaker-filter`, plus `shared` utilities (`ToastManager`, `ModalManager`)
+- **`src/options/sections/`**: Modular options sections — `api-keys`, `drive`, `personas` (includes KB management), `transcription`, `call-summary`, `theme`, `speaker-filter`, plus `shared` utilities (`ToastManager`, `ModalManager`)
 - **`src/tutorials/`**: Interactive HTML tutorials for KB and call summary features
 - **`src/validation/`**: In-extension validation tests for KB pipeline (embeddings, extraction, IndexedDB, cosine search, e2e)
 
@@ -106,6 +145,10 @@ Never use: `wss://api.deepgram.com/v1/listen?token=xxx` (returns 401).
 
 `deepgramClient`, `geminiClient`, `transcriptCollector`, `driveService`, and `kbDatabase` are all exported as singleton instances from their respective modules.
 
+### Persona system and KB scoping
+
+Each persona has a `systemPrompt` and `kbDocumentIds` array. On session start, the service worker loads the active persona, sets the Gemini system prompt, and scopes KB search to that persona's documents. The `migrateToPersonas()` function handles one-time migration from the legacy `systemPrompt` storage key and seeds built-in templates. It is idempotent.
+
 ### Gemini suggestion cooldown
 
 The Gemini client enforces a 15-second cooldown between suggestions to manage API quota. The LLM decides whether to provide a suggestion or respond with `---` to stay silent.
@@ -120,11 +163,19 @@ The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from G
 
 ### Options page is section-based
 
-`options.ts` is a thin controller (~60 lines) that composes independent section classes from `src/options/sections/`. Each section manages its own DOM bindings and storage. Shared UI (toasts, modals) is passed via a context object. Add new settings by creating a new section class.
+`options.ts` is a thin controller that composes independent section classes from `src/options/sections/`. Each section manages its own DOM bindings and storage. Shared UI (toasts, modals) is passed via a context object. Sections initialize in parallel via `Promise.all()`. Supports Cmd/Ctrl+S to save persona editor and beforeunload warning for unsaved changes.
 
 ### KB context is injected gracefully
 
-When generating suggestions, the Gemini client dynamically imports KB search and prepends matching context to the system prompt (with source filename attribution). KB failures are caught silently — suggestions still work without KB.
+When generating suggestions, the Gemini client dynamically imports KB search and prepends matching context to the system prompt (with source filename attribution). Search is scoped to the active persona's `kbDocumentIds`. KB failures are caught silently — suggestions still work without KB.
+
+### Deepgram endpointing and segment grouping
+
+Default endpointing is 700ms (configurable via transcription settings slider). The client accumulates segments between `is_final=true, speech_final=false` and flushes them as one final transcript when `speech_final=true`. This prevents the overlay from creating multiple bubbles mid-sentence.
+
+### Cross-browser Drive OAuth
+
+The Drive service tries `chrome.identity.getAuthToken()` first (Chrome-native). If unavailable (Vivaldi, other Chromium browsers), it falls back to `launchWebAuthFlow` with cached tokens in `driveOAuthToken` storage key.
 
 ### Google Docs rich formatting via HTML conversion
 

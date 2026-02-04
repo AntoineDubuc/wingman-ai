@@ -15,6 +15,7 @@ import {
   type SummaryMetadata,
   buildSummaryPrompt,
 } from './call-summary';
+import { getKBContext } from './kb/kb-search';
 
 // Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -80,7 +81,7 @@ export class GeminiClient {
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
     this.kbDocumentFilter = null;
-    console.log('[GeminiClient] Started new session');
+    console.debug('[GeminiClient] Session started');
   }
 
   /**
@@ -92,7 +93,7 @@ export class GeminiClient {
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
     this.kbDocumentFilter = null;
-    console.log('[GeminiClient] Cleared session');
+    console.debug('[GeminiClient] Session cleared');
   }
 
   /**
@@ -118,7 +119,7 @@ export class GeminiClient {
       this.systemPrompt = trimmed;
     }
 
-    console.log(`[GeminiClient] Custom system prompt set (${this.systemPrompt.length} chars)`);
+    console.debug(`[GeminiClient] System prompt set (${this.systemPrompt.length} chars)`);
   }
 
   /**
@@ -127,7 +128,7 @@ export class GeminiClient {
    */
   setKBDocumentFilter(documentIds: string[] | null): void {
     this.kbDocumentFilter = documentIds && documentIds.length > 0 ? documentIds : null;
-    console.log(`[GeminiClient] KB filter set: ${this.kbDocumentFilter ? this.kbDocumentFilter.length + ' docs' : 'all'}`);
+    console.debug(`[GeminiClient] KB filter: ${this.kbDocumentFilter ? this.kbDocumentFilter.length + ' docs' : 'all'}`);
   }
 
   /**
@@ -152,7 +153,7 @@ export class GeminiClient {
     speaker: string,
     isFinal: boolean
   ): Promise<Suggestion | null> {
-    console.log(`[GeminiClient] processTranscript: "${text?.slice(0, 30)}..." final=${isFinal}`);
+    // Only log final transcripts that will be processed
 
     // Only process final transcripts
     if (!isFinal) {
@@ -242,12 +243,17 @@ export class GeminiClient {
       let systemPromptWithKB = this.systemPrompt;
 
       try {
-        const { getKBContext } = await import('./kb/kb-search');
-        const kbResult = await getKBContext(currentText, this.kbDocumentFilter ?? undefined);
+        // Use recent conversation context + current text for better KB matching
+        const recentContext = this.chatHistory.slice(-3).map(t => t.text).join(' ');
+        const kbQuery = recentContext ? `${recentContext} ${currentText}` : currentText;
+        console.debug(`[GeminiClient] KB query: "${kbQuery.slice(0, 60)}..."`);
+        const kbResult = await getKBContext(kbQuery, this.kbDocumentFilter ?? undefined);
         if (kbResult.matched && kbResult.context) {
-          systemPromptWithKB = `KNOWLEDGE BASE CONTEXT (from ${kbResult.source}):\n${kbResult.context}\n\n${this.systemPrompt}`;
+          systemPromptWithKB = `KNOWLEDGE BASE CONTEXT (from ${kbResult.source}):\nIMPORTANT: When this context is relevant to the conversation, you MUST reference specific numbers, names, and facts from it. Do not give generic advice when you have specific data available.\n\n${kbResult.context}\n\n${this.systemPrompt}`;
           kbSource = kbResult.source;
-          console.log(`[GeminiClient] KB context injected from: ${kbSource}`);
+          console.log(`[GeminiClient] KB context injected (${kbResult.context.length} chars) from: ${kbSource}`);
+        } else {
+          console.warn(`[GeminiClient] KB returned no match — suggestion will be generated WITHOUT KB data`);
         }
       } catch (kbError) {
         console.warn('[GeminiClient] KB retrieval failed, proceeding without KB:', kbError);
@@ -255,7 +261,7 @@ export class GeminiClient {
 
       // Build conversation messages
       const contents = this.buildConversationMessages(currentText, currentSpeaker);
-      console.log('[GeminiClient] Making API request...');
+      // API request in-flight
 
       // Make API request
       const response = await fetch(
@@ -392,7 +398,7 @@ export class GeminiClient {
       role: 'user',
       parts: [
         {
-          text: `[${currentSpeaker}]: ${currentText}\n\nShould I provide a suggestion for the sales rep, or stay silent (---)?`,
+          text: `[${currentSpeaker}]: ${currentText}\n\nShould I provide a suggestion, or stay silent (---)? IMPORTANT: Never output placeholder text in brackets like [X] or [specific thing from KB]. Either fill in real data or give concrete advice.`,
         },
       ],
     });

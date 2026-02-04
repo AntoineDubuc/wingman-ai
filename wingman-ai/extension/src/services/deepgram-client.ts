@@ -19,7 +19,7 @@ const DEEPGRAM_PARAMS = {
   smart_format: 'true',
   encoding: 'linear16',
   sample_rate: '16000',
-  endpointing: '5000',
+  endpointing: '700',
 };
 
 /**
@@ -67,6 +67,16 @@ export class DeepgramClient {
   private apiKey: string | null = null;
   private connectionPromise: Promise<boolean> | null = null;
 
+  // Per-channel text accumulation for endpointing-aware grouping.
+  // Segments with is_final=true but speech_final=false are accumulated
+  // and emitted as interims until speech_final=true arrives.
+  private accumulatedSegments = new Map<number, string[]>();
+
+  // Fallback flush timers: if speech_final never arrives (noisy environment,
+  // echo cancellation off), force-flush accumulated segments after a timeout.
+  private flushTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private activeEndpointingMs = 700;
+
   /**
    * Set the callback for transcript events
    */
@@ -101,9 +111,14 @@ export class DeepgramClient {
       }
 
       // Apply user-configured endpointing threshold
-      const endpointingMs = storage.endpointingMs ?? '5000';
+      let endpointingMs = storage.endpointingMs ?? '700';
+      // Migrate stale default from pre-slider UI (was a dropdown defaulting to 5000)
+      if (endpointingMs === '5000' && !storage.endpointingMs) {
+        endpointingMs = '700';
+      }
       DEEPGRAM_PARAMS.endpointing = endpointingMs;
-      console.log(`[DeepgramClient] Endpointing: ${endpointingMs}ms`);
+      this.activeEndpointingMs = Number(endpointingMs) || 700;
+      console.debug(`[DeepgramClient] Endpointing: ${endpointingMs}ms`);
     } catch (error) {
       console.error('[DeepgramClient] Failed to get API key:', error);
       return false;
@@ -119,13 +134,13 @@ export class DeepgramClient {
 
     return new Promise((resolve) => {
       try {
-        console.log('[DeepgramClient] Connecting to Deepgram...');
+        console.debug('[DeepgramClient] Connecting...');
         // Use Sec-WebSocket-Protocol for auth (browser WebSocket can't set Authorization header)
         // Pass 'token' and the API key as subprotocols - Deepgram will use the key for auth
         this.socket = new WebSocket(url, ['token', this.apiKey!]);
 
         this.socket.onopen = () => {
-          console.log('[DeepgramClient] Connected to Deepgram');
+          console.debug('[DeepgramClient] Connected');
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
@@ -189,7 +204,7 @@ export class DeepgramClient {
 
       // Handle transcript results
       if (data.type === 'Results') {
-        console.log('[DeepgramClient] Received Results message, channel:', JSON.stringify(data.channel_index));
+        // Results handled in processTranscriptResult
         this.processTranscriptResult(data);
       } else if (data.type === 'Metadata') {
         console.debug('[DeepgramClient] Received metadata:', data);
@@ -210,6 +225,13 @@ export class DeepgramClient {
    *
    * In multichannel mode, each Results message includes channel_index: [channelNum, totalChannels].
    * Channel 0 = mic (user), Channel 1 = tab (participants).
+   *
+   * Endpointing-aware grouping:
+   * - is_final=true, speech_final=false → segment committed but speaker continues.
+   *   Accumulated and emitted as interim so the overlay doesn't create a new bubble.
+   * - is_final=true, speech_final=true  → speaker stopped (endpointing threshold met).
+   *   All accumulated segments + this one emitted as a single final transcript.
+   * - is_final=false → regular interim, prepended with any accumulated text.
    */
   private processTranscriptResult(data: Record<string, unknown>): void {
     try {
@@ -223,41 +245,139 @@ export class DeepgramClient {
       }
 
       const transcriptText = alternative.transcript as string;
-      if (!transcriptText) return;
 
       const isFinal = (data.is_final as boolean) ?? false;
+      const speechFinal = (data.speech_final as boolean) ?? false;
 
       // Determine channel from multichannel response
       const channelIndex = data.channel_index as number[] | undefined;
       const channelNum = channelIndex?.[0] ?? 0;
+
+      // Deepgram may send speech_final=true with empty text to signal endpoint.
+      // We must still flush accumulated segments, otherwise bubbles stay interim
+      // forever and suggestions never trigger.
+      if (!transcriptText) {
+        if (isFinal && speechFinal) {
+          this.clearFlushTimer(channelNum);
+          const segments = this.accumulatedSegments.get(channelNum);
+          if (segments && segments.length > 0) {
+            this.accumulatedSegments.delete(channelNum);
+            const fullText = segments.join(' ');
+            const isSelf = channelNum === 0;
+            const speaker = isSelf ? 'You' : 'Participant';
+            console.log(
+              `[DeepgramClient] Transcript: "${fullText}" (ch=${channelNum}, ${speaker}, speech_final=true empty-text flush, segments=${segments.length})`
+            );
+            this.onTranscriptCallback?.({
+              text: fullText,
+              speaker, speaker_id: channelNum, speaker_role: isSelf ? 'consultant' : 'customer',
+              is_final: true, is_self: isSelf, confidence: 0, timestamp: new Date().toISOString(),
+            });
+          }
+        }
+        return;
+      }
 
       // Deterministic speaker identification via channel index
       const isSelf = channelNum === 0;
       const speaker = isSelf ? 'You' : 'Participant';
       const speakerId = channelNum;
       const speakerRole: SpeakerRole = isSelf ? 'consultant' : 'customer';
+      const confidence = (alternative.confidence as number) ?? 0;
+      const timestamp = new Date().toISOString();
 
-      const transcript: Transcript = {
-        text: transcriptText,
-        speaker,
-        speaker_id: speakerId,
-        speaker_role: speakerRole,
-        is_final: isFinal,
-        is_self: isSelf,
-        confidence: (alternative.confidence as number) ?? 0,
-        timestamp: new Date().toISOString(),
-      };
+      if (isFinal && !speechFinal) {
+        // Segment committed but speaker hasn't stopped — accumulate
+        const segments = this.accumulatedSegments.get(channelNum) ?? [];
+        segments.push(transcriptText);
+        this.accumulatedSegments.set(channelNum, segments);
 
-      console.log(
-        `[DeepgramClient] Transcript: "${transcriptText}" (ch=${channelNum}, ${speaker}, final=${isFinal})`
-      );
+        // Start fallback flush timer (in case speech_final never arrives)
+        this.startFlushTimer(channelNum, isSelf, speakerId, speakerRole);
 
-      // Emit transcript to callback
-      if (this.onTranscriptCallback) {
-        this.onTranscriptCallback(transcript);
+        // Emit as interim so the overlay updates the existing bubble
+        const fullText = segments.join(' ');
+        // Accumulated segment, will log on speech_final
+        this.onTranscriptCallback?.({
+          text: fullText,
+          speaker, speaker_id: speakerId, speaker_role: speakerRole,
+          is_final: false, is_self: isSelf, confidence, timestamp,
+        });
+        return;
       }
+
+      if (isFinal && speechFinal) {
+        // Speaker truly stopped — flush accumulated segments + this one as final
+        this.clearFlushTimer(channelNum);
+        const segments = this.accumulatedSegments.get(channelNum) ?? [];
+        segments.push(transcriptText);
+        this.accumulatedSegments.delete(channelNum);
+
+        const fullText = segments.join(' ');
+        console.log(
+          `[DeepgramClient] Transcript: "${fullText}" (ch=${channelNum}, ${speaker}, speech_final=true, segments=${segments.length})`
+        );
+        this.onTranscriptCallback?.({
+          text: fullText,
+          speaker, speaker_id: speakerId, speaker_role: speakerRole,
+          is_final: true, is_self: isSelf, confidence, timestamp,
+        });
+        return;
+      }
+
+      // Regular interim — prepend any accumulated text
+      const segments = this.accumulatedSegments.get(channelNum);
+      const prefix = segments && segments.length > 0 ? segments.join(' ') + ' ' : '';
+      const displayText = prefix + transcriptText;
+
+      // Interim transcript, no log
+      this.onTranscriptCallback?.({
+        text: displayText,
+        speaker, speaker_id: speakerId, speaker_role: speakerRole,
+        is_final: false, is_self: isSelf, confidence, timestamp,
+      });
     } catch (error) {
       console.error('[DeepgramClient] Error processing transcript:', error);
+    }
+  }
+
+  /**
+   * Start a fallback timer that force-flushes accumulated segments as final.
+   * Covers noisy environments where speech_final never arrives.
+   */
+  private startFlushTimer(
+    channelNum: number,
+    isSelf: boolean,
+    speakerId: number,
+    speakerRole: SpeakerRole,
+  ): void {
+    this.clearFlushTimer(channelNum);
+    const timeout = this.activeEndpointingMs + 1500;
+    const timer = setTimeout(() => {
+      this.flushTimers.delete(channelNum);
+      const segments = this.accumulatedSegments.get(channelNum);
+      if (segments && segments.length > 0) {
+        this.accumulatedSegments.delete(channelNum);
+        const fullText = segments.join(' ');
+        const speaker = isSelf ? 'You' : 'Participant';
+        console.log(
+          `[DeepgramClient] Transcript: "${fullText}" (ch=${channelNum}, ${speaker}, fallback-flush after ${timeout}ms, segments=${segments.length})`
+        );
+        this.onTranscriptCallback?.({
+          text: fullText,
+          speaker, speaker_id: speakerId, speaker_role: speakerRole,
+          is_final: true, is_self: isSelf, confidence: 0, timestamp: new Date().toISOString(),
+        });
+      }
+    }, timeout);
+    this.flushTimers.set(channelNum, timer);
+  }
+
+  private clearFlushTimer(channelNum: number): void {
+    const timer = this.flushTimers.get(channelNum);
+    if (timer) {
+      clearTimeout(timer);
+      this.flushTimers.delete(channelNum);
     }
   }
 
@@ -318,7 +438,7 @@ export class DeepgramClient {
    * Disconnect from Deepgram
    */
   async disconnect(): Promise<void> {
-    console.log('[DeepgramClient] Disconnecting...');
+    console.debug('[DeepgramClient] Disconnecting...');
 
     // Flush remaining audio
     this.flushBuffer();
@@ -332,8 +452,11 @@ export class DeepgramClient {
 
     this.isConnected = false;
     this.reconnectAttempts = this.maxReconnectAttempts; // Prevent auto-reconnect
+    this.accumulatedSegments.clear();
+    for (const timer of this.flushTimers.values()) clearTimeout(timer);
+    this.flushTimers.clear();
 
-    console.log('[DeepgramClient] Disconnected');
+    console.debug('[DeepgramClient] Disconnected');
   }
 
   /**

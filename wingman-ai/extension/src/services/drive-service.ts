@@ -119,15 +119,20 @@ class DriveService {
         await this.revokeToken(token);
       }
 
-      // Clear stored state
+      // Clear stored state (including launchWebAuthFlow cached token)
       await chrome.storage.local.set({
         driveConnected: false,
         driveAccountEmail: null,
+        driveOAuthToken: null,
       });
 
-      // Clear Chrome's cached token
+      // Clear Chrome's cached token (may not work for launchWebAuthFlow tokens)
       if (token) {
-        await chrome.identity.removeCachedAuthToken({ token });
+        try {
+          await chrome.identity.removeCachedAuthToken({ token });
+        } catch {
+          // Expected for launchWebAuthFlow tokens — already cleared from local storage
+        }
       }
 
       console.log('[DriveService] Disconnected');
@@ -137,6 +142,7 @@ class DriveService {
       await chrome.storage.local.set({
         driveConnected: false,
         driveAccountEmail: null,
+        driveOAuthToken: null,
       });
     }
   }
@@ -206,19 +212,74 @@ class DriveService {
   }
 
   /**
-   * Get OAuth token from Chrome Identity API
+   * Get OAuth token from Chrome Identity API, with launchWebAuthFlow fallback
+   * for Vivaldi and other Chromium browsers where getAuthToken isn't supported.
    */
   private async getAuthToken(interactive: boolean): Promise<string | null> {
-    return new Promise((resolve) => {
-      chrome.identity.getAuthToken({ interactive }, (token) => {
-        if (chrome.runtime.lastError) {
-          console.error('[DriveService] Auth error:', chrome.runtime.lastError.message);
-          resolve(null);
-        } else {
-          resolve(token || null);
-        }
+    // Try Chrome-native getAuthToken first
+    try {
+      const token = await new Promise<string | null>((resolve) => {
+        chrome.identity.getAuthToken({ interactive }, (t) => {
+          if (chrome.runtime.lastError) {
+            console.warn('[DriveService] getAuthToken failed:', chrome.runtime.lastError.message);
+            resolve(null);
+          } else {
+            resolve(t || null);
+          }
+        });
       });
-    });
+      if (token) return token;
+    } catch (err) {
+      console.warn('[DriveService] getAuthToken not available:', err);
+    }
+
+    // Check for cached launchWebAuthFlow token
+    if (!interactive) {
+      const stored = await chrome.storage.local.get(['driveOAuthToken']);
+      return (stored.driveOAuthToken as string) || null;
+    }
+
+    // Fallback: launchWebAuthFlow (works in Vivaldi and all Chromium browsers)
+    // Requires redirect URI registered in Google Cloud Console:
+    // https://<extension-id>.chromiumapp.org/
+    try {
+      const redirectUrl = chrome.identity.getRedirectURL();
+      console.log('[DriveService] launchWebAuthFlow redirect URI:', redirectUrl);
+      // Web application OAuth client (separate from the Chrome Extension client in manifest.json)
+      const clientId = '617701449574-6sq8rsijsmu4aj964n3htr4urk8u8hj3.apps.googleusercontent.com';
+      const scopes = encodeURIComponent('https://www.googleapis.com/auth/drive.file email');
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?client_id=${clientId}` +
+        `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+        `&response_type=token` +
+        `&scope=${scopes}`;
+
+      const responseUrl = await chrome.identity.launchWebAuthFlow({
+        url: authUrl,
+        interactive: true,
+      });
+
+      if (!responseUrl) {
+        console.error('[DriveService] launchWebAuthFlow returned no URL');
+        return null;
+      }
+
+      // Parse access_token from the redirect URL fragment
+      const hashParams = new URLSearchParams(responseUrl.split('#')[1] ?? '');
+      const token = hashParams.get('access_token');
+      if (token) {
+        // Cache the token locally for non-interactive use
+        await chrome.storage.local.set({ driveOAuthToken: token });
+        return token;
+      }
+
+      console.error('[DriveService] No access_token in redirect URL');
+      return null;
+    } catch (err) {
+      console.error('[DriveService] launchWebAuthFlow failed:', err);
+      return null;
+    }
   }
 
   /**

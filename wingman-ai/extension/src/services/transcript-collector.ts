@@ -38,7 +38,7 @@ class TranscriptCollector {
       suggestionsCount: 0,
       speakerFilterEnabled,
     };
-    console.log('[TranscriptCollector] Session started');
+    console.debug('[TranscriptCollector] Session started');
   }
 
   /**
@@ -65,7 +65,7 @@ class TranscriptCollector {
       is_self: transcript.is_self ?? false,
     });
 
-    console.log(`[TranscriptCollector] Collected transcript #${this.session.transcripts.length}`);
+    console.debug(`[TranscriptCollector] Transcript #${this.session.transcripts.length}`);
   }
 
   /**
@@ -90,7 +90,7 @@ class TranscriptCollector {
     });
 
     this.session.suggestionsCount++;
-    console.log(`[TranscriptCollector] Collected suggestion #${this.session.suggestionsCount}`);
+    console.debug(`[TranscriptCollector] Suggestion #${this.session.suggestionsCount}`);
   }
 
   /**
@@ -99,7 +99,7 @@ class TranscriptCollector {
    */
   endSession(): SessionData | null {
     if (!this.session) {
-      console.log('[TranscriptCollector] No active session to end');
+      console.debug('[TranscriptCollector] No active session to end');
       return null;
     }
 
@@ -109,7 +109,7 @@ class TranscriptCollector {
     // Clear session
     this.session = null;
 
-    console.log(
+    console.debug(
       `[TranscriptCollector] Session ended: ${sessionData.transcripts.length} transcripts, ` +
       `${sessionData.suggestionsCount} suggestions`
     );

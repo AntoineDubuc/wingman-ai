@@ -6,6 +6,7 @@
  */
 
 import { DEFAULT_SYSTEM_PROMPT } from './default-prompt';
+import { DEFAULT_PERSONA_TEMPLATES } from './default-personas';
 
 // === TYPES ===
 
@@ -100,36 +101,61 @@ export function createPersona(
 
 // === MIGRATION ===
 
+const STORAGE_KEY_BUILTINS_SEEDED = 'builtInPersonasSeeded';
+
 /**
  * One-time migration: creates a "Default" persona from the existing
  * systemPrompt storage key and all KB document IDs.
+ * Also seeds built-in persona templates if not already done.
  *
- * Safe to call multiple times — skips if personas already exist.
+ * Safe to call multiple times — each step is idempotent.
  */
 export async function migrateToPersonas(): Promise<void> {
   const existing = await getPersonas();
-  if (existing.length > 0) return;
 
-  // Read legacy system prompt
-  const storage = await chrome.storage.local.get(['systemPrompt']);
-  const prompt = (storage.systemPrompt as string) || DEFAULT_SYSTEM_PROMPT;
+  if (existing.length === 0) {
+    // Fresh install — create Default persona + all built-ins
+    const storage = await chrome.storage.local.get(['systemPrompt']);
+    const prompt = (storage.systemPrompt as string) || DEFAULT_SYSTEM_PROMPT;
 
-  // Read KB document IDs (dynamic import to avoid pulling IndexedDB into lightweight contexts)
-  let kbDocIds: string[] = [];
-  try {
-    const { kbDatabase } = await import('../services/kb/kb-database');
-    await kbDatabase.init();
-    const docs = await kbDatabase.getDocuments();
-    kbDocIds = docs
-      .filter((d) => d.status === 'complete')
-      .map((d) => d.id);
-  } catch {
-    // IndexedDB may not be available (e.g., first install with no docs)
+    let kbDocIds: string[] = [];
+    try {
+      const { kbDatabase } = await import('../services/kb/kb-database');
+      await kbDatabase.init();
+      const docs = await kbDatabase.getDocuments();
+      kbDocIds = docs
+        .filter((d) => d.status === 'complete')
+        .map((d) => d.id);
+    } catch {
+      // IndexedDB may not be available
+    }
+
+    const defaultPersona = createPersona('Default', prompt, DEFAULT_PERSONA_COLOR, kbDocIds);
+    const builtIns = DEFAULT_PERSONA_TEMPLATES.map((t) =>
+      createPersona(t.name, t.systemPrompt, t.color)
+    );
+
+    await savePersonas([defaultPersona, ...builtIns]);
+    await setActivePersonaId(defaultPersona.id);
+    await chrome.storage.local.set({ [STORAGE_KEY_BUILTINS_SEEDED]: true });
+
+    console.log(`[Persona] Migration complete — created Default + ${builtIns.length} built-in personas`);
+    return;
   }
 
-  const defaultPersona = createPersona('Default', prompt, DEFAULT_PERSONA_COLOR, kbDocIds);
-  await savePersonas([defaultPersona]);
-  await setActivePersonaId(defaultPersona.id);
+  // Existing user — seed built-in templates if not already done
+  const flags = await chrome.storage.local.get([STORAGE_KEY_BUILTINS_SEEDED]);
+  if (flags[STORAGE_KEY_BUILTINS_SEEDED]) return;
 
-  console.log('[Persona] Migration complete — created Default persona');
+  const existingNames = new Set(existing.map((p) => p.name));
+  const newPersonas = DEFAULT_PERSONA_TEMPLATES
+    .filter((t) => !existingNames.has(t.name))
+    .map((t) => createPersona(t.name, t.systemPrompt, t.color));
+
+  if (newPersonas.length > 0) {
+    await savePersonas([...existing, ...newPersonas]);
+    console.log(`[Persona] Seeded ${newPersonas.length} built-in personas`);
+  }
+
+  await chrome.storage.local.set({ [STORAGE_KEY_BUILTINS_SEEDED]: true });
 }

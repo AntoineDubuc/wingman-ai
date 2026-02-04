@@ -19,6 +19,9 @@
     "wss://api.deepgram.com/*",
     "https://generativelanguage.googleapis.com/*"
   ],
+  "optional_host_permissions": [
+    "*://*/*"
+  ],
   "oauth2": {
     "client_id": "617701449574-b88mqgktdiqdgc3qdhe57mbqdm6oiq5a.apps.googleusercontent.com",
     "scopes": [

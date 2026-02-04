@@ -114,7 +114,7 @@ This plan covers two categories of work: (A) completing the persona-as-single-hu
 
 | Done | # | Task Name | Start | End | Total (min) | Human Est. (min) | Multiplier |
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
-| [ ] | 1 | Remove KB tab and panel from options HTML | | | | | |
+| [x] | 1 | Remove KB tab and panel from options HTML | 12:00 | | | | |
 | [ ] | 2 | Remove KnowledgeBaseSection from options.ts | | | | | |
 | [ ] | 3 | Add KB section HTML to persona editor (upload, list, test) | | | | | |
 | [ ] | 4 | Implement KB upload logic in PersonaSection | | | | | |

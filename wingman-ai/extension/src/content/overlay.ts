@@ -78,6 +78,20 @@ export class AIOverlay {
   // Post-call state
   private activePostCallView: 'summary' | 'timeline' = 'summary';
 
+  // LangBuilder nav state
+  private overlayNav: HTMLElement | null = null;
+  private langBuilderPanel: HTMLElement | null = null;
+  private langBuilderFlowSelect: HTMLSelectElement | null = null;
+  private langBuilderInput: HTMLTextAreaElement | null = null;
+  private langBuilderResult: HTMLElement | null = null;
+  private langBuilderGoBtn: HTMLButtonElement | null = null;
+  private langBuilderCancelBtn: HTMLButtonElement | null = null;
+  private activeNavTab: 'chat' | 'langbuilder' = 'chat';
+  private layoutToggleBtn: HTMLButtonElement | null = null;
+  private layoutMode: 'single' | 'side-by-side' = 'single';
+  private singlePanelWidth: string | null = null;
+  private langBuilderConfigured = false;
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
@@ -101,6 +115,7 @@ export class AIOverlay {
     this.restorePosition();
     this.loadTheme();
     this.loadPersonaLabel();
+    this.loadLangBuilderVisibility();
   }
 
   /**
@@ -272,7 +287,9 @@ export class AIOverlay {
       }
 
       .overlay-panel.minimized .resize-handle,
+      .overlay-panel.minimized .overlay-body,
       .overlay-panel.minimized .overlay-content,
+      .overlay-panel.minimized .overlay-nav,
       .overlay-panel.minimized .post-call-toggle,
       .overlay-panel.minimized .summary-footer,
       .overlay-panel.minimized .title,
@@ -357,6 +374,174 @@ export class AIOverlay {
         height: 22px;
         font-size: 11px;
         font-weight: 600;
+      }
+
+      /* ── Body wrapper (nav + content) ── */
+      .overlay-body {
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* ── Vertical nav ── */
+      .overlay-nav {
+        width: 64px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 0;
+        border-right: 1px solid var(--overlay-border);
+        background: var(--overlay-bg);
+      }
+
+      .overlay-nav button {
+        width: 56px;
+        border: none;
+        background: transparent;
+        color: var(--overlay-text-secondary);
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 6px 4px;
+        border-left: 3px solid transparent;
+        transition: background 0.15s, color 0.15s;
+        font-family: inherit;
+      }
+
+      .overlay-nav button span {
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      .overlay-nav button:hover {
+        background: var(--overlay-bg-secondary);
+        color: var(--overlay-text);
+      }
+
+      .overlay-nav button.active {
+        background: var(--overlay-bg-secondary);
+        border-left-color: var(--overlay-text);
+        color: var(--overlay-text);
+      }
+
+      /* ── LangBuilder panel ── */
+      .langbuilder-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 10px;
+        gap: 8px;
+      }
+
+      .lb-flow-select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--overlay-text);
+        background: var(--overlay-bg);
+        border: 1px solid var(--overlay-border);
+        border-radius: 6px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4l3 3 3-3' fill='none' stroke='%239aa0a6' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        padding-right: 24px;
+        flex-shrink: 0;
+      }
+
+      .lb-flow-select:focus {
+        outline: none;
+        border-color: #e67e22;
+      }
+
+      .lb-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 80px;
+        resize: vertical;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-family: inherit;
+        color: var(--overlay-text);
+        background: var(--overlay-bg);
+        border: 1px solid var(--overlay-border);
+        border-radius: 6px;
+        line-height: 1.5;
+        flex-shrink: 0;
+      }
+
+      .lb-textarea::placeholder { color: var(--overlay-text-muted); }
+      .lb-textarea:focus { outline: none; border-color: #e67e22; }
+
+      .lb-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .lb-go-btn {
+        padding: 6px 16px;
+        background: #e67e22;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .lb-go-btn:hover:not(:disabled) { background: #d35400; }
+      .lb-go-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .lb-cancel-btn {
+        padding: 6px 16px;
+        background: transparent;
+        color: var(--overlay-text-secondary);
+        border: 1px solid var(--overlay-border);
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .lb-cancel-btn:hover:not(:disabled) { background: var(--overlay-bg-secondary); }
+      .lb-cancel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      .lb-result {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+        border-radius: 6px;
+        background: var(--overlay-bg-secondary);
+        font-size: 13px;
+        color: var(--overlay-text);
+        white-space: pre-wrap;
+        line-height: 1.5;
+        min-height: 60px;
+      }
+
+      .lb-result.loading {
+        color: var(--overlay-text-secondary);
+        animation: lbFade 1.8s ease-in-out infinite;
+      }
+
+      .lb-result-error {
+        color: var(--overlay-text-secondary);
       }
 
       /* ── Content area ── */
@@ -732,11 +917,17 @@ export class AIOverlay {
         50% { opacity: 1; transform: scale(1.2); }
       }
 
+      @keyframes lbFade {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         @keyframes bubbleIn { from, to { opacity: 1; transform: none; } }
         @keyframes wingmanIn { from, to { opacity: 1; transform: none; } }
         @keyframes statusPulse { from, to { opacity: 1; } }
         @keyframes interimPulse { from, to { opacity: 0.5; } }
+        @keyframes lbFade { from, to { opacity: 1; } }
       }
     `;
     this.shadow.appendChild(styles);
@@ -760,13 +951,39 @@ export class AIOverlay {
             <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
             <button class="font-increase-btn" title="Increase font size">A+</button>
           </div>
+          <button class="layout-toggle-btn" title="Toggle side-by-side" style="display:none;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
           <button class="minimize-btn" title="Minimize">${ICON_MINIMIZE}</button>
           <button class="close-btn" title="Hide">${ICON_CLOSE}</button>
         </div>
       </div>
-      <div class="overlay-content">
-        <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
-          <div class="empty-state">Listening for conversation...</div>
+      <div class="overlay-body">
+        <div class="overlay-nav" style="display:none;">
+          <button class="nav-chat-btn active" title="Chat">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 3V3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Chat</span>
+          </button>
+          <button class="nav-lb-btn" title="Flows">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5.5v1a2.5 2.5 0 002.5 2.5h3A2.5 2.5 0 0012 6.5v-1" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="9" x2="8" y2="10.5" stroke="currentColor" stroke-width="1.2"/></svg>
+            <span>Flows</span>
+          </button>
+        </div>
+        <div class="overlay-content">
+          <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
+            <div class="empty-state">Listening for conversation...</div>
+          </div>
+        </div>
+        <div class="langbuilder-panel" style="display:none;">
+          <select class="lb-flow-select">
+            <option disabled selected>Select a flow...</option>
+          </select>
+          <textarea class="lb-textarea" placeholder="Paste or type input for the flow..."></textarea>
+          <div class="lb-actions">
+            <button class="lb-cancel-btn" disabled>Cancel</button>
+            <button class="lb-go-btn" disabled>Go</button>
+          </div>
+          <div class="lb-result" style="color:var(--overlay-text-muted);">Run a flow to see results here.</div>
         </div>
       </div>
       <div class="resize-handle" title="Resize"></div>
@@ -798,6 +1015,39 @@ export class AIOverlay {
     });
     panel.addEventListener('click', () => {
       if (this.isMinimized) this.toggleMinimize();
+    });
+
+    // Store nav/body references
+    this.overlayNav = panel.querySelector('.overlay-nav') as HTMLElement;
+    this.layoutToggleBtn = panel.querySelector('.layout-toggle-btn') as HTMLButtonElement;
+
+    // LangBuilder panel references
+    this.langBuilderPanel = panel.querySelector('.langbuilder-panel') as HTMLElement;
+    this.langBuilderFlowSelect = panel.querySelector('.lb-flow-select') as HTMLSelectElement;
+    this.langBuilderInput = panel.querySelector('.lb-textarea') as HTMLTextAreaElement;
+    this.langBuilderResult = panel.querySelector('.lb-result') as HTMLElement;
+    this.langBuilderGoBtn = panel.querySelector('.lb-go-btn') as HTMLButtonElement;
+    this.langBuilderCancelBtn = panel.querySelector('.lb-cancel-btn') as HTMLButtonElement;
+
+    // Enable/disable Go button on input changes
+    this.langBuilderFlowSelect?.addEventListener('change', () => this.updateGoButtonState());
+    this.langBuilderInput?.addEventListener('input', () => this.updateGoButtonState());
+
+    // Go button — run flow via service worker
+    this.langBuilderGoBtn?.addEventListener('click', () => this.runLangBuilderFlow());
+    // Cancel button — abort in-flight flow
+    this.langBuilderCancelBtn?.addEventListener('click', () => this.cancelLangBuilderFlow());
+
+    // Nav tab switching
+    const chatNavBtn = panel.querySelector('.nav-chat-btn') as HTMLButtonElement;
+    const lbNavBtn = panel.querySelector('.nav-lb-btn') as HTMLButtonElement;
+    chatNavBtn?.addEventListener('click', (e) => { e.stopPropagation(); this.setActiveNavTab('chat'); });
+    lbNavBtn?.addEventListener('click', (e) => { e.stopPropagation(); this.setActiveNavTab('langbuilder'); });
+
+    // Layout toggle
+    this.layoutToggleBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.setLayoutMode(this.layoutMode === 'single' ? 'side-by-side' : 'single');
     });
 
     return panel;
@@ -1487,6 +1737,250 @@ export class AIOverlay {
     this.panel.style.display = 'flex';
   }
 
+  // ── LangBuilder Nav ──
+
+  /**
+   * Switch between Chat and LangBuilder tabs in the overlay nav.
+   */
+  private setActiveNavTab(tab: 'chat' | 'langbuilder'): void {
+    this.activeNavTab = tab;
+    const content = this.panel.querySelector('.overlay-content') as HTMLElement;
+    const chatBtn = this.panel.querySelector('.nav-chat-btn') as HTMLElement;
+    const lbBtn = this.panel.querySelector('.nav-lb-btn') as HTMLElement;
+
+    if (tab === 'chat') {
+      if (content) content.style.display = 'flex';
+      if (this.langBuilderPanel) this.langBuilderPanel.style.display = 'none';
+      chatBtn?.classList.add('active');
+      lbBtn?.classList.remove('active');
+    } else {
+      if (content) content.style.display = 'none';
+      if (this.langBuilderPanel) this.langBuilderPanel.style.display = 'flex';
+      chatBtn?.classList.remove('active');
+      lbBtn?.classList.add('active');
+    }
+  }
+
+  /**
+   * Check storage for LangBuilder config and show/hide the nav accordingly.
+   */
+  private loadLangBuilderVisibility(): void {
+    try {
+      chrome.storage.local.get(
+        ['langbuilderUrl', 'langbuilderApiKey', 'langbuilderFlows', 'langbuilderLayoutMode'],
+        (result) => {
+          const configured = !!(result.langbuilderUrl && result.langbuilderApiKey);
+          this.langBuilderConfigured = configured;
+
+          if (this.overlayNav) {
+            this.overlayNav.style.display = configured ? 'flex' : 'none';
+          }
+          if (this.layoutToggleBtn) {
+            this.layoutToggleBtn.style.display = configured ? 'flex' : 'none';
+          }
+
+          // Load flows into the panel select
+          if (configured && result.langbuilderFlows) {
+            this.updateLangBuilderFlows(result.langbuilderFlows);
+          }
+
+          // Restore layout mode
+          if (configured && result.langbuilderLayoutMode === 'side-by-side') {
+            this.setLayoutMode('side-by-side');
+          }
+        },
+      );
+
+      // Live-update on storage changes
+      chrome.storage.onChanged.addListener((changes) => {
+        if (changes.langbuilderUrl || changes.langbuilderApiKey) {
+          chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey'], (r) => {
+            const configured = !!(r.langbuilderUrl && r.langbuilderApiKey);
+            this.langBuilderConfigured = configured;
+            if (this.overlayNav) {
+              this.overlayNav.style.display = configured ? 'flex' : 'none';
+            }
+            if (this.layoutToggleBtn) {
+              this.layoutToggleBtn.style.display = configured ? 'flex' : 'none';
+            }
+            if (!configured && this.layoutMode === 'side-by-side') {
+              this.setLayoutMode('single');
+            }
+          });
+        }
+        if (changes.langbuilderFlows) {
+          const flows = changes.langbuilderFlows.newValue;
+          if (Array.isArray(flows)) {
+            this.updateLangBuilderFlows(flows);
+          }
+        }
+      });
+    } catch {
+      // Extension context may be invalid
+    }
+  }
+
+  /**
+   * Update the LangBuilder flow dropdown from a flows array.
+   */
+  private updateLangBuilderFlows(flows: { id: string; name: string }[]): void {
+    if (!this.langBuilderFlowSelect) return;
+    this.langBuilderFlowSelect.innerHTML = '';
+
+    if (flows.length === 0) {
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.selected = true;
+      opt.textContent = 'No flows \u2014 configure in Settings';
+      this.langBuilderFlowSelect.appendChild(opt);
+      return;
+    }
+
+    const placeholder = document.createElement('option');
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = 'Select a flow...';
+    this.langBuilderFlowSelect.appendChild(placeholder);
+
+    for (const flow of flows) {
+      const opt = document.createElement('option');
+      opt.value = flow.id;
+      opt.textContent = flow.name;
+      this.langBuilderFlowSelect.appendChild(opt);
+    }
+
+    this.updateGoButtonState();
+  }
+
+  /**
+   * Toggle layout between single-panel and side-by-side mode.
+   */
+  private setLayoutMode(mode: 'single' | 'side-by-side'): void {
+    this.layoutMode = mode;
+    const content = this.panel.querySelector('.overlay-content') as HTMLElement;
+
+    if (mode === 'side-by-side') {
+      // Save current width for restore
+      this.singlePanelWidth = this.panel.style.width || null;
+
+      // Show both panels
+      if (content) content.style.display = 'flex';
+      if (this.langBuilderPanel) {
+        this.langBuilderPanel.style.display = 'flex';
+        this.langBuilderPanel.style.order = '-1';
+        this.langBuilderPanel.style.borderRight = `1px solid var(--overlay-border)`;
+      }
+
+      // Hide nav (both panels visible)
+      if (this.overlayNav) this.overlayNav.style.display = 'none';
+
+      // Widen panel
+      this.panel.style.maxWidth = '900px';
+      this.panel.style.width = `${Math.min(window.innerWidth - 40, 900)}px`;
+    } else {
+      // Restore single panel
+      this.panel.style.maxWidth = '600px';
+      if (this.singlePanelWidth) {
+        this.panel.style.width = this.singlePanelWidth;
+      }
+
+      // Show nav, revert to active tab
+      if (this.overlayNav && this.langBuilderConfigured) {
+        this.overlayNav.style.display = 'flex';
+      }
+
+      if (this.langBuilderPanel) {
+        this.langBuilderPanel.style.order = '';
+        this.langBuilderPanel.style.borderRight = '';
+      }
+
+      this.setActiveNavTab(this.activeNavTab);
+    }
+
+    // Persist
+    try {
+      if (chrome.runtime?.id) {
+        chrome.storage.local.set({ langbuilderLayoutMode: mode });
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Enable/disable Go button based on flow selection and input text.
+   */
+  private updateGoButtonState(): void {
+    if (!this.langBuilderGoBtn || !this.langBuilderFlowSelect || !this.langBuilderInput) return;
+    const hasFlow = this.langBuilderFlowSelect.selectedIndex > 0 ||
+      (this.langBuilderFlowSelect.options.length > 0 && !this.langBuilderFlowSelect.options[0]?.disabled);
+    const hasText = (this.langBuilderInput.value?.trim() || '').length > 0;
+    this.langBuilderGoBtn.disabled = !hasFlow || !hasText;
+  }
+
+  /**
+   * Run the selected LangBuilder flow via the service worker.
+   */
+  private async runLangBuilderFlow(): Promise<void> {
+    if (!this.langBuilderFlowSelect || !this.langBuilderInput || !this.langBuilderResult) return;
+
+    const flowId = this.langBuilderFlowSelect.value;
+    const inputValue = this.langBuilderInput.value.trim();
+    if (!flowId || !inputValue) return;
+
+    // Disable Go, enable Cancel
+    if (this.langBuilderGoBtn) this.langBuilderGoBtn.disabled = true;
+    if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = false;
+
+    // Show loading state
+    this.langBuilderResult.textContent = 'Running flow...';
+    this.langBuilderResult.classList.add('loading');
+    this.langBuilderResult.classList.remove('lb-result-error');
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'RUN_LANGBUILDER_FLOW',
+        flowId,
+        inputValue,
+      });
+
+      this.langBuilderResult.classList.remove('loading');
+
+      if (response?.success) {
+        this.langBuilderResult.textContent = response.result || '(empty response)';
+      } else {
+        this.langBuilderResult.textContent = response?.error || 'Flow execution failed';
+        this.langBuilderResult.classList.add('lb-result-error');
+      }
+    } catch (err) {
+      this.langBuilderResult.classList.remove('loading');
+      this.langBuilderResult.textContent = err instanceof Error ? err.message : 'Connection error';
+      this.langBuilderResult.classList.add('lb-result-error');
+    } finally {
+      if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = true;
+      this.updateGoButtonState();
+    }
+  }
+
+  /**
+   * Cancel an in-flight LangBuilder flow execution.
+   */
+  private cancelLangBuilderFlow(): void {
+    try {
+      chrome.runtime.sendMessage({ type: 'CANCEL_LANGBUILDER_FLOW' });
+    } catch {
+      // Extension context may be invalid
+    }
+
+    if (this.langBuilderResult) {
+      this.langBuilderResult.classList.remove('loading');
+      this.langBuilderResult.textContent = 'Cancelled';
+      this.langBuilderResult.classList.add('lb-result-error');
+    }
+    if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = true;
+    this.updateGoButtonState();
+  }
+
   /**
    * Show the overlay
    */
@@ -1545,7 +2039,8 @@ export class AIOverlay {
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
 
-      const newWidth = Math.max(280, Math.min(600, startWidth + deltaX));
+      const maxW = this.layoutMode === 'side-by-side' ? 900 : 600;
+      const newWidth = Math.max(280, Math.min(maxW, startWidth + deltaX));
       const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
 
       this.panel.style.width = `${newWidth}px`;

@@ -11,7 +11,9 @@ import {
   migrateToPersonas,
 } from '../../shared/persona';
 import { DEFAULT_SYSTEM_PROMPT } from '../../shared/default-prompt';
-import { kbDatabase, ingestDocument } from '../../services/kb/kb-database';
+import { kbDatabase, ingestDocument, isIngesting } from '../../services/kb/kb-database';
+import { searchKB } from '../../services/kb/kb-search';
+import { icon } from './icons';
 
 const MIN_PROMPT_LENGTH = 100;
 const MAX_PROMPT_LENGTH = 10000;
@@ -24,7 +26,7 @@ export class PersonaSection {
   private editingPersona: Persona | null = null;
   private isDirty = false;
 
-  // DOM references
+  // DOM references — persona list & editor
   private listEl: HTMLElement | null = null;
   private emptyEl: HTMLElement | null = null;
   private editorEl: HTMLElement | null = null;
@@ -34,7 +36,6 @@ export class PersonaSection {
   private promptTextarea: HTMLTextAreaElement | null = null;
   private charCurrent: HTMLElement | null = null;
   private charCount: HTMLElement | null = null;
-  private kbListEl: HTMLElement | null = null;
   private saveBtn: HTMLButtonElement | null = null;
   private deleteBtn: HTMLButtonElement | null = null;
   private duplicateBtn: HTMLButtonElement | null = null;
@@ -44,6 +45,20 @@ export class PersonaSection {
   private importProgress: HTMLElement | null = null;
   private importFill: HTMLElement | null = null;
   private importText: HTMLElement | null = null;
+
+  // DOM references — embedded KB section
+  private kbDropZone: HTMLElement | null = null;
+  private kbFileInput: HTMLInputElement | null = null;
+  private kbProgress: HTMLElement | null = null;
+  private kbProgressFill: HTMLElement | null = null;
+  private kbProgressText: HTMLElement | null = null;
+  private kbDocList: HTMLElement | null = null;
+  private kbEmpty: HTMLElement | null = null;
+  private kbStats: HTMLElement | null = null;
+  private kbTestSection: HTMLElement | null = null;
+  private kbTestInput: HTMLInputElement | null = null;
+  private kbTestBtn: HTMLButtonElement | null = null;
+  private kbTestResults: HTMLElement | null = null;
 
   get dirty(): boolean {
     return this.isDirty;
@@ -55,7 +70,7 @@ export class PersonaSection {
     // Ensure migration has run
     await migrateToPersonas();
 
-    // Bind DOM
+    // Bind DOM — persona list & editor
     this.listEl = document.getElementById('persona-list');
     this.emptyEl = document.getElementById('persona-empty');
     this.editorEl = document.getElementById('persona-editor');
@@ -65,7 +80,6 @@ export class PersonaSection {
     this.promptTextarea = document.getElementById('persona-prompt-textarea') as HTMLTextAreaElement;
     this.charCurrent = document.getElementById('persona-char-current');
     this.charCount = document.getElementById('persona-char-count');
-    this.kbListEl = document.getElementById('persona-kb-list');
     this.saveBtn = document.getElementById('persona-save-btn') as HTMLButtonElement;
     this.deleteBtn = document.getElementById('persona-delete-btn') as HTMLButtonElement;
     this.duplicateBtn = document.getElementById('persona-duplicate-btn') as HTMLButtonElement;
@@ -76,7 +90,21 @@ export class PersonaSection {
     this.importFill = document.getElementById('persona-import-fill');
     this.importText = document.getElementById('persona-import-text');
 
-    // Event listeners
+    // Bind DOM — embedded KB section
+    this.kbDropZone = document.getElementById('persona-kb-drop-zone');
+    this.kbFileInput = document.getElementById('persona-kb-file-input') as HTMLInputElement;
+    this.kbProgress = document.getElementById('persona-kb-progress');
+    this.kbProgressFill = document.getElementById('persona-kb-progress-fill');
+    this.kbProgressText = document.getElementById('persona-kb-progress-text');
+    this.kbDocList = document.getElementById('persona-kb-doc-list');
+    this.kbEmpty = document.getElementById('persona-kb-empty');
+    this.kbStats = document.getElementById('persona-kb-stats');
+    this.kbTestSection = document.getElementById('persona-kb-test-section');
+    this.kbTestInput = document.getElementById('persona-kb-test-input') as HTMLInputElement;
+    this.kbTestBtn = document.getElementById('persona-kb-test-btn') as HTMLButtonElement;
+    this.kbTestResults = document.getElementById('persona-kb-test-results');
+
+    // Event listeners — persona actions
     document.getElementById('persona-new-btn')?.addEventListener('click', () => this.createNew());
     this.saveBtn?.addEventListener('click', () => this.save());
     this.deleteBtn?.addEventListener('click', () => this.confirmDelete());
@@ -94,6 +122,33 @@ export class PersonaSection {
       const file = this.importInput?.files?.[0];
       if (file) this.importPersona(file);
       if (this.importInput) this.importInput.value = '';
+    });
+
+    // Event listeners — KB drop zone
+    this.kbDropZone?.addEventListener('click', () => this.kbFileInput?.click());
+    this.kbDropZone?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.kbDropZone?.classList.add('drag-over');
+    });
+    this.kbDropZone?.addEventListener('dragleave', () => {
+      this.kbDropZone?.classList.remove('drag-over', 'drag-invalid');
+    });
+    this.kbDropZone?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.kbDropZone?.classList.remove('drag-over', 'drag-invalid');
+      const files = (e as DragEvent).dataTransfer?.files;
+      if (files) this.handleKBFiles(files);
+    });
+    this.kbFileInput?.addEventListener('change', () => {
+      const files = this.kbFileInput?.files;
+      if (files) this.handleKBFiles(files);
+      if (this.kbFileInput) this.kbFileInput.value = '';
+    });
+
+    // Event listeners — KB test query
+    this.kbTestBtn?.addEventListener('click', () => this.testPersonaQuery());
+    this.kbTestInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.testPersonaQuery();
     });
 
     // Render color swatches
@@ -127,13 +182,9 @@ export class PersonaSection {
 
     this.promptTextarea.classList.remove('error');
 
-    // Gather selected KB doc IDs
-    const kbDocumentIds = this.getSelectedKBDocIds();
-
-    // Update persona
+    // Update persona — kbDocumentIds is already kept up-to-date by upload/delete
     this.editingPersona.name = name;
     this.editingPersona.systemPrompt = prompt;
-    this.editingPersona.kbDocumentIds = kbDocumentIds;
     this.editingPersona.updatedAt = Date.now();
 
     // Save to storage
@@ -242,8 +293,9 @@ export class PersonaSection {
     // Select color
     this.selectColor(persona.color);
 
-    // Render KB doc checkboxes
-    await this.renderKBPicker(persona.kbDocumentIds);
+    // Init KB and render persona's documents
+    await this.initKB();
+    await this.renderPersonaDocList();
 
     this.editorEl.hidden = false;
     this.editorEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -283,9 +335,14 @@ export class PersonaSection {
     if (!this.editingPersona) return;
 
     const name = this.editingPersona.name;
+    const kbCount = this.editingPersona.kbDocumentIds.length;
+    const kbWarning = kbCount > 0
+      ? ` This will also delete ${kbCount} Knowledge Base document${kbCount !== 1 ? 's' : ''}. This cannot be undone.`
+      : '';
+
     this.ctx.showConfirmModal(
       'Delete persona?',
-      `Delete "${name}"? KB documents will not be deleted.`,
+      `Delete "${name}"?${kbWarning}`,
       () => this.deletePersona()
     );
   }
@@ -294,6 +351,23 @@ export class PersonaSection {
     if (!this.editingPersona) return;
 
     const id = this.editingPersona.id;
+
+    // Cascade-delete KB documents from IndexedDB
+    if (this.editingPersona.kbDocumentIds.length > 0) {
+      try {
+        await kbDatabase.init();
+        for (const docId of this.editingPersona.kbDocumentIds) {
+          try {
+            await kbDatabase.deleteDocument(docId);
+          } catch (err) {
+            console.warn(`[Persona] Failed to delete KB doc ${docId}:`, err);
+          }
+        }
+      } catch (err) {
+        console.warn('[Persona] Failed to init KB for cascade delete:', err);
+      }
+    }
+
     this.personas = this.personas.filter((p) => p.id !== id);
 
     // If we deleted the active persona, activate another
@@ -528,60 +602,258 @@ export class PersonaSection {
     }
   }
 
-  // === KB PICKER ===
+  // === EMBEDDED KB MANAGEMENT ===
 
-  private async renderKBPicker(selectedIds: string[]): Promise<void> {
-    if (!this.kbListEl) return;
-
+  /** Initialize IndexedDB and clean up incomplete documents */
+  private async initKB(): Promise<void> {
     try {
       await kbDatabase.init();
-      const docs = await kbDatabase.getDocuments();
-      const completeDocs = docs.filter((d) => d.status === 'complete');
 
-      if (completeDocs.length === 0) {
-        this.kbListEl.innerHTML = '<p class="persona-kb-empty">No documents uploaded yet. Go to the Knowledge Base tab to add documents.</p>';
-        return;
+      const incomplete = await kbDatabase.getIncompleteDocuments();
+      for (const doc of incomplete) {
+        await kbDatabase.deleteDocument(doc.id);
+        console.log(`[KB] Cleaned up incomplete: ${doc.filename}`);
       }
-
-      const selectedSet = new Set(selectedIds);
-      this.kbListEl.innerHTML = '';
-
-      for (const doc of completeDocs) {
-        const item = document.createElement('div');
-        item.className = 'persona-kb-item';
-
-        const size = this.formatFileSize(doc.fileSize);
-        const checked = selectedSet.has(doc.id) ? 'checked' : '';
-
-        item.innerHTML = `
-          <input type="checkbox" data-doc-id="${doc.id}" ${checked}>
-          <span class="persona-kb-item-name" title="${this.escapeHtml(doc.filename)}">${this.escapeHtml(doc.filename)}</span>
-          <span class="persona-kb-item-meta">${size}</span>
-        `;
-
-        const checkbox = item.querySelector('input') as HTMLInputElement;
-        checkbox.addEventListener('change', () => {
-          this.isDirty = true;
-        });
-
-        this.kbListEl.appendChild(item);
+      if (incomplete.length > 0) {
+        this.ctx.showToast(
+          `Cleaned up ${incomplete.length} incomplete upload(s)`,
+          'success'
+        );
       }
-    } catch {
-      this.kbListEl.innerHTML = '<p class="persona-kb-empty">Failed to load documents.</p>';
+    } catch (error) {
+      console.error('Failed to init KB:', error);
     }
   }
 
-  private getSelectedKBDocIds(): string[] {
-    if (!this.kbListEl) return this.editingPersona?.kbDocumentIds ?? [];
+  /** Handle file drop or selection — process sequentially */
+  private async handleKBFiles(files: FileList): Promise<void> {
+    if (isIngesting()) {
+      this.ctx.showToast('Processing in progress. Please wait.', 'error');
+      return;
+    }
 
-    const checkboxes = this.kbListEl.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    const ids: string[] = [];
-    for (const cb of checkboxes) {
-      if (cb.checked && cb.dataset.docId) {
-        ids.push(cb.dataset.docId);
+    for (const file of Array.from(files)) {
+      await this.processKBFile(file);
+    }
+  }
+
+  /** Ingest a single file and auto-associate with the current persona */
+  private async processKBFile(file: File): Promise<void> {
+    if (!this.editingPersona) return;
+
+    if (this.kbProgress) this.kbProgress.hidden = false;
+    this.kbDropZone?.classList.add('disabled');
+
+    const result = await ingestDocument(file, (_stage, percent) => {
+      if (this.kbProgressFill) this.kbProgressFill.style.width = `${percent}%`;
+      if (this.kbProgressText)
+        this.kbProgressText.textContent = `Processing: ${file.name}...`;
+    });
+
+    if (this.kbProgress) this.kbProgress.hidden = true;
+    if (this.kbProgressFill) this.kbProgressFill.style.width = '0%';
+    this.kbDropZone?.classList.remove('disabled');
+
+    if (result.success && result.documentId) {
+      // Auto-associate with editing persona
+      this.editingPersona.kbDocumentIds.push(result.documentId);
+
+      // Save persona to storage immediately
+      const idx = this.personas.findIndex((p) => p.id === this.editingPersona!.id);
+      if (idx >= 0) {
+        this.personas[idx] = this.editingPersona;
+      } else {
+        this.personas.push(this.editingPersona);
+      }
+      await savePersonas(this.personas);
+
+      this.ctx.showToast(
+        `${file.name} added (${result.chunkCount} sections)`,
+        'success'
+      );
+    } else {
+      this.ctx.showToast(result.error ?? 'Failed to process file', 'error');
+    }
+
+    await this.renderPersonaDocList();
+    this.renderList();
+  }
+
+  /** Render the persona's own KB documents (not all docs in IndexedDB) */
+  private async renderPersonaDocList(): Promise<void> {
+    if (!this.editingPersona) return;
+
+    try {
+      const docs = await kbDatabase.getDocuments();
+      const personaDocIds = new Set(this.editingPersona.kbDocumentIds);
+      const personaDocs = docs.filter(
+        (d) => personaDocIds.has(d.id) && d.status === 'complete'
+      );
+
+      // Empty state
+      if (this.kbEmpty) {
+        this.kbEmpty.style.display = personaDocs.length === 0 ? 'block' : 'none';
+      }
+
+      // Test section visibility
+      if (this.kbTestSection) {
+        this.kbTestSection.hidden = personaDocs.length === 0;
+      }
+
+      // Document list
+      if (this.kbDocList) {
+        this.kbDocList.innerHTML = '';
+        for (const doc of personaDocs) {
+          const item = document.createElement('div');
+          item.className = 'kb-doc-item';
+          item.dataset.id = doc.id;
+
+          const ago = this.timeAgo(doc.uploadedAt);
+          const size = this.formatFileSize(doc.fileSize);
+
+          item.innerHTML = `
+            <span class="kb-doc-icon">${icon('document', 24)}</span>
+            <div class="kb-doc-info">
+              <span class="kb-doc-name" title="${this.escapeHtml(doc.filename)}">${this.escapeHtml(doc.filename)}</span>
+              <span class="kb-doc-meta">${doc.chunkCount} sections \u00B7 ${size} \u00B7 Added ${ago}</span>
+            </div>
+            <button class="kb-doc-delete" title="Delete">${icon('trash', 18)}</button>
+          `;
+
+          const deleteBtn = item.querySelector('.kb-doc-delete') as HTMLButtonElement;
+          deleteBtn.addEventListener('click', () => {
+            this.ctx.showConfirmModal(
+              'Delete document?',
+              `Delete "${doc.filename}"? This removes the file permanently.`,
+              () => this.deletePersonaDoc(doc.id, doc.filename)
+            );
+          });
+
+          this.kbDocList.appendChild(item);
+        }
+      }
+
+      // Stats
+      await this.updateKBStats();
+    } catch (error) {
+      console.error('[Persona] Failed to render doc list:', error);
+      if (this.kbDocList) {
+        this.kbDocList.innerHTML = '';
+      }
+      if (this.kbEmpty) {
+        this.kbEmpty.style.display = 'block';
+        this.kbEmpty.textContent = 'Failed to load documents.';
       }
     }
-    return ids;
+  }
+
+  /** Delete a KB document from IndexedDB and remove from persona */
+  private async deletePersonaDoc(docId: string, filename: string): Promise<void> {
+    if (!this.editingPersona) return;
+
+    try {
+      await kbDatabase.deleteDocument(docId);
+
+      // Remove from persona's kbDocumentIds
+      const idx = this.editingPersona.kbDocumentIds.indexOf(docId);
+      if (idx >= 0) {
+        this.editingPersona.kbDocumentIds.splice(idx, 1);
+      }
+
+      // Save persona to storage
+      const pIdx = this.personas.findIndex((p) => p.id === this.editingPersona!.id);
+      if (pIdx >= 0) {
+        this.personas[pIdx] = this.editingPersona;
+      }
+      await savePersonas(this.personas);
+
+      this.ctx.showToast(`Deleted ${filename}`, 'success');
+      await this.renderPersonaDocList();
+      this.renderList();
+    } catch (error) {
+      console.error('[Persona] Failed to delete KB doc:', error);
+      this.ctx.showToast('Failed to delete document', 'error');
+    }
+  }
+
+  /** Update KB stats for the persona's documents */
+  private async updateKBStats(): Promise<void> {
+    if (!this.kbStats || !this.editingPersona) return;
+
+    if (this.editingPersona.kbDocumentIds.length === 0) {
+      this.kbStats.textContent = '';
+      return;
+    }
+
+    try {
+      const docs = await kbDatabase.getDocuments();
+      const personaDocIds = new Set(this.editingPersona.kbDocumentIds);
+      const personaDocs = docs.filter(
+        (d) => personaDocIds.has(d.id) && d.status === 'complete'
+      );
+
+      const docCount = personaDocs.length;
+      const chunkCount = personaDocs.reduce((sum, d) => sum + d.chunkCount, 0);
+      const storageUsed = personaDocs.reduce((sum, d) => sum + d.fileSize, 0);
+      const storageStr = this.formatFileSize(storageUsed);
+
+      this.kbStats.textContent = `${docCount} document${docCount !== 1 ? 's' : ''} \u00B7 ${chunkCount} sections \u00B7 ${storageStr}`;
+    } catch {
+      this.kbStats.textContent = '';
+    }
+  }
+
+  /** Test KB query scoped to the persona's documents */
+  private async testPersonaQuery(): Promise<void> {
+    if (!this.editingPersona) return;
+
+    const query = this.kbTestInput?.value?.trim();
+    if (!query) {
+      this.ctx.showToast('Enter a test query', 'error');
+      return;
+    }
+
+    if (this.kbTestBtn) {
+      this.kbTestBtn.disabled = true;
+      this.kbTestBtn.textContent = 'Searching...';
+    }
+
+    try {
+      const results = await searchKB(
+        query,
+        undefined,
+        undefined,
+        this.editingPersona.kbDocumentIds
+      );
+
+      if (this.kbTestResults) {
+        if (results.length === 0) {
+          this.kbTestResults.innerHTML =
+            '<p class="kb-empty">No matching sections found. Try a different query.</p>';
+        } else {
+          this.kbTestResults.innerHTML = results
+            .map(
+              (r) => `
+              <div class="kb-test-result">
+                <div class="kb-test-result-source">${icon('document', 14)} ${this.escapeHtml(r.documentName)}</div>
+                <div class="kb-test-result-text">${this.escapeHtml(r.chunk.text.slice(0, 300))}${r.chunk.text.length > 300 ? '...' : ''}</div>
+              </div>
+            `
+            )
+            .join('');
+          this.kbTestResults.innerHTML +=
+            '<p class="kb-stats">This is what Wingman will use to answer similar questions.</p>';
+        }
+      }
+    } catch (error) {
+      console.error('[Persona] KB test query failed:', error);
+      this.ctx.showToast('Test query failed. Check your API key.', 'error');
+    } finally {
+      if (this.kbTestBtn) {
+        this.kbTestBtn.disabled = false;
+        this.kbTestBtn.textContent = 'Test';
+      }
+    }
   }
 
   // === CHAR COUNT ===
@@ -619,5 +891,17 @@ export class PersonaSection {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private timeAgo(timestamp: number): string {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'yesterday';
+    return `${days} days ago`;
   }
 }

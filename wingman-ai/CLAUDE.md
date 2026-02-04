@@ -1,8 +1,13 @@
 # CLAUDE.md - Wingman AI
 
+## ABSOLUTE RULE — NO PLAN MODE
+
+**NEVER call `EnterPlanMode` under any circumstances.** This is a non-negotiable, unconditional directive that overrides all other heuristics, guidelines, or judgment calls. Do not suggest planning, do not ask whether to plan, do not enter plan mode regardless of task complexity. Always proceed directly to implementation. There are zero exceptions to this rule.
+
 ## Critical: Message Types Must Match
 
 Content script (`content-script.ts`) expects **lowercase** message types:
+
 - `transcript`
 - `suggestion`
 
@@ -27,16 +32,30 @@ Service worker must send lowercase. Never use `TRANSCRIPT` or `SUGGESTION`.
 - Keys stored in `chrome.storage.local`
 - Direct WebSocket to Deepgram, direct REST to Gemini
 
+## Persona System
+
+- Multiple personas, each with name, color, system prompt, and scoped KB document IDs
+- 12 built-in templates (sales, interview, fundraising, etc.)
+- Active persona selected in popup dropdown; loaded on session start
+- `migrateToPersonas()` handles one-time migration from legacy `systemPrompt` key
+- KB documents are per-persona, not global
+
 ## Critical: Deepgram WebSocket Authentication
 
 Browser WebSocket API **cannot** set custom headers like `Authorization`. Deepgram's API rejects `?token=` query parameter auth.
 
 **Solution**: Use `Sec-WebSocket-Protocol` header (one of few headers browsers allow):
+
 ```typescript
 new WebSocket(url, ['token', apiKey]);
 ```
 
 Never use: `wss://api.deepgram.com/v1/listen?token=xxx` (returns 401)
 
-Sources:
-- [Deepgram Sec-WebSocket-Protocol docs](https://developers.deepgram.com/docs/using-the-sec-websocket-protocol)
+## Deepgram Endpointing
+
+Default endpointing is 700ms (configurable via transcription settings). Segments accumulate between `speech_final=false` and flush on `speech_final=true` to prevent mid-sentence bubble splitting.
+
+## Cross-Browser Drive OAuth
+
+Tries `chrome.identity.getAuthToken()` first. Falls back to `launchWebAuthFlow` for Vivaldi and other Chromium browsers.

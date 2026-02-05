@@ -1,0 +1,103 @@
+/**
+ * Tests for call summary prompt building and tuning injection.
+ */
+
+import { describe, it, expect } from 'vitest';
+import { buildSummaryPrompt } from '../src/services/call-summary';
+import type { CollectedTranscript } from '../src/services/transcript-collector';
+import type { SummaryMetadata } from '../src/services/call-summary';
+import { MODEL_TUNING_PROFILES } from '../src/shared/model-tuning';
+
+const mockTranscripts: CollectedTranscript[] = [
+  { speaker: 'Speaker 1', text: 'Tell me about your product.', timestamp: new Date().toISOString(), speaker_id: 0, speaker_role: 'participant', is_self: false },
+  { speaker: 'Speaker 2', text: 'We offer cloud security solutions.', timestamp: new Date().toISOString(), speaker_id: 1, speaker_role: 'self', is_self: true },
+  { speaker: 'Speaker 1', text: 'What about pricing?', timestamp: new Date().toISOString(), speaker_id: 0, speaker_role: 'participant', is_self: false },
+  { speaker: 'Speaker 2', text: 'Our starter plan is $99 per month.', timestamp: new Date().toISOString(), speaker_id: 1, speaker_role: 'self', is_self: true },
+];
+
+const mockMetadata: SummaryMetadata = {
+  generatedAt: new Date().toISOString(),
+  durationMinutes: 5,
+  speakerCount: 2,
+  transcriptCount: 4,
+};
+
+describe('buildSummaryPrompt', () => {
+  it('returns a non-empty prompt string', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    expect(prompt).toBeTruthy();
+    expect(typeof prompt).toBe('string');
+  });
+
+  it('includes transcript content', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    expect(prompt).toContain('Tell me about your product');
+    expect(prompt).toContain('cloud security solutions');
+  });
+
+  it('includes JSON return instruction', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    expect(prompt).toContain('Return ONLY valid JSON');
+  });
+
+  it('includes metadata', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    expect(prompt).toContain('5');
+    expect(prompt).toContain('Transcript entries: 4');
+  });
+});
+
+describe('summary prompt tuning injection', () => {
+  it('summaryPromptPrefix prepends to prompt', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    const qwenProfile = MODEL_TUNING_PROFILES.qwen;
+
+    // Simulate auto tuning injection (same logic as gemini-client.ts)
+    let tuned = prompt;
+    if (qwenProfile.summaryPromptPrefix) {
+      tuned = qwenProfile.summaryPromptPrefix + tuned;
+    }
+
+    expect(tuned.startsWith('/think\n')).toBe(true);
+    expect(tuned).toContain('Return ONLY valid JSON'); // original content preserved
+  });
+
+  it('summaryJsonHint injects before "Return ONLY valid JSON"', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    const llamaProfile = MODEL_TUNING_PROFILES.llama;
+
+    // Simulate injection (same logic as gemini-client.ts)
+    let tuned = prompt;
+    if (llamaProfile.summaryJsonHint) {
+      const jsonLine = 'Return ONLY valid JSON.';
+      const idx = tuned.lastIndexOf(jsonLine);
+      expect(idx).toBeGreaterThan(0); // line exists
+      tuned = tuned.slice(0, idx) + llamaProfile.summaryJsonHint + '\n\n' + tuned.slice(idx);
+    }
+
+    // Verify hint appears before the JSON line
+    const hintIdx = tuned.indexOf('No markdown fencing');
+    const jsonIdx = tuned.indexOf('Return ONLY valid JSON');
+    expect(hintIdx).toBeGreaterThan(0);
+    expect(hintIdx).toBeLessThan(jsonIdx);
+  });
+
+  it('Gemini profile injects nothing (no-op)', () => {
+    const prompt = buildSummaryPrompt(mockTranscripts, mockMetadata, { includeKeyMoments: true });
+    const geminiProfile = MODEL_TUNING_PROFILES.gemini;
+
+    let tuned = prompt;
+    if (geminiProfile.summaryPromptPrefix) {
+      tuned = geminiProfile.summaryPromptPrefix + tuned;
+    }
+    if (geminiProfile.summaryJsonHint) {
+      const jsonLine = 'Return ONLY valid JSON.';
+      const idx = tuned.lastIndexOf(jsonLine);
+      if (idx >= 0) {
+        tuned = tuned.slice(0, idx) + geminiProfile.summaryJsonHint + '\n\n' + tuned.slice(idx);
+      }
+    }
+
+    expect(tuned).toBe(prompt); // unchanged
+  });
+});

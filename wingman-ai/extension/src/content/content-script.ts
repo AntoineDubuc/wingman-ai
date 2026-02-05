@@ -168,6 +168,12 @@ try {
         }
         break;
 
+      case 'cost_update':
+        if (overlay && message.data) {
+          overlay.updateCost(message.data);
+        }
+        break;
+
       default:
         // Ignore messages not meant for content script (e.g., AUDIO_CHUNK, CAPTURE_STATUS)
         break;

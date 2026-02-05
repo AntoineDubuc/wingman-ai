@@ -48,13 +48,18 @@ npm run dev          # Development build with watch
 npm run build        # TypeScript check + Vite build (tsc && vite build)
 npm run build:prod   # Production build with mode flag
 npm run typecheck    # TypeScript --noEmit check only
+npm test             # Run Vitest unit tests
+npm run test:watch   # Vitest in watch mode
+npm run test:coverage # Vitest with V8 coverage
 npm run lint         # ESLint (src/**/*.{ts,tsx})
 npm run lint:fix     # ESLint with auto-fix
 npm run format       # Prettier (src/**/*.{ts,tsx,css,html})
 npm run clean        # Remove dist/
 ```
 
-No test framework is configured. Validation tests in `src/validation/` run inside the extension context via message `{ type: 'RUN_VALIDATION' }`.
+### Unit Testing
+
+Vitest with `@webext-core/fake-browser` for Chrome API mocking. Tests live in `wingman-ai/extension/tests/`. Setup file (`tests/setup.ts`) provides in-memory `chrome.storage.local` and mock stubs for `chrome.permissions`, `chrome.runtime`, etc. Use `/run-tests` skill to run tests with investigation on failure. Validation tests in `src/validation/` run inside the extension context via message `{ type: 'RUN_VALIDATION' }`.
 
 Load extension: `chrome://extensions/` → Developer mode → Load unpacked → `wingman-ai/extension/dist`
 

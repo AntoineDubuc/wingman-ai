@@ -376,6 +376,88 @@ export class AIOverlay {
         font-weight: 600;
       }
 
+
+      /* ── Cost Ticker ── */
+      .cost-ticker {
+        font-size: 11px;
+        font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.6;
+        margin-left: auto;
+        margin-right: 8px;
+        cursor: default;
+        position: relative;
+        white-space: nowrap;
+        transition: opacity 0.15s;
+      }
+      .cost-ticker:hover { opacity: 0.9; }
+      .cost-ticker .cost-tooltip {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: var(--overlay-bg-secondary, #2d2d2d);
+        border: 1px solid var(--overlay-border, #444);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 11px;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        font-variant-numeric: tabular-nums;
+        color: var(--overlay-text, #e0e0e0);
+        white-space: nowrap;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        min-width: 180px;
+      }
+      .cost-ticker:hover .cost-tooltip { display: block; }
+      .cost-tooltip .cost-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        line-height: 1.6;
+      }
+      .cost-tooltip .cost-row.total {
+        border-top: 1px solid var(--overlay-border, #444);
+        margin-top: 4px;
+        padding-top: 4px;
+        font-weight: 500;
+      }
+      .cost-tooltip .cost-hint {
+        font-size: 10px;
+        opacity: 0.5;
+        margin-top: 6px;
+      }
+
+      /* ── Cost Summary Section (post-call) ── */
+      .cost-summary {
+        border-top: 1px solid var(--overlay-border, #333);
+        margin-top: 12px;
+        padding-top: 10px;
+        font-size: 11px;
+        color: var(--overlay-text-secondary, #9aa0a6);
+      }
+      .cost-summary h4 {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.7;
+      }
+      .cost-summary .cost-line {
+        display: flex;
+        justify-content: space-between;
+        line-height: 1.6;
+        font-variant-numeric: tabular-nums;
+      }
+      .cost-summary .cost-line.cost-total-line {
+        border-top: 1px solid var(--overlay-border, #333);
+        margin-top: 4px;
+        padding-top: 4px;
+        font-weight: 500;
+        color: var(--overlay-text, #e0e0e0);
+      }
+
       /* ── Body wrapper (nav + content) ── */
       .overlay-body {
         display: flex;
@@ -922,6 +1004,7 @@ export class AIOverlay {
         50% { opacity: 0.4; }
       }
 
+
       @media (prefers-reduced-motion: reduce) {
         @keyframes bubbleIn { from, to { opacity: 1; transform: none; } }
         @keyframes wingmanIn { from, to { opacity: 1; transform: none; } }
@@ -946,6 +1029,15 @@ export class AIOverlay {
           <span class="title">Wingman</span>
           <span class="persona-label" style="font-size:11px;opacity:0.7;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;"></span>
         </div>
+        <span class="cost-ticker" style="display:none;">
+          <span class="cost-value"></span>
+          <div class="cost-tooltip">
+            <div class="cost-row"><span class="cost-stt-label">Deepgram (STT)</span><span class="cost-stt-value"></span></div>
+            <div class="cost-row"><span class="cost-llm-label">LLM</span><span class="cost-llm-value"></span></div>
+            <div class="cost-row total"><span>Total</span><span class="cost-total-value"></span></div>
+            <div class="cost-hint"></div>
+          </div>
+        </span>
         <div class="controls">
           <div class="font-controls">
             <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
@@ -1147,6 +1239,62 @@ export class AIOverlay {
       status.style.background = '#34a853';
       status.style.animation = 'statusPulse 2s ease-in-out infinite';
     }
+
+    // Reset cost ticker
+    const ticker = this.panel.querySelector('.cost-ticker') as HTMLElement;
+    if (ticker) ticker.style.display = 'none';
+  }
+
+  /**
+   * Update the live cost ticker in the overlay header.
+   */
+  updateCost(data: {
+    deepgramCost: number;
+    llmCost: number;
+    totalCost: number;
+    audioMinutes: number;
+    suggestionCount: number;
+    providerLabel: string;
+    isFreeTier: boolean;
+  }): void {
+    const ticker = this.panel.querySelector('.cost-ticker') as HTMLElement;
+    if (!ticker) return;
+
+    // Show the ticker on first update
+    ticker.style.display = '';
+
+    // Main value
+    const valueEl = ticker.querySelector('.cost-value');
+    if (valueEl) {
+      if (data.isFreeTier && data.llmCost === 0) {
+        valueEl.textContent = `~$${data.deepgramCost.toFixed(2)}`;
+      } else {
+        valueEl.textContent = `~$${data.totalCost.toFixed(2)}`;
+      }
+    }
+
+    // Tooltip details
+    const sttLabel = ticker.querySelector('.cost-stt-label');
+    if (sttLabel) sttLabel.textContent = `Deepgram (${Math.round(data.audioMinutes)} min)`;
+    const sttValue = ticker.querySelector('.cost-stt-value');
+    if (sttValue) sttValue.textContent = `$${data.deepgramCost.toFixed(3)}`;
+
+    const llmLabel = ticker.querySelector('.cost-llm-label');
+    if (llmLabel) {
+      llmLabel.textContent = data.isFreeTier
+        ? `${data.providerLabel} (free tier)`
+        : `${data.providerLabel} (${data.suggestionCount} calls)`;
+    }
+    const llmValue = ticker.querySelector('.cost-llm-value');
+    if (llmValue) {
+      llmValue.textContent = data.isFreeTier ? 'Free \u2713' : `$${data.llmCost.toFixed(3)}`;
+    }
+
+    const totalValue = ticker.querySelector('.cost-total-value');
+    if (totalValue) totalValue.textContent = `~$${data.totalCost.toFixed(2)}`;
+
+    const hint = ticker.querySelector('.cost-hint');
+    if (hint) hint.textContent = 'Estimate \u00b7 actual bill may vary';
   }
 
   /**
@@ -1515,6 +1663,23 @@ export class AIOverlay {
         html += `<div class="key-moment ${moment.type}">"${this.escapeHtml(moment.text)}"</div>`;
       }
       html += '</div></div>';
+    }
+
+    // Cost breakdown section (optional — only if data is present)
+    if (summary.costEstimate) {
+      const cost = summary.costEstimate;
+      const minutes = Math.round(cost.audioMinutes);
+      const llmLabel = cost.isFreeTier
+        ? `${cost.providerLabel} (free tier)`
+        : `${cost.providerLabel} (${cost.suggestionCount} calls)`;
+      const llmValue = cost.isFreeTier ? 'Free \u2713' : `$${cost.llmCost.toFixed(3)}`;
+
+      html += `<div class="cost-summary">
+        <h4>Session Cost</h4>
+        <div class="cost-line"><span>Deepgram STT (${minutes} min)</span><span>$${cost.deepgramCost.toFixed(3)}</span></div>
+        <div class="cost-line"><span>${this.escapeHtml(llmLabel)}</span><span>${llmValue}</span></div>
+        <div class="cost-line cost-total-line"><span>Total</span><span>~$${cost.totalCost.toFixed(2)}</span></div>
+      </div>`;
     }
 
     summaryEl.innerHTML = html;

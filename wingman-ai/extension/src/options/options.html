@@ -83,7 +83,28 @@
             </div>
           </div>
 
+          <!-- AI Provider Toggle -->
           <div class="api-key-section">
+            <label class="input-label">AI Provider</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="llm-provider" value="gemini" checked>
+                <span class="radio-label">Gemini (direct)</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="llm-provider" value="openrouter">
+                <span class="radio-label">OpenRouter</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="llm-provider" value="groq">
+                <span class="radio-label">Groq</span>
+              </label>
+            </div>
+            <p class="input-hint" style="margin-top: 6px;">Gemini uses your key directly. OpenRouter lets you choose from multiple models. Groq offers ultra-fast open-source AI.</p>
+          </div>
+
+          <!-- Gemini Key (visible when provider=gemini) -->
+          <div id="gemini-key-section" class="api-key-section">
             <label for="gemini-api-key" class="input-label">
               Google Gemini API Key
               <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
@@ -101,7 +122,73 @@
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
-              <p class="input-hint">Used for AI-powered suggestions and responses</p>
+              <p class="input-hint" id="gemini-hint">Used for AI-powered suggestions and responses</p>
+            </div>
+          </div>
+
+          <!-- OpenRouter fields (visible when provider=openrouter) -->
+          <div id="openrouter-section" style="display: none;">
+            <div class="api-key-section">
+              <label for="openrouter-api-key" class="input-label">
+                OpenRouter API Key
+                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one)</a>
+              </label>
+              <div class="input-with-hint">
+                <div class="password-input-wrapper">
+                  <input
+                    type="password"
+                    id="openrouter-api-key"
+                    class="text-input api-key-input"
+                    placeholder="Enter your OpenRouter API key"
+                    autocomplete="off"
+                  >
+                  <button type="button" class="toggle-visibility-btn" data-target="openrouter-api-key" title="Show/hide key">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <p class="input-hint">Used for AI-powered suggestions and responses via OpenRouter</p>
+              </div>
+            </div>
+
+            <div class="api-key-section">
+              <label for="openrouter-model-select" class="input-label">Model</label>
+              <div class="input-with-hint">
+                <select id="openrouter-model-select" class="select-input"></select>
+                <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Groq fields (visible when provider=groq) -->
+          <div id="groq-section" style="display: none;">
+            <div class="api-key-section">
+              <label for="groq-api-key" class="input-label">
+                Groq API Key
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+              </label>
+              <div class="input-with-hint">
+                <div class="password-input-wrapper">
+                  <input
+                    type="password"
+                    id="groq-api-key"
+                    class="text-input api-key-input"
+                    placeholder="Enter your Groq API key"
+                    autocomplete="off"
+                  >
+                  <button type="button" class="toggle-visibility-btn" data-target="groq-api-key" title="Show/hide key">
+                    <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+                <p class="input-hint">Ultra-fast inference on open-source models — free tier at console.groq.com</p>
+              </div>
+            </div>
+
+            <div class="api-key-section">
+              <label for="groq-model-select" class="input-label">Model</label>
+              <div class="input-with-hint">
+                <select id="groq-model-select" class="select-input"></select>
+                <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
+              </div>
             </div>
           </div>
 
@@ -225,6 +312,53 @@
           </div>
         </div>
 
+        <!-- Suggestion Cooldown Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Suggestion Frequency</h2>
+          <p class="form-section-description">
+            Minimum time between AI suggestions. Higher values reduce API usage but may miss fast-paced conversation.
+          </p>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <label for="cooldown-range" class="toggle-label">Cooldown</label>
+              <span id="cooldown-value" class="slider-value">15s</span>
+            </div>
+            <input type="range" id="cooldown-range" class="styled-slider" min="2000" max="30000" step="1000" value="15000">
+            <div class="slider-labels">
+              <span>2s</span>
+              <span>30s</span>
+            </div>
+            <p class="toggle-description">
+              After each suggestion, Wingman waits this long before considering the next one. Takes effect next session.
+            </p>
+          </div>
+        </div>
+
+        <!-- AI Tuning Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">AI Prompt Tuning</h2>
+          <p class="form-section-description">
+            Adapts your persona prompts to work best with your selected AI model.
+            Different models respond better to different prompt structures.
+          </p>
+
+          <div class="api-key-section">
+            <label class="input-label">Tuning Mode</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="prompt-tuning-mode" value="auto" checked>
+                <span class="radio-label">Auto (recommended)</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="prompt-tuning-mode" value="off">
+                <span class="radio-label">Off</span>
+              </label>
+            </div>
+            <p class="input-hint" style="margin-top: 6px;">Auto applies model-specific adjustments at runtime without modifying your saved prompts.</p>
+          </div>
+        </div>
+
         <!-- Speaker Filter Card -->
         <div class="options-card">
           <h2 class="form-section-title">Speaker Filter</h2>
@@ -258,7 +392,7 @@
             <div class="toggle-info">
               <label for="summary-enabled-toggle" class="toggle-label">Auto-generate call summary</label>
               <p class="toggle-description">
-                Uses one additional Gemini API call per session.
+                Uses one additional AI API call per session.
               </p>
             </div>
             <label class="toggle-switch">

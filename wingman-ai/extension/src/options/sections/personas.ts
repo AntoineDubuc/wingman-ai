@@ -632,6 +632,13 @@ export class PersonaSection {
       return;
     }
 
+    // KB embeddings always use Gemini — require the key regardless of active provider
+    const storage = await chrome.storage.local.get(['geminiApiKey']);
+    if (!storage.geminiApiKey) {
+      this.ctx.showToast('Gemini API key required for Knowledge Base (embeddings use Gemini)', 'error');
+      return;
+    }
+
     for (const file of Array.from(files)) {
       await this.processKBFile(file);
     }

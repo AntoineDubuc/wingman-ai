@@ -2,7 +2,7 @@
  * Extension Popup - BYOK (Bring Your Own Keys) Architecture
  *
  * Shows API key configuration status and session controls.
- * Users must configure Deepgram and Gemini API keys in Options before starting a session.
+ * Users must configure Deepgram and an LLM API key (Gemini, OpenRouter, or Groq) in Options before starting a session.
  */
 
 class PopupController {
@@ -64,8 +64,14 @@ class PopupController {
    */
   private async checkApiKeys(): Promise<void> {
     try {
-      const storage = await chrome.storage.local.get(['deepgramApiKey', 'geminiApiKey']);
-      this.hasApiKeys = !!(storage.deepgramApiKey && storage.geminiApiKey);
+      const storage = await chrome.storage.local.get(['deepgramApiKey', 'geminiApiKey', 'openrouterApiKey', 'groqApiKey', 'llmProvider']);
+      const provider = (storage.llmProvider as string) || 'gemini';
+      const providerKeyMap: Record<string, unknown> = {
+        gemini: storage.geminiApiKey,
+        openrouter: storage.openrouterApiKey,
+        groq: storage.groqApiKey,
+      };
+      this.hasApiKeys = !!(storage.deepgramApiKey && providerKeyMap[provider]);
       this.updateApiKeyStatus();
     } catch (error) {
       console.error('Failed to check API keys:', error);

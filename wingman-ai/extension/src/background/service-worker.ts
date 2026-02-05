@@ -18,6 +18,7 @@ import type { SummaryMetadata } from '../services/call-summary';
 import { runAllTests, runTest, getAvailableTests } from '../validation/index';
 import { migrateToPersonas, getActivePersona } from '../shared/persona';
 import { langBuilderClient } from '../services/langbuilder-client';
+import { costTracker } from '../services/cost-tracker';
 
 // Session state
 let isSessionActive = false;
@@ -185,6 +186,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       console.log('[ServiceWorker] Cleaning up stale session');
       await deepgramClient.disconnect();
       geminiClient.clearSession();
+      costTracker.reset();
       isSessionActive = false;
     }
 
@@ -192,6 +194,9 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     const storage = await chrome.storage.local.get([
       'deepgramApiKey',
       'geminiApiKey',
+      'openrouterApiKey',
+      'groqApiKey',
+      'llmProvider',
       'speakerFilterEnabled',
     ]);
 
@@ -202,10 +207,22 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       };
     }
 
-    if (!storage.geminiApiKey) {
+    const provider = (storage.llmProvider as string) || 'gemini';
+    const providerKeyMap: Record<string, string | undefined> = {
+      gemini: storage.geminiApiKey as string | undefined,
+      openrouter: storage.openrouterApiKey as string | undefined,
+      groq: storage.groqApiKey as string | undefined,
+    };
+    const providerLabels: Record<string, string> = {
+      gemini: 'Gemini',
+      openrouter: 'OpenRouter',
+      groq: 'Groq',
+    };
+
+    if (!providerKeyMap[provider]) {
       return {
         success: false,
-        error: 'Gemini API key not configured. Go to Options to add your key.',
+        error: `${providerLabels[provider] ?? provider} API key not configured. Go to Options to add your key.`,
       };
     }
 
@@ -236,8 +253,15 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
     console.debug(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
 
-    // Step 2: Initialize Gemini client with active persona
+    // Step 2: Initialize Gemini client with provider config and active persona
     geminiClient.startSession();
+    await geminiClient.loadProviderConfig();
+
+    // Start cost tracking for this session
+    costTracker.startSession(
+      geminiClient.getActiveProvider(),
+      geminiClient.getActiveModel()
+    );
 
     // Ensure personas are migrated, then load the active one
     await migrateToPersonas();
@@ -271,6 +295,9 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
     // Start transcript collection for auto-save
     transcriptCollector.startSession(speakerFilterEnabled);
+
+    // Start periodic cost updates
+    startCostAlarm();
 
     // Ensure content script is injected and initialize overlay
     await ensureContentScriptAndInitOverlay(tab.id);
@@ -424,6 +451,9 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
 
         console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
       }
+
+      // Send cost update after every LLM call (whether suggestion generated or not)
+      sendCostUpdate();
     } catch (error) {
       console.error('[ServiceWorker] Gemini processing error:', error);
     }
@@ -462,6 +492,9 @@ async function handleStopSession(): Promise<{ success: boolean }> {
       'summaryEnabled',
       'summaryKeyMomentsEnabled',
       'geminiApiKey',
+      'openrouterApiKey',
+      'groqApiKey',
+      'llmProvider',
       'driveAutosaveEnabled',
       'driveConnected',
       'driveFolderName',
@@ -473,7 +506,16 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     let summary: import('../services/call-summary').CallSummary | null = null;
     let summaryOutcome: SummaryOutcome = 'disabled';
 
-    if (storage.summaryEnabled === false || !storage.geminiApiKey) {
+    // Check the active provider's key (not hardcoded Gemini)
+    const summaryProvider = (storage.llmProvider as string) || 'gemini';
+    const summaryKeyMap: Record<string, string | undefined> = {
+      gemini: storage.geminiApiKey as string | undefined,
+      openrouter: storage.openrouterApiKey as string | undefined,
+      groq: storage.groqApiKey as string | undefined,
+    };
+    const hasProviderKey = !!summaryKeyMap[summaryProvider];
+
+    if (storage.summaryEnabled === false || !hasProviderKey) {
       summaryOutcome = 'disabled';
     } else if (!sessionData || speechTranscripts.length < 2) {
       summaryOutcome = 'skipped';
@@ -507,6 +549,14 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     }
 
     console.log(`[ServiceWorker] Summary outcome: ${summaryOutcome}`);
+
+    // 5b. Freeze cost tracker and attach cost to summary
+    costTracker.endSession();
+    const costEstimate = costTracker.getFinalCost();
+
+    if (summary && costEstimate) {
+      summary.costEstimate = costEstimate;
+    }
 
     // 6. Save to Drive
     let driveResult: { saved: boolean; fileUrl?: string; error?: string } = { saved: false };
@@ -584,8 +634,10 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     }
 
     // 8. Cleanup
+    stopCostAlarm();
     await deepgramClient.disconnect();
     geminiClient.clearSession();
+    costTracker.reset();
 
     // Close offscreen document to free resources
     try {
@@ -612,6 +664,37 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     return { success: false };
   }
 }
+
+// ── Cost update helpers ─────────────────────────────────────────
+
+const COST_ALARM_NAME = 'wingman-cost-update';
+
+/** Send a cost_update message to the content script */
+function sendCostUpdate(): void {
+  if (!activeTabId || !costTracker.isActive) return;
+  const snapshot = costTracker.getCostSnapshot();
+  if (!snapshot) return;
+  chrome.tabs
+    .sendMessage(activeTabId, { type: 'cost_update', data: snapshot })
+    .catch(() => {});
+}
+
+/** Start the periodic cost update alarm (fires every 1 min — Chrome MV3 minimum) */
+function startCostAlarm(): void {
+  chrome.alarms.create(COST_ALARM_NAME, { periodInMinutes: 1 });
+}
+
+/** Stop the periodic cost update alarm */
+function stopCostAlarm(): void {
+  chrome.alarms.clear(COST_ALARM_NAME);
+}
+
+// Listen for the cost alarm
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === COST_ALARM_NAME) {
+    sendCostUpdate();
+  }
+});
 
 /**
  * Open a popup window to request microphone permission.

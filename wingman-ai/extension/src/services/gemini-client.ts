@@ -16,6 +16,22 @@ import {
   buildSummaryPrompt,
 } from './call-summary';
 import { getKBContext } from './kb/kb-search';
+import {
+  type LLMProvider,
+  DEFAULT_PROVIDER_CONFIG,
+  PROVIDER_COOLDOWNS,
+  OPENROUTER_API_BASE,
+  GROQ_API_BASE,
+} from '../shared/llm-config';
+import {
+  type PromptTuningMode,
+  type ModelTuningProfile,
+  getTuningProfile,
+  NEUTRAL_PROFILE,
+  PROMPT_TUNING_STORAGE_KEY,
+  DEFAULT_PROMPT_TUNING_MODE,
+} from '../shared/model-tuning';
+import { costTracker } from './cost-tracker';
 
 // Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -72,6 +88,18 @@ export class GeminiClient {
   // Persona-scoped KB filter: restrict search to these document IDs
   private kbDocumentFilter: string[] | null = null;
 
+  // Provider config (session-scoped, loaded via loadProviderConfig)
+  private provider: LLMProvider = 'gemini';
+  private geminiApiKey: string | null = null;
+  private openrouterApiKey: string | null = null;
+  private openrouterModel = DEFAULT_PROVIDER_CONFIG.openrouterModel;
+  private groqApiKey: string | null = null;
+  private groqModel = DEFAULT_PROVIDER_CONFIG.groqModel;
+
+  // Model tuning (session-scoped)
+  private tuningMode: PromptTuningMode = DEFAULT_PROMPT_TUNING_MODE;
+  private tuningProfile: ModelTuningProfile = NEUTRAL_PROFILE;
+
   /**
    * Start a new conversation session
    */
@@ -81,6 +109,15 @@ export class GeminiClient {
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
     this.kbDocumentFilter = null;
+    this.provider = 'gemini';
+    this.geminiApiKey = null;
+    this.openrouterApiKey = null;
+    this.openrouterModel = DEFAULT_PROVIDER_CONFIG.openrouterModel;
+    this.groqApiKey = null;
+    this.groqModel = DEFAULT_PROVIDER_CONFIG.groqModel;
+    this.suggestionCooldownMs = DEFAULT_PROVIDER_CONFIG.suggestionCooldownMs;
+    this.tuningMode = DEFAULT_PROMPT_TUNING_MODE;
+    this.tuningProfile = NEUTRAL_PROFILE;
     console.debug('[GeminiClient] Session started');
   }
 
@@ -93,7 +130,78 @@ export class GeminiClient {
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
     this.kbDocumentFilter = null;
+    this.provider = 'gemini';
+    this.geminiApiKey = null;
+    this.openrouterApiKey = null;
+    this.openrouterModel = DEFAULT_PROVIDER_CONFIG.openrouterModel;
+    this.groqApiKey = null;
+    this.groqModel = DEFAULT_PROVIDER_CONFIG.groqModel;
+    this.suggestionCooldownMs = DEFAULT_PROVIDER_CONFIG.suggestionCooldownMs;
+    this.tuningMode = DEFAULT_PROMPT_TUNING_MODE;
+    this.tuningProfile = NEUTRAL_PROFILE;
     console.debug('[GeminiClient] Session cleared');
+  }
+
+  /**
+   * Load provider configuration from storage. Call after startSession()
+   * but before any suggestion/summary calls. Caches values for the session.
+   */
+  async loadProviderConfig(): Promise<void> {
+    try {
+      const storage = await chrome.storage.local.get([
+        'llmProvider',
+        'geminiApiKey',
+        'openrouterApiKey',
+        'openrouterModel',
+        'groqApiKey',
+        'groqModel',
+        'suggestionCooldownMs',
+        PROMPT_TUNING_STORAGE_KEY,
+      ]);
+
+      this.provider = (storage.llmProvider as LLMProvider) || 'gemini';
+      this.geminiApiKey = storage.geminiApiKey || null;
+      this.openrouterApiKey = storage.openrouterApiKey || null;
+      this.groqApiKey = storage.groqApiKey || null;
+
+      if (storage.openrouterModel) {
+        this.openrouterModel = storage.openrouterModel;
+      }
+      if (storage.groqModel) {
+        this.groqModel = storage.groqModel;
+      }
+
+      // Provider-aware cooldown: use provider default, then override with custom value
+      this.suggestionCooldownMs = PROVIDER_COOLDOWNS[this.provider];
+
+      if (storage.suggestionCooldownMs) {
+        const cooldown = Number(storage.suggestionCooldownMs);
+        const minCooldown = PROVIDER_COOLDOWNS[this.provider];
+        if (!isNaN(cooldown) && cooldown >= minCooldown && cooldown <= 30000) {
+          this.suggestionCooldownMs = cooldown;
+        }
+      }
+
+      const activeModel = this.provider === 'openrouter'
+        ? this.openrouterModel
+        : this.provider === 'groq'
+          ? this.groqModel
+          : this.model;
+
+      // Resolve model tuning profile
+      this.tuningMode = (storage[PROMPT_TUNING_STORAGE_KEY] as PromptTuningMode) || DEFAULT_PROMPT_TUNING_MODE;
+      this.tuningProfile = this.tuningMode === 'auto'
+        ? getTuningProfile(activeModel)
+        : NEUTRAL_PROFILE;
+
+      console.debug(
+        `[GeminiClient] Provider config loaded: provider=${this.provider}, ` +
+        `model=${activeModel}, cooldown=${this.suggestionCooldownMs}ms, ` +
+        `tuning=${this.tuningMode}`
+      );
+    } catch (error) {
+      console.error('[GeminiClient] Failed to load provider config:', error);
+    }
   }
 
   /**
@@ -129,6 +237,18 @@ export class GeminiClient {
   setKBDocumentFilter(documentIds: string[] | null): void {
     this.kbDocumentFilter = documentIds && documentIds.length > 0 ? documentIds : null;
     console.debug(`[GeminiClient] KB filter: ${this.kbDocumentFilter ? this.kbDocumentFilter.length + ' docs' : 'all'}`);
+  }
+
+  /** Active LLM provider for the current session */
+  getActiveProvider(): LLMProvider {
+    return this.provider;
+  }
+
+  /** Active model ID for the current session */
+  getActiveModel(): string {
+    if (this.provider === 'openrouter') return this.openrouterModel;
+    if (this.provider === 'groq') return this.groqModel;
+    return this.model;
   }
 
   /**
@@ -221,18 +341,10 @@ export class GeminiClient {
     currentText: string,
     currentSpeaker: string
   ): Promise<Suggestion | null> {
-    // Get API key from storage
-    let apiKey: string | undefined;
-    try {
-      const storage = await chrome.storage.local.get(['geminiApiKey']);
-      apiKey = storage.geminiApiKey;
-
-      if (!apiKey) {
-        console.error('[GeminiClient] No API key configured');
-        return null;
-      }
-    } catch (error) {
-      console.error('[GeminiClient] Failed to get API key:', error);
+    // Get the API key for the active provider (cached by loadProviderConfig)
+    const apiKey = this.getProviderApiKey();
+    if (!apiKey) {
+      console.error(`[GeminiClient] No API key for provider: ${this.provider}`);
       return null;
     }
 
@@ -259,35 +371,42 @@ export class GeminiClient {
         console.warn('[GeminiClient] KB retrieval failed, proceeding without KB:', kbError);
       }
 
-      // Build conversation messages
-      const contents = this.buildConversationMessages(currentText, currentSpeaker);
-      // API request in-flight
+      // Apply model tuning to system prompt (auto mode only)
+      let tunedSystemPrompt = systemPromptWithKB;
+      let suggestionTemp = this.temperature;
+      const profile = this.tuningProfile;
 
-      // Make API request
-      const response = await fetch(
-        `${GEMINI_API_BASE}/${this.model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents,
-            systemInstruction: {
-              parts: [{ text: systemPromptWithKB }],
-            },
-            generationConfig: {
-              maxOutputTokens: this.maxTokens,
-              temperature: this.temperature,
-            },
-          }),
+      if (this.tuningMode === 'auto') {
+        if (profile.promptPrefix) {
+          tunedSystemPrompt = profile.promptPrefix + tunedSystemPrompt;
         }
-      );
+        if (profile.silenceReinforcement) {
+          tunedSystemPrompt += '\n\n' + profile.silenceReinforcement;
+        }
+        if (profile.promptSuffix) {
+          tunedSystemPrompt += '\n\n' + profile.promptSuffix;
+        }
+        suggestionTemp = profile.suggestionTemperature;
+      }
+
+      // Build conversation messages and provider-formatted request
+      const contents = this.buildConversationMessages(currentText, currentSpeaker);
+      const req = this.buildRequest({
+        messages: contents,
+        systemPrompt: tunedSystemPrompt,
+        maxTokens: this.maxTokens,
+        temperature: suggestionTemp,
+      });
+
+      const response = await fetch(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: req.body,
+      });
 
       if (!response.ok) {
-        // Handle rate limiting with backoff
         if (response.status === 429) {
-          const backoffSeconds = this.parseRetryDelay(await response.text());
+          const backoffSeconds = await this.parseRetrySeconds(response);
           this.rateLimitedUntil = Date.now() + backoffSeconds * 1000;
           console.warn(`[GeminiClient] Rate limited — backing off ${backoffSeconds}s`);
           return null;
@@ -299,12 +418,14 @@ export class GeminiClient {
       }
 
       const data = await response.json();
+      const responseText = this.extractResponseText(data);
 
-      // Extract response text
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      // Track token usage (even for silent/empty responses — input tokens were consumed)
+      const usage = this.extractUsage(data);
+      costTracker.addLLMUsage(usage.inputTokens, usage.outputTokens);
 
       if (!responseText) {
-        console.debug('[GeminiClient] Empty response from Gemini');
+        console.debug('[GeminiClient] Empty response from LLM');
         return null;
       }
 
@@ -321,7 +442,7 @@ export class GeminiClient {
         text: responseText,
         confidence: 0.85,
         suggestion_type: this.classifySuggestion(responseText),
-        source: 'gemini',
+        source: this.provider,
         timestamp: new Date().toISOString(),
         kbSource,
       };
@@ -360,6 +481,189 @@ export class GeminiClient {
   }
 
   /**
+   * Parse retry delay from an OpenRouter 429 response using the Retry-After header.
+   * Falls back to 60s if the header is missing or unparseable.
+   */
+  private parseRetryAfterHeader(response: Response): number {
+    const DEFAULT_BACKOFF = 60;
+    const header = response.headers.get('Retry-After');
+    if (header) {
+      const seconds = parseInt(header, 10);
+      if (!isNaN(seconds) && seconds > 0) return seconds;
+    }
+    return DEFAULT_BACKOFF;
+  }
+
+  /**
+   * Parse retry delay from a 429 response, dispatching to the right parser.
+   * For Gemini: reads the response body for retryDelay (body must not have been consumed).
+   * For OpenRouter: reads the Retry-After header.
+   */
+  private async parseRetrySeconds(response: Response): Promise<number> {
+    if (this.provider !== 'gemini') {
+      // OpenRouter and Groq both use Retry-After header
+      return this.parseRetryAfterHeader(response);
+    }
+    // Gemini: parse retry info from response body
+    try {
+      const body = await response.text();
+      return this.parseRetryDelay(body);
+    } catch {
+      return 60;
+    }
+  }
+
+  /**
+   * Build a provider-formatted request for either Gemini or OpenRouter.
+   * Used by both generateResponse() and generateCallSummary().
+   */
+  private buildRequest(options: {
+    messages?: Array<{ role: string; parts: Array<{ text: string }> }>;
+    prompt?: string;
+    systemPrompt?: string;
+    maxTokens: number;
+    temperature: number;
+    jsonMode?: boolean;
+  }): { url: string; headers: Record<string, string>; body: string } {
+    const apiKey = this.getProviderApiKey();
+
+    if (this.provider !== 'gemini') {
+      // OpenAI-compatible format (OpenRouter and Groq)
+      const openaiMessages: Array<{ role: string; content: string }> = [];
+
+      if (options.systemPrompt) {
+        openaiMessages.push({ role: 'system', content: options.systemPrompt });
+      }
+
+      if (options.messages) {
+        for (const msg of options.messages) {
+          openaiMessages.push({
+            role: msg.role === 'model' ? 'assistant' : msg.role,
+            content: msg.parts.map(p => p.text).join(''),
+          });
+        }
+      } else if (options.prompt) {
+        openaiMessages.push({ role: 'user', content: options.prompt });
+      }
+
+      const model = this.provider === 'groq' ? this.groqModel : this.openrouterModel;
+      const baseUrl = this.provider === 'groq' ? GROQ_API_BASE : OPENROUTER_API_BASE;
+
+      const body: Record<string, unknown> = {
+        model,
+        messages: openaiMessages,
+        max_tokens: options.maxTokens,
+        temperature: options.temperature,
+      };
+
+      if (options.jsonMode) {
+        body.response_format = { type: 'json_object' };
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      };
+
+      // OpenRouter-specific headers (not needed for Groq)
+      if (this.provider === 'openrouter') {
+        headers['HTTP-Referer'] = 'https://wingman-ai.com';
+        headers['X-Title'] = 'Wingman AI';
+      }
+
+      return {
+        url: `${baseUrl}/chat/completions`,
+        headers,
+        body: JSON.stringify(body),
+      };
+    }
+
+    // Gemini format
+    const geminiBody: Record<string, unknown> = {
+      generationConfig: {
+        maxOutputTokens: options.maxTokens,
+        temperature: options.temperature,
+        ...(options.jsonMode && { responseMimeType: 'application/json' }),
+      },
+    };
+
+    if (options.systemPrompt) {
+      geminiBody.systemInstruction = { parts: [{ text: options.systemPrompt }] };
+    }
+
+    if (options.messages) {
+      geminiBody.contents = options.messages;
+    } else if (options.prompt) {
+      geminiBody.contents = [{ parts: [{ text: options.prompt }] }];
+    }
+
+    return {
+      url: `${GEMINI_API_BASE}/${this.model}:generateContent?key=${apiKey}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(geminiBody),
+    };
+  }
+
+  /**
+   * Extract the response text from either Gemini or OpenRouter response format.
+   */
+  private extractResponseText(data: Record<string, unknown>): string | null {
+    if (this.provider !== 'gemini') {
+      // OpenAI-compatible format (OpenRouter and Groq)
+      const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
+      return choices?.[0]?.message?.content?.trim() ?? null;
+    }
+
+    // Gemini format
+    const candidates = data.candidates as Array<{
+      content?: { parts?: Array<{ text?: string }> };
+    }> | undefined;
+    return candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
+  }
+
+  /**
+   * Extract token usage from an API response. Returns zeros if missing.
+   */
+  private extractUsage(data: Record<string, unknown>): { inputTokens: number; outputTokens: number } {
+    try {
+      if (this.provider !== 'gemini') {
+        // OpenAI-compatible format (OpenRouter and Groq)
+        const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
+        return {
+          inputTokens: usage?.prompt_tokens ?? 0,
+          outputTokens: usage?.completion_tokens ?? 0,
+        };
+      }
+
+      // Gemini format
+      const meta = data.usageMetadata as { promptTokenCount?: number; candidatesTokenCount?: number } | undefined;
+      return {
+        inputTokens: meta?.promptTokenCount ?? 0,
+        outputTokens: meta?.candidatesTokenCount ?? 0,
+      };
+    } catch {
+      console.debug('[GeminiClient] Could not parse usage metadata');
+      return { inputTokens: 0, outputTokens: 0 };
+    }
+  }
+
+  /**
+   * Strip markdown code block fencing from a string (safety for JSON parsing).
+   */
+  private stripMarkdownCodeBlock(text: string): string {
+    let result = text.trim();
+    if (result.startsWith('```json')) {
+      result = result.slice(7);
+    } else if (result.startsWith('```')) {
+      result = result.slice(3);
+    }
+    if (result.endsWith('```')) {
+      result = result.slice(0, -3);
+    }
+    return result.trim();
+  }
+
+  /**
    * Build conversation messages for the API
    */
   private buildConversationMessages(
@@ -393,12 +697,16 @@ export class GeminiClient {
       });
     }
 
-    // Add current utterance
+    // Add current utterance — use tuned silence hint if profile provides one
+    const silenceHint = (this.tuningMode === 'auto' && this.tuningProfile.conversationSilenceHint)
+      ? this.tuningProfile.conversationSilenceHint
+      : 'Should I provide a suggestion, or stay silent (---)?';
+
     messages.push({
       role: 'user',
       parts: [
         {
-          text: `[${currentSpeaker}]: ${currentText}\n\nShould I provide a suggestion, or stay silent (---)? IMPORTANT: Never output placeholder text in brackets like [X] or [specific thing from KB]. Either fill in real data or give concrete advice.`,
+          text: `[${currentSpeaker}]: ${currentText}\n\n${silenceHint} IMPORTANT: Never output placeholder text in brackets like [X] or [specific thing from KB]. Either fill in real data or give concrete advice.`,
         },
       ],
     });
@@ -430,14 +738,38 @@ export class GeminiClient {
   }
 
   /**
-   * Get the Gemini API key from storage
+   * Get the appropriate API key for the current operation.
+   * For suggestions/summaries: uses the active provider's key.
+   * For embeddings: always uses the Gemini key (pass 'gemini' explicitly).
    */
-  private async getApiKey(): Promise<string> {
-    const storage = await chrome.storage.local.get(['geminiApiKey']);
-    if (!storage.geminiApiKey) {
-      throw new Error('ENOKEY');
+  /**
+   * Get the cached API key for the active provider. Synchronous — uses
+   * values loaded by loadProviderConfig(). Returns null if no key is set.
+   */
+  private getProviderApiKey(): string | null {
+    switch (this.provider) {
+      case 'gemini':    return this.geminiApiKey;
+      case 'openrouter': return this.openrouterApiKey;
+      case 'groq':       return this.groqApiKey;
     }
-    return storage.geminiApiKey;
+  }
+
+  /**
+   * Get the appropriate API key for the current operation.
+   * For suggestions/summaries: uses the active provider's key.
+   * For embeddings: always uses the Gemini key (pass 'gemini' explicitly).
+   */
+  private async getApiKey(forProvider?: 'gemini'): Promise<string> {
+    if (forProvider === 'gemini' || this.provider === 'gemini') {
+      // Try cached key first, fall back to storage for embeddings called outside session
+      if (this.geminiApiKey) return this.geminiApiKey;
+      const storage = await chrome.storage.local.get(['geminiApiKey']);
+      if (!storage.geminiApiKey) throw new Error('ENOKEY');
+      return storage.geminiApiKey;
+    }
+    const key = this.getProviderApiKey();
+    if (key) return key;
+    throw new Error('ENOKEY');
   }
 
   /**
@@ -447,7 +779,7 @@ export class GeminiClient {
     text: string,
     taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'
   ): Promise<number[]> {
-    const apiKey = await this.getApiKey();
+    const apiKey = await this.getApiKey('gemini');
 
     const response = await this.fetchWithRetry(
       `${GEMINI_API_BASE}/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
@@ -474,7 +806,7 @@ export class GeminiClient {
     texts: string[],
     taskType: 'RETRIEVAL_DOCUMENT' | 'RETRIEVAL_QUERY'
   ): Promise<number[][]> {
-    const apiKey = await this.getApiKey();
+    const apiKey = await this.getApiKey('gemini');
     const allEmbeddings: number[][] = [];
 
     for (let i = 0; i < texts.length; i += EMBEDDING_BATCH_SIZE) {
@@ -525,7 +857,7 @@ export class GeminiClient {
       }
 
       const errorText = await response.text();
-      throw new Error(`Gemini API error ${response.status}: ${errorText}`);
+      throw new Error(`LLM API error ${response.status}: ${errorText}`);
     }
 
     throw new Error('Max retries exceeded');
@@ -540,45 +872,62 @@ export class GeminiClient {
     metadata: SummaryMetadata,
     options: { includeKeyMoments: boolean }
   ): Promise<CallSummary | null> {
-    let apiKey: string;
     try {
-      apiKey = await this.getApiKey();
+      await this.getApiKey();
     } catch {
       console.error('[GeminiClient] No API key for summary generation');
       return null;
     }
 
     try {
-      const prompt = buildSummaryPrompt(transcripts, metadata, options);
+      let prompt = buildSummaryPrompt(transcripts, metadata, options);
 
-      const response = await this.fetchWithRetry(
-        `${GEMINI_API_BASE}/${this.model}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              maxOutputTokens: 2000,
-              temperature: 0.2,
-            },
-          }),
+      // Apply model tuning to summary prompt (auto mode only)
+      if (this.tuningMode === 'auto') {
+        const profile = this.tuningProfile;
+        if (profile.summaryPromptPrefix) {
+          prompt = profile.summaryPromptPrefix + prompt;
         }
-      );
+        if (profile.summaryJsonHint) {
+          // Inject before the closing "Return ONLY valid JSON" line
+          const jsonLine = 'Return ONLY valid JSON.';
+          const idx = prompt.lastIndexOf(jsonLine);
+          if (idx >= 0) {
+            prompt = prompt.slice(0, idx) + profile.summaryJsonHint + '\n\n' + prompt.slice(idx);
+          }
+        }
+      }
+
+      const req = this.buildRequest({
+        prompt,
+        maxTokens: 2000,
+        temperature: 0.2, // Never overridden — low temp critical for consistent JSON
+        jsonMode: true,
+      });
+
+      const response = await this.fetchWithRetry(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: req.body,
+      });
 
       const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      // Track summary token usage
+      const summaryUsage = this.extractUsage(data);
+      costTracker.addLLMUsage(summaryUsage.inputTokens, summaryUsage.outputTokens);
+
+      const rawText = this.extractResponseText(data);
 
       if (!rawText) {
-        console.error('[GeminiClient] Empty summary response from Gemini');
+        console.error(`[GeminiClient] Empty summary response from ${this.provider}`);
         return null;
       }
 
-      // Parse JSON response
+      // Parse JSON response — strip markdown fencing for OpenRouter models
       let parsed: unknown;
       try {
-        parsed = JSON.parse(rawText);
+        parsed = JSON.parse(this.stripMarkdownCodeBlock(rawText));
       } catch {
         console.error('[GeminiClient] Malformed JSON in summary response:', rawText.slice(0, 200));
         return null;

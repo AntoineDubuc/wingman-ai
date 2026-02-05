@@ -6,6 +6,7 @@
  */
 
 import type { CollectedTranscript } from './transcript-collector';
+import type { CostEstimate } from '@shared/pricing';
 
 // --- Types ---
 
@@ -32,6 +33,7 @@ export interface CallSummary {
   actionItems: ActionItem[];
   keyMoments: KeyMoment[];
   metadata: SummaryMetadata;
+  costEstimate?: CostEstimate;
 }
 
 // --- Prompt Builder ---
@@ -175,6 +177,22 @@ export function formatSummaryAsMarkdown(summary: CallSummary): string {
       const timestamp = moment.timestamp ? ` (${moment.timestamp})` : '';
       lines.push(`- "${moment.text}"${timestamp}`);
     }
+  }
+
+  // Cost estimate (omit if absent)
+  if (summary.costEstimate) {
+    const cost = summary.costEstimate;
+    const minutes = Math.round(cost.audioMinutes);
+    const llmLabel = cost.isFreeTier
+      ? `${cost.providerLabel} (free tier)`
+      : `${cost.providerLabel} (${cost.suggestionCount} calls)`;
+    const llmValue = cost.isFreeTier ? 'Free' : `$${cost.llmCost.toFixed(3)}`;
+
+    lines.push('');
+    lines.push('### Session Cost Estimate');
+    lines.push(`- Deepgram STT (${minutes} min): $${cost.deepgramCost.toFixed(3)}`);
+    lines.push(`- ${llmLabel}: ${llmValue}`);
+    lines.push(`- **Total: ~$${cost.totalCost.toFixed(2)}**`);
   }
 
   lines.push('');

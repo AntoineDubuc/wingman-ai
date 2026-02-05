@@ -96,13 +96,13 @@ This phase adds Groq as a third LLM provider alongside Gemini (Direct) and OpenR
 
 | Done | # | Task Name | Start | End | Total (min) | Human Est. (min) | Multiplier |
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
-| [ ] | 1 | Add Groq to LLM config types and constants | | | | | |
-| [ ] | 2 | Verify Groq model IDs against live API | | | | | |
-| [ ] | 3 | Add Groq permission to manifest | | | | | |
-| [ ] | 4 | Add Groq branch to LLM client (all methods) | | | | | |
-| [ ] | 5 | Update service worker session validation for Groq | | | | | |
-| [ ] | 6 | Add Groq UI to Options page HTML | | | | | |
-| [ ] | 7 | Add Groq logic to API keys section | | | | | |
+| [x] | 1 | Add Groq to LLM config types and constants | 14:52 | 14:55 | 3 | 20 | 6.7x |
+| [x] | 2 | Verify Groq model IDs against live API | 14:52 | 15:14 | 22 | 15 | 0.7x |
+| [x] | 3 | Add Groq permission to manifest | 14:55 | 14:56 | 1 | 10 | 10x |
+| [x] | 4 | Add Groq branch to LLM client (all methods) | 14:56 | 15:06 | 10 | 60 | 6x |
+| [x] | 5 | Update service worker session validation for Groq | 15:06 | 15:12 | 6 | 30 | 5x |
+| [x] | 6 | Add Groq UI to Options page HTML | 15:12 | 15:18 | 6 | 25 | 4.2x |
+| [x] | 7 | Add Groq logic to API keys section | 15:18 | | | | |
 | [ ] | 8 | Update popup API key check and provider label | | | | | |
 | [ ] | 9 | Make Gemini key optional for non-KB users | | | | | |
 | [ ] | 10 | Define model tuning profiles | | | | | |

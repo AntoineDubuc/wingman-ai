@@ -165,7 +165,6 @@ export class AIOverlay {
         const label = this.shadow.querySelector('.persona-label') as HTMLElement | null;
         if (label) {
           label.textContent = `\u00B7 ${active.name}`;
-          label.style.color = active.color;
         }
       });
 
@@ -190,7 +189,6 @@ export class AIOverlay {
             }
 
             label.textContent = `\u00B7 ${active.name}`;
-            label.style.color = active.color;
           });
         }
       });
@@ -1027,7 +1025,7 @@ export class AIOverlay {
         <div class="drag-handle">
           <span class="status-indicator"></span>
           <span class="title">Wingman</span>
-          <span class="persona-label" style="font-size:11px;opacity:0.7;margin-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;"></span>
+          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;"></span>
         </div>
         <span class="cost-ticker" style="display:none;">
           <span class="cost-value"></span>

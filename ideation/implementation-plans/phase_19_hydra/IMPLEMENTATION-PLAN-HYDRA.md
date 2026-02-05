@@ -246,6 +246,7 @@ Existing functions — **no changes needed**:
 - The `switchPersona()` method is replaced by `addPersona()` and `removePersona()`
 - Session lock state comes from `GET_STATUS` message (existing pattern — `isSessionActive`)
 - Remove the old `<select>` and `persona-dot` elements entirely
+- **First-time tooltip:** On first popup load after Hydra ships (check `hydraTooltipShown` storage flag), show a tooltip pointing to "+ Add persona": "New: activate multiple personas for expert-panel mode." Dismiss on click or after 5 seconds.
 
 ---
 
@@ -322,6 +323,8 @@ async processTranscriptForPersona(
 - This method must NOT mutate `this.systemPrompt` or `this.kbDocumentFilter` — it uses the persona parameter only
 - Conversation history (`this.conversationHistory`) is shared across all personas (they all see the same conversation)
 - The `buildRequest()` method (provider routing) is reused — only the system prompt differs per persona
+- **Error handling:** Return `null` on any error (network, 429, parse failure). Log the error with persona ID for debugging. Never throw — let other personas continue.
+- **History mutation safety:** History is read-only during parallel calls. The service worker appends the user's transcript once before firing parallel calls. Persona suggestions are appended after all calls complete, not during.
 
 ---
 
@@ -444,9 +447,10 @@ Transcript arrives (speech_final)
 ```typescript
 const results = await Promise.allSettled(
   sessionPersonas.map((persona, i) =>
-    new Promise<Result>(resolve =>
-      setTimeout(() => {
-        resolve(geminiClient.processTranscriptForPersona(text, speaker, isFinal, persona));
+    new Promise<Result>((resolve) =>
+      setTimeout(async () => {
+        const result = await geminiClient.processTranscriptForPersona(text, speaker, isFinal, persona);
+        resolve(result);
       }, i * 100)  // 0ms, 100ms, 200ms, 300ms
     )
   )
@@ -459,6 +463,7 @@ const results = await Promise.allSettled(
 - Rate limit errors (429) are caught per-persona — log and continue
 - The single-persona path is preserved as-is for simplicity and zero-risk backward compat
 - Send `cost_update` after all calls complete (one update, not N)
+- **Rate limit toast:** If any persona hits a 429, send a brief non-blocking toast to the overlay: "Rate limited — some suggestions skipped." Don't spam — dedupe within 30 seconds.
 
 ---
 
@@ -496,7 +501,7 @@ const results = await Promise.allSettled(
 - The overlay renders all persona badges in the bubble header
 - Trim whitespace before comparing (avoid false negatives from trailing spaces)
 - Case-sensitive comparison (different casing = different suggestions)
-- This is a simple `Map<string, Result[]>` grouping — no complex algorithm needed
+- **O(n) grouping:** Use `Map<string, Result[]>` keyed by trimmed suggestion text. Single pass through results, then iterate map values. No pair comparisons.
 
 ---
 
@@ -519,8 +524,8 @@ const results = await Promise.allSettled(
 - Single persona: show one dot + the persona name (looks similar to today)
 
 **Expected behavior:**
-- Dots rendered on session start from persona data passed in the `session_started` message
-- New message type or extended data: `{ type: 'session_started', personas: [{name, color}] }`
+- Dots rendered on session start from persona data passed in the existing session message
+- **Extend existing message:** Add `personas: [{name, color}]` field to the existing `session_start` or status response message. Don't add a new message type.
 - Tooltip appears on hover over the dots container
 - Tooltip disappears on mouse leave
 - On session stop, dots cleared
@@ -564,6 +569,7 @@ const results = await Promise.allSettled(
 - Single-persona case: `personas` array has 1 element — renders identically to before but with persona name
 - The left border color was previously based on suggestion type. Now it's based on persona color. If you want to keep type colors, use the persona color for the left border and the type color for the badge only.
 - Keep the existing suggestion structure — just add persona attribution to the header area
+- **Error boundary:** Wrap persona badge rendering in try/catch. On error (malformed data), fall back to generic "Wingman" label and log the error. Don't crash the overlay.
 
 ---
 
@@ -620,6 +626,7 @@ const results = await Promise.allSettled(
 - Suggestion count per persona: track in a `Map<string, number>` in the service worker during the session
 - For single persona, the "Personas Used" section still appears (1 persona, N suggestions) — consistent UI
 - The `CallSummary` interface gains an optional `personasUsed?: Array<{name: string, color: string, count: number}>`
+- **Leader attribution:** Add a line at the top of the summary: "Summary guided by [Leader Persona Name]" so users know which expertise shaped it (especially important in Phase 19a before the Conclave tab exists).
 
 ---
 
@@ -685,10 +692,29 @@ interface CollectedTranscript {
 - `npm test` passes all existing + new tests
 - `npm run typecheck` clean
 
+**QA.md updates — add these items:**
+- [ ] Multi-persona selection in popup (add/remove chips, max 4 enforced)
+- [ ] Multi-persona selection in options (checkboxes sync with popup)
+- [ ] Parallel suggestions arrive with correct persona attribution
+- [ ] Exact dedup merges badges when two personas say the same thing
+- [ ] Session lock prevents persona changes mid-call (chips disabled)
+- [ ] Overlay header shows colored dots for active personas
+- [ ] Summary shows "Personas Used" section with counts
+- [ ] Summary shows "Summary guided by [Persona]" attribution
+- [ ] Single-persona mode works identically to pre-Hydra
+- [ ] Rate limit toast appears on 429 (not spammy)
+
+**Manual QA steps for parallel pipeline:**
+1. Start session with 2+ personas, verify all appear as dots in header
+2. Speak a question that one persona should answer — verify single attributed suggestion
+3. Speak a topic that both personas cover — verify 2 separate suggestion bubbles (or merged if identical text)
+4. End session — verify summary shows all personas with suggestion counts
+5. Repeat with single persona — verify behavior unchanged from pre-Hydra
+
 **Notes:**
 - Use `@webext-core/fake-browser` for storage tests (existing pattern)
 - Dedup tests are pure logic — no Chrome API mocking needed
-- Don't test the parallel pipeline end-to-end in unit tests (too many moving parts) — that's manual QA
+- Don't test the parallel pipeline end-to-end in unit tests (too many moving parts) — manual QA covers it
 
 ---
 
@@ -712,6 +738,7 @@ interface CollectedTranscript {
 **Notes:**
 - Follow the same pattern as `api-keys.ts`, `personas.ts` etc. — a class with `init()`, `render()`, event bindings
 - The tab content area gets `id="conclave-section"`
+- **Subheading for clarity:** The tab content starts with explanatory text: "Configure how multiple personas work together during calls." This helps users who don't know what "Conclave" means.
 
 ---
 
@@ -768,7 +795,8 @@ activatePreset(id: string): Promise<void>
 
 **Notes:**
 - Presets reference persona IDs — if a persona is deleted, the preset becomes stale
-- On `activatePreset()`, validate that all referenced personas still exist; warn if any are missing
+- On `activatePreset()`, validate that all referenced personas still exist. If any are missing, show a warning modal: "This preset references deleted personas: [names]. Remove them from the preset?" with [Remove & Activate] and [Cancel] buttons.
+- **Unique preset names:** Validate on save that no other preset has the same name (case-insensitive). Show error toast if duplicate: "A preset named '[name]' already exists."
 - Max 4 personas per preset (same as the general cap)
 
 ---
@@ -874,6 +902,9 @@ Hydra is additive and backward compatible:
 2. **Will I get flooded with suggestions?** → LLMs already handle silence well. Most transcripts trigger 0–1 suggestions across all personas. Exact dedup catches the rare identical response.
 3. **How do I know which persona to activate?** → Each persona's KB doc count and description snippet shown in the activation UI. Quick visual to understand what each persona covers.
 4. **Can I save my favorite combos?** → Yes, via presets in the Conclave tab (Phase 19b). Quick-switch buttons in popup.
+5. **How will I discover multi-persona?** → First-time tooltip on popup load points to "+ Add persona" button. (Added to Task 2)
+6. **What if I hit rate limits?** → Non-blocking toast appears: "Rate limited — some suggestions skipped." (Added to Task 7)
+7. **Who guides my summary in Phase 19a?** → Summary shows "Summary guided by [Persona Name]" so it's clear. (Added to Task 12)
 
 ### Senior Engineering Manager Review
 
@@ -885,10 +916,15 @@ Hydra is additive and backward compatible:
 - Clean separation between pipeline changes (service worker) and UI changes (overlay/popup)
 
 **Gaps identified and addressed:**
-1. **Conversation history sharing**: All personas see the same `conversationHistory` in GeminiClient. This is correct — they're all observing the same call. But if history includes previous suggestions, persona A might see persona B's suggestion in context. → This is actually desirable — personas build on each other's contributions.
+1. **Conversation history sharing**: All personas see the same `conversationHistory` in GeminiClient. This is correct — they're all observing the same call. But if history includes previous suggestions, persona A might see persona B's suggestion in context. → This is actually desirable — personas build on each other's contributions. History mutation safety clarified in Task 4.
 2. **Race condition in dedup**: Two personas finishing at different times — does dedup work? → Yes, `Promise.allSettled` waits for ALL to complete before dedup runs. No streaming/incremental dedup needed.
 3. **Memory footprint**: 4 personas × full system prompts + KB contexts in parallel. → Service workers have generous memory limits (>100MB). 4 prompts of 5KB each + KB chunks is negligible.
-4. **Test coverage gap**: No integration test for the parallel pipeline end-to-end. → Acknowledged in Task 14 notes. Manual QA covers this. Unit tests cover the building blocks (persona helpers, dedup logic, cooldowns).
+4. **Test coverage gap**: No integration test for the parallel pipeline end-to-end. → Manual QA steps now specified in Task 14. Unit tests cover the building blocks.
+5. **Stagger code bug**: Original code resolved Promise immediately instead of awaiting. → Fixed in Task 7 code snippet.
+6. **Error handling underspecified**: Task 4 now explicitly says return `null` on any error, never throw.
+7. **Dedup complexity**: Clarified O(n) Map-based grouping in Task 8.
+8. **Overlay crash risk**: Task 10 now has error boundary around persona badge rendering.
+9. **Message contract vague**: Task 9 now says extend existing message, don't add new type.
 
 ### Product Manager Review (Second Pass)
 
@@ -899,6 +935,10 @@ Hydra is additive and backward compatible:
 - Out of scope prevents creep into router/priority/analytics territory
 
 **Gaps identified and addressed:**
-1. **No onboarding hint for new feature.** Users won't discover multi-persona by accident. → Add a subtle "+ Add persona" button in the popup that draws attention. First-time tooltip: "New: activate multiple personas for expert-panel mode."
-2. **Preset quick-switch could replace the chips entirely.** Power users might prefer one-tap preset over managing individual chips. → Both coexist — chips for ad-hoc, presets for saved combos.
-3. **Summary "Personas Used" section is informational but not actionable.** → True, but it's useful for post-call review ("oh, Cloud Solutions contributed 2 suggestions about infra costs — I should dig into that"). No action needed.
+1. **No onboarding hint for new feature.** → First-time tooltip added to Task 2.
+2. **Preset quick-switch could replace the chips entirely.** → Both coexist — chips for ad-hoc, presets for saved combos.
+3. **Summary "Personas Used" section is informational but not actionable.** → True, but useful for post-call review. No action needed.
+4. **"Conclave" tab name is jargon.** → Subheading added in Task 15: "Configure how multiple personas work together during calls."
+5. **Deleted persona in preset.** → Warning modal with [Remove & Activate] option added to Task 17.
+6. **Duplicate preset names.** → Unique name validation added to Task 17.
+7. **QA checklist missing.** → Full QA.md updates and manual QA steps added to Task 14.

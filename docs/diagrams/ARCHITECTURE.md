@@ -27,21 +27,25 @@ graph TB
 
         subgraph "Services (Singletons)"
             Deepgram[deepgramClient<br/>WebSocket STT]
-            Gemini[geminiClient<br/>REST API]
+            Gemini[geminiClient<br/>Multi-Provider LLM]
             Drive[driveService<br/>OAuth + Save]
             KB[kbDatabase<br/>IndexedDB]
             Collector[transcriptCollector<br/>Session data]
+            CostTracker[costTracker<br/>Live Cost Tracking]
+            Pricing[pricing.ts<br/>Hardcoded Model Rates]
         end
 
         subgraph "Storage"
-            ChromeStorage[(chrome.storage.local<br/>Personas, Keys, Settings)]
+            ChromeStorage[(chrome.storage.local<br/>Personas, Keys, Settings<br/>Provider Config)]
             IndexedDB[(IndexedDB<br/>KB Documents + Embeddings)]
         end
     end
 
     subgraph "External APIs"
         DeepgramAPI[Deepgram API<br/>wss://api.deepgram.com<br/>Nova-3 STT]
-        GeminiAPI[Gemini API<br/>Gemini 2.0 Flash<br/>Suggestions + Embeddings]
+        GeminiAPI[Gemini API<br/>Gemini 2.5 Flash<br/>Suggestions + Embeddings]
+        OpenRouterAPI[OpenRouter API<br/>OpenAI-compatible<br/>Multi-model]
+        GroqAPI[Groq API<br/>OpenAI-compatible<br/>Fast inference]
         DriveAPI[Google Drive API<br/>Save transcripts<br/>OAuth]
     end
 
@@ -66,7 +70,9 @@ graph TB
 
     %% Services to External APIs
     Deepgram <-->|WebSocket<br/>Sec-WebSocket-Protocol| DeepgramAPI
-    Gemini <-->|HTTPS<br/>REST API| GeminiAPI
+    Gemini <-->|Gemini REST API| GeminiAPI
+    Gemini <-->|OpenAI-compatible| OpenRouterAPI
+    Gemini <-->|OpenAI-compatible| GroqAPI
     Drive <-->|HTTPS<br/>OAuth 2.0| DriveAPI
 
     %% Storage Access
@@ -74,8 +80,13 @@ graph TB
     Gemini <-->|embeddings| KB
     KB <-->|vectors| IndexedDB
 
+    %% Cost Tracking
+    SW -->|addLLMUsage| CostTracker
+    CostTracker -->|lookupPricing| Pricing
+    SW -->|chrome.alarms| SW
+
     %% Messages back to UI
-    SW -->|transcript<br/>suggestion<br/>call_summary| ContentScript
+    SW -->|transcript<br/>suggestion<br/>call_summary<br/>cost_update| ContentScript
     ContentScript -->|display| Overlay
 ```
 
@@ -102,7 +113,7 @@ graph LR
     Content1 -->|INIT_OVERLAY| SW1
     Offscreen1 -->|AUDIO_CHUNK<br/>CAPTURE_STATUS| SW1
 
-    SW2 -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading| Content2
+    SW2 -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>cost_update| Content2
 
 ```
 
@@ -163,14 +174,16 @@ graph TB
 
     subgraph "Session Start"
         Load[Load Active Persona]
-        SetPrompt[Set Gemini<br/>System Prompt]
+        LoadProvider[Load Provider Config<br/>llmProvider, model, apiKey]
+        SetPrompt[Set System Prompt<br/>+ Model Tuning Profile]
         SetFilter[Set KB<br/>Document Filter]
     end
 
     subgraph "Runtime Usage"
-        GeminiClient[geminiClient<br/>processTranscript]
+        GeminiClient[geminiClient<br/>processTranscript<br/>Multi-provider routing]
         KBSearch[KB Search<br/>searchKB]
-        Overlay2[Overlay Header<br/>Active Persona Label]
+        CostTracker2[costTracker<br/>Live cost ticker]
+        Overlay2[Overlay Header<br/>Active Persona Label<br/>Cost Ticker]
     end
 
     Storage --> Personas
@@ -179,7 +192,9 @@ graph TB
 
     Load --> Personas
     Load --> ActiveID
+    LoadProvider --> Storage
     Load --> SetPrompt
+    LoadProvider --> SetPrompt
     Load --> SetFilter
 
     SetPrompt --> GeminiClient
@@ -187,8 +202,10 @@ graph TB
 
     KBSearch -->|filter by documentIds| IDB
     GeminiClient -->|inject KB context| SetPrompt
+    GeminiClient -->|addLLMUsage| CostTracker2
 
     Personas --> Overlay2
+    CostTracker2 -->|cost_update| Overlay2
 
 ```
 
@@ -211,7 +228,18 @@ Deepgram requires `Sec-WebSocket-Protocol` header (browser limitation):
 new WebSocket(url, ['token', apiKey]);  // ✅ Correct
 ```
 
-### 4. Async Message Responses
+### 4. Multi-Provider LLM Routing
+`geminiClient.buildRequest()` routes based on `llmProvider` stored in `chrome.storage.local`:
+- **gemini**: Gemini REST API (native format)
+- **openrouter**: OpenRouter API (OpenAI-compatible format)
+- **groq**: Groq API (OpenAI-compatible format)
+
+Model tuning profiles adjust temperature and prompt structure per model family.
+
+### 5. Chrome Alarms for Cost Updates
+`chrome.alarms` fires periodic `cost_update` messages to the content script during an active session. Cleared on session stop.
+
+### 6. Async Message Responses
 ```typescript
 chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
   handleAsync(message).then(sendResponse);
@@ -228,7 +256,8 @@ chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 | **Offscreen Document** | Tab audio capture (requires offscreen context) | Offscreen |
 | **Overlay** | UI rendering (Shadow DOM isolation) | Google Meet tab |
 | **deepgramClient** | WebSocket STT connection | Service Worker |
-| **geminiClient** | REST API for suggestions + embeddings | Service Worker |
+| **geminiClient** | Multi-provider LLM for suggestions + embeddings | Service Worker |
+| **costTracker** | Live token cost tracking per session | Service Worker |
 | **driveService** | OAuth + file upload to Drive | Service Worker |
 | **kbDatabase** | IndexedDB wrapper for vectors | Service Worker |
 | **transcriptCollector** | Session data accumulation | Service Worker |

@@ -12,8 +12,11 @@ A comprehensive tutorial for junior engineers joining the project.
 6. [Part 3: The AI Pipeline](#part-3-the-ai-pipeline)
 7. [Part 4: The RAG Knowledge Base](#part-4-the-rag-knowledge-base)
 8. [Part 5: Customization Features](#part-5-customization-features)
-9. [Debugging Guide](#debugging-guide)
-10. [Common Gotchas](#common-gotchas)
+9. [Part 6: Multi-Provider LLM Architecture](#part-6-multi-provider-llm-architecture)
+10. [Part 7: Live Cost Tracking](#part-7-live-cost-tracking)
+11. [Part 8: Testing Infrastructure](#part-8-testing-infrastructure)
+12. [Debugging Guide](#debugging-guide)
+13. [Common Gotchas](#common-gotchas)
 
 ---
 
@@ -82,9 +85,11 @@ Here's how data flows through the system:
 **Key insight:** The system has three main "hops":
 1. **Browser → Backend**: Audio chunks over WebSocket
 2. **Backend → Deepgram**: Audio to text (external API)
-3. **Backend → Gemini**: Text to suggestions (external API)
+3. **Backend → LLM Provider**: Text to suggestions (Gemini, OpenRouter, or Groq)
 
 Each hop adds latency, which is why we stream everything instead of waiting for complete data.
+
+> **Note:** The current architecture is fully BYOK (Bring Your Own Keys) — no backend server required. The service worker connects directly to Deepgram via WebSocket and to the selected LLM provider via REST. The "backend server" sections below describe the original architecture for reference.
 
 ---
 
@@ -954,6 +959,102 @@ async def _handle_transcript(self, transcript: Transcript) -> None:
 ```
 
 **Note:** Deepgram's diarization assigns speaker IDs (0, 1, 2, ...). The first person to speak in a session gets speaker_id=0, which we assume is the user.
+
+---
+
+## Part 6: Multi-Provider LLM Architecture
+
+The extension originally supported only Google Gemini for suggestions and summaries. It now supports **three LLM providers**: Gemini (direct API), OpenRouter (access to Claude, GPT-4o, Llama, and more), and Groq (fastest inference, free tier).
+
+### 6.1 Provider Configuration (`src/shared/llm-config.ts`)
+
+This module defines the `LLMProvider` type (`'gemini' | 'openrouter' | 'groq'`) and all provider-related constants:
+
+- **Model catalogs**: `OPENROUTER_MODELS` and `GROQ_MODELS` list the available models for each provider
+- **Provider cooldowns**: Gemini has a 15-second cooldown (free-tier quota), while OpenRouter and Groq use 2 seconds
+- **API base URLs**: Each provider has its own endpoint constant
+- **Default config**: Falls back to Gemini with sensible defaults
+
+The user selects their provider and model in Options → Setup tab. Each provider has its own API key field. The active provider configuration is stored in `chrome.storage.local`.
+
+### 6.2 How `gemini-client.ts` Handles Multiple Providers
+
+Despite its name, `gemini-client.ts` now acts as a unified LLM gateway. It uses a `buildRequest()` pattern to construct provider-specific HTTP requests:
+
+- **Gemini**: POST to `generativelanguage.googleapis.com` with Gemini's native JSON format
+- **OpenRouter**: POST to `openrouter.ai/api/v1/chat/completions` using the OpenAI-compatible format
+- **Groq**: POST to `api.groq.com/openai/v1/chat/completions` using the same OpenAI-compatible format
+
+All three paths share the same suggestion and summary generation logic. Only the request construction and response parsing differ. Embeddings always use the Gemini API regardless of provider, since embeddings are needed for KB search and Gemini provides them for free.
+
+### 6.3 Model-Aware Prompt Tuning (`src/shared/model-tuning.ts`)
+
+Different model families have different behaviors with the same prompt. The model tuning system adapts prompts automatically:
+
+- **Model family map**: Maps every supported model ID to a family (`gemini`, `claude`, `gpt`, `llama`, `qwen`)
+- **Per-family tuning profiles**: Each family has settings for temperature, silence reinforcement, JSON compliance hints, and prompt prefixes/suffixes
+- **Examples**:
+  - Llama models get stronger silence reinforcement (they tend to over-respond) and explicit JSON formatting instructions
+  - Qwen models use a `/no_think` prefix for suggestions (fast) but `/think` for summaries (better quality)
+  - GPT models get a reminder not to wrap JSON in markdown code fences
+  - Gemini is the baseline — no modifications needed
+- **Unknown models** get a neutral fallback profile with safe defaults
+
+The tuning mode (`off`, `once`, `auto`) is configurable in settings.
+
+---
+
+## Part 7: Live Cost Tracking
+
+### 7.1 Pricing Table (`src/shared/pricing.ts`)
+
+Hardcoded per-model pricing in USD per token for all supported models, plus the Deepgram Nova-3 per-minute rate. Key design decisions:
+
+- **Staleness guard**: Logs a warning if the pricing data is over 90 days old, so developers remember to update it
+- **Free tier flags**: Gemini and Groq are marked as free tier — their LLM cost displays as "Free" in the UI
+- **Fallback pricing**: Unknown models use Gemini Flash rates as a middle-of-the-road estimate
+- **Shared types**: `CostSnapshot` (live during session) and `CostEstimate` (final, attached to summary)
+
+### 7.2 Cost Tracker Service (`src/services/cost-tracker.ts`)
+
+A singleton that accumulates costs during a session:
+
+1. **Session start**: Locks in the provider, model, and per-token pricing
+2. **During session**: `addLLMUsage(inputTokens, outputTokens)` is called after each LLM API response
+3. **Live snapshots**: `getCostSnapshot()` computes Deepgram cost from elapsed audio minutes + LLM cost from accumulated tokens
+4. **Session end**: `endSession()` freezes the end time; `getFinalCost()` produces the final cost estimate
+
+The service worker periodically sends `cost_update` messages to the content script, which displays a running cost ticker in the overlay header. The ticker shows the total estimated cost with a hover tooltip breaking down STT vs LLM costs.
+
+### 7.3 Cost in Post-Call Summary
+
+When the call ends, the final cost estimate is attached to the summary data. The summary card includes a "Session Cost" section showing Deepgram and LLM costs. Free-tier providers show "Free" instead of a dollar amount for the LLM portion.
+
+---
+
+## Part 8: Testing Infrastructure
+
+### 8.1 Vitest Setup
+
+Unit tests use **Vitest** with `@webext-core/fake-browser` for Chrome API mocking. Configuration lives in `vitest.config.ts`:
+
+- **Environment**: Node (not jsdom — no DOM needed for business logic tests)
+- **Path aliases**: `@/` → `src/`, `@shared/` → `src/shared/`
+- **Setup file**: `tests/setup.ts` provides an in-memory `chrome.storage.local` and mock stubs for `chrome.permissions`, `chrome.runtime`, etc.
+- **Coverage**: V8 provider targeting `src/shared/` and `src/services/`
+
+### 8.2 Test Files
+
+Tests live in `tests/` at the extension root:
+
+- **`llm-config.test.ts`**: Validates provider config types, default values, and model catalogs
+- **`model-tuning.test.ts`**: Tests family resolution, profile lookups, and neutral fallback behavior
+- **`provider-config.test.ts`**: Tests storage key handling and provider-specific cooldowns
+- **`pricing.test.ts`**: Verifies per-model pricing lookups, fallback pricing, and staleness checks
+- **`cost-tracker.test.ts`**: Tests the full session lifecycle — start, add usage, snapshot, end, final cost
+- **`call-summary.test.ts`**: Tests summary prompt building and transcript truncation
+
+Run with: `npm test` (single run), `npm run test:watch` (interactive), or `npm run test:coverage` (with V8 coverage report).
 
 ---
 

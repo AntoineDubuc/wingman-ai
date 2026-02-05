@@ -30,16 +30,23 @@ service-worker: handleTranscript()
           │   └─ Return top matches + source
           │
           ├─ Inject KB context into system prompt
+          ├─ Apply model tuning (temperature, prompt prefix/suffix)
           ├─ Build conversation with chat history
-          ├─ Gemini API call
+          ├─ buildRequest() routes to provider API:
+          │   ├─ Gemini REST API (Gemini provider)
+          │   ├─ OpenRouter API (OpenAI-compatible)
+          │   └─ Groq API (OpenAI-compatible)
           │   └─ Handle 429 rate-limit backoff
           │
           └─ Parse response
+              ├─ extractUsage() → token counts (Gemini or OpenAI format)
+              ├─ costTracker.addLLMUsage(inputTokens, outputTokens)
               ├─ Check for silence marker (---)
               ├─ Classify suggestion type
               └─ Return Suggestion object
                   ↓
 service-worker: Send 'suggestion' (lowercase) → Content Script
+service-worker: sendCostUpdate() → Content Script (cost snapshot)
   ↓
 content-script: Map suggestion type & call overlay.addSuggestion()
   ↓
@@ -265,7 +272,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 - Sorted by similarity (descending)
 - Truncated to top-K
 
-### 5. Gemini API Call with KB Context
+### 5. LLM API Call with KB Context (Multi-Provider)
 
 **File**: `gemini-client.ts:220-334`
 
@@ -285,6 +292,8 @@ if (kbResult.matched && kbResult.context) {
 geminiClient.setSystemPrompt(persona.systemPrompt);
 ```
 
+**Model tuning**: If a tuning profile is active, adjusts `temperature` and prepends/appends prompt prefixes/suffixes based on the model family (e.g., Gemini Flash, Llama, Mixtral).
+
 **Conversation building** (line 263):
 ```typescript
 const contents = this.buildConversationMessages(currentText, currentSpeaker);
@@ -295,25 +304,36 @@ Includes:
 - Current utterance
 - Explicit instruction to respond or stay silent (`---`)
 
-**REST API call** (line 267-285):
+**Provider routing** via `buildRequest()`:
+
+The `this.provider` field (set by `loadProviderConfig()`) determines the API format:
+
+| Provider | API Format | Endpoint |
+|----------|-----------|----------|
+| `gemini` | Gemini REST | `generativelanguage.googleapis.com` |
+| `openrouter` | OpenAI-compatible | `openrouter.ai/api/v1` |
+| `groq` | OpenAI-compatible | `api.groq.com/openai/v1` |
+
+**Gemini format**:
 ```typescript
-const response = await fetch(
-  `${GEMINI_API_BASE}/${this.model}:generateContent?key=${apiKey}`,
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents,
-      systemInstruction: { parts: [{ text: systemPromptWithKB }] },
-      generationConfig: { maxOutputTokens, temperature },
-    }),
-  }
-);
+body: {
+  contents,
+  systemInstruction: { parts: [{ text: systemPromptWithKB }] },
+  generationConfig: { maxOutputTokens, temperature },
+}
 ```
 
-**Model**: `gemini-2.0-flash-exp` (default)
+**OpenAI-compatible format** (OpenRouter/Groq):
+```typescript
+body: {
+  model: this.model,
+  messages: [{ role: 'system', content: systemPromptWithKB }, ...],
+  max_tokens: maxOutputTokens,
+  temperature,
+}
+```
 
-**Rate-limit handling** (line 288-294) ⚠️ **429 backoff**:
+**Rate-limit handling** (line 288-294) — **429 backoff**:
 ```typescript
 if (response.status === 429) {
   const backoffSeconds = this.parseRetryDelay(await response.text());
@@ -332,6 +352,18 @@ if (!responseText || responseText === '---' || responseText === '-') {
   return null;  // LLM chose to stay silent
 }
 ```
+
+### 5b. Extract Token Usage and Track Cost
+
+**File**: `gemini-client.ts`
+
+After parsing the response JSON:
+
+1. **`extractUsage(data)`** — parses token counts from the provider response:
+   - Gemini format: `data.usageMetadata.promptTokenCount` / `candidatesTokenCount`
+   - OpenAI format: `data.usage.prompt_tokens` / `completion_tokens`
+
+2. **`costTracker.addLLMUsage(inputTokens, outputTokens)`** — accumulates token counts for the session, multiplied by the per-token rates locked in at session start.
 
 **Suggestion classification** (line 323):
 ```typescript
@@ -369,13 +401,20 @@ transcriptCollector.addSuggestion({
 });
 ```
 
-**Send to content script** (line 416-422) ⚠️ **LOWERCASE**:
+**Send to content script** (line 416-422) — **LOWERCASE**:
 ```typescript
 chrome.tabs.sendMessage(activeTabId, {
   type: 'suggestion',  // LOWERCASE — critical
   data: suggestion,
 });
 ```
+
+**Send cost update** — after each suggestion:
+```typescript
+sendCostUpdate();  // Pushes current cost snapshot to overlay
+```
+
+Sends `{ type: 'cost_update', data: CostEstimate }` (lowercase) to the content script. The overlay calls `overlay.updateCost()` to display the running session cost.
 
 ### 7. Content Script Maps Suggestion
 
@@ -489,8 +528,8 @@ if (this.timelineEntries.length > 500) {
 
 ## Critical Conventions
 
-### 1. Lowercase Message Types ⚠️
-- Service worker sends: `transcript`, `suggestion`
+### 1. Lowercase Message Types — ⚠️
+- Service worker sends: `transcript`, `suggestion`, `cost_update`
 - Never: `TRANSCRIPT`, `SUGGESTION`
 - Content script expects lowercase (content-script.ts:73, 118)
 
@@ -518,7 +557,11 @@ if (this.timelineEntries.length > 500) {
 | `handleMessage()` | deepgram-client.ts | 201-221 | Parse Deepgram messages |
 | `handleTranscript()` | service-worker.ts | 370-431 | Transcript routing |
 | `processTranscript()` | gemini-client.ts | 151-215 | Cooldown + validation |
-| `generateResponse()` | gemini-client.ts | 220-334 | KB + Gemini API |
+| `generateResponse()` | gemini-client.ts | 220-334 | KB + LLM API (multi-provider) |
+| `buildRequest()` | gemini-client.ts | — | Route to Gemini/OpenRouter/Groq |
+| `extractUsage()` | gemini-client.ts | — | Parse token counts from response |
+| `costTracker.addLLMUsage()` | service-worker.ts | — | Accumulate token costs |
+| `sendCostUpdate()` | service-worker.ts | — | Push cost snapshot to overlay |
 | `getKBContext()` | kb-search.ts | 109-152 | High-level KB search |
 | `searchKB()` | kb-search.ts | 27-92 | Cosine similarity search |
 | `addSuggestion()` | overlay.ts | 1287-1315 | Render suggestion card |

@@ -39,9 +39,9 @@ npm run dev          # Watch mode - rebuilds on file changes
 **Test it:**
 1. Get free API keys:
    - Deepgram: https://console.deepgram.com/
-   - Gemini: https://aistudio.google.com/apikey
+   - Gemini: https://aistudio.google.com/apikey (or OpenRouter/Groq key)
 2. Right-click extension icon → Options → API Keys tab
-3. Paste keys, click Save
+3. Select your LLM provider, paste keys, choose a model, click Save
 4. Join a Google Meet: https://meet.google.com/new
 5. Click extension icon → Start Session
 6. Speak → see live transcripts + AI suggestions
@@ -55,14 +55,15 @@ Real-time AI assistant for sales calls on Google Meet. Listens to conversation, 
 
 **Key Features:**
 - Real-time speech-to-text (Deepgram)
-- AI suggestions (Google Gemini)
+- AI suggestions (Google Gemini, OpenRouter, or Groq)
 - Knowledge base semantic search
 - Multi-persona system (different prompts + KB docs)
 - Call summaries auto-saved to Google Drive
+- Live cost tracking during sessions
 
 **Architecture:**
 - **BYOK** (Bring Your Own Keys) — no backend server
-- Users provide Deepgram + Gemini API keys
+- Users provide Deepgram + LLM API keys (Gemini, OpenRouter, or Groq)
 - Extension makes direct API calls from browser
 - All data stays local (chrome.storage + IndexedDB)
 
@@ -302,8 +303,11 @@ Real-time AI assistant for sales calls on Google Meet. Listens to conversation, 
 | What | File | Line/Section |
 |------|------|--------------|
 | **Deepgram model** | `services/deepgram-client.ts` | Line 12 (`DEEPGRAM_PARAMS`) |
-| **Gemini model** | `services/gemini-client.ts` | Search `gemini-2.0-flash-exp` |
-| **Suggestion cooldown** | `services/gemini-client.ts` | Search `suggestionCooldownMs` |
+| **LLM provider/model** | `options/sections/api-keys.ts` | Provider selector + model picker |
+| **LLM model lists** | `shared/llm-config.ts` | `GROQ_MODELS`, `OPENROUTER_MODELS` |
+| **Suggestion cooldown** | `shared/llm-config.ts` | `SUGGESTION_COOLDOWN_MS` constant |
+| **Model tuning profiles** | `shared/model-tuning.ts` | `getTuningProfile()` |
+| **Cost/pricing data** | `shared/pricing.ts` | Per-model pricing table |
 | **KB similarity threshold** | `services/kb/kb-search.ts` | Line 31 (`DEFAULT_THRESHOLD`) |
 | **Overlay styles** | `content/overlay.ts` | Line 205-933 (inline CSS) |
 | **Popup UI** | `popup/popup.html` + `popup/popup.ts` | — |
@@ -477,6 +481,9 @@ npm install            # Install dependencies
 npm run dev            # Development build with watch mode
 npm run build          # Production build (tsc + vite build)
 npm run typecheck      # TypeScript check only (no build)
+npm test               # Run Vitest unit tests
+npm run test:watch     # Vitest in watch mode
+npm run test:coverage  # Vitest with V8 coverage
 npm run lint           # ESLint
 npm run lint:fix       # ESLint with auto-fix
 npm run format         # Prettier formatting

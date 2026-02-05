@@ -18,7 +18,7 @@ Comprehensive documentation for junior engineers working on Wingman AI.
 |----------|---------|--------------|
 | **[GETTING-STARTED.md](GETTING-STARTED.md)** | Setup, common tasks, debugging | First day onboarding |
 | **[FILE-STRUCTURE-MAP.md](FILE-STRUCTURE-MAP.md)** | File-to-purpose mapping | Finding where to make changes |
-| **[CODE-PATTERNS.md](CODE-PATTERNS.md)** | Copy-paste code patterns | Implementing similar features |
+| **[CODE-PATTERNS.md](CODE-PATTERNS.md)** | Copy-paste code patterns (includes multi-provider, cost tracking, alarms, model tuning) | Implementing similar features |
 | **[CODE-DISCOVERY-PATTERN.md](../CODE-DISCOVERY-PATTERN.md)** | Safe codebase exploration with Claude Code | Working with AI assistants |
 
 ### Visual Diagrams
@@ -54,7 +54,7 @@ End-to-end traces of critical features with code references.
 docs/
 ├── README.md                              ← You are here
 ├── GETTING-STARTED.md                     ← Start here for onboarding
-├── FILE-STRUCTURE-MAP.md                  ← Find files
+├── FILE-STRUCTURE-MAP.md                  ← Find files (includes unit test map)
 ├── CODE-PATTERNS.md                       ← Copy patterns
 └── flows/                                 ← Feature traces
     ├── SESSION-START-FLOW.md

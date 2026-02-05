@@ -28,13 +28,22 @@ sequenceDiagram
         Popup->>User: Show error
     end
 
-    Note over SW: Initialize Gemini
+    Note over SW: Load provider config
+    SW->>Storage: get(['llmProvider', 'groqApiKey', 'groqModel',<br/>'openrouterApiKey', 'openrouterModel', 'promptTuningMode'])
+    Storage-->>SW: Provider config
+
+    Note over SW: Initialize Gemini (multi-provider)
     SW->>Gemini: startSession()
+    SW->>Gemini: loadProviderConfig(providerConfig)
     SW->>Storage: migrateToPersonas()
     SW->>Storage: getActivePersona()
     Storage-->>SW: { id, name, systemPrompt, kbDocumentIds }
     SW->>Gemini: setSystemPrompt(persona.systemPrompt)
     SW->>Gemini: setKBDocumentFilter(persona.kbDocumentIds)
+
+    Note over SW: Initialize cost tracking
+    SW->>SW: costTracker.startSession(activeModel)
+    SW->>SW: chrome.alarms.create('cost-update')
 
     Note over SW: Connect to Deepgram
     SW->>Deepgram: connect()
@@ -76,7 +85,8 @@ sequenceDiagram
     participant Collector as transcriptCollector
     participant Gemini as geminiClient
     participant KB as KB Search
-    participant GeminiAPI as Gemini API
+    participant LLM as LLM API<br/>(Gemini / OpenRouter / Groq)
+    participant CostTracker as costTracker
     participant Content as Content Script
     participant Overlay
 
@@ -113,8 +123,14 @@ sequenceDiagram
             Note over Gemini: Build prompt with KB context
             Gemini->>Gemini: systemPromptWithKB =<br/>KB context + persona prompt
 
-            Gemini->>GeminiAPI: generateContent({ contents, systemInstruction })
-            GeminiAPI-->>Gemini: { candidates: [{ content: { parts: [{ text }] } }] }
+            Note over Gemini: Route to active provider
+            Gemini->>Gemini: buildRequest()<br/>(Gemini REST or OpenAI-compatible format)
+            Gemini->>LLM: Send request to active provider
+            LLM-->>Gemini: API response with token usage
+
+            Note over Gemini: Track cost
+            Gemini->>Gemini: extractUsage(response)
+            Gemini->>CostTracker: addLLMUsage(inputTokens, outputTokens)
 
             alt Response is silence marker (---)
                 Gemini-->>SW: null
@@ -144,6 +160,7 @@ sequenceDiagram
     participant Offscreen
     participant Deepgram as deepgramClient
     participant Collector as transcriptCollector
+    participant CostTracker as costTracker
     participant Gemini as geminiClient
     participant GeminiAPI as Gemini API
     participant Drive as driveService
@@ -162,9 +179,13 @@ sequenceDiagram
     SW->>Content: { type: 'summary_loading' }
     Content->>Overlay: Show spinner
 
-    Note over SW: End session
+    Note over SW: End session + freeze cost
     SW->>Collector: endSession()
     Collector-->>SW: { startTime, endTime, transcripts[], suggestionsCount }
+    SW->>CostTracker: endSession()
+    SW->>CostTracker: getFinalCost()
+    CostTracker-->>SW: { totalCost, inputTokens, outputTokens }
+    SW->>SW: chrome.alarms.clear('cost-update')
 
     Note over SW: Generate call summary
     SW->>SW: Filter speech-only transcripts
@@ -173,6 +194,7 @@ sequenceDiagram
     Gemini->>GeminiAPI: generateContent with summary prompt
     GeminiAPI-->>Gemini: { summary[], actionItems[], keyMoments[] }
     Gemini-->>SW: CallSummary object
+    SW->>SW: Attach finalCost to summary
 
     alt Drive autosave enabled
         Note over SW: Save to Google Drive
@@ -204,6 +226,7 @@ sequenceDiagram
     SW->>Deepgram: disconnect()
     Deepgram->>Deepgram: Close WebSocket
     SW->>Gemini: clearSession()
+    SW->>CostTracker: reset()
     SW->>SW: chrome.offscreen.closeDocument()
     SW->>SW: isSessionActive = false
 
@@ -280,7 +303,7 @@ flowchart TB
 
     Listener --> |Process| Sender
 
-    Sender -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>drive_save_result| ContentListener
+    Sender -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>drive_save_result<br/>cost_update| ContentListener
     ContentListener --> OverlayRender
 
 ```
@@ -372,4 +395,74 @@ sequenceDiagram
     end
 
     Drive-->>Drive: return token
+```
+
+## Live Cost Update Flow
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+sequenceDiagram
+    participant Alarms as chrome.alarms
+    participant SW as Service Worker
+    participant CostTracker as costTracker
+    participant Content as Content Script
+    participant Overlay
+
+    Note over SW: Session active, alarm created
+
+    loop Every alarm interval
+        Alarms->>SW: chrome.alarms.onAlarm('cost-update')
+        SW->>CostTracker: getCurrentCost()
+        CostTracker-->>SW: { totalCost, inputTokens, outputTokens }
+
+        SW->>Content: { type: 'cost_update', data: { cost, tokens } }
+        Content->>Overlay: updateCost(data)
+        Overlay->>Overlay: Update cost ticker in header
+    end
+
+    Note over SW: Session stops
+    SW->>Alarms: chrome.alarms.clear('cost-update')
+    SW->>CostTracker: endSession()
+    CostTracker->>CostTracker: Freeze final cost
+    SW->>CostTracker: getFinalCost()
+    CostTracker-->>SW: Final cost data
+    SW->>SW: Attach cost to call summary
+```
+
+## Multi-Provider LLM Routing
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+sequenceDiagram
+    participant SW as Service Worker
+    participant Storage as chrome.storage
+    participant Gemini as geminiClient
+    participant Tuning as Model Tuning
+    participant GeminiAPI as Gemini API
+    participant OpenRouter as OpenRouter API
+    participant Groq as Groq API
+
+    Note over SW: Session start — load provider
+    SW->>Storage: get(['llmProvider', 'groqApiKey',<br/>'openrouterApiKey', 'promptTuningMode', ...])
+    Storage-->>SW: Provider config
+    SW->>Gemini: loadProviderConfig(config)
+
+    Note over Gemini: On each suggestion request
+    Gemini->>Tuning: getModelProfile(activeModel)
+    Tuning-->>Gemini: { temperature, promptAdjustments }
+    Gemini->>Gemini: buildRequest()
+
+    alt llmProvider = 'gemini'
+        Gemini->>GeminiAPI: Gemini REST format<br/>generateContent()
+        GeminiAPI-->>Gemini: Gemini response + usageMetadata
+    else llmProvider = 'openrouter'
+        Gemini->>OpenRouter: OpenAI-compatible format<br/>chat/completions
+        OpenRouter-->>Gemini: OpenAI response + usage
+    else llmProvider = 'groq'
+        Gemini->>Groq: OpenAI-compatible format<br/>chat/completions
+        Groq-->>Gemini: OpenAI response + usage
+    end
+
+    Gemini->>Gemini: extractUsage(response)
+    Gemini-->>SW: Parsed suggestion + token counts
 ```

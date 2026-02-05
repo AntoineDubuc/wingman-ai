@@ -13,11 +13,18 @@ USER (Popup)
   │
   └─[START_SESSION]──────→ SERVICE WORKER
                           │
-                          ├─ Validate API keys (Deepgram + Gemini)
+                          ├─ Validate API keys (Deepgram + LLM provider)
                           ├─ Find active Google Meet tab
                           ├─ Migrate personas (one-time, idempotent)
                           ├─ Load active persona from storage
                           │   └─ Set Gemini system prompt + KB doc filter
+                          │
+                          ├─ geminiClient.loadProviderConfig()
+                          │   └─ Reads provider type, API keys, model,
+                          │      cooldown, and prompt tuning mode
+                          │
+                          ├─ costTracker.startSession(provider, model)
+                          │   └─ Locks in per-token pricing for the session
                           │
                           ├─ deepgramClient.connect()
                           │   └─[WebSocket OPEN]──→ Deepgram Nova-3
@@ -32,10 +39,13 @@ USER (Popup)
                           ├─ chrome.offscreen.createDocument()
                           ├─ chrome.tabCapture.getMediaStreamId()
                           │
-                          └─[START_DUAL_CAPTURE]──→ OFFSCREEN DOCUMENT
-                              └─ getUserMedia() → Mic + Tab audio
-                                  └─ AudioWorklet processing
-                                      └─[AUDIO_CHUNK]──→ Deepgram
+                          ├─[START_DUAL_CAPTURE]──→ OFFSCREEN DOCUMENT
+                          │   └─ getUserMedia() → Mic + Tab audio
+                          │       └─ AudioWorklet processing
+                          │           └─[AUDIO_CHUNK]──→ Deepgram
+                          │
+                          └─ startCostAlarm()
+                              └─ chrome.alarm fires every 1 min
 
 ```
 
@@ -60,7 +70,7 @@ USER (Popup)
 
 - Reads from `chrome.storage.local`:
   - `deepgramApiKey`
-  - `geminiApiKey`
+  - `geminiApiKey` (or active provider's key)
   - `speakerFilterEnabled`
 - Returns error if keys missing
 - Finds active Google Meet tab
@@ -80,7 +90,28 @@ USER (Popup)
 
 **Persona Scoping**: All KB searches during session use active persona's documents only.
 
-### 5. Connect to Deepgram WebSocket
+### 5. Load Provider Configuration
+**File**: `gemini-client.ts`
+
+`geminiClient.loadProviderConfig()` reads from `chrome.storage.local`:
+- `llmProvider` — `gemini`, `openrouter`, or `groq`
+- API keys for the selected provider
+- `llmModel` — model selection per provider
+- `suggestionCooldownMs` — cooldown between suggestions
+- `promptTuningMode` — model tuning profile (adjusts temperature, adds prompt prefixes/suffixes per model family)
+
+Routes subsequent API calls to Gemini REST, OpenRouter, or Groq (OpenAI-compatible format).
+
+### 6. Start Cost Tracker
+**File**: `service-worker.ts`
+
+```
+costTracker.startSession(provider, model)
+```
+
+Locks in per-token pricing for the active provider and model. All token usage during the session accumulates against these rates.
+
+### 7. Connect to Deepgram WebSocket
 **File**: `deepgram-client.ts:90-181`
 
 **Critical Convention**: Uses `Sec-WebSocket-Protocol` for auth (browser limitation)
@@ -102,7 +133,7 @@ new WebSocket(url, ['token', apiKey]);
 **Timeout**: 10 seconds for connection
 **Reconnect**: Exponential backoff (max 5 attempts)
 
-### 6. Ensure Content Script + Init Overlay
+### 8. Ensure Content Script + Init Overlay
 **File**: `service-worker.ts:657-722`
 
 **Strategy** (retries with fallback):
@@ -117,7 +148,7 @@ new WebSocket(url, ['token', apiKey]);
 - Appends to `document.documentElement`
 - Injects inline CSS for style isolation
 
-### 7. Create Offscreen Document
+### 9. Create Offscreen Document
 **File**: `service-worker.ts:278-294`
 
 ```typescript
@@ -128,7 +159,7 @@ chrome.offscreen.createDocument({
 })
 ```
 
-### 8. Get Tab Capture Stream ID
+### 10. Get Tab Capture Stream ID
 **File**: `service-worker.ts:296-312`
 
 ```typescript
@@ -137,7 +168,7 @@ chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id })
 
 Required for capturing Google Meet participant audio.
 
-### 9. Start Dual Audio Capture
+### 11. Start Dual Audio Capture
 **File**: `service-worker.ts:314-357`
 
 Sends `START_DUAL_CAPTURE` message to offscreen document.
@@ -147,7 +178,13 @@ Sends `START_DUAL_CAPTURE` message to offscreen document.
 - Waits for `MIC_PERMISSION_RESULT` message (30s timeout)
 - Retries capture after permission granted
 
-### 10. Return Success
+### 12. Start Cost Alarm
+
+**File**: `service-worker.ts`
+
+After the session is marked active, `startCostAlarm()` creates a `chrome.alarms` alarm that fires every 1 minute. Each alarm tick triggers `sendCostUpdate()` to push the current cost snapshot to the content script overlay.
+
+### 13. Return Success
 **File**: `service-worker.ts:359-360`
 
 - Response: `{ success: true }`
@@ -160,9 +197,15 @@ Sends `START_DUAL_CAPTURE` message to offscreen document.
 |-------------|--------|-------|
 | `personas` | Read | Array of persona objects |
 | `activePersonaId` | Read | Currently selected persona ID |
+| `llmProvider` | Read | `gemini`, `openrouter`, or `groq` |
+| `llmModel` | Read | Model selection for active provider |
+| `suggestionCooldownMs` | Read | Cooldown between suggestions |
+| `promptTuningMode` | Read | Model tuning profile |
 | In-memory | Set | `isSessionActive = true` |
 | In-memory | Set | `activeTabId = tab.id` |
 | In-memory | Set | `isCapturing = true` |
+| In-memory | Set | `costTracker` session started with pricing |
+| chrome.alarms | Set | Cost alarm (1-minute interval) |
 
 ## Error Handling
 
@@ -193,6 +236,9 @@ Sends `START_DUAL_CAPTURE` message to offscreen document.
 | `migrateToPersonas()` | persona.ts | 113-161 | One-time persona setup |
 | `getActivePersona()` | persona.ts | 65-80 | Load active persona |
 | `geminiClient.startSession()` | gemini-client.ts | 78-84 | Reset Gemini state |
+| `loadProviderConfig()` | gemini-client.ts | — | Load provider, model, cooldown, tuning |
+| `costTracker.startSession()` | service-worker.ts | — | Lock in per-token pricing |
+| `startCostAlarm()` | service-worker.ts | — | 1-min chrome.alarm for cost updates |
 | `deepgramClient.connect()` | deepgram-client.ts | 90-181 | WebSocket connection |
 | `ensureContentScriptAndInitOverlay()` | service-worker.ts | 657-722 | Script injection + overlay |
 | `new AIOverlay()` | overlay.ts | 95-100+ | Shadow DOM setup |

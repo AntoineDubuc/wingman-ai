@@ -12,6 +12,10 @@ Common patterns used throughout the Wingman AI codebase. Copy these examples whe
 - [Async Message Response Pattern](#async-message-response-pattern)
 - [Error Handling Patterns](#error-handling-patterns)
 - [WebSocket Auth Pattern (Deepgram)](#websocket-auth-pattern-deepgram)
+- [Multi-Provider Request Building](#multi-provider-request-building)
+- [Cost Tracking Singleton](#cost-tracking-singleton)
+- [Chrome Alarms Pattern (MV3)](#chrome-alarms-pattern-mv3)
+- [Model Tuning Injection](#model-tuning-injection)
 
 ---
 
@@ -56,6 +60,7 @@ deepgramClient.setTranscriptCallback(handleTranscript);
 | `driveService` | `services/drive-service.ts` | Google Drive API |
 | `kbDatabase` | `services/kb/kb-database.ts` | IndexedDB wrapper |
 | `langBuilderClient` | `services/langbuilder-client.ts` | LangBuilder flow executor |
+| `costTracker` | `services/cost-tracker.ts` | Session cost accumulator |
 
 ---
 
@@ -586,6 +591,10 @@ this.socket.onerror = (error) => {
 | **Silent Failure** | Non-critical cleanup, audio forwarding |
 | **Catch-Send-Ignore** | Sending to tabs that may be closed |
 | **Sec-WebSocket-Protocol** | WebSocket auth when custom headers blocked |
+| **Multi-Provider Requests** | Adding/modifying LLM providers (Gemini/OpenRouter/Groq) |
+| **Cost Tracking** | Session-scoped usage tracking with singleton lifecycle |
+| **Chrome Alarms** | Periodic tasks in MV3 service workers (replaces `setInterval`) |
+| **Model Tuning** | Per-model-family temperature and prompt adjustments |
 
 ---
 
@@ -642,3 +651,124 @@ this.socket = new WebSocket(url);
 const url = 'wss://api.deepgram.com/v1/listen?model=nova-3&...';
 this.socket = new WebSocket(url, ['token', apiKey]);
 ```
+
+---
+
+## Multi-Provider Request Building
+
+The Gemini client now supports three LLM providers via a unified `buildRequest()` method that dispatches to Gemini or OpenAI-compatible format.
+
+**File**: `gemini-client.ts`
+
+```typescript
+private buildRequest(systemPrompt: string, userContent: string) {
+  if (this.provider === 'gemini') {
+    // Gemini-native format
+    return {
+      url: `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`,
+      body: {
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: userContent }] }],
+        generationConfig: { temperature: this.temperature },
+      },
+    };
+  }
+  // OpenAI-compatible format (OpenRouter + Groq)
+  const baseUrl = this.provider === 'groq'
+    ? 'https://api.groq.com/openai/v1'
+    : 'https://openrouter.ai/api/v1';
+  return {
+    url: `${baseUrl}/chat/completions`,
+    body: {
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      temperature: this.temperature,
+    },
+    headers: { Authorization: `Bearer ${this.apiKey}` },
+  };
+}
+```
+
+**When to use:** Any time a new provider needs to be added. If the provider is OpenAI-compatible, it slots into the else branch. Only Gemini uses a bespoke format.
+
+---
+
+## Cost Tracking Singleton
+
+**File**: `cost-tracker.ts`
+
+`costTracker` follows the same singleton pattern as other services. It has a session lifecycle: `startSession()` → track usage → `endSession()`.
+
+```typescript
+import { costTracker } from '../services/cost-tracker';
+
+// Session start
+costTracker.startSession();
+
+// During session — record LLM token usage
+costTracker.addLLMUsage(inputTokens, outputTokens);
+
+// Get current cost snapshot (for periodic UI updates)
+const snapshot = costTracker.getCostSnapshot();
+
+// Session end — get final cost and reset
+const finalCost = costTracker.getFinalCost();
+costTracker.reset();
+```
+
+The service worker sends `cost_update` messages to the content script on a periodic alarm so the overlay can display a live cost ticker.
+
+---
+
+## Chrome Alarms Pattern (MV3)
+
+In Manifest V3, service workers can be suspended at any time, which kills `setInterval` timers. Use `chrome.alarms` for periodic tasks instead.
+
+**File**: `service-worker.ts`
+
+```typescript
+// ✅ CORRECT: Survives service worker suspension
+chrome.alarms.create('cost-update', { periodInMinutes: 0.25 });  // Every 15s
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'cost-update' && isSessionActive) {
+    sendCostUpdate();
+  }
+});
+
+// Cleanup on session end
+chrome.alarms.clear('cost-update');
+```
+
+```typescript
+// ❌ WRONG: Dies when service worker suspends
+setInterval(() => {
+  sendCostUpdate();
+}, 15000);
+```
+
+**Requires:** `"alarms"` permission in `manifest.json`.
+
+---
+
+## Model Tuning Injection
+
+`getTuningProfile()` returns a `ModelTuningProfile` with temperature and prompt tweaks for a given model family. Applied automatically when generating suggestions and summaries.
+
+**File**: `model-tuning.ts`
+
+```typescript
+import { getTuningProfile, NEUTRAL_PROFILE } from '../shared/model-tuning';
+
+// Get tuning profile for the active model
+const profile = getTuningProfile(modelId);
+// profile.temperature — recommended temperature override
+// profile.systemPromptSuffix — extra instructions appended to system prompt
+
+// Falls back to NEUTRAL_PROFILE if model family is unknown
+```
+
+**When to use:** When adding a new model or model family. Define a tuning profile so the extension adjusts temperature and prompt style for optimal output.

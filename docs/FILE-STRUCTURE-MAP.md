@@ -15,7 +15,8 @@
 | File | Export | Purpose |
 |------|--------|---------|
 | `src/services/deepgram-client.ts` | `deepgramClient` | WebSocket STT (Nova-3) |
-| `src/services/gemini-client.ts` | `geminiClient` | REST API for suggestions + embeddings + summaries |
+| `src/services/gemini-client.ts` | `geminiClient` | Multi-provider LLM client (Gemini, OpenRouter, Groq) for suggestions + embeddings + summaries |
+| `src/services/cost-tracker.ts` | `costTracker` | Session-scoped cost accumulator (Deepgram minutes + LLM tokens) |
 | `src/services/langbuilder-client.ts` | `langbuilderClient` | LangBuilder flow execution |
 | `src/services/drive-service.ts` | `driveService` | Google Drive API with cross-browser OAuth |
 | `src/services/transcript-collector.ts` | `transcriptCollector` | Session transcript accumulator |
@@ -28,7 +29,7 @@
 
 | File | Purpose |
 |------|---------|
-| `src/content/overlay.ts` | Shadow DOM floating panel (transcripts, suggestions, summary) |
+| `src/content/overlay.ts` | Shadow DOM floating panel (transcripts, suggestions, summary, cost ticker) |
 | `src/content/audio-processor.worklet.js` | AudioWorklet: resample to 16kHz PCM16 |
 | `src/offscreen/audio-processor.js` | Tab audio capture AudioWorklet |
 
@@ -36,10 +37,10 @@
 
 | File | Purpose |
 |------|---------|
-| `src/options/sections/api-keys.ts` | Deepgram + Gemini API key inputs |
+| `src/options/sections/api-keys.ts` | API key inputs + provider selector (Gemini/OpenRouter/Groq) + model picker |
 | `src/options/sections/personas.ts` | Persona CRUD + KB document upload |
 | `src/options/sections/drive.ts` | Google Drive OAuth + format selection |
-| `src/options/sections/transcription.ts` | Deepgram endpointing + language settings |
+| `src/options/sections/transcription.ts` | Deepgram endpointing + language settings + AI prompt tuning toggle |
 | `src/options/sections/call-summary.ts` | Call summary toggle + settings |
 | `src/options/sections/theme.ts` | Dark/light mode |
 | `src/options/sections/speaker-filter.ts` | Filter self from transcripts |
@@ -55,6 +56,9 @@
 | `src/shared/persona.ts` | `Persona` type, active persona helpers, migration |
 | `src/shared/default-personas.ts` | 12 built-in persona templates |
 | `src/shared/default-prompt.ts` | Legacy default system prompt |
+| `src/shared/llm-config.ts` | `LLMProvider` type, model lists (Groq/OpenRouter), API base URLs, cooldown constants |
+| `src/shared/model-tuning.ts` | `ModelTuningProfile` interface, `getTuningProfile()` for per-model-family temperature/prompt tuning |
+| `src/shared/pricing.ts` | Per-model pricing table, `CostSnapshot`/`CostEstimate` types, free-tier flags |
 
 ## Validation Tests
 
@@ -69,6 +73,18 @@
 | `src/validation/index.ts` | Test runner (triggered via message) |
 | `src/validation/node-runner.ts` | Node.js test runner (for development) |
 
+## Unit Tests (Vitest)
+
+| File | Tests |
+|------|-------|
+| `tests/setup.ts` | Chrome API mocking via `@webext-core/fake-browser` |
+| `tests/pricing.test.ts` | Per-model pricing lookups and cost calculations |
+| `tests/cost-tracker.test.ts` | Cost tracker session lifecycle |
+| `tests/model-tuning.test.ts` | Model-family tuning profile selection |
+| `tests/llm-config.test.ts` | Provider types, model lists, API URLs |
+| `tests/provider-config.test.ts` | Provider config storage and defaults |
+| `tests/call-summary.test.ts` | Summary prompt builder and formatter |
+
 ## Build Artifacts
 
 | Path | Description |
@@ -76,6 +92,7 @@
 | `dist/` | Vite build output (gitignored) |
 | `manifest.json` | Extension manifest (root) |
 | `vite.config.ts` | Vite + @crxjs/vite-plugin |
+| `vitest.config.ts` | Vitest test framework config |
 | `tsconfig.json` | TypeScript config (strict mode) |
 
 ## Dependencies
@@ -89,5 +106,6 @@
 **Dev:**
 - `vite` + `@crxjs/vite-plugin` - Build system
 - `typescript` - Type checking
+- `vitest` + `@webext-core/fake-browser` - Unit testing with Chrome API mocks
 - `eslint` + `prettier` - Linting/formatting
 - `playwright` - Browser automation (for testing)

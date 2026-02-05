@@ -27,6 +27,12 @@ USER (Popup)
                        │   └─ Gemini API call
                        │       └─ Returns: summary, actionItems, keyMoments
                        │
+                       ├─ costTracker.endSession()
+                       │   └─ Freezes session end time
+                       ├─ costTracker.getFinalCost()
+                       │   └─ Returns final CostEstimate
+                       ├─ Attach costEstimate to summary (if both exist)
+                       │
                        ├─ Save to Google Drive (if enabled)
                        │   ├─ OAuth (getAuthToken or launchWebAuthFlow)
                        │   ├─ Format transcript (googledoc/md/text/json)
@@ -36,6 +42,8 @@ USER (Popup)
                        ├─ Send summary to overlay
                        ├─ Disconnect Deepgram
                        ├─ Close offscreen document
+                       ├─ stopCostAlarm()
+                       ├─ costTracker.reset()
                        └─ Reset state
 
 ```
@@ -236,7 +244,19 @@ export function buildSummaryPrompt(
 }
 ```
 
-### 8. Save to Google Drive
+### 8. Finalize Cost Tracking
+
+**File**: `service-worker.ts`
+
+After summary generation completes:
+
+1. `costTracker.endSession()` — freezes the session end time
+2. `costTracker.getFinalCost()` — returns the final `CostEstimate` (total input/output tokens, cost in dollars)
+3. If both summary and cost estimate exist: `summary.costEstimate = costEstimate` — attaches cost data to the summary object
+
+The cost estimate is included in the summary sent to the overlay and saved to Drive.
+
+### 9. Save to Google Drive
 
 **File**: `service-worker.ts:514-564`
 
@@ -469,7 +489,7 @@ if (fileFormat === 'googledoc') {
 }
 ```
 
-### 9. Summary Displayed in Overlay
+### 10. Summary Displayed in Overlay
 
 **File**: `service-worker.ts:568-583`
 
@@ -518,7 +538,7 @@ else {
 - `summary_error` → show error toast
 - `summary_loading` → show spinner
 
-### 10. Cleanup and State Reset
+### 11. Cleanup and State Reset
 
 **File**: `service-worker.ts:586-601`
 
@@ -534,6 +554,10 @@ try {
   // Ignore — may already be closed
 }
 
+// Cost tracking cleanup
+stopCostAlarm();
+costTracker.reset();
+
 // 9. Reset state
 isSessionActive = false;
 isCapturing = false;
@@ -542,6 +566,8 @@ activeTabId = null;
 console.log('[ServiceWorker] Session stopped');
 return { success: true };
 ```
+
+**Cost cleanup**: `stopCostAlarm()` cancels the 1-minute chrome.alarm. `costTracker.reset()` clears accumulated token counts and pricing data for the next session.
 
 ## Message Types Summary
 
@@ -601,6 +627,10 @@ return { success: true };
 | `endSession()` | transcript-collector.ts | — | Freeze session data |
 | `buildSummaryPrompt()` | call-summary.ts | 49-120 | Prompt + truncation |
 | `generateCallSummary()` | gemini-client.ts | 538-618 | Summary generation |
+| `costTracker.endSession()` | service-worker.ts | — | Freeze session end time |
+| `costTracker.getFinalCost()` | service-worker.ts | — | Return final CostEstimate |
+| `stopCostAlarm()` | service-worker.ts | — | Cancel 1-min chrome.alarm |
+| `costTracker.reset()` | service-worker.ts | — | Clear token counts and pricing |
 | `saveTranscript()` | drive-service.ts | 153-207 | Drive save |
 | `getAuthToken()` | drive-service.ts | 218-283 | OAuth flow |
 | `formatGoogleDoc()` | drive-service.ts | 457-579 | HTML formatting |

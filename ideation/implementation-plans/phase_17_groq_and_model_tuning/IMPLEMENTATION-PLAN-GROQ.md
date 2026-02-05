@@ -190,31 +190,34 @@ Update the `GROQ_MODELS` array in Task 1 with the verified IDs.
 
 **Intent:** Route suggestion and summary requests through Groq's API when it's the active provider.
 
-**Context:** `gemini-client.ts` has multiple methods that branch on `this.provider`. The original plan only mentioned `buildRequest()` and `loadProviderConfig()`, but the code review found **6 methods** that need Groq handling:
+**Context:** `gemini-client.ts` has multiple methods that branch on `this.provider`. The original plan only mentioned `buildRequest()` and `loadProviderConfig()`, but the code review found **8 locations** that need Groq handling:
 
 1. **`loadProviderConfig()`** — read `groqApiKey` and `groqModel` from storage
 2. **`startSession()` / `clearSession()`** — reset `groqApiKey` and `groqModel` to defaults (prevent stale key leaks between sessions)
-3. **`generateResponse()` line 290** — API key selection uses a two-way ternary (`openrouter ? openrouterKey : geminiKey`). Groq needs its own branch or this needs refactoring to a key lookup.
-4. **`getApiKey()` line 630** — only handles `gemini` and falls through to `openrouterApiKey`. Groq needs its own case.
-5. **`buildRequest()`** — add Groq branch (reuse OpenRouter body format, different URL and headers)
-6. **`parseRetrySeconds()` line 425** — only branches on `openrouter`, falls through to Gemini body parsing for everything else. Groq uses `Retry-After` header (same as OpenRouter).
+3. **`generateResponse()` line 290** — API key guard uses a two-way ternary (`openrouter ? openrouterKey : geminiKey`). Groq falls through to geminiKey (wrong).
+4. **`getApiKey()` line 630** — only handles `gemini` and falls through to `openrouterApiKey`. Groq falls through to openrouterApiKey (wrong).
+5. **`buildRequest()` line 450** — ANOTHER key lookup ternary for URL construction (Gemini puts key in URL query param, OpenRouter uses Bearer header). Groq falls through to Gemini URL format (wrong).
+6. **`buildRequest()`** — add Groq branch (reuse OpenRouter body format, different URL and headers)
+7. **`extractResponseText()` line 527** — checks `provider === 'openrouter'` specifically. Groq falls through to Gemini response parsing (wrong — Groq returns OpenAI format). Must change to `provider !== 'gemini'` or add explicit Groq case.
+8. **`parseRetrySeconds()` line 425** — only branches on `openrouter`, falls through to Gemini body parsing for everything else. Groq uses `Retry-After` header (same as OpenRouter).
 
 **Expected behavior:**
 - `loadProviderConfig()` reads `groqApiKey` and `groqModel` from storage
 - `startSession()` and `clearSession()` reset `this.groqApiKey = null` and `this.groqModel` to default
 - `generateResponse()` picks the correct API key for all 3 providers
 - `getApiKey()` returns `this.groqApiKey` when provider is `'groq'`
+- `buildRequest()` line 450 key lookup returns Groq key (not Gemini key)
 - `buildRequest()` produces requests to `https://api.groq.com/openai/v1/chat/completions` with `Authorization: Bearer <key>` (no `HTTP-Referer` / `X-Title` headers — those are OpenRouter-specific)
-- `extractResponseText()` reuses the OpenAI path (`choices[0].message.content`) — no changes needed
+- **`extractResponseText()` handles Groq** — uses the OpenAI path (`choices[0].message.content`), NOT the Gemini path. Easiest fix: change `=== 'openrouter'` to `!== 'gemini'` so both OpenRouter and Groq share the OpenAI extraction.
 - `parseRetrySeconds()` uses header-based parsing for both `openrouter` and `groq`
 - Debug log in `loadProviderConfig()` shows groq model when active
 
-**Refactoring suggestion:** The OpenRouter and Groq branches in `buildRequest()` share identical request body construction. Extract a `buildOpenAICompatibleRequest()` helper that both call with different URL/headers. This prevents duplicating the message translation logic.
+**Refactoring suggestion:** The key lookup pattern (`provider === 'openrouter' ? openrouterKey : geminiKey`) appears in **3 separate places** (lines 290, 450, 638). Extract a single `getProviderApiKey()` method that returns the right cached key for the active provider. This prevents the bug where adding a new provider requires finding and updating 3 ternaries. The same "is this an OpenAI-compatible provider?" check appears in `extractResponseText()`, `parseRetrySeconds()`, and `buildRequest()` — consider a helper `isOpenAICompatible()` that returns true for both OpenRouter and Groq.
 
 **Key components:**
 - `src/services/gemini-client.ts`
 
-**Notes:** The key lookup pattern (`provider === 'openrouter' ? openrouterKey : geminiKey`) appears in 3 places. Consider replacing all ternaries with a single `getProviderApiKey()` method that returns the right key for the active provider.
+**Notes:** The `extractResponseText()` bug is subtle and would cause silent failures — Groq responses would be parsed as Gemini format, find no `candidates[0].content.parts[0].text`, and return null. Suggestions would silently stop working with no error logged (just "Empty response from LLM").
 
 ---
 
@@ -225,17 +228,19 @@ Update the `GROQ_MODELS` array in Task 1 with the verified IDs.
 **Context:** The original plan said "No service worker changes." This is wrong. The service worker has two hardcoded Gemini key gates:
 
 1. **Session start (line 207-222):** Checks `provider === 'openrouter'` and falls through to require Gemini key. A Groq user would be blocked: "Gemini API key not configured."
-2. **Summary generation (line 489):** `if (!storage.geminiApiKey)` skips summaries entirely. A Groq-only user would never get call summaries.
+2. **Session start storage.get (line 192-198):** Only reads `'groqApiKey'` is missing from the storage.get keys — need to add it so it's available for validation.
+3. **Summary generation (line 489):** `if (!storage.geminiApiKey)` skips summaries entirely. A Groq-only user would never get call summaries.
+4. **Summary storage.get (line 474-482):** Only reads `'geminiApiKey'`. Needs to also read `'groqApiKey'`, `'openrouterApiKey'`, and `'llmProvider'` so it can check the active provider's key.
 
 **Expected behavior:**
-- Session start validates the active provider's key (Gemini, OpenRouter, *or* Groq)
+- Session start reads `groqApiKey` from storage and validates it when provider is `'groq'`
 - Summary generation checks the active provider's key, not hardcoded `geminiApiKey`
-- KB search gracefully skips if no Gemini key is present (no crash, just no KB context)
+- KB search gracefully skips if no Gemini key is present (already works — verified in code: `generateEmbedding()` → `getApiKey('gemini')` → throws ENOKEY → caught at kb-search.ts line 55 → returns empty results → `getKBContext()` returns `matched: false` → suggestion proceeds without KB)
 
 **Key components:**
 - `src/background/service-worker.ts`
 
-**Notes:** This is the task the original plan missed entirely. Without it, Groq users can't start sessions or get summaries. The fix is straightforward — replace the two-way provider check with a three-way check (or a lookup map). For summaries, the key check should validate whatever provider is active, not hardcode Gemini.
+**Notes:** This is the task the original plan missed entirely. Without it, Groq users can't start sessions or get summaries. The fix is straightforward — replace the two-way provider check with a three-way check (or a key lookup map keyed by provider). For summaries, refactor the hardcoded `!storage.geminiApiKey` to check the active provider's key instead.
 
 ---
 
@@ -360,12 +365,14 @@ Each model available in the extension (across all providers) maps to one of thes
   - `ModelFamily` type: `'gemini' | 'claude' | 'gpt' | 'llama' | 'qwen'`
   - `MODEL_FAMILY_MAP`: maps each model ID (from all providers) to its `ModelFamily`
   - `ModelTuningProfile` interface with fields:
-    - `temperature: number` — optimal temperature for this family
+    - `suggestionTemperature: number` — optimal temperature for suggestion calls only
     - `silenceReinforcement: string` — extra text to append about the `---` convention
+    - `conversationSilenceHint?: string` — adapted text for the hardcoded silence lines in `buildConversationMessages()` (see Notes)
     - `promptPrefix?: string` — text prepended to system prompt (e.g., Qwen `/no_think`)
     - `promptSuffix?: string` — text appended to system prompt
-    - `summaryPrefix?: string` — different prefix for summary calls (e.g., Qwen `/think`)
-    - `jsonHint?: string` — extra text to ensure JSON compliance (e.g., GPT "respond in JSON")
+    - `summaryPromptPrefix?: string` — text prepended to the standalone summary prompt string (e.g., Qwen `/think`)
+    - `summaryJsonHint?: string` — extra text injected before the "Return ONLY valid JSON" line in `buildSummaryPrompt()` output
+    - `jsonHint?: string` — extra text to ensure JSON compliance for non-summary calls
   - `MODEL_TUNING_PROFILES: Record<ModelFamily, ModelTuningProfile>` — the actual profiles
 - Storage key: `promptTuningMode` with values `'off' | 'once' | 'auto'`, default `'auto'`
 
@@ -374,25 +381,40 @@ Each model available in the extension (across all providers) maps to one of thes
 
 **Notes:** The profiles are static data — no API calls, no AI. They encode what the research found about each model family's quirks. The `MODEL_FAMILY_MAP` needs to cover every model ID in `OPENROUTER_MODELS` and `GROQ_MODELS`, plus the default Gemini model. Unknown models default to a neutral profile (no tweaks).
 
+**Critical design decisions from code review:**
+
+1. **Temperature is split between suggestions and summaries.** The profile defines `suggestionTemperature` only. Summary generation uses a hardcoded `temperature: 0.2` (gemini-client.ts line 754) that must NOT be overridden — low temperature is critical for consistent JSON output. The old field name `temperature` was misleading because it implied global override.
+
+2. **Summary prompt is standalone — not a system prompt.** `buildSummaryPrompt()` (call-summary.ts) returns a single self-contained prompt string, not a system prompt + messages pattern. The old `summaryPrefix` field implied prepending to a system prompt, but the tuning actually needs to inject into the standalone prompt. Renamed to `summaryPromptPrefix` (prepended to the whole prompt string) and `summaryJsonHint` (injected before the "Return ONLY valid JSON" closing line).
+
+3. **`buildConversationMessages()` has hardcoded silence text** that `silenceReinforcement` (system prompt only) doesn't touch:
+   - Line 583: model turn says `"...respond with --- if I should stay silent."`
+   - Line 594: user turn says `"Should I provide a suggestion, or stay silent (---)?"`
+   These are in user/model message turns, not the system prompt. The `conversationSilenceHint` field provides model-adapted versions of these hardcoded strings. For Gemini, this is null (keep as-is). For Llama, it would include the few-shot silence example inline.
+
 Example profiles:
 
 **Llama profile:**
 ```
-temperature: 0.5
+suggestionTemperature: 0.5
 silenceReinforcement: "If you have nothing valuable to add, you MUST respond with exactly three hyphens: ---. This is not optional. Do NOT add explanations or caveats when staying silent. Here is an example of correct silence:\nUser: [Speaker 1]: Sounds good, let me check my calendar.\nAssistant: ---"
+conversationSilenceHint: "Should I provide a suggestion, or stay silent (---)? Remember: if you stay silent, respond with ONLY --- and nothing else."
 promptPrefix: null
 promptSuffix: null
-summaryPrefix: null
+summaryPromptPrefix: null
+summaryJsonHint: "You MUST respond with raw JSON only. No markdown fencing. No text before or after the JSON object."
 jsonHint: "You MUST respond with raw JSON only. No markdown fencing. No text before or after the JSON object."
 ```
 
 **Qwen profile:**
 ```
-temperature: 0.6
+suggestionTemperature: 0.6
 silenceReinforcement: "You are allowed to stay silent. If you have nothing useful to add, respond with exactly: ---"
+conversationSilenceHint: null
 promptPrefix: "/no_think\n"
 promptSuffix: null
-summaryPrefix: "/think\n"
+summaryPromptPrefix: "/think\n"
+summaryJsonHint: "Respond only in raw JSON. No extra text or explanations."
 jsonHint: "Respond only in raw JSON. No extra text or explanations."
 ```
 
@@ -417,17 +439,27 @@ jsonHint: "Respond only in raw JSON. No extra text or explanations."
 - Stored in `chrome.storage.local` as `promptTuningMode`
 
 *Auto mode (runtime injection):*
-- In `gemini-client.ts`, after loading the system prompt and before sending to the API:
+- In `gemini-client.ts`, tuning is applied at two distinct injection points:
+
+  **Injection Point A — Suggestions (system prompt + conversation messages):**
   1. Look up the active model's family via `MODEL_FAMILY_MAP`
   2. Get the `ModelTuningProfile` for that family
   3. If tuning is `'auto'`:
-     - Override `this.temperature` with the profile's temperature
+     - Override `this.temperature` with `profile.suggestionTemperature` (NOT for summaries — see below)
      - Prepend `promptPrefix` to the system prompt (if set)
      - Append `silenceReinforcement` to the system prompt
      - Append `promptSuffix` to the system prompt (if set)
-     - For summary calls: use `summaryPrefix` instead of `promptPrefix`
-     - For JSON calls: append `jsonHint`
+     - In `buildConversationMessages()`: if `conversationSilenceHint` is set, replace the hardcoded silence text at line 583 (model turn) and line 594 (user turn) with the profile's adapted versions
   4. If tuning is `'off'`: send as-is
+
+  **Injection Point B — Summary generation (`generateCallSummary()`):**
+  1. Get the same profile
+  2. If tuning is `'auto'`:
+     - Prepend `summaryPromptPrefix` to the prompt string returned by `buildSummaryPrompt()` (e.g., Qwen `/think`)
+     - Inject `summaryJsonHint` before the closing "Return ONLY valid JSON" line in the prompt
+     - **Do NOT override temperature** — summary always uses 0.2 for consistent JSON output
+  3. If tuning is `'off'`: send as-is
+
 - The user's saved `systemPrompt` in storage is never modified
 - Applied fresh each session in `loadProviderConfig()` or at prompt-send time
 
@@ -467,6 +499,12 @@ Temperature: 0.5 (from profile, overriding default 0.3)
 - The "Optimize Once" button should be grayed out when tuning is set to "Auto" (redundant) or "Off" (user doesn't want tuning)
 - If the user switches models after running "Optimize Once", the prompt won't re-adapt — that's expected and acceptable. A subtle warning "Prompt was optimized for Llama 4 Scout, you're now using Qwen3 32B" would be a nice touch but not required for v1
 - The Gemini profile should be a no-op (empty strings, same temperature) so Auto mode does nothing when Gemini is active — preserving current behavior exactly
+
+**Critical implementation details from code review:**
+- **Summary temperature must be protected.** `generateCallSummary()` hardcodes `temperature: 0.2` (line 754). Auto mode must NOT override this — high temperature causes inconsistent JSON. Only `suggestionTemperature` from the profile is applied, and only to suggestion calls.
+- **Summary prompt injection requires string surgery.** `buildSummaryPrompt()` returns a self-contained string ending with `"Return ONLY valid JSON..."`. The `summaryPromptPrefix` goes at the top. The `summaryJsonHint` gets injected just before the closing JSON instruction line. Consider adding a parameter to `buildSummaryPrompt()` for this, or doing a string replace in `generateCallSummary()`.
+- **Conversation silence text lives in TWO places.** The system prompt gets `silenceReinforcement`, but `buildConversationMessages()` also has hardcoded silence text in the model acknowledgment (line 583) and user prompt (line 594). The `conversationSilenceHint` field handles this — inject it by parameterizing those strings instead of hardcoding them.
+- **"Optimize Once" can only handle system prompt tweaks.** It cannot rewrite the hardcoded conversation messages or the summary prompt — those are code, not user data. This is fine: "Optimize Once" rewrites the persona's `systemPrompt` field only. The conversation message and summary tweaks are only available in Auto mode (runtime injection).
 
 ---
 
@@ -524,6 +562,10 @@ These gaps were found during senior engineer + user review and are now covered:
 | Users don't know what Groq is | No help text | Task 6 |
 | No provider indicator in popup | Not mentioned | Task 8 |
 | Model labels are meaningless to non-technical users | Technical labels | Task 6 |
+| Summary temperature (0.2) would be overridden by model tuning | `temperature` field applied globally | Split into `suggestionTemperature` only; summary keeps 0.2 |
+| Summary prompt is standalone string, not system prompt | `summaryPrefix` implies system prompt injection | Renamed to `summaryPromptPrefix` + `summaryJsonHint` with string injection |
+| `buildConversationMessages()` has hardcoded silence text | `silenceReinforcement` only in system prompt | Added `conversationSilenceHint` for conversation turn injection |
+| "Optimize Once" can't touch conversation messages or summary | Not mentioned | Documented: Only Auto mode handles runtime injection points |
 | Cooldown slider doesn't warn on provider switch | Out of scope | Out of scope (noted below) |
 
 ### Known Limitations (Not Addressed)

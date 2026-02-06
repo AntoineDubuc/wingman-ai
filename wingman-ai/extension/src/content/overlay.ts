@@ -45,13 +45,16 @@ interface TimelineEntry {
 }
 
 import { ICONS, UI, LIMITS } from '../shared/constants';
+import { Draggable } from './overlay/draggable';
+import { Resizable } from './overlay/resizable';
 
 export class AIOverlay {
   public container: HTMLDivElement;
   private shadow: ShadowRoot;
   private panel: HTMLDivElement;
   private isMinimized = false;
-  private isDragging = false;
+  private draggable: Draggable | null = null;
+  private resizable: Resizable | null = null;
   private onCloseCallback?: () => void;
   private fontSize: number = UI.FONT_SIZE_DEFAULT;
   private readonly MIN_FONT_SIZE = UI.FONT_SIZE_MIN;
@@ -415,43 +418,16 @@ export class AIOverlay {
   }
 
   /**
-   * Initialize drag functionality
+   * Initialize drag functionality using Draggable component
    */
   private initDrag(): void {
     const header = this.panel.querySelector('.overlay-header') as HTMLElement;
-    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
-    header.addEventListener('mousedown', (e) => {
-      if (this.isMinimized) return;
-      this.isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      const rect = this.panel.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop = rect.top;
-      header.style.cursor = 'grabbing';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!this.isDragging) return;
-
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-
-      const newLeft = Math.max(0, Math.min(window.innerWidth - this.panel.offsetWidth, startLeft + deltaX));
-      const newTop = Math.max(0, Math.min(window.innerHeight - this.panel.offsetHeight, startTop + deltaY));
-
-      this.panel.style.left = `${newLeft}px`;
-      this.panel.style.top = `${newTop}px`;
-      this.panel.style.right = 'auto';
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (this.isDragging) {
-        this.isDragging = false;
-        header.style.cursor = 'grab';
-        this.savePosition();
-      }
+    this.draggable = new Draggable({
+      handle: header,
+      target: this.panel,
+      isDisabled: () => this.isMinimized,
+      onDragEnd: () => this.savePosition(),
     });
   }
 
@@ -1475,49 +1451,21 @@ export class AIOverlay {
   }
 
   /**
-   * Initialize resize functionality
+   * Initialize resize functionality using Resizable component
    */
   private initResize(): void {
     const handle = this.panel.querySelector('.resize-handle') as HTMLElement;
     if (!handle) return;
 
-    let isResizing = false;
-    let startX = 0, startY = 0, startWidth = 0, startHeight = 0;
-
-    handle.addEventListener('mousedown', (e) => {
-      if (this.isMinimized) return;
-      e.preventDefault();
-      e.stopPropagation();
-
-      isResizing = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startWidth = this.panel.offsetWidth;
-      startHeight = this.panel.offsetHeight;
-
-      handle.style.cursor = 'nwse-resize';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isResizing) return;
-
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-
-      const maxW = this.layoutMode === 'side-by-side' ? 900 : 600;
-      const newWidth = Math.max(280, Math.min(maxW, startWidth + deltaX));
-      const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, startHeight + deltaY));
-
-      this.panel.style.width = `${newWidth}px`;
-      this.panel.style.height = `${newHeight}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isResizing) {
-        isResizing = false;
-        handle.style.cursor = 'nwse-resize';
-        this.savePosition();
-      }
+    this.resizable = new Resizable({
+      handle,
+      target: this.panel,
+      minWidth: 280,
+      maxWidth: () => this.layoutMode === 'side-by-side' ? 900 : 600,
+      minHeight: 200,
+      maxHeight: () => window.innerHeight * 0.8,
+      isDisabled: () => this.isMinimized,
+      onResizeEnd: () => this.savePosition(),
     });
   }
 
@@ -1650,5 +1598,13 @@ export class AIOverlay {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  /**
+   * Clean up event listeners and resources
+   */
+  destroy(): void {
+    this.draggable?.destroy();
+    this.resizable?.destroy();
   }
 }

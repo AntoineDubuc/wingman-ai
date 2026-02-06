@@ -221,31 +221,30 @@ class DriveService {
   }
 
   /**
-   * Get OAuth token from Chrome Identity API, with launchWebAuthFlow fallback
-   * for Vivaldi and other Chromium browsers where getAuthToken isn't supported.
+   * Get OAuth token using launchWebAuthFlow (Web Application client).
+   * We use launchWebAuthFlow exclusively because it works in all Chromium browsers
+   * (Chrome, Vivaldi, Edge, etc.) and we're using a Web Application OAuth client.
    */
   private async getAuthToken(interactive: boolean): Promise<string | null> {
-    // Try Chrome-native getAuthToken first
-    try {
-      const token = await new Promise<string | null>((resolve) => {
-        chrome.identity.getAuthToken({ interactive }, (t) => {
-          if (chrome.runtime.lastError) {
-            console.warn('[DriveService] getAuthToken failed:', chrome.runtime.lastError.message);
-            resolve(null);
-          } else {
-            resolve(t || null);
-          }
-        });
-      });
-      if (token) return token;
-    } catch (err) {
-      console.warn('[DriveService] getAuthToken not available:', err);
+    // Check for cached token first (for both interactive and non-interactive)
+    const stored = await chrome.storage.local.get(['driveOAuthToken']);
+    const cachedToken = stored.driveOAuthToken as string | undefined;
+
+    if (cachedToken) {
+      // Validate the cached token is still valid
+      const isValid = await this.validateToken(cachedToken);
+      if (isValid) {
+        return cachedToken;
+      }
+      // Token expired, clear it
+      console.log('[DriveService] Cached token expired, clearing');
+      await chrome.storage.local.set({ driveOAuthToken: null });
     }
 
-    // Check for cached launchWebAuthFlow token
+    // If non-interactive and no valid cached token, we can't get a new one
     if (!interactive) {
-      const stored = await chrome.storage.local.get(['driveOAuthToken']);
-      return (stored.driveOAuthToken as string) || null;
+      console.warn('[DriveService] No valid cached token and non-interactive mode');
+      return null;
     }
 
     // Fallback: launchWebAuthFlow (works in Vivaldi and all Chromium browsers)
@@ -288,6 +287,25 @@ class DriveService {
     } catch (err) {
       console.error('[DriveService] launchWebAuthFlow failed:', err);
       return null;
+    }
+  }
+
+  /**
+   * Validate if a token is still valid by checking with Google's tokeninfo endpoint
+   */
+  private async validateToken(token: string): Promise<boolean> {
+    try {
+      const response = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?access_token=${token}`
+      );
+      if (!response.ok) {
+        return false;
+      }
+      const data = await response.json();
+      // Token is valid if it has remaining time (expires_in > 0)
+      return data.expires_in && parseInt(data.expires_in, 10) > 60; // At least 1 min left
+    } catch {
+      return false;
     }
   }
 

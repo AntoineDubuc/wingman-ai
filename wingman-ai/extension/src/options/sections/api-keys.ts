@@ -6,6 +6,7 @@ import {
   GROQ_MODELS,
   GROQ_API_BASE,
 } from '../../shared/llm-config';
+import { HumeClient } from '../../services/hume-client';
 
 const OPENROUTER_ORIGIN = 'https://openrouter.ai/*';
 const GROQ_ORIGIN = 'https://api.groq.com/*';
@@ -26,6 +27,12 @@ export class ApiKeysSection {
   private groqSection: HTMLElement | null = null;
   private provider: LLMProvider = 'gemini';
 
+  // Hume AI fields
+  private humeApiKeyInput: HTMLInputElement | null = null;
+  private humeSecretKeyInput: HTMLInputElement | null = null;
+  private humeTestBtn: HTMLButtonElement | null = null;
+  private humeTestStatus: HTMLElement | null = null;
+
   async init(ctx: OptionsContext): Promise<void> {
     this.ctx = ctx;
     this.deepgramInput = document.getElementById('deepgram-api-key') as HTMLInputElement;
@@ -43,6 +50,14 @@ export class ApiKeysSection {
 
     this.saveBtn?.addEventListener('click', () => this.save());
     this.testBtn?.addEventListener('click', () => this.test());
+
+    // Hume AI fields
+    this.humeApiKeyInput = document.getElementById('hume-api-key') as HTMLInputElement;
+    this.humeSecretKeyInput = document.getElementById('hume-secret-key') as HTMLInputElement;
+    this.humeTestBtn = document.getElementById('hume-test-btn') as HTMLButtonElement;
+    this.humeTestStatus = document.getElementById('hume-test-status');
+
+    this.humeTestBtn?.addEventListener('click', () => this.testHume());
 
     // Provider radio toggle
     const radios = document.querySelectorAll<HTMLInputElement>('input[name="llm-provider"]');
@@ -94,6 +109,8 @@ export class ApiKeysSection {
         'groqApiKey',
         'groqModel',
         'llmProvider',
+        'humeApiKey',
+        'humeSecretKey',
       ]);
 
       if (this.deepgramInput && result.deepgramApiKey) {
@@ -113,6 +130,14 @@ export class ApiKeysSection {
       }
       if (this.groqModelSelect && result.groqModel) {
         this.groqModelSelect.value = result.groqModel;
+      }
+
+      // Hume keys
+      if (this.humeApiKeyInput && result.humeApiKey) {
+        this.humeApiKeyInput.value = result.humeApiKey;
+      }
+      if (this.humeSecretKeyInput && result.humeSecretKey) {
+        this.humeSecretKeyInput.value = result.humeSecretKey;
       }
 
       // Set provider radio
@@ -192,6 +217,8 @@ export class ApiKeysSection {
     const openrouterModel = this.modelSelect?.value || '';
     const groqKey = this.groqInput?.value?.trim() || '';
     const groqModel = this.groqModelSelect?.value || '';
+    const humeApiKey = this.humeApiKeyInput?.value?.trim() || '';
+    const humeSecretKey = this.humeSecretKeyInput?.value?.trim() || '';
 
     if (!deepgramKey) {
       this.ctx.showToast('Deepgram API key is required', 'error');
@@ -232,6 +259,8 @@ export class ApiKeysSection {
         groqApiKey: groqKey,
         groqModel: groqModel,
         llmProvider: this.provider,
+        humeApiKey: humeApiKey,
+        humeSecretKey: humeSecretKey,
       });
       this.updateStatus();
       this.ctx.showToast('Settings saved', 'success');
@@ -413,6 +442,46 @@ export class ApiKeysSection {
     const input = document.getElementById(inputId) as HTMLInputElement;
     if (input) {
       input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  }
+
+  private async testHume(): Promise<void> {
+    const apiKey = this.humeApiKeyInput?.value?.trim() || '';
+    const secretKey = this.humeSecretKeyInput?.value?.trim() || '';
+
+    if (!apiKey || !secretKey) {
+      this.updateHumeStatus('Enter both API Key and Secret Key', 'error');
+      return;
+    }
+
+    if (this.humeTestBtn) {
+      this.humeTestBtn.disabled = true;
+      this.humeTestBtn.textContent = 'Testing...';
+    }
+
+    try {
+      const result = await HumeClient.testCredentials(apiKey, secretKey);
+
+      if (result.valid) {
+        this.updateHumeStatus('✓ Valid', 'success');
+      } else {
+        this.updateHumeStatus(result.error || 'Invalid credentials', 'error');
+      }
+    } catch (error) {
+      this.updateHumeStatus('Network error', 'error');
+      console.error('Hume test error:', error);
+    } finally {
+      if (this.humeTestBtn) {
+        this.humeTestBtn.disabled = false;
+        this.humeTestBtn.textContent = 'Test Hume';
+      }
+    }
+  }
+
+  private updateHumeStatus(message: string, type: 'success' | 'error'): void {
+    if (this.humeTestStatus) {
+      this.humeTestStatus.textContent = message;
+      this.humeTestStatus.className = `hume-test-status ${type}`;
     }
   }
 }

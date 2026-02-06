@@ -176,6 +176,18 @@ try {
         }
         break;
 
+      case 'emotion_update':
+        if (overlay && message.data) {
+          overlay.updateEmotion(message.data);
+        }
+        break;
+
+      case 'emotion_clear':
+        if (overlay) {
+          overlay.clearEmotion();
+        }
+        break;
+
       default:
         // Ignore messages not meant for content script (e.g., AUDIO_CHUNK, CAPTURE_STATUS)
         break;

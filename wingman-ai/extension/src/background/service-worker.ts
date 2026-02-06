@@ -20,6 +20,8 @@ import { migrateToPersonas, getActivePersonas } from '../shared/persona';
 import { MODEL_STAGGER_MS, PROVIDER_STAGGER_FALLBACK } from '../shared/llm-config';
 import { langBuilderClient } from '../services/langbuilder-client';
 import { costTracker } from '../services/cost-tracker';
+import { humeClient, HumeClient } from '../services/hume-client';
+import type { EmotionUpdate } from '../shared/constants';
 
 // Session state
 let isSessionActive = false;
@@ -105,9 +107,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
 
     case 'AUDIO_CHUNK':
-      // Forward audio chunk directly to Deepgram
+      // Forward audio chunk to Deepgram and Hume (if connected)
       if (isSessionActive) {
         deepgramClient.sendAudio(message.data);
+        humeClient.sendAudio(message.data); // No-op if not connected
       }
       return false;
 
@@ -323,6 +326,9 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
     // Mark session as active
     isSessionActive = true;
+
+    // Step 5: Connect to Hume AI for emotion detection (optional)
+    connectHumeIfConfigured(tab.id!);
 
     // Start transcript collection for auto-save
     transcriptCollector.startSession(speakerFilterEnabled);
@@ -819,6 +825,7 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     // 8. Cleanup
     stopCostAlarm();
     await deepgramClient.disconnect();
+    await humeClient.disconnect();
     geminiClient.clearSession();
     costTracker.reset();
 
@@ -847,6 +854,56 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     activeTabId = null;
 
     return { success: false };
+  }
+}
+
+// ── Hume AI (Emotion Detection) helpers ─────────────────────────
+
+/**
+ * Connect to Hume AI if API keys are configured.
+ * Runs asynchronously — doesn't block session start.
+ * Failures are logged but don't affect transcription/suggestions.
+ */
+async function connectHumeIfConfigured(tabId: number): Promise<void> {
+  try {
+    // Check if Hume is configured
+    const configured = await HumeClient.isConfigured();
+    if (!configured) {
+      console.debug('[ServiceWorker] Hume AI not configured — emotion detection disabled');
+      return;
+    }
+
+    // Set up emotion callback to forward to content script
+    humeClient.setEmotionCallback((update: EmotionUpdate) => {
+      console.log(`[ServiceWorker] Emotion: ${update.state} (${(update.confidence * 100).toFixed(0)}%)`);
+      if (tabId && isSessionActive) {
+        chrome.tabs
+          .sendMessage(tabId, { type: 'emotion_update', data: update })
+          .catch((err) => console.warn('[ServiceWorker] Failed to send emotion to tab:', err));
+      } else {
+        console.warn(`[ServiceWorker] Can't send emotion: tabId=${tabId}, active=${isSessionActive}`);
+      }
+    });
+
+    // Set up disconnect callback to clear emotion badge
+    humeClient.setDisconnectCallback((reason) => {
+      console.log(`[ServiceWorker] Hume disconnected: ${reason}`);
+      if (tabId && isSessionActive) {
+        chrome.tabs
+          .sendMessage(tabId, { type: 'emotion_clear', data: { reason } })
+          .catch(() => {});
+      }
+    });
+
+    // Connect (async, don't await — let it complete in background)
+    const connected = await humeClient.connect();
+    if (connected) {
+      console.log('[ServiceWorker] Hume AI connected — emotion detection enabled');
+    } else {
+      console.warn('[ServiceWorker] Hume AI connection failed — emotion detection disabled');
+    }
+  } catch (error) {
+    console.warn('[ServiceWorker] Hume AI error:', error);
   }
 }
 

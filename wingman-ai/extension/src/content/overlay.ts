@@ -45,6 +45,7 @@ interface TimelineEntry {
 }
 
 import { ICONS, UI, LIMITS } from '../shared/constants';
+import type { EmotionState, EmotionUpdate } from '../shared/constants';
 import { Draggable } from './overlay/draggable';
 import { Resizable } from './overlay/resizable';
 
@@ -299,7 +300,8 @@ export class AIOverlay {
           <span class="status-indicator"></span>
           <span class="title">Wingman</span>
           <span class="persona-dots" style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;position:relative;"></span>
-          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;"></span>
+          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;"></span>
+          <span class="emotion-badge" style="display:none;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;"></span>
         </div>
         <span class="cost-ticker" style="display:none;">
           <span class="cost-value"></span>
@@ -488,6 +490,13 @@ export class AIOverlay {
     // Reset cost ticker
     const ticker = this.panel.querySelector('.cost-ticker') as HTMLElement;
     if (ticker) ticker.style.display = 'none';
+
+    // Reset emotion badge
+    const emotionBadge = this.panel.querySelector('.emotion-badge') as HTMLElement;
+    if (emotionBadge) {
+      emotionBadge.style.display = 'none';
+      emotionBadge.textContent = '';
+    }
   }
 
   /**
@@ -540,6 +549,50 @@ export class AIOverlay {
 
     const hint = ticker.querySelector('.cost-hint');
     if (hint) hint.textContent = 'Estimate \u00b7 actual bill may vary';
+  }
+
+  /**
+   * Update the emotion badge in the overlay header.
+   * Maps emotion states to colors and displays the current detected emotion.
+   */
+  updateEmotion(data: EmotionUpdate): void {
+    const badge = this.panel.querySelector('.emotion-badge') as HTMLElement;
+    if (!badge) return;
+
+    // Color mapping for each emotion state
+    const stateColors: Record<EmotionState, { bg: string; text: string }> = {
+      engaged: { bg: '#10b981', text: '#ffffff' },     // Green
+      neutral: { bg: '#6b7280', text: '#ffffff' },     // Gray
+      frustrated: { bg: '#ef4444', text: '#ffffff' },  // Red
+      thinking: { bg: '#f59e0b', text: '#ffffff' },    // Amber
+    };
+
+    const colors = stateColors[data.state];
+    badge.style.display = 'inline-block';
+    badge.style.backgroundColor = colors.bg;
+    badge.style.color = colors.text;
+    badge.textContent = data.state;
+
+    // Add tooltip with top emotions
+    if (data.topEmotions.length > 0) {
+      const tooltipText = data.topEmotions
+        .slice(0, 3)
+        .map(e => `${e.name}: ${Math.round(e.score * 100)}%`)
+        .join(', ');
+      badge.title = tooltipText;
+    }
+  }
+
+  /**
+   * Clear the emotion badge (called when Hume disconnects).
+   */
+  clearEmotion(): void {
+    const badge = this.panel.querySelector('.emotion-badge') as HTMLElement;
+    if (badge) {
+      badge.style.display = 'none';
+      badge.textContent = '';
+      badge.title = '';
+    }
   }
 
   /**

@@ -40,10 +40,10 @@
   top: 100px;
   width: 350px;
   height: 450px;
-  min-width: 280px;
-  min-height: 200px;
-  max-width: 600px;
-  max-height: 80vh;
+  min-width: 200px;
+  min-height: 150px;
+  max-width: 90vw;
+  max-height: 95vh;
   background: var(--overlay-bg);
   border-radius: 12px;
   box-shadow: var(--overlay-shadow);
@@ -126,6 +126,29 @@
   background: #34a853;
   flex-shrink: 0;
   animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* ── Emotion Badge ── */
+.emotion-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  animation: emotionFadeIn 0.3s ease-out;
+}
+
+.overlay-panel.minimized .emotion-badge {
+  display: none;
+}
+
+@keyframes emotionFadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .controls {

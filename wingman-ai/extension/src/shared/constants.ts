@@ -172,6 +172,8 @@ export const STORAGE_KEYS = {
   GEMINI_API_KEY: 'geminiApiKey',
   OPENROUTER_API_KEY: 'openrouterApiKey',
   GROQ_API_KEY: 'groqApiKey',
+  HUME_API_KEY: 'humeApiKey',
+  HUME_SECRET_KEY: 'humeSecretKey',
 
   // Provider configuration
   LLM_PROVIDER: 'llmProvider',
@@ -239,6 +241,42 @@ export const DEEPGRAM = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HUME AI CONFIGURATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const HUME = {
+  /** WebSocket endpoint for Expression Measurement streaming */
+  WS_URL: 'wss://api.hume.ai/v0/stream/models',
+
+  /** OAuth token endpoint */
+  TOKEN_URL: 'https://api.hume.ai/oauth2-cc/token',
+
+  /** Token validity duration (30 minutes) */
+  TOKEN_EXPIRY_MS: 30 * 60 * 1000,
+
+  /** Refresh token when this many ms remain */
+  TOKEN_REFRESH_THRESHOLD_MS: 5 * 60 * 1000,
+
+  /** Audio buffer size before sending (100ms at 16kHz = 1600 samples) */
+  AUDIO_BUFFER_SAMPLES: 1600,
+
+  /** Maximum audio per message (5 seconds) */
+  MAX_AUDIO_DURATION_MS: 5000,
+
+  /** Emotion smoothing window (3 seconds) */
+  SMOOTHING_WINDOW_MS: 3000,
+
+  /** Minimum emotion score to consider significant (lowered — Hume has 48 emotions) */
+  MIN_EMOTION_SCORE: 0.05,
+
+  /** Reconnection attempts before giving up */
+  MAX_RECONNECT_ATTEMPTS: 3,
+
+  /** Base delay for reconnection backoff */
+  RECONNECT_BASE_DELAY_MS: 1000,
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ICONS (SVG strings for overlay UI)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -258,3 +296,20 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export type LLMProvider = 'gemini' | 'openrouter' | 'groq';
 export type Theme = 'light' | 'dark';
 export type DriveFileFormat = 'google-doc' | 'markdown' | 'text' | 'json';
+
+/** Simplified emotion states derived from Hume's 48 emotions */
+export type EmotionState = 'engaged' | 'neutral' | 'frustrated' | 'thinking';
+
+/** Raw emotion from Hume API */
+export interface HumeEmotion {
+  name: string;
+  score: number;
+}
+
+/** Emotion update message sent to content script */
+export interface EmotionUpdate {
+  state: EmotionState;
+  confidence: number;
+  topEmotions: HumeEmotion[];
+  timestamp: number;
+}

@@ -26,6 +26,7 @@ export default defineConfig({
         { src: 'src/mic-permission.js', dest: 'src' },
         { src: 'src/assets', dest: 'src' },
         { src: 'src/assets/icons', dest: 'src/assets' },
+        { src: 'src/content/overlay', dest: 'src/content' },
       ],
     }),
   ],

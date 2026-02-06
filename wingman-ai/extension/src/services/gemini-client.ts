@@ -33,13 +33,12 @@ import {
 } from '../shared/model-tuning';
 import { costTracker } from './cost-tracker';
 
+import { TIMING, LIMITS, LLM } from '../shared/constants';
+
 // Gemini API endpoint
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.5-flash';
-const EMBEDDING_MODEL = 'gemini-embedding-001';
-const EMBEDDING_DIMENSIONS = 768;
-const EMBEDDING_BATCH_SIZE = 100;
-const MAX_RETRIES = 3;
+const MAX_RETRIES = LIMITS.MAX_API_RETRIES;
 
 /**
  * Suggestion data structure
@@ -67,17 +66,17 @@ interface ConversationTurn {
  */
 export class GeminiClient {
   private model = DEFAULT_MODEL;
-  private maxTokens = 500;
+  private maxTokens = LLM.SUGGESTION_MAX_TOKENS;
   private temperature = 0.3;
   private systemPrompt: string = DEFAULT_SYSTEM_PROMPT;
 
   // Conversation history
   private chatHistory: ConversationTurn[] = [];
-  private maxHistoryTurns = 20;
+  private maxHistoryTurns = LIMITS.MAX_HISTORY_TURNS;
 
-  // Suggestion cooldown (15 seconds to avoid API quota limits)
+  // Suggestion cooldown (configurable, default 15 seconds)
   private lastSuggestionTime: number | null = null;
-  private suggestionCooldownMs = 15000; // 15 seconds
+  private suggestionCooldownMs: number = TIMING.SUGGESTION_COOLDOWN_MS;
 
   // Per-persona cooldown tracking (Hydra multi-persona)
   private generatingPersonas = new Set<string>(); // persona IDs currently generating
@@ -979,15 +978,15 @@ export class GeminiClient {
     const apiKey = await this.getApiKey('gemini');
 
     const response = await this.fetchWithRetry(
-      `${GEMINI_API_BASE}/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
+      `${GEMINI_API_BASE}/${LLM.EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: `models/${EMBEDDING_MODEL}`,
+          model: `models/${LLM.EMBEDDING_MODEL}`,
           content: { parts: [{ text }] },
           taskType,
-          outputDimensionality: EMBEDDING_DIMENSIONS,
+          outputDimensionality: LLM.EMBEDDING_DIMENSIONS,
         }),
       }
     );
@@ -1006,20 +1005,20 @@ export class GeminiClient {
     const apiKey = await this.getApiKey('gemini');
     const allEmbeddings: number[][] = [];
 
-    for (let i = 0; i < texts.length; i += EMBEDDING_BATCH_SIZE) {
-      const batch = texts.slice(i, i + EMBEDDING_BATCH_SIZE);
+    for (let i = 0; i < texts.length; i += LIMITS.EMBEDDING_BATCH_SIZE) {
+      const batch = texts.slice(i, i + LIMITS.EMBEDDING_BATCH_SIZE);
 
       const response = await this.fetchWithRetry(
-        `${GEMINI_API_BASE}/${EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`,
+        `${GEMINI_API_BASE}/${LLM.EMBEDDING_MODEL}:batchEmbedContents?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             requests: batch.map((t) => ({
-              model: `models/${EMBEDDING_MODEL}`,
+              model: `models/${LLM.EMBEDDING_MODEL}`,
               content: { parts: [{ text: t }] },
               taskType,
-              outputDimensionality: EMBEDDING_DIMENSIONS,
+              outputDimensionality: LLM.EMBEDDING_DIMENSIONS,
             })),
           }),
         }

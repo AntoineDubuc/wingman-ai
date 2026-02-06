@@ -59,7 +59,10 @@
   "options_page": "src/options/options.html",
   "web_accessible_resources": [
     {
-      "resources": ["src/content/audio-processor.worklet.js"],
+      "resources": [
+        "src/content/audio-processor.worklet.js",
+        "src/content/overlay/overlay.css"
+      ],
       "matches": ["https://meet.google.com/*"]
     }
   ],

@@ -214,7 +214,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--gradient-header);
+  background: url('../assets/header-banner.png') center/cover no-repeat;
   padding: var(--spacing-lg) var(--spacing-lg);
   box-shadow: var(--shadow-lg);
   position: relative;

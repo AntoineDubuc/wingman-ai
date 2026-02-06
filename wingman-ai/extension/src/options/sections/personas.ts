@@ -199,6 +199,7 @@ export class PersonaSection {
     this.isDirty = false;
     this.ctx.showToast('Persona saved', 'success');
     this.renderList();
+    this.notifyPersonasChanged();
   };
 
   // === PRIVATE METHODS ===
@@ -389,6 +390,7 @@ export class PersonaSection {
     if (this.editorEl) this.editorEl.hidden = true;
     this.ctx.showToast('Persona deleted', 'success');
     this.renderList();
+    this.notifyPersonasChanged();
   }
 
   private async duplicate(): Promise<void> {
@@ -414,6 +416,7 @@ export class PersonaSection {
     this.isDirty = false;
     this.ctx.showToast('Persona duplicated', 'success');
     this.renderList();
+    this.notifyPersonasChanged();
     this.openEditor(copy);
   }
 
@@ -559,6 +562,7 @@ export class PersonaSection {
       this.personas.push(persona);
       await savePersonas(this.personas);
       this.renderList();
+      this.notifyPersonasChanged();
 
       const skipped = (imported.kbDocuments?.length ?? 0) - kbDocIds.length;
       if (skipped > 0) {
@@ -910,5 +914,10 @@ export class PersonaSection {
     const days = Math.floor(hours / 24);
     if (days === 1) return 'yesterday';
     return `${days} days ago`;
+  }
+
+  /** Notify other sections that personas have changed (for Active Personas refresh). */
+  private notifyPersonasChanged(): void {
+    window.dispatchEvent(new CustomEvent('personas-changed'));
   }
 }

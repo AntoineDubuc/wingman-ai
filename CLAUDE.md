@@ -6,6 +6,12 @@
 
 ---
 
+## ABSOLUTE RULE — NO SYSTEM ENVIRONMENT VARIABLES
+
+**NEVER read or export system environment variables.** All secrets and configuration live in `.env` files within the repository. Do not use `$ENV_VAR`, `process.env`, or shell environment lookups. Always read from `.env` files directly.
+
+---
+
 ## Communication Style — Product Manager Audience
 
 The user is a **product manager**, not an engineer. Be **concise and to the point** — no walls of text.

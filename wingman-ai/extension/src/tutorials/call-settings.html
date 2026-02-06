@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Settings - Wingman AI</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="back-link">&larr; All Tutorials</a>
+    <h1>Call Settings</h1>
+    <p>Configure transcription sensitivity, suggestion frequency, speaker filter, and call summaries</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open Call Settings</div>
+      </div>
+      <p class="step-description">
+        Go to Settings and click the Call Settings tab. Here you can fine-tune how Wingman transcribes audio and generates suggestions during your calls.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/02-call-settings-tab.png" target="_blank">
+          <img src="screenshots-new/02-call-settings-tab.png" alt="Call Settings tab overview" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Adjust Endpointing</div>
+      </div>
+      <p class="step-description">
+        Endpointing controls how long Wingman waits after speech stops before finalizing a transcript. Lower values (400ms) create faster, choppier transcripts. Higher values (1000ms) wait longer for complete sentences.
+      </p>
+      <div class="step-annotation">
+        <strong>Recommended:</strong> 700ms (default) works well for most conversations. Lower it for fast-paced calls, raise it if transcripts are cutting off mid-sentence.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Configure Speaker Filter</div>
+      </div>
+      <p class="step-description">
+        Speaker Filter lets you choose which audio sources to transcribe: your microphone, the meeting audio (other participants), or both. This helps focus suggestions on what matters most.
+      </p>
+      <div class="step-annotation">
+        <strong>Use cases:</strong> "Both" for full context. "Meeting only" to focus on what prospects say. "Mic only" if you want suggestions based on your own speech patterns.
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Suggestion Cooldown</div>
+      </div>
+      <p class="step-description">
+        The suggestion cooldown prevents Wingman from overwhelming you with suggestions. Default is 15 seconds between suggestions. Adjust based on your call pace and API limits.
+      </p>
+      <div class="step-annotation">
+        <strong>API limits:</strong> Lower cooldowns use more API quota. If you're on a free tier, consider keeping this at 15+ seconds.
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Call Summary Options</div>
+      </div>
+      <p class="step-description">
+        Enable automatic call summaries to get a structured recap when your call ends. You can also enable auto-save to Google Drive to keep a record of all your calls.
+      </p>
+      <div class="step-annotation">
+        <strong>Summary includes:</strong> Key discussion points, action items, participant insights, and notable moments — all formatted based on your Conclave Leader's perspective.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI &mdash; Call Settings Tutorial
+  </footer>
+
+</body>
+</html>

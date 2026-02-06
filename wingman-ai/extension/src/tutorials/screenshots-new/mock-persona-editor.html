@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Persona Editor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      background: #fef7f2;
+      padding: 24px;
+    }
+
+    .options-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 720px;
+      border: 1px solid rgba(232, 117, 10, 0.12);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .form-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 8px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #e8eaed;
+      border-radius: 8px;
+      background: #fff;
+      color: #202124;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #e67e22;
+      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+    }
+
+    /* Color picker */
+    .persona-color-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.1);
+    }
+
+    .color-swatch.active {
+      border-color: #202124;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #202124;
+    }
+
+    /* Prompt textarea */
+    .prompt-container {
+      position: relative;
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 14px;
+      font-size: 13px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      border: 1px solid #e8eaed;
+      border-radius: 8px;
+      background: #fff;
+      color: #202124;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .prompt-textarea:focus {
+      outline: none;
+      border-color: #e67e22;
+      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 6px;
+    }
+
+    /* KB Section */
+    .kb-drop-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      border: 2px dashed #e8eaed;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .kb-drop-zone:hover {
+      border-color: #e67e22;
+      background: rgba(232, 117, 10, 0.04);
+    }
+
+    .kb-drop-icon {
+      color: #9aa0a6;
+      margin-bottom: 8px;
+    }
+
+    .kb-drop-text {
+      font-size: 14px;
+      color: #5f6368;
+      margin-bottom: 4px;
+    }
+
+    .kb-drop-hint {
+      font-size: 12px;
+      color: #9aa0a6;
+    }
+
+    /* KB Document List */
+    .kb-doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .kb-doc-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px solid #e8eaed;
+    }
+
+    .kb-doc-icon {
+      font-size: 20px;
+    }
+
+    .kb-doc-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-doc-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .kb-doc-meta {
+      font-size: 11px;
+      color: #5f6368;
+      margin-top: 2px;
+    }
+
+    .kb-doc-remove {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: #9aa0a6;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.15s;
+    }
+
+    .kb-doc-remove:hover {
+      background: #fce8e6;
+      color: #ea4335;
+    }
+
+    /* Button row */
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e8eaed;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #5f6368;
+      border: 1px solid #e8eaed;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ea4335;
+      border: 1px solid #ea4335;
+    }
+  </style>
+</head>
+<body>
+  <div class="options-card">
+    <h2 class="form-section-title">Edit Persona</h2>
+
+    <div class="form-group">
+      <label class="input-label">Name</label>
+      <input type="text" class="text-input" value="Sales Closer" placeholder="e.g. Cloud Security Demo">
+    </div>
+
+    <div class="form-group">
+      <label class="input-label">Color tag</label>
+      <div class="persona-color-picker">
+        <div class="color-swatch active" style="background: #e74c3c;"></div>
+        <div class="color-swatch" style="background: #3498db;"></div>
+        <div class="color-swatch" style="background: #9b59b6;"></div>
+        <div class="color-swatch" style="background: #27ae60;"></div>
+        <div class="color-swatch" style="background: #f39c12;"></div>
+        <div class="color-swatch" style="background: #1abc9c;"></div>
+        <div class="color-swatch" style="background: #e91e63;"></div>
+        <div class="color-swatch" style="background: #607d8b;"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="input-label">System Prompt</label>
+      <div class="prompt-container">
+        <textarea class="prompt-textarea">You are an expert sales closer. Your specialty is:
+- Handling objections about price and timing
+- Creating urgency without pressure
+- Asking for the close at the right moment
+
+When the prospect raises concerns about budget, acknowledge their concern and reframe the conversation around value and ROI.
+
+WHEN TO RESPOND:
+- Price objections or budget concerns
+- Timing hesitations ("we need to think about it")
+- Competitive comparisons
+- Buying signals that indicate readiness to close
+
+WHEN TO STAY SILENT (respond with "---"):
+- Technical questions about features
+- Legal or compliance questions
+- General small talk</textarea>
+        <div class="char-count">847 / 10,000 chars</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="input-label">Knowledge Base</label>
+
+      <div class="kb-drop-zone">
+        <span class="kb-drop-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="kb-drop-text">Drop files here or click to browse</span>
+        <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+      </div>
+
+      <div class="kb-doc-list">
+        <div class="kb-doc-item">
+          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">pricing-guide-2024.pdf</div>
+            <div class="kb-doc-meta">24 sections · 156 KB</div>
+          </div>
+          <button class="kb-doc-remove">×</button>
+        </div>
+        <div class="kb-doc-item">
+          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">objection-handling-playbook.md</div>
+            <div class="kb-doc-meta">18 sections · 42 KB</div>
+          </div>
+          <button class="kb-doc-remove">×</button>
+        </div>
+        <div class="kb-doc-item">
+          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">competitor-battlecards.pdf</div>
+            <div class="kb-doc-meta">31 sections · 203 KB</div>
+          </div>
+          <button class="kb-doc-remove">×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="btn btn-secondary">Cancel</button>
+      <div class="button-group">
+        <button class="btn btn-secondary">Export</button>
+        <button class="btn btn-secondary">Duplicate</button>
+        <button class="btn btn-danger">Delete</button>
+        <button class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

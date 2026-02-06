@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Personas List</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      background: #fef7f2;
+      padding: 24px;
+    }
+
+    .options-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 720px;
+      border: 1px solid rgba(232, 117, 10, 0.12);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .persona-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .form-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+
+    .form-section-description {
+      font-size: 14px;
+      color: #5f6368;
+      line-height: 1.5;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-small {
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #5f6368;
+      border: 1px solid #e8eaed;
+    }
+
+    /* Persona list */
+    .persona-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .persona-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      border: 1px solid #e8eaed;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .persona-card:hover {
+      border-color: #dadce0;
+      background: #f1f3f4;
+    }
+
+    .persona-card.active {
+      background: rgba(232, 117, 10, 0.08);
+      border-color: #e67e22;
+    }
+
+    .persona-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .persona-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .persona-name {
+      font-weight: 500;
+      font-size: 14px;
+      color: #202124;
+    }
+
+    .persona-meta {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 2px;
+    }
+
+    .persona-active-badge {
+      background: #e67e22;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    .persona-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 6px;
+      color: #5f6368;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: #e8eaed;
+    }
+  </style>
+</head>
+<body>
+  <div class="options-card">
+    <div class="persona-header-row">
+      <div>
+        <h2 class="form-section-title">Personas</h2>
+        <p class="form-section-description">
+          Bundle a system prompt with specific Knowledge Base documents into switchable presets.
+        </p>
+      </div>
+      <div class="button-group">
+        <button class="btn btn-secondary btn-small">Import</button>
+        <button class="btn btn-primary btn-small">+ New Persona</button>
+      </div>
+    </div>
+
+    <div class="persona-list">
+      <div class="persona-card active">
+        <div class="persona-dot" style="background: #e74c3c;"></div>
+        <div class="persona-info">
+          <div class="persona-name">Sales Closer</div>
+          <div class="persona-meta">3 KB documents · Last edited 2 days ago</div>
+        </div>
+        <span class="persona-active-badge">Active</span>
+        <div class="persona-actions">
+          <button class="icon-btn" title="Edit"><img src="../../assets/icons/icon-edit.png" width="16" height="16" alt="Edit"></button>
+          <button class="icon-btn" title="Export"><img src="../../assets/icons/icon-export.png" width="16" height="16" alt="Export"></button>
+          <button class="icon-btn" title="Delete"><img src="../../assets/icons/icon-delete.png" width="16" height="16" alt="Delete"></button>
+        </div>
+      </div>
+
+      <div class="persona-card active">
+        <div class="persona-dot" style="background: #3498db;"></div>
+        <div class="persona-info">
+          <div class="persona-name">Technical Expert</div>
+          <div class="persona-meta">5 KB documents · Last edited 1 week ago</div>
+        </div>
+        <span class="persona-active-badge">Active</span>
+        <div class="persona-actions">
+          <button class="icon-btn" title="Edit"><img src="../../assets/icons/icon-edit.png" width="16" height="16" alt="Edit"></button>
+          <button class="icon-btn" title="Export"><img src="../../assets/icons/icon-export.png" width="16" height="16" alt="Export"></button>
+          <button class="icon-btn" title="Delete"><img src="../../assets/icons/icon-delete.png" width="16" height="16" alt="Delete"></button>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-dot" style="background: #9b59b6;"></div>
+        <div class="persona-info">
+          <div class="persona-name">Legal & Compliance</div>
+          <div class="persona-meta">2 KB documents · Last edited 3 days ago</div>
+        </div>
+        <div class="persona-actions">
+          <button class="icon-btn" title="Edit"><img src="../../assets/icons/icon-edit.png" width="16" height="16" alt="Edit"></button>
+          <button class="icon-btn" title="Export"><img src="../../assets/icons/icon-export.png" width="16" height="16" alt="Export"></button>
+          <button class="icon-btn" title="Delete"><img src="../../assets/icons/icon-delete.png" width="16" height="16" alt="Delete"></button>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-dot" style="background: #27ae60;"></div>
+        <div class="persona-info">
+          <div class="persona-name">Discovery Coach</div>
+          <div class="persona-meta">1 KB document · Last edited 5 days ago</div>
+        </div>
+        <div class="persona-actions">
+          <button class="icon-btn" title="Edit"><img src="../../assets/icons/icon-edit.png" width="16" height="16" alt="Edit"></button>
+          <button class="icon-btn" title="Export"><img src="../../assets/icons/icon-export.png" width="16" height="16" alt="Export"></button>
+          <button class="icon-btn" title="Delete"><img src="../../assets/icons/icon-delete.png" width="16" height="16" alt="Delete"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

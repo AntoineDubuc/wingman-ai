@@ -16,6 +16,8 @@ export interface Suggestion {
   confidence?: number;
   timestamp: number;
   kbSource?: string;
+  // Hydra multi-persona attribution
+  personas?: Array<{ id: string; name: string; color: string }>;
 }
 
 export interface Transcript {
@@ -38,6 +40,8 @@ interface TimelineEntry {
   confidence?: number;
   kbSource?: string;
   element?: HTMLElement;
+  // Hydra multi-persona attribution
+  personas?: Array<{ id: string; name: string; color: string }>;
 }
 
 // Inline SVG icons
@@ -150,51 +154,126 @@ export class AIOverlay {
   }
 
   /**
-   * Load active persona name into the overlay header
+   * Load active personas into the overlay header (Hydra multi-persona support)
    */
   private loadPersonaLabel(): void {
+    const updatePersonaDisplay = () => {
+      try {
+        chrome.storage.local.get(['personas', 'activePersonaIds', 'activePersonaId'], (result) => {
+          const personas = result.personas as { id: string; name: string; color: string }[] | undefined;
+          // Hydra: prefer activePersonaIds array, fall back to single activePersonaId
+          let activeIds: string[] = result.activePersonaIds as string[] | undefined ?? [];
+          if (activeIds.length === 0 && result.activePersonaId) {
+            activeIds = [result.activePersonaId as string];
+          }
+
+          const dotsContainer = this.shadow.querySelector('.persona-dots') as HTMLElement | null;
+          const label = this.shadow.querySelector('.persona-label') as HTMLElement | null;
+
+          if (!personas || activeIds.length === 0 || !dotsContainer || !label) {
+            if (dotsContainer) dotsContainer.innerHTML = '';
+            if (label) label.textContent = '';
+            return;
+          }
+
+          // Find all active personas
+          const activePersonas = activeIds
+            .map(id => personas.find(p => p.id === id))
+            .filter((p): p is { id: string; name: string; color: string } => !!p);
+
+          if (activePersonas.length === 0) {
+            dotsContainer.innerHTML = '';
+            label.textContent = '';
+            return;
+          }
+
+          // Render dots
+          dotsContainer.innerHTML = activePersonas
+            .map(p => `<span class="persona-dot" style="width:8px;height:8px;border-radius:50%;background:${p.color};" title="${this.escapeHtml(p.name)}"></span>`)
+            .join('');
+
+          // For single persona: show name, for multi: show count or hide
+          if (activePersonas.length === 1) {
+            const persona = activePersonas[0]!;
+            // Hide if it's just "Default" with no other personas
+            if (persona.name === 'Default' && personas.length <= 1) {
+              label.textContent = '';
+            } else {
+              label.textContent = persona.name;
+            }
+          } else {
+            // Multi-persona: names in tooltip, show nothing in label
+            label.textContent = '';
+          }
+
+          // Add tooltip hover behavior for multi-persona
+          if (activePersonas.length > 1) {
+            this.setupPersonaTooltip(dotsContainer, activePersonas);
+          }
+        });
+      } catch {
+        // Extension context may be invalid
+      }
+    };
+
+    // Initial load
+    updatePersonaDisplay();
+
+    // Live-update when personas change
     try {
-      chrome.storage.local.get(['personas', 'activePersonaId'], (result) => {
-        const personas = result.personas as { id: string; name: string; color: string }[] | undefined;
-        const activeId = result.activePersonaId as string | undefined;
-        if (!personas || !activeId) return;
-
-        const active = personas.find((p) => p.id === activeId);
-        if (!active || (active.name === 'Default' && personas.length <= 1)) return;
-
-        const label = this.shadow.querySelector('.persona-label') as HTMLElement | null;
-        if (label) {
-          label.textContent = `\u00B7 ${active.name}`;
-        }
-      });
-
-      // Live-update when persona changes
       chrome.storage.onChanged.addListener((changes) => {
-        if (changes.activePersonaId || changes.personas) {
-          chrome.storage.local.get(['personas', 'activePersonaId'], (result) => {
-            const personas = result.personas as { id: string; name: string; color: string }[] | undefined;
-            const activeId = result.activePersonaId as string | undefined;
-            const label = this.shadow.querySelector('.persona-label') as HTMLElement | null;
-            if (!label) return;
-
-            if (!personas || !activeId) {
-              label.textContent = '';
-              return;
-            }
-
-            const active = personas.find((p) => p.id === activeId);
-            if (!active || (active.name === 'Default' && personas.length <= 1)) {
-              label.textContent = '';
-              return;
-            }
-
-            label.textContent = `\u00B7 ${active.name}`;
-          });
+        if (changes.activePersonaIds || changes.activePersonaId || changes.personas) {
+          updatePersonaDisplay();
         }
       });
     } catch {
       // Extension context may be invalid
     }
+  }
+
+  /**
+   * Set up hover tooltip for multi-persona dots
+   */
+  private setupPersonaTooltip(
+    container: HTMLElement,
+    personas: { id: string; name: string; color: string }[]
+  ): void {
+    // Remove existing tooltip if any
+    const existingTooltip = container.querySelector('.persona-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'persona-tooltip';
+    tooltip.style.cssText = `
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: rgba(0,0,0,0.9);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      display: none;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    tooltip.innerHTML = personas
+      .map(p => `<div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${p.color};"></span>
+        <span style="color:#fff;">${this.escapeHtml(p.name)}</span>
+      </div>`)
+      .join('');
+
+    container.appendChild(tooltip);
+
+    // Show/hide on hover
+    container.addEventListener('mouseenter', () => {
+      tooltip.style.display = 'block';
+    });
+    container.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
   }
 
   /**
@@ -1025,7 +1104,8 @@ export class AIOverlay {
         <div class="drag-handle">
           <span class="status-indicator"></span>
           <span class="title">Wingman</span>
-          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;"></span>
+          <span class="persona-dots" style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;position:relative;"></span>
+          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;"></span>
         </div>
         <span class="cost-ticker" style="display:none;">
           <span class="cost-value"></span>
@@ -1445,6 +1525,7 @@ export class AIOverlay {
       question: suggestion.question,
       confidence: suggestion.confidence,
       kbSource: suggestion.kbSource,
+      personas: suggestion.personas,
     };
 
     this.timeline.push(entry);
@@ -1491,13 +1572,44 @@ export class AIOverlay {
       return bubble;
     }
 
-    // Suggestion bubble
+    // Suggestion bubble (with Hydra persona attribution)
     const bubble = document.createElement('div');
     const typeClass = entry.suggestionType || 'info';
     bubble.className = `bubble wingman ${typeClass}`;
     bubble.setAttribute('role', 'article');
-    bubble.setAttribute('aria-label', `Wingman ${typeClass}: ${entry.suggestionText || ''}`);
     bubble.style.animation = 'wingmanIn 250ms ease-out forwards';
+
+    // Hydra: Render persona attribution with error boundary
+    let personaHtml = `${ICON_WINGMAN}<span class="wingman-label" style="font-size:${this.fontSize - 2}px">Wingman</span>`;
+    let borderColor = '';
+    let ariaLabel = `Wingman ${typeClass}`;
+
+    try {
+      const personas = entry.personas;
+      if (personas && personas.length > 0) {
+        // Build persona dots + names
+        const dotsHtml = personas
+          .map(p => `<span style="width:6px;height:6px;border-radius:50%;background:${p.color};display:inline-block;"></span>`)
+          .join('');
+        const namesHtml = personas.map(p => this.escapeHtml(p.name)).join(', ');
+        personaHtml = `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:4px;">${dotsHtml}</span>` +
+          `<span class="wingman-label" style="font-size:${this.fontSize - 2}px">${namesHtml}</span>`;
+
+        // Use first persona's color for left border
+        borderColor = personas[0]!.color;
+        ariaLabel = `${namesHtml} ${typeClass}`;
+      }
+    } catch (err) {
+      console.warn('[Overlay] Failed to render persona attribution:', err);
+      // Keep default Wingman label on error
+    }
+
+    bubble.setAttribute('aria-label', `${ariaLabel}: ${entry.suggestionText || ''}`);
+
+    // Apply persona color to left border if available
+    if (borderColor) {
+      bubble.style.borderLeftColor = borderColor;
+    }
 
     const badgeLabel = (entry.suggestionType || 'info').toUpperCase();
     const sourceHtml = entry.kbSource
@@ -1506,8 +1618,7 @@ export class AIOverlay {
 
     bubble.innerHTML =
       `<div class="bubble-header">` +
-      `${ICON_WINGMAN}` +
-      `<span class="wingman-label" style="font-size:${this.fontSize - 2}px">Wingman</span>` +
+      personaHtml +
       `<span class="badge ${typeClass}" style="font-size:${this.fontSize - 4}px">${badgeLabel}</span>` +
       `</div>` +
       `<div class="bubble-content">` +

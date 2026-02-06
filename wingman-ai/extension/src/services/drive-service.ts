@@ -31,6 +31,13 @@ export interface DriveSaveResult {
   error?: string;
 }
 
+/** Persona attribution for Hydra multi-persona suggestions */
+export interface SuggestionPersona {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface TranscriptData {
   timestamp: string;
   speaker: string;
@@ -40,6 +47,8 @@ export interface TranscriptData {
   is_self: boolean;
   is_suggestion?: boolean;
   suggestion_type?: string;
+  /** Hydra: personas that contributed to this suggestion */
+  personas?: SuggestionPersona[];
 }
 
 export interface SessionMetadata {
@@ -544,12 +553,21 @@ class DriveService {
     let currentSpeaker = '';
     for (const t of transcripts) {
       if (t.is_suggestion) {
-        // AI suggestion — two-cell table: narrow amber accent + content cell
+        // AI suggestion — two-cell table: colored accent (persona color or amber default) + content cell
+        const accentColor = t.personas && t.personas.length > 0 ? t.personas[0]!.color : '#fbbc04';
+        const speakerLabel = t.personas && t.personas.length > 0
+          ? t.personas.map(p => escapeHtml(p.name)).join(', ')
+          : 'Wingman AI';
+        // Build persona dots (small colored circles before names)
+        const personaDots = t.personas && t.personas.length > 0
+          ? t.personas.map(p => `<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${p.color}; margin-right: 3px;"></span>`).join('')
+          : '';
+
         h.push('<table style="width: 100%; border-collapse: collapse; margin: 12px 0;">');
         h.push('<tr>');
-        h.push('<td style="width: 4px; background-color: #fbbc04; padding: 0;"></td>');
+        h.push(`<td style="width: 4px; background-color: ${accentColor}; padding: 0;"></td>`);
         h.push(`<td style="padding: 10px 14px; background-color: #fef7e0;">`);
-        h.push(`<strong style="color: #e37400;">Wingman AI</strong> <span style="color: #80868b; font-size: 12px;">(${escapeHtml(t.suggestion_type || 'suggestion')}) &mdash; ${escapeHtml(t.timestamp)}</span><br>`);
+        h.push(`${personaDots}<strong style="color: #e37400;">${speakerLabel}</strong> <span style="color: #80868b; font-size: 12px;">(${escapeHtml(t.suggestion_type || 'suggestion')}) &mdash; ${escapeHtml(t.timestamp)}</span><br>`);
         h.push(`<span style="color: #5f6368;">${escapeHtml(t.text)}</span>`);
         h.push('</td></tr></table>');
         currentSpeaker = '';
@@ -623,7 +641,10 @@ class DriveService {
     let currentSpeaker = '';
     for (const t of transcripts) {
       if (t.is_suggestion) {
-        lines.push(`> **Wingman AI** *(${t.suggestion_type || 'suggestion'})* — ${t.timestamp}`);
+        const speakerLabel = t.personas && t.personas.length > 0
+          ? t.personas.map(p => p.name).join(', ')
+          : 'Wingman AI';
+        lines.push(`> **${speakerLabel}** *(${t.suggestion_type || 'suggestion'})* — ${t.timestamp}`);
         lines.push(`> ${t.text}`);
         lines.push('');
         currentSpeaker = '';
@@ -703,7 +724,10 @@ class DriveService {
 
     for (const t of transcripts) {
       if (t.is_suggestion) {
-        lines.push(`[${t.timestamp}] ** WINGMAN AI (${t.suggestion_type || 'suggestion'}) **`);
+        const speakerLabel = t.personas && t.personas.length > 0
+          ? t.personas.map(p => p.name).join(', ')
+          : 'WINGMAN AI';
+        lines.push(`[${t.timestamp}] ** ${speakerLabel.toUpperCase()} (${t.suggestion_type || 'suggestion'}) **`);
         lines.push(`  >> ${t.text}`);
         lines.push('');
         continue;
@@ -758,6 +782,7 @@ class DriveService {
           ...(t.is_suggestion && {
             is_suggestion: true,
             suggestion_type: t.suggestion_type,
+            personas: t.personas?.map(p => ({ id: p.id, name: p.name, color: p.color })),
           }),
         })),
       },

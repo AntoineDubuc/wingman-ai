@@ -79,10 +79,14 @@ export class GeminiClient {
   private lastSuggestionTime: number | null = null;
   private suggestionCooldownMs = 15000; // 15 seconds
 
+  // Per-persona cooldown tracking (Hydra multi-persona)
+  private generatingPersonas = new Set<string>(); // persona IDs currently generating
+  private lastSuggestionTimes = new Map<string, number>(); // persona ID → timestamp
+
   // Rate-limit backoff: suppress all calls until this timestamp
   private rateLimitedUntil = 0;
 
-  // Concurrency guard: only one suggestion call in-flight at a time
+  // Concurrency guard: only one suggestion call in-flight at a time (single-persona mode)
   private isGenerating = false;
 
   // Persona-scoped KB filter: restrict search to these document IDs
@@ -108,6 +112,8 @@ export class GeminiClient {
     this.lastSuggestionTime = null;
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
+    this.generatingPersonas.clear();
+    this.lastSuggestionTimes.clear();
     this.kbDocumentFilter = null;
     this.provider = 'gemini';
     this.geminiApiKey = null;
@@ -129,6 +135,8 @@ export class GeminiClient {
     this.lastSuggestionTime = null;
     this.rateLimitedUntil = 0;
     this.isGenerating = false;
+    this.generatingPersonas.clear();
+    this.lastSuggestionTimes.clear();
     this.kbDocumentFilter = null;
     this.provider = 'gemini';
     this.geminiApiKey = null;
@@ -332,6 +340,195 @@ export class GeminiClient {
     const suggestion = await this.generateResponse(text, speaker);
 
     return suggestion;
+  }
+
+  /**
+   * Process a transcript for a specific persona (Hydra multi-persona pipeline).
+   * This method does NOT modify instance state (`systemPrompt`, `kbDocumentFilter`)
+   * and does NOT check `isGenerating` — concurrency is managed by the caller.
+   *
+   * @param text - The transcript text
+   * @param speaker - The speaker label
+   * @param isFinal - Whether this is a final transcript
+   * @param persona - The persona to generate suggestions for
+   * @returns Suggestion result with persona attribution, or null if silent/error
+   */
+  async processTranscriptForPersona(
+    text: string,
+    speaker: string,
+    isFinal: boolean,
+    persona: {
+      id: string;
+      name: string;
+      color: string;
+      systemPrompt: string;
+      kbDocumentIds: string[];
+    }
+  ): Promise<{
+    suggestion: string;
+    type: 'answer' | 'question' | 'objection' | 'info';
+    personaId: string;
+    personaName: string;
+    personaColor: string;
+    kbSource?: string | null;
+  } | null> {
+    // Only process final transcripts
+    if (!isFinal) {
+      console.debug(`[GeminiClient] [${persona.name}] Skipping non-final transcript`);
+      return null;
+    }
+
+    // Skip empty or very short text
+    if (!text || text.trim().length === 0) {
+      console.debug(`[GeminiClient] [${persona.name}] Skipping empty text`);
+      return null;
+    }
+
+    const words = text.trim().split(/\s+/);
+    if (words.length < 2) {
+      console.debug(`[GeminiClient] [${persona.name}] Skipping too short text`);
+      return null;
+    }
+
+    // Check rate-limit backoff (shared across all personas)
+    if (Date.now() < this.rateLimitedUntil) {
+      const waitSec = Math.ceil((this.rateLimitedUntil - Date.now()) / 1000);
+      console.debug(`[GeminiClient] [${persona.name}] Rate-limited, backing off (${waitSec}s remaining)`);
+      return null;
+    }
+
+    // Per-persona cooldown check
+    const lastTime = this.lastSuggestionTimes.get(persona.id) ?? 0;
+    const elapsed = Date.now() - lastTime;
+    if (elapsed < this.suggestionCooldownMs) {
+      console.debug(`[GeminiClient] [${persona.name}] Cooldown active (${elapsed}ms of ${this.suggestionCooldownMs}ms)`);
+      return null;
+    }
+
+    // Per-persona concurrency guard
+    if (this.generatingPersonas.has(persona.id)) {
+      console.debug(`[GeminiClient] [${persona.name}] Already generating, skipping`);
+      return null;
+    }
+
+    // Get the API key for the active provider
+    const apiKey = this.getProviderApiKey();
+    if (!apiKey) {
+      console.error(`[GeminiClient] [${persona.name}] No API key for provider: ${this.provider}`);
+      return null;
+    }
+
+    // Mark persona as generating
+    this.generatingPersonas.add(persona.id);
+
+    try {
+      // KB retrieval: search for relevant context using persona's KB filter
+      let kbSource: string | null = null;
+      let systemPromptWithKB = persona.systemPrompt;
+
+      try {
+        // Use recent conversation context + current text for better KB matching
+        const recentContext = this.chatHistory.slice(-3).map(t => t.text).join(' ');
+        const kbQuery = recentContext ? `${recentContext} ${text}` : text;
+        const kbFilter = persona.kbDocumentIds.length > 0 ? persona.kbDocumentIds : undefined;
+        console.debug(`[GeminiClient] [${persona.name}] KB query: "${kbQuery.slice(0, 60)}..."`);
+        const kbResult = await getKBContext(kbQuery, kbFilter);
+        if (kbResult.matched && kbResult.context) {
+          systemPromptWithKB = `KNOWLEDGE BASE CONTEXT (from ${kbResult.source}):\nIMPORTANT: When this context is relevant to the conversation, you MUST reference specific numbers, names, and facts from it. Do not give generic advice when you have specific data available.\n\n${kbResult.context}\n\n${persona.systemPrompt}`;
+          kbSource = kbResult.source;
+          console.log(`[GeminiClient] [${persona.name}] KB context injected (${kbResult.context.length} chars) from: ${kbSource}`);
+        } else {
+          console.debug(`[GeminiClient] [${persona.name}] KB returned no match`);
+        }
+      } catch (kbError) {
+        console.warn(`[GeminiClient] [${persona.name}] KB retrieval failed:`, kbError);
+      }
+
+      // Apply model tuning to system prompt (auto mode only)
+      let tunedSystemPrompt = systemPromptWithKB;
+      let suggestionTemp = this.temperature;
+      const profile = this.tuningProfile;
+
+      if (this.tuningMode === 'auto') {
+        if (profile.promptPrefix) {
+          tunedSystemPrompt = profile.promptPrefix + tunedSystemPrompt;
+        }
+        if (profile.silenceReinforcement) {
+          tunedSystemPrompt += '\n\n' + profile.silenceReinforcement;
+        }
+        if (profile.promptSuffix) {
+          tunedSystemPrompt += '\n\n' + profile.promptSuffix;
+        }
+        suggestionTemp = profile.suggestionTemperature;
+      }
+
+      // Build conversation messages and provider-formatted request
+      const contents = this.buildConversationMessages(text, speaker);
+      const req = this.buildRequest({
+        messages: contents,
+        systemPrompt: tunedSystemPrompt,
+        maxTokens: this.maxTokens,
+        temperature: suggestionTemp,
+      });
+
+      const response = await fetch(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: req.body,
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          const backoffSeconds = await this.parseRetrySeconds(response);
+          this.rateLimitedUntil = Date.now() + backoffSeconds * 1000;
+          console.warn(`[GeminiClient] [${persona.name}] Rate limited — backing off ${backoffSeconds}s`);
+          return null;
+        }
+
+        const errorText = await response.text();
+        console.error(`[GeminiClient] [${persona.name}] API error: ${response.status} ${errorText}`);
+        return null;
+      }
+
+      const data = await response.json();
+      const responseText = this.extractResponseText(data);
+
+      // Track token usage (even for silent/empty responses — input tokens were consumed)
+      const usage = this.extractUsage(data);
+      costTracker.addLLMUsage(usage.inputTokens, usage.outputTokens);
+
+      if (!responseText) {
+        console.debug(`[GeminiClient] [${persona.name}] Empty response from LLM`);
+        return null;
+      }
+
+      // Check if LLM chose to stay silent
+      if (responseText === '---' || responseText === '-') {
+        console.debug(`[GeminiClient] [${persona.name}] LLM chose to stay silent`);
+        return null;
+      }
+
+      console.log(`[GeminiClient] [${persona.name}] Suggestion: ${responseText.slice(0, 50)}...`);
+
+      // Update per-persona cooldown on successful suggestion
+      this.lastSuggestionTimes.set(persona.id, Date.now());
+
+      // Return enriched result with persona attribution
+      return {
+        suggestion: responseText,
+        type: this.classifySuggestion(responseText),
+        personaId: persona.id,
+        personaName: persona.name,
+        personaColor: persona.color,
+        kbSource,
+      };
+    } catch (error) {
+      console.error(`[GeminiClient] [${persona.name}] Failed to generate response:`, error);
+      return null;
+    } finally {
+      // Always clear the generating flag for this persona
+      this.generatingPersonas.delete(persona.id);
+    }
   }
 
   /**

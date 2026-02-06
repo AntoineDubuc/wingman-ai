@@ -14,9 +14,10 @@ import { deepgramClient, Transcript } from '../services/deepgram-client';
 import { geminiClient } from '../services/gemini-client';
 import { transcriptCollector } from '../services/transcript-collector';
 import { driveService, type TranscriptData, type SessionMetadata } from '../services/drive-service';
-import type { SummaryMetadata } from '../services/call-summary';
+import type { SummaryMetadata, PersonaStats } from '../services/call-summary';
 import { runAllTests, runTest, getAvailableTests } from '../validation/index';
-import { migrateToPersonas, getActivePersona } from '../shared/persona';
+import { migrateToPersonas, getActivePersonas } from '../shared/persona';
+import { MODEL_STAGGER_MS, PROVIDER_STAGGER_FALLBACK } from '../shared/llm-config';
 import { langBuilderClient } from '../services/langbuilder-client';
 import { costTracker } from '../services/cost-tracker';
 
@@ -24,6 +25,18 @@ import { costTracker } from '../services/cost-tracker';
 let isSessionActive = false;
 let isCapturing = false;
 let activeTabId: number | null = null;
+
+// Hydra multi-persona session state
+interface SessionPersona {
+  id: string;
+  name: string;
+  color: string;
+  systemPrompt: string;
+  kbDocumentIds: string[];
+}
+let sessionPersonas: SessionPersona[] = [];
+// Track suggestion counts per persona for summary attribution
+const suggestionCountByPersona = new Map<string, number>();
 
 // Speaker filter state
 let speakerFilterEnabled = false;
@@ -187,6 +200,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       await deepgramClient.disconnect();
       geminiClient.clearSession();
       costTracker.reset();
+      suggestionCountByPersona.clear();
       isSessionActive = false;
     }
 
@@ -263,14 +277,31 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       geminiClient.getActiveModel()
     );
 
-    // Ensure personas are migrated, then load the active one
+    // Ensure personas are migrated, then load all active personas (Hydra)
     await migrateToPersonas();
-    const persona = await getActivePersona();
-    if (persona) {
-      geminiClient.setSystemPrompt(persona.systemPrompt);
-      geminiClient.setKBDocumentFilter(persona.kbDocumentIds);
-      console.log(`[ServiceWorker] Loaded persona: ${persona.name}`);
+    const personas = await getActivePersonas();
+
+    if (personas.length > 0) {
+      // Snapshot personas for session duration
+      sessionPersonas = personas.map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        systemPrompt: p.systemPrompt,
+        kbDocumentIds: p.kbDocumentIds,
+      }));
+
+      // Log persona names
+      const personaNames = sessionPersonas.map(p => p.name).join(', ');
+      console.log(`[ServiceWorker] Hydra: loaded ${sessionPersonas.length} persona(s): ${personaNames}`);
+
+      // For backward compat + single-persona optimization, set the first persona's prompt/KB
+      const primary = sessionPersonas[0]!;
+      geminiClient.setSystemPrompt(primary.systemPrompt);
+      geminiClient.setKBDocumentFilter(primary.kbDocumentIds);
     } else {
+      // Fallback to legacy system prompt
+      sessionPersonas = [];
       await geminiClient.loadSystemPrompt();
     }
     // Gemini client initialized
@@ -425,39 +456,181 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
   // Process through Gemini for AI suggestions (only final transcripts)
   if (transcript.is_final) {
     try {
-      const suggestion = await geminiClient.processTranscript(
-        transcript.text,
-        transcript.speaker,
-        transcript.is_final
-      );
+      // Hydra: parallel pipeline for multiple personas, or single-call for one
+      if (sessionPersonas.length > 1) {
+        // Multi-persona parallel pipeline
+        await processTranscriptHydra(transcript);
+      } else {
+        // Single-persona path (backward compat)
+        const suggestion = await geminiClient.processTranscript(
+          transcript.text,
+          transcript.speaker,
+          transcript.is_final
+        );
 
-      if (suggestion) {
-        // Store full suggestion text for Drive transcript
-        transcriptCollector.addSuggestion({
-          text: suggestion.text,
-          suggestion_type: suggestion.suggestion_type,
-          timestamp: suggestion.timestamp,
-        });
+        if (suggestion) {
+          // Store full suggestion text for Drive transcript
+          transcriptCollector.addSuggestion({
+            text: suggestion.text,
+            suggestion_type: suggestion.suggestion_type,
+            timestamp: suggestion.timestamp,
+          });
 
-        // Send suggestion to content script for display
-        if (activeTabId) {
-          chrome.tabs
-            .sendMessage(activeTabId, {
-              type: 'suggestion',
-              data: suggestion,
-            })
-            .catch(() => {});
+          // Send suggestion to content script for display
+          if (activeTabId) {
+            chrome.tabs
+              .sendMessage(activeTabId, {
+                type: 'suggestion',
+                data: suggestion,
+              })
+              .catch(() => {});
+          }
+
+          console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
         }
 
-        console.log(`[ServiceWorker] Suggestion: ${suggestion.text.slice(0, 50)}...`);
+        // Send cost update after every LLM call (whether suggestion generated or not)
+        sendCostUpdate();
       }
-
-      // Send cost update after every LLM call (whether suggestion generated or not)
-      sendCostUpdate();
     } catch (error) {
       console.error('[ServiceWorker] Gemini processing error:', error);
     }
   }
+}
+
+/**
+ * Hydra: Process a transcript through all active personas in parallel.
+ * Fires staggered parallel calls, filters silent responses, deduplicates
+ * exact matches, and sends attributed suggestions to the overlay.
+ */
+async function processTranscriptHydra(transcript: Transcript): Promise<void> {
+  const text = transcript.text;
+  const speaker = transcript.speaker;
+  const isFinal = transcript.is_final;
+
+  // Per-model stagger timing (based on latency testing with variance padding)
+  // Lookup by model first, fall back to provider default
+  const provider = geminiClient.getActiveProvider();
+  const activeModel = geminiClient.getActiveModel();
+  const staggerMs = MODEL_STAGGER_MS[activeModel] ?? PROVIDER_STAGGER_FALLBACK[provider] ?? 200;
+  console.debug(`[ServiceWorker] Hydra stagger: ${staggerMs}ms for model=${activeModel}`);
+
+  // Fire parallel calls with provider-tuned stagger to reduce burst rate limiting
+  const results = await Promise.allSettled(
+    sessionPersonas.map((persona, i) =>
+      new Promise<{
+        suggestion: string;
+        type: 'answer' | 'question' | 'objection' | 'info';
+        personaId: string;
+        personaName: string;
+        personaColor: string;
+        kbSource?: string | null;
+      } | null>((resolve) => {
+        setTimeout(async () => {
+          try {
+            const result = await geminiClient.processTranscriptForPersona(
+              text,
+              speaker,
+              isFinal,
+              persona
+            );
+            resolve(result);
+          } catch (error) {
+            console.error(`[ServiceWorker] Hydra: ${persona.name} failed:`, error);
+            resolve(null);
+          }
+        }, i * staggerMs); // e.g., Groq: 0ms, 75ms, 150ms, 225ms
+      })
+    )
+  );
+
+  // Define the suggestion result type for clarity
+  type PersonaSuggestionResult = {
+    suggestion: string;
+    type: 'answer' | 'question' | 'objection' | 'info';
+    personaId: string;
+    personaName: string;
+    personaColor: string;
+    kbSource?: string | null;
+  };
+
+  // Filter out null/rejected results
+  const validSuggestions: PersonaSuggestionResult[] = [];
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value !== null) {
+      validSuggestions.push(result.value);
+    }
+  }
+
+  if (validSuggestions.length === 0) {
+    console.debug('[ServiceWorker] Hydra: all personas chose silence');
+    sendCostUpdate();
+    return;
+  }
+
+  // Task 8: Exact string dedup + badge merge (O(n) grouping)
+  const grouped = new Map<string, PersonaSuggestionResult[]>();
+  for (const s of validSuggestions) {
+    const key = s.suggestion.trim(); // Case-sensitive, trimmed whitespace
+    const group = grouped.get(key);
+    if (group) {
+      group.push(s);
+    } else {
+      grouped.set(key, [s]);
+    }
+  }
+
+  // Process each unique suggestion
+  for (const [, group] of grouped) {
+    const first = group[0]!;
+
+    // Build personas array for merged suggestions
+    const personas = group.map(s => ({
+      id: s.personaId,
+      name: s.personaName,
+      color: s.personaColor,
+    }));
+
+    // Track suggestion counts per persona (each persona in group gets credit)
+    for (const s of group) {
+      const count = suggestionCountByPersona.get(s.personaId) ?? 0;
+      suggestionCountByPersona.set(s.personaId, count + 1);
+    }
+
+    // Store suggestion for Drive transcript (once per unique text, with persona attribution)
+    transcriptCollector.addSuggestion({
+      text: first.suggestion,
+      suggestion_type: first.type,
+      timestamp: new Date().toISOString(),
+      personas,
+    });
+
+    // Send attributed suggestion to overlay with merged persona badges
+    if (activeTabId) {
+      chrome.tabs
+        .sendMessage(activeTabId, {
+          type: 'suggestion',
+          data: {
+            text: first.suggestion,
+            suggestion_type: first.type,
+            confidence: 0.85,
+            source: geminiClient.getActiveProvider(),
+            timestamp: new Date().toISOString(),
+            kbSource: first.kbSource,
+            // Hydra: personas array (may have 1 or more elements)
+            personas,
+          },
+        })
+        .catch(() => {});
+    }
+
+    const personaNames = personas.map(p => p.name).join(', ');
+    const dedupNote = personas.length > 1 ? ` (deduped ${personas.length} personas)` : '';
+    console.log(`[ServiceWorker] Hydra [${personaNames}]: ${first.suggestion.slice(0, 50)}...${dedupNote}`);
+  }
+
+  // Send single cost update after all parallel calls complete
+  sendCostUpdate();
 }
 
 /**
@@ -527,11 +700,20 @@ async function handleStopSession(): Promise<{ success: boolean }> {
       );
       const speakerIds = new Set(speechTranscripts.map((t) => t.speaker_id));
 
+      // Build persona stats for summary (Hydra multi-persona attribution)
+      const personaStats: PersonaStats[] = sessionPersonas.map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        suggestionCount: suggestionCountByPersona.get(p.id) ?? 0,
+      }));
+
       const summaryMeta: SummaryMetadata = {
         generatedAt: new Date().toISOString(),
         durationMinutes,
         speakerCount: speakerIds.size,
         transcriptCount: speechTranscripts.length,
+        personas: personaStats.length > 0 ? personaStats : undefined,
       };
 
       const result = await geminiClient.generateCallSummary(
@@ -577,6 +759,7 @@ async function handleStopSession(): Promise<{ success: boolean }> {
         is_self: t.is_self,
         is_suggestion: t.is_suggestion,
         suggestion_type: t.suggestion_type,
+        personas: t.personas,
       }));
 
       const endTime = sessionData.endTime ?? new Date();
@@ -650,6 +833,8 @@ async function handleStopSession(): Promise<{ success: boolean }> {
     isSessionActive = false;
     isCapturing = false;
     activeTabId = null;
+    sessionPersonas = [];
+    suggestionCountByPersona.clear();
 
     console.log('[ServiceWorker] Session stopped');
     return { success: true };

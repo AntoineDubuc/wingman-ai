@@ -21,11 +21,20 @@ export interface KeyMoment {
   type: 'signal' | 'objection' | 'decision' | 'quote';
 }
 
+export interface PersonaStats {
+  id: string;
+  name: string;
+  color: string;
+  suggestionCount: number;
+}
+
 export interface SummaryMetadata {
   generatedAt: string;
   durationMinutes: number;
   speakerCount: number;
   transcriptCount: number;
+  /** Hydra: personas used during the call with suggestion counts */
+  personas?: PersonaStats[];
 }
 
 export interface CallSummary {
@@ -176,6 +185,20 @@ export function formatSummaryAsMarkdown(summary: CallSummary): string {
     for (const moment of summary.keyMoments) {
       const timestamp = moment.timestamp ? ` (${moment.timestamp})` : '';
       lines.push(`- "${moment.text}"${timestamp}`);
+    }
+  }
+
+  // Personas Used (omit if absent or single persona with no suggestions)
+  const personas = summary.metadata.personas;
+  if (personas && personas.length > 0) {
+    const totalSuggestions = personas.reduce((sum, p) => sum + p.suggestionCount, 0);
+    if (personas.length > 1 || totalSuggestions > 0) {
+      lines.push('');
+      lines.push('### Personas Used');
+      for (const persona of personas) {
+        const countLabel = persona.suggestionCount === 1 ? 'suggestion' : 'suggestions';
+        lines.push(`- ${persona.name} — ${persona.suggestionCount} ${countLabel}`);
+      }
     }
   }
 

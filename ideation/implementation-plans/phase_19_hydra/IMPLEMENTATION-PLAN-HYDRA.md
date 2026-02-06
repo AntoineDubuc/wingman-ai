@@ -131,29 +131,29 @@ Hydra turns Wingman from a single-expert assistant into a multi-expert panel. In
 
 | Done | # | Task Name | Start | End | Total (min) | Human Est. (min) | Multiplier |
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
-| [ ] | 1 | Storage model + persona helpers | | | | 60 | |
-| [ ] | 2 | Popup multi-select UI | | | | 180 | |
-| [ ] | 3 | Options page: Active Personas section | | | | 120 | |
-| [ ] | 4 | GeminiClient per-persona method | | | | 90 | |
-| [ ] | 5 | Per-persona cooldown tracking | | | | 60 | |
-| [ ] | 6 | Service worker: load multiple personas | | | | 45 | |
-| [ ] | 7 | Service worker: parallel suggestion pipeline | | | | 120 | |
-| [ ] | 8 | Exact string dedup + badge merge | | | | 60 | |
-| [ ] | 9 | Overlay header: multi-persona dots | | | | 90 | |
-| [ ] | 10 | Suggestion bubbles: persona attribution | | | | 120 | |
-| [ ] | 11 | Content script: multi-persona messages | | | | 45 | |
-| [ ] | 12 | Post-call summary: persona metadata | | | | 90 | |
-| [ ] | 13 | Transcript collector + Drive export attribution | | | | 60 | |
-| [ ] | 14 | Unit tests + build verification | | | | 120 | |
+| [x] | 1 | Storage model + persona helpers | 13:15 | 13:22 | 7 | 60 | 9x |
+| [x] | 2 | Popup multi-select UI | 13:22 | 13:38 | 16 | 180 | 11x |
+| [x] | 3 | Options page: Active Personas section | 13:38 | 14:05 | 27 | 120 | 4x |
+| [x] | 4 | GeminiClient per-persona method | 14:05 | 14:15 | 10 | 90 | 9x |
+| [x] | 5 | Per-persona cooldown tracking | 14:15 | 14:20 | 5 | 60 | 12x |
+| [x] | 6 | Service worker: load multiple personas | 14:20 | 14:28 | 8 | 45 | 6x |
+| [x] | 7 | Service worker: parallel suggestion pipeline | 14:28 | 14:38 | 10 | 120 | 12x |
+| [x] | 8 | Exact string dedup + badge merge | 14:38 | 14:45 | 7 | 60 | 9x |
+| [x] | 9 | Overlay header: multi-persona dots | 14:45 | 14:55 | 10 | 90 | 9x |
+| [x] | 10 | Suggestion bubbles: persona attribution | 14:55 | 15:05 | 10 | 120 | 12x |
+| [x] | 11 | Content script: multi-persona messages | 15:05 | 15:10 | 5 | 45 | 9x |
+| [x] | 12 | Post-call summary: persona metadata | 15:10 | 13:23 | 6 | 90 | 15x |
+| [x] | 13 | Transcript collector + Drive export attribution | 13:23 | 13:24 | 4 | 60 | 15x |
+| [x] | 14 | Unit tests + build verification | 13:24 | 13:25 | 5 | 120 | 24x |
 
 ### Progress Dashboard — Phase 19b (Conclave Tab + Presets)
 
 | Done | # | Task Name | Start | End | Total (min) | Human Est. (min) | Multiplier |
 |:----:|:-:|-----------|:-----:|:---:|:-----------:|:----------------:|:----------:|
-| [ ] | 15 | Options page: new Conclave tab | | | | 120 | |
-| [ ] | 16 | Conclave leader picker | | | | 60 | |
-| [ ] | 17 | Preset data model + CRUD | | | | 90 | |
-| [ ] | 18 | Preset UI + popup quick-switch | | | | 120 | |
+| [x] | 15 | Options page: new Conclave tab | 14:34 | 14:35 | 3 | 120 | 40x |
+| [x] | 16 | Conclave leader picker | 14:35 | 14:36 | 2 | 60 | 30x |
+| [x] | 17 | Preset data model + CRUD | 14:30 | 14:34 | 4 | 90 | 23x |
+| [x] | 18 | Preset UI + popup quick-switch | 14:36 | 14:38 | 5 | 120 | 24x |
 
 **Summary:**
 - Total tasks: 18

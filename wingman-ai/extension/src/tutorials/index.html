@@ -5,6 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tutorials - Wingman AI</title>
   <style>
+    /* CSS Custom Properties - Light Mode (default) */
+    :root {
+      --color-primary: #e67e22;
+      --color-primary-hover: #d35400;
+      --color-text-primary: #202124;
+      --color-text-secondary: #5f6368;
+      --color-text-muted: #9aa0a6;
+      --color-bg-page: #f8f9fa;
+      --color-bg-surface: #ffffff;
+      --color-border: #dadce0;
+      --gradient-header: linear-gradient(135deg, #c0392b 0%, #d35400 30%, #e67e22 60%, #f39c12 100%);
+      --gradient-page: linear-gradient(160deg, #f8f9fa 0%, #fef5ec 50%, #f8f9fa 100%);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+      --font-size-sm: 13px;
+      --font-size-xl: 20px;
+      --spacing-xs: 4px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --radius-md: 8px;
+    }
+
+    /* Dark Mode */
+    [data-theme="dark"] {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-border: #374151;
+      --gradient-header: linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #d97706 60%, #f59e0b 100%);
+      --gradient-page: linear-gradient(160deg, #111827 0%, #1a1a2e 50%, #111827 100%);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Auto dark mode based on system preference */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --color-primary: #f39c12;
+        --color-primary-hover: #e67e22;
+        --color-text-primary: #f3f4f6;
+        --color-text-secondary: #9ca3af;
+        --color-text-muted: #6b7280;
+        --color-bg-page: #111827;
+        --color-bg-surface: #1f2937;
+        --color-border: #374151;
+        --gradient-header: linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #d97706 60%, #f59e0b 100%);
+        --gradient-page: linear-gradient(160deg, #111827 0%, #1a1a2e 50%, #111827 100%);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+    }
+
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -12,9 +71,10 @@
     }
 
     body {
-      background: #1e1e2e;
-      color: #cdd6f4;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--gradient-page);
+      background-attachment: fixed;
+      color: var(--color-text-primary);
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       line-height: 1.6;
       padding: 0;
       min-height: 100vh;
@@ -22,27 +82,85 @@
       flex-direction: column;
     }
 
-    header {
-      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
-      padding: 48px 24px;
-      text-align: center;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    /* Header - matches options page exactly */
+    .options-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gradient-header);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      z-index: 10;
     }
 
-    header h1 {
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .header-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.9);
+      padding: var(--spacing-xs);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .header-title {
+      font-size: var(--font-size-xl);
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .header-subtitle {
+      font-size: var(--font-size-sm);
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* Theme Toggle Button - matches options page */
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
       color: #fff;
-      font-size: clamp(1.8rem, 5vw, 2.5rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.2s;
     }
 
-    header p {
-      color: rgba(255, 255, 255, 0.85);
-      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-      margin-top: 8px;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    .theme-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Show sun in dark mode, moon in light mode */
+    .theme-icon-dark { display: none; }
+    .theme-icon-light { display: flex; }
+
+    [data-theme="dark"] .theme-icon-dark { display: flex; }
+    [data-theme="dark"] .theme-icon-light { display: none; }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .theme-icon-dark { display: flex; }
+      :root:not([data-theme="light"]) .theme-icon-light { display: none; }
     }
 
     main {
@@ -53,10 +171,24 @@
       width: 100%;
     }
 
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      margin-top: 32px;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
     .tutorials-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 24px;
+      gap: 16px;
     }
 
     @media (min-width: 640px) {
@@ -66,38 +198,38 @@
     }
 
     .tutorial-card {
-      background: #313244;
+      background: var(--color-bg-surface);
       border-radius: 16px;
-      padding: 28px 24px;
+      padding: 24px;
       text-decoration: none;
       color: inherit;
-      border: 1px solid #45475a;
+      border: 1px solid var(--color-border);
       transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .tutorial-card:hover {
-      border-color: #e8750a;
-      box-shadow: 0 8px 32px rgba(232, 117, 10, 0.15);
+      border-color: var(--color-primary);
+      box-shadow: 0 8px 32px rgba(230, 117, 10, 0.15);
       transform: translateY(-2px);
     }
 
     .card-icon {
-      font-size: 2rem;
-      line-height: 1;
+      width: 36px;
+      height: 36px;
     }
 
     .card-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: #fff;
+      color: var(--color-text-primary);
     }
 
     .card-description {
-      font-size: 0.9rem;
-      color: #a6adc8;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
       line-height: 1.5;
     }
 
@@ -108,21 +240,30 @@
       margin-top: auto;
       padding-top: 8px;
       font-size: 0.8rem;
-      color: #6c7086;
+      color: var(--color-text-muted);
     }
 
     .card-meta .steps-count {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: #45475a;
+      background: var(--color-border);
       padding: 2px 10px;
       border-radius: 12px;
     }
 
+    .card-meta .badge-new {
+      background: var(--color-primary);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
     .card-arrow {
       margin-left: auto;
-      color: #e8750a;
+      color: var(--color-primary);
       font-size: 1.2rem;
       opacity: 0;
       transform: translateX(-4px);
@@ -137,51 +278,147 @@
     footer {
       text-align: center;
       padding: 32px 24px;
-      border-top: 1px solid #313244;
-      color: #585b70;
+      border-top: 1px solid var(--color-border);
+      color: var(--color-text-muted);
       font-size: 0.8rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .options-header {
+        padding: var(--spacing-md);
+      }
+
+      .header-logo {
+        width: 40px;
+        height: 40px;
+      }
+
+      .header-title {
+        font-size: 18px;
+      }
+
+      .header-subtitle {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Wingman AI Tutorials</h1>
-    <p>Step-by-step guides to get the most out of Wingman during your calls</p>
+  <header class="options-header">
+    <div class="header-content">
+      <img src="../icons/icon-48.png" alt="Wingman Logo" class="header-logo">
+      <div>
+        <h1 class="header-title">Wingman</h1>
+        <p class="header-subtitle">Tutorials</p>
+      </div>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">
+      <span class="theme-icon theme-icon-light">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </span>
+      <span class="theme-icon theme-icon-dark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </span>
+    </button>
   </header>
 
   <main>
+    <div class="section-title">Getting Started</div>
     <div class="tutorials-grid">
 
-      <a href="kb-upload-search.html" class="tutorial-card">
-        <div class="card-icon">&#128218;</div>
-        <div class="card-title">Knowledge Base Upload &amp; Search</div>
+      <a href="getting-started.html" class="tutorial-card">
+        <img src="../assets/icons/icon-key.png" class="card-icon" alt="">
+        <div class="card-title">API Keys &amp; Provider Setup</div>
         <div class="card-description">
-          Upload battle cards, FAQs, and product docs so Wingman can reference them during your calls for smarter suggestions.
+          Configure your API keys and choose between Gemini, OpenRouter, or Groq for AI suggestions.
         </div>
         <div class="card-meta">
-          <span class="steps-count">8 steps</span>
+          <span class="steps-count">5 steps</span>
+          <span class="badge-new">New</span>
           <span class="card-arrow">&rarr;</span>
         </div>
       </a>
 
-      <a href="summary-settings.html" class="tutorial-card">
-        <div class="card-icon">&#9881;&#65039;</div>
-        <div class="card-title">Configure Call Summary</div>
+      <a href="personas.html" class="tutorial-card">
+        <img src="../assets/icons/icon-users.png" class="card-icon" alt="">
+        <div class="card-title">Creating Personas</div>
         <div class="card-description">
-          Enable auto-generated summaries with action items and key moments after every call. Customize what gets included.
+          Build expert personas with custom prompts and dedicated Knowledge Base documents.
         </div>
         <div class="card-meta">
-          <span class="steps-count">7 steps</span>
+          <span class="steps-count">6 steps</span>
+          <span class="badge-new">New</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="section-title">Multi-Persona (Hydra)</div>
+    <div class="tutorials-grid">
+
+      <a href="hydra.html" class="tutorial-card">
+        <img src="../assets/icons/icon-hydra.png" class="card-icon" alt="">
+        <div class="card-title">Using Multiple Personas</div>
+        <div class="card-description">
+          Activate up to 4 personas simultaneously. Each expert responds only when their specialty is relevant.
+        </div>
+        <div class="card-meta">
+          <span class="steps-count">4 steps</span>
+          <span class="badge-new">New</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+      </a>
+
+      <a href="conclave.html" class="tutorial-card">
+        <img src="../assets/icons/icon-preset.png" class="card-icon" alt="">
+        <div class="card-title">Conclave Presets</div>
+        <div class="card-description">
+          Save persona combinations as presets for instant switching. Set a leader to guide summaries.
+        </div>
+        <div class="card-meta">
+          <span class="steps-count">5 steps</span>
+          <span class="badge-new">New</span>
+          <span class="card-arrow">&rarr;</span>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="section-title">Call Features</div>
+    <div class="tutorials-grid">
+
+      <a href="call-settings.html" class="tutorial-card">
+        <img src="../assets/icons/icon-sliders.png" class="card-icon" alt="">
+        <div class="card-title">Call Settings</div>
+        <div class="card-description">
+          Configure transcription sensitivity, suggestion frequency, speaker filter, and call summaries.
+        </div>
+        <div class="card-meta">
+          <span class="steps-count">5 steps</span>
           <span class="card-arrow">&rarr;</span>
         </div>
       </a>
 
       <a href="summary-overlay.html" class="tutorial-card">
-        <div class="card-icon">&#128196;</div>
-        <div class="card-title">Using the Summary Overlay</div>
+        <img src="../assets/icons/icon-clipboard.png" class="card-icon" alt="">
+        <div class="card-title">Post-Call Summary</div>
         <div class="card-description">
-          See how the post-call summary overlay works: view action items, expand key moments, copy to clipboard, and auto-save to Drive.
+          View action items, key moments, copy to clipboard, and auto-save to Google Drive.
         </div>
         <div class="card-meta">
           <span class="steps-count">8 steps</span>
@@ -190,11 +427,14 @@
       </a>
 
     </div>
+
   </main>
 
   <footer>
     Wingman AI &mdash; Real-Time AI Assistant for Google Meet
   </footer>
+
+  <script src="tutorials.ts" type="module"></script>
 
 </body>
 </html>

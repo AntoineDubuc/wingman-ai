@@ -37,13 +37,17 @@
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span class="tab-label">Personas</span>
       </button>
+      <button class="tab" id="tab-conclave" data-tab="conclave" role="tab" aria-selected="false" aria-controls="panel-conclave">
+        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+        <span class="tab-label">Conclave</span>
+      </button>
       <button class="tab" id="tab-langbuilder" data-tab="langbuilder" role="tab" aria-selected="false" aria-controls="panel-langbuilder">
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M5 8v2a4 4 0 0 0 4 4h2"/><path d="M19 8v2a4 4 0 0 1-4 4h-2"/><line x1="12" y1="14" x2="12" y2="16"/></svg>
         <span class="tab-label">LangBuilder</span>
       </button>
       <button class="tab" id="tab-support" data-tab="support" role="tab" aria-selected="false" aria-controls="panel-support">
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        <span class="tab-label">Support</span>
+        <span class="tab-label">Support & Feature Requests</span>
       </button>
       <div class="tab-indicator"></div>
     </nav>
@@ -283,6 +287,26 @@
               </label>
             </div>
           </div>
+        </div>
+
+        <!-- Active Personas Card (Hydra) -->
+        <div class="options-card">
+          <h2 class="form-section-title">Active Personas for Calls</h2>
+          <p class="form-section-description">
+            Select which personas are active during your calls. Each active persona contributes suggestions from its own expertise and knowledge base.
+          </p>
+
+          <div id="active-personas-list" class="active-personas-list">
+            <!-- Populated by JavaScript -->
+          </div>
+
+          <div id="active-personas-status" class="active-personas-status">
+            0 of 0 active · Max 4 active personas.
+          </div>
+
+          <p class="input-hint" style="margin-top: 8px;">
+            Each active persona evaluates transcripts independently. Set a Conclave Leader in the Conclave tab to guide post-call summaries.
+          </p>
         </div>
       </div>
 
@@ -538,6 +562,43 @@
         </div>
       </div>
 
+      <!-- ==================== CONCLAVE TAB ==================== -->
+      <div class="tab-panel" id="panel-conclave" data-panel="conclave" role="tabpanel" aria-labelledby="tab-conclave">
+        <div class="options-card">
+          <h2 class="form-section-title">Conclave Settings</h2>
+          <p class="form-section-description">
+            Configure how multiple personas work together during calls. The conclave leader guides post-call summaries.
+          </p>
+
+          <!-- Conclave Leader Picker -->
+          <div class="api-key-section">
+            <label for="conclave-leader-select" class="input-label">Conclave Leader</label>
+            <div class="input-with-hint">
+              <select id="conclave-leader-select" class="select-input">
+                <option value="">Loading...</option>
+              </select>
+              <p class="input-hint">The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Presets</h2>
+          <p class="form-section-description">
+            Save persona combinations for quick activation. Click a preset to instantly switch to that persona group.
+          </p>
+
+          <div id="conclave-presets-list" class="conclave-presets-list">
+            <!-- Populated by JavaScript -->
+          </div>
+
+          <button type="button" id="conclave-add-preset" class="btn btn-secondary" style="margin-top: 12px;">
+            + New Preset
+          </button>
+        </div>
+      </div>
+
       <!-- ==================== LANGBUILDER TAB ==================== -->
       <div class="tab-panel" id="panel-langbuilder" data-panel="langbuilder" role="tabpanel" aria-labelledby="tab-langbuilder">
         <div class="options-card">
@@ -608,14 +669,15 @@
         </div>
       </div>
 
-      <!-- ==================== SUPPORT TAB ==================== -->
+      <!-- ==================== SUPPORT & FEATURE REQUESTS TAB ==================== -->
       <div class="tab-panel" id="panel-support" data-panel="support" role="tabpanel" aria-labelledby="tab-support">
-        <div class="options-card support-card">
+        <!-- Support Card -->
+        <div class="options-card support-card" style="text-align: center; margin-bottom: 20px;">
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
             <h2 class="form-section-title">Support Wingman</h2>
             <p class="form-section-description">
-              If Wingman helps you close deals, consider buying the developer a coffee.
+              Enjoying Wingman? Your support helps fund new features and improvements.
             </p>
           </div>
           <a href="https://buymeacoffee.com/antoinedubuc" target="_blank" rel="noopener noreferrer" class="btn-primary support-coffee-btn">
@@ -625,6 +687,54 @@
           <div class="support-links">
             <a href="#" id="open-tutorials-support" class="support-link">View Tutorials</a>
           </div>
+        </div>
+
+        <!-- Feature Requests Card -->
+        <div class="options-card" style="text-align: center;">
+          <div class="support-hero">
+            <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <h2 class="form-section-title">Feature Requests & Bug Reports</h2>
+            <p class="form-section-description">
+              Have an idea for a new feature? Found a bug? We'd love to hear from you.
+            </p>
+          </div>
+          <a href="https://github.com/AntoineDubuc/Wingman-AI/issues/new" target="_blank" rel="noopener noreferrer" class="btn-primary support-coffee-btn">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            Submit on GitHub
+          </a>
+        </div>
+
+        <!-- LangBuilder Card -->
+        <div class="options-card" style="text-align: center; margin-top: 20px;">
+          <div class="support-hero">
+            <img src="../assets/langbuilder-logo.png" alt="LangBuilder" width="64" height="64" style="margin-bottom: 8px;">
+            <h2 class="form-section-title">Built with LangBuilder</h2>
+            <p class="form-section-description">
+              Wingman's AI workflows are powered by <strong>LangBuilder</strong> — CloudGeometry's open-source AI agent platform. Build visual AI workflows with no vendor lock-in, supporting GPT, Claude, Gemini, and more.
+            </p>
+          </div>
+          <a href="https://www.cloudgeometry.com/solutions/langbuilder" target="_blank" rel="noopener noreferrer" class="btn-primary support-coffee-btn" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            Learn More
+          </a>
+        </div>
+
+        <!-- Connect Card -->
+        <div class="options-card" style="text-align: center; margin-top: 20px;">
+          <div class="support-hero">
+            <img src="../assets/linkedin-profile.png" alt="Antoine Dubuc" style="max-width: 100%; height: auto; border-radius: 12px; margin-bottom: 12px; border: 3px solid #e67e22;">
+            <h2 class="form-section-title">Connect with the Creator</h2>
+            <p class="form-section-description">
+              Hi, I'm Antoine Dubuc — Senior Technical Product Manager for LangBuilder at CloudGeometry.
+            </p>
+            <p class="form-section-description" style="margin-top: 8px;">
+              I'd love to hear how you're using Wingman! Also happy to chat if you're curious about LangBuilder.
+            </p>
+          </div>
+          <a href="https://www.linkedin.com/in/antoinedubuc/" target="_blank" rel="noopener noreferrer" class="btn-primary support-coffee-btn" style="background: linear-gradient(135deg, #0077b5 0%, #005885 100%);">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            Connect on LinkedIn
+          </a>
         </div>
       </div>
 

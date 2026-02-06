@@ -327,34 +327,246 @@ body {
   margin-bottom: 6px;
 }
 
-.persona-selector {
+/* Persona chips (Hydra multi-select) */
+.persona-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.persona-chip {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
 }
 
-.persona-dot {
+.persona-chip-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: var(--color-primary);
 }
 
-.persona-select {
+.persona-chip-name {
   flex: 1;
-  padding: 6px 10px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg);
   color: var(--color-text);
-  cursor: pointer;
-  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.persona-select:focus {
+.persona-chip-remove {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.persona-chip-remove:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  color: var(--color-danger);
+}
+
+.persona-chip-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.persona-add-row {
+  position: relative;
+}
+
+.persona-add-btn {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-primary);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.persona-add-btn:hover:not(:disabled) {
+  background: var(--color-bg);
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.15);
+}
+
+.persona-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.persona-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.persona-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.persona-dropdown-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.persona-dropdown-item-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.persona-dropdown-item-name {
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.persona-status {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 6px;
+}
+
+.persona-max-message {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 8px;
+}
+
+/* Preset Quick-Switch Dropdown */
+.persona-presets {
+  margin-bottom: 10px;
+}
+
+.preset-dropdown-wrapper {
+  position: relative;
+}
+
+.preset-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.preset-dropdown-trigger:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-primary);
+}
+
+.preset-dropdown-trigger:disabled,
+.preset-dropdown-trigger.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preset-dropdown-label {
+  font-weight: 500;
+}
+
+.preset-dropdown-arrow {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.preset-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.preset-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.preset-option:last-child {
+  border-bottom: none;
+}
+
+.preset-option:hover {
+  background: var(--color-bg-secondary);
+}
+
+.preset-option-dots {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.preset-option-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.preset-option-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-option-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }

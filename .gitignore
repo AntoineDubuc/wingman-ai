@@ -4,8 +4,15 @@ client_secret*.json
 .env.local
 .env.*.local
 
+# Root assets (logos, images)
+/assets/
+
 # Playwright MCP cache
 .playwright-mcp/
+
+# Generated scripts
+generate-agent-flow-images.ts
+generate-icons.ts
 
 # OS files
 .DS_Store
@@ -28,6 +35,7 @@ Thumbs.db
 !ideation/implementation-plans/phase_17_groq_and_model_tuning/IMPLEMENTATION-PLAN-GROQ.md
 !ideation/implementation-plans/phase_17_groq_and_model_tuning/model-optimization/*.md
 !ideation/implementation-plans/phase_19_hydra/*.md
+!ideation/implementation-plans/phase_20_code_quality_refactor/*.md
 !CODE-DISCOVERY-PATTERN.md
 !docs/README.md
 !docs/GETTING-STARTED.md

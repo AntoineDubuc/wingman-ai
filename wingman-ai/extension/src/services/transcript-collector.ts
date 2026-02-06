@@ -6,6 +6,13 @@
  */
 
 
+/** Persona attribution for Hydra multi-persona suggestions */
+export interface SuggestionPersona {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface CollectedTranscript {
   timestamp: string;
   speaker: string;
@@ -15,6 +22,8 @@ export interface CollectedTranscript {
   is_self: boolean;
   is_suggestion?: boolean;
   suggestion_type?: string;
+  /** Hydra: personas that contributed to this suggestion */
+  personas?: SuggestionPersona[];
 }
 
 export interface SessionData {
@@ -75,18 +84,26 @@ class TranscriptCollector {
     text: string;
     suggestion_type: string;
     timestamp: string;
+    /** Hydra: personas that contributed to this suggestion */
+    personas?: SuggestionPersona[];
   }): void {
     if (!this.session) return;
 
+    // Build speaker label from personas or default to "Wingman AI"
+    const speakerLabel = suggestion.personas && suggestion.personas.length > 0
+      ? suggestion.personas.map(p => p.name).join(', ')
+      : 'Wingman AI';
+
     this.session.transcripts.push({
       timestamp: suggestion.timestamp,
-      speaker: 'Wingman AI',
+      speaker: speakerLabel,
       speaker_id: -1,
       speaker_role: 'assistant',
       text: suggestion.text,
       is_self: false,
       is_suggestion: true,
       suggestion_type: suggestion.suggestion_type,
+      personas: suggestion.personas,
     });
 
     this.session.suggestionsCount++;

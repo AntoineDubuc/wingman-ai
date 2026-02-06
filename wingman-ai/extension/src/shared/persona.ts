@@ -39,6 +39,11 @@ export const DEFAULT_PERSONA_COLOR = PERSONA_COLORS[0]!;
 
 const STORAGE_KEY_PERSONAS = 'personas';
 const STORAGE_KEY_ACTIVE_ID = 'activePersonaId';
+const STORAGE_KEY_ACTIVE_IDS = 'activePersonaIds';
+const STORAGE_KEY_CONCLAVE_LEADER = 'conclaveLeaderId';
+
+/** Maximum number of active personas (UI constraint) */
+export const MAX_ACTIVE_PERSONAS = 4;
 
 export async function getPersonas(): Promise<Persona[]> {
   const result = await chrome.storage.local.get([STORAGE_KEY_PERSONAS]);
@@ -56,6 +61,121 @@ export async function getActivePersonaId(): Promise<string | null> {
 
 export async function setActivePersonaId(id: string): Promise<void> {
   await chrome.storage.local.set({ [STORAGE_KEY_ACTIVE_ID]: id });
+}
+
+// === HYDRA: MULTI-PERSONA HELPERS ===
+
+/**
+ * Get all active persona IDs.
+ * Falls back to [activePersonaId] if activePersonaIds doesn't exist (migration).
+ */
+export async function getActivePersonaIds(): Promise<string[]> {
+  const result = await chrome.storage.local.get([STORAGE_KEY_ACTIVE_IDS, STORAGE_KEY_ACTIVE_ID]);
+  const ids = result[STORAGE_KEY_ACTIVE_IDS] as string[] | undefined;
+
+  if (ids && ids.length > 0) {
+    return ids;
+  }
+
+  // Fallback to single activePersonaId for backward compat
+  const singleId = result[STORAGE_KEY_ACTIVE_ID] as string | undefined;
+  return singleId ? [singleId] : [];
+}
+
+/**
+ * Set active persona IDs.
+ * Also sets activePersonaId = first ID for backward compat.
+ * Enforces max 4 and requires at least 1.
+ */
+export async function setActivePersonaIds(ids: string[]): Promise<void> {
+  if (ids.length === 0) {
+    throw new Error('At least one active persona is required');
+  }
+  if (ids.length > MAX_ACTIVE_PERSONAS) {
+    throw new Error(`Maximum ${MAX_ACTIVE_PERSONAS} active personas allowed`);
+  }
+
+  await chrome.storage.local.set({
+    [STORAGE_KEY_ACTIVE_IDS]: ids,
+    [STORAGE_KEY_ACTIVE_ID]: ids[0], // backward compat
+  });
+}
+
+/**
+ * Get full Persona objects for all active IDs.
+ * Filters out stale IDs (deleted personas).
+ */
+export async function getActivePersonas(): Promise<Persona[]> {
+  const [personas, activeIds] = await Promise.all([
+    getPersonas(),
+    getActivePersonaIds(),
+  ]);
+
+  if (personas.length === 0) return [];
+  if (activeIds.length === 0) {
+    // No active IDs set — return first persona as default
+    return personas[0] ? [personas[0]] : [];
+  }
+
+  const personaMap = new Map(personas.map(p => [p.id, p]));
+  const result: Persona[] = [];
+
+  for (const id of activeIds) {
+    const persona = personaMap.get(id);
+    if (persona) {
+      result.push(persona);
+    }
+  }
+
+  // If all active IDs were stale, fall back to first persona
+  if (result.length === 0 && personas[0]) {
+    return [personas[0]];
+  }
+
+  return result;
+}
+
+/**
+ * Get the conclave leader persona ID.
+ * Falls back to first active persona if not set or stale.
+ */
+export async function getConclaveLeaderId(): Promise<string | null> {
+  const [result, activeIds] = await Promise.all([
+    chrome.storage.local.get([STORAGE_KEY_CONCLAVE_LEADER]),
+    getActivePersonaIds(),
+  ]);
+
+  const leaderId = result[STORAGE_KEY_CONCLAVE_LEADER] as string | undefined;
+
+  // If leader is set and is in active list, use it
+  if (leaderId && activeIds.includes(leaderId)) {
+    return leaderId;
+  }
+
+  // Fall back to first active persona
+  return activeIds[0] ?? null;
+}
+
+/**
+ * Set the conclave leader persona ID.
+ */
+export async function setConclaveLeaderId(id: string): Promise<void> {
+  await chrome.storage.local.set({ [STORAGE_KEY_CONCLAVE_LEADER]: id });
+}
+
+/**
+ * Get the conclave leader persona (full object).
+ * Falls back to first active persona if leader not set or stale.
+ */
+export async function getConclaveLeader(): Promise<Persona | null> {
+  const [leaderId, personas] = await Promise.all([
+    getConclaveLeaderId(),
+    getPersonas(),
+  ]);
+
+  if (!leaderId) return null;
+
+  return personas.find(p => p.id === leaderId) ?? null;
 }
 
 /**
@@ -158,4 +278,115 @@ export async function migrateToPersonas(): Promise<void> {
   }
 
   await chrome.storage.local.set({ [STORAGE_KEY_BUILTINS_SEEDED]: true });
+}
+
+// === CONCLAVE PRESETS ===
+
+export interface ConclavePreset {
+  id: string;
+  name: string;
+  personaIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+const STORAGE_KEY_PRESETS = 'conclavePresets';
+
+/**
+ * Get all conclave presets.
+ */
+export async function getConclavePresets(): Promise<ConclavePreset[]> {
+  const result = await chrome.storage.local.get([STORAGE_KEY_PRESETS]);
+  return (result[STORAGE_KEY_PRESETS] as ConclavePreset[] | undefined) ?? [];
+}
+
+/**
+ * Save a conclave preset (create or update).
+ * Validates unique name (case-insensitive) and max 4 personas.
+ */
+export async function saveConclavePreset(preset: ConclavePreset): Promise<void> {
+  if (preset.personaIds.length === 0) {
+    throw new Error('Preset must have at least one persona');
+  }
+  if (preset.personaIds.length > MAX_ACTIVE_PERSONAS) {
+    throw new Error(`Preset can have at most ${MAX_ACTIVE_PERSONAS} personas`);
+  }
+
+  const presets = await getConclavePresets();
+
+  // Check for duplicate name (case-insensitive, excluding self)
+  const duplicate = presets.find(
+    (p) => p.id !== preset.id && p.name.toLowerCase() === preset.name.toLowerCase()
+  );
+  if (duplicate) {
+    throw new Error(`A preset named "${preset.name}" already exists`);
+  }
+
+  const existingIndex = presets.findIndex((p) => p.id === preset.id);
+  if (existingIndex >= 0) {
+    presets[existingIndex] = preset;
+  } else {
+    presets.push(preset);
+  }
+
+  await chrome.storage.local.set({ [STORAGE_KEY_PRESETS]: presets });
+}
+
+/**
+ * Delete a conclave preset by ID.
+ */
+export async function deleteConclavePreset(id: string): Promise<void> {
+  const presets = await getConclavePresets();
+  const filtered = presets.filter((p) => p.id !== id);
+  await chrome.storage.local.set({ [STORAGE_KEY_PRESETS]: filtered });
+}
+
+/**
+ * Activate a preset — sets activePersonaIds to the preset's personas.
+ * Returns list of missing persona IDs if any referenced personas were deleted.
+ */
+export async function activatePreset(id: string): Promise<{ missingIds: string[] }> {
+  const [presets, allPersonas] = await Promise.all([
+    getConclavePresets(),
+    getPersonas(),
+  ]);
+
+  const preset = presets.find((p) => p.id === id);
+  if (!preset) {
+    throw new Error('Preset not found');
+  }
+
+  const personaMap = new Map(allPersonas.map((p) => [p.id, p]));
+  const validIds: string[] = [];
+  const missingIds: string[] = [];
+
+  for (const pid of preset.personaIds) {
+    if (personaMap.has(pid)) {
+      validIds.push(pid);
+    } else {
+      missingIds.push(pid);
+    }
+  }
+
+  if (validIds.length === 0) {
+    throw new Error('All personas in this preset have been deleted');
+  }
+
+  await setActivePersonaIds(validIds);
+
+  return { missingIds };
+}
+
+/**
+ * Create a new preset object (factory function).
+ */
+export function createConclavePreset(name: string, personaIds: string[]): ConclavePreset {
+  const now = Date.now();
+  return {
+    id: crypto.randomUUID(),
+    name,
+    personaIds,
+    createdAt: now,
+    updatedAt: now,
+  };
 }

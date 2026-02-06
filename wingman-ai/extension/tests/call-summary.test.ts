@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildSummaryPrompt } from '../src/services/call-summary';
+import { buildSummaryPrompt, formatSummaryAsMarkdown } from '../src/services/call-summary';
 import type { CollectedTranscript } from '../src/services/transcript-collector';
-import type { SummaryMetadata } from '../src/services/call-summary';
+import type { SummaryMetadata, CallSummary } from '../src/services/call-summary';
 import { MODEL_TUNING_PROFILES } from '../src/shared/model-tuning';
 
 const mockTranscripts: CollectedTranscript[] = [
@@ -99,5 +99,88 @@ describe('summary prompt tuning injection', () => {
     }
 
     expect(tuned).toBe(prompt); // unchanged
+  });
+});
+
+describe('formatSummaryAsMarkdown - Personas Used', () => {
+  const baseSummary: CallSummary = {
+    summary: ['Discussed product features.'],
+    actionItems: [],
+    keyMoments: [],
+    metadata: {
+      generatedAt: '2024-01-15T10:00:00Z',
+      durationMinutes: 10,
+      speakerCount: 2,
+      transcriptCount: 20,
+    },
+  };
+
+  it('omits Personas Used section when no personas', () => {
+    const md = formatSummaryAsMarkdown(baseSummary);
+    expect(md).not.toContain('### Personas Used');
+  });
+
+  it('includes Personas Used section for multi-persona session', () => {
+    const summary: CallSummary = {
+      ...baseSummary,
+      metadata: {
+        ...baseSummary.metadata,
+        personas: [
+          { id: 'p1', name: 'Sales Pro', color: '#3b82f6', suggestionCount: 4 },
+          { id: 'p2', name: 'Tech Advisor', color: '#22c55e', suggestionCount: 2 },
+        ],
+      },
+    };
+
+    const md = formatSummaryAsMarkdown(summary);
+    expect(md).toContain('### Personas Used');
+    expect(md).toContain('- Sales Pro — 4 suggestions');
+    expect(md).toContain('- Tech Advisor — 2 suggestions');
+  });
+
+  it('shows singular "suggestion" for count of 1', () => {
+    const summary: CallSummary = {
+      ...baseSummary,
+      metadata: {
+        ...baseSummary.metadata,
+        personas: [
+          { id: 'p1', name: 'Single Persona', color: '#f59e0b', suggestionCount: 1 },
+        ],
+      },
+    };
+
+    const md = formatSummaryAsMarkdown(summary);
+    expect(md).toContain('- Single Persona — 1 suggestion');
+  });
+
+  it('includes Personas Used section even for single persona with suggestions', () => {
+    const summary: CallSummary = {
+      ...baseSummary,
+      metadata: {
+        ...baseSummary.metadata,
+        personas: [
+          { id: 'p1', name: 'Solo Expert', color: '#8b5cf6', suggestionCount: 5 },
+        ],
+      },
+    };
+
+    const md = formatSummaryAsMarkdown(summary);
+    expect(md).toContain('### Personas Used');
+    expect(md).toContain('Solo Expert — 5 suggestions');
+  });
+
+  it('omits section for single persona with 0 suggestions', () => {
+    const summary: CallSummary = {
+      ...baseSummary,
+      metadata: {
+        ...baseSummary.metadata,
+        personas: [
+          { id: 'p1', name: 'Silent Persona', color: '#ef4444', suggestionCount: 0 },
+        ],
+      },
+    };
+
+    const md = formatSummaryAsMarkdown(summary);
+    expect(md).not.toContain('### Personas Used');
   });
 });

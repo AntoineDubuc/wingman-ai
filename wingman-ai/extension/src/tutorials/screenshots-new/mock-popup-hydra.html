@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Popup with Hydra</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      background: #f3f4f6;
+      padding: 24px;
+      display: flex;
+      gap: 32px;
+    }
+
+    .popup-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #5f6368;
+      text-align: center;
+    }
+
+    .popup {
+      width: 320px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 16px;
+    }
+
+    /* Header */
+    .popup-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      border-radius: 10px;
+    }
+
+    .popup-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #e67e22;
+    }
+
+    .subtitle {
+      width: 100%;
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: -4px;
+    }
+
+    /* Status section */
+    .status-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .status-row:not(:last-child) {
+      border-bottom: 1px solid #e8eaed;
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: #5f6368;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-dot.success { background: #34a853; }
+    .status-dot.inactive { background: #9aa0a6; }
+
+    .status-text {
+      font-size: 13px;
+      color: #202124;
+    }
+
+    /* Persona section */
+    .persona-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+
+    .persona-section-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #9aa0a6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    /* Preset dropdown */
+    .preset-dropdown-wrapper {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .preset-dropdown-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 12px;
+      background: #fff;
+      border: 1px solid #e8eaed;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #202124;
+    }
+
+    .preset-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e8eaed;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 100;
+    }
+
+    .preset-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f3f4;
+    }
+
+    .preset-option:last-child { border-bottom: none; }
+    .preset-option:hover { background: #f8f9fa; }
+
+    .preset-option-dots {
+      display: flex;
+      gap: 3px;
+    }
+
+    .preset-option-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .preset-option-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .preset-option-count {
+      font-size: 11px;
+      color: #9aa0a6;
+    }
+
+    /* Persona chips */
+    .persona-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .persona-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #fff;
+      border: 1px solid #e8eaed;
+      border-radius: 6px;
+    }
+
+    .persona-chip-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .persona-chip-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      color: #202124;
+    }
+
+    .persona-chip-remove {
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: #9aa0a6;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 4px;
+    }
+
+    .persona-chip-remove:hover {
+      background: #f1f3f4;
+      color: #ea4335;
+    }
+
+    .persona-add-btn {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #e67e22;
+      background: transparent;
+      border: 1px dashed #e8eaed;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .persona-add-btn:hover {
+      background: #fff;
+      border-color: #e67e22;
+    }
+
+    .persona-status {
+      font-size: 12px;
+      color: #9aa0a6;
+      margin-top: 6px;
+    }
+
+    /* Main button */
+    .primary-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .primary-btn.start {
+      background: #e67e22;
+    }
+
+    .primary-btn.stop {
+      background: #ea4335;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Popup with dropdown closed -->
+  <div class="popup-wrapper">
+    <div class="label">Dropdown Closed - Session Active</div>
+    <div class="popup">
+      <div class="popup-header">
+        <div class="logo"></div>
+        <h1>Wingman</h1>
+        <p class="subtitle">Real-Time AI Assistant for Google Meet</p>
+      </div>
+
+      <div class="persona-section">
+        <label class="persona-section-label">Active Personas</label>
+        <div class="preset-dropdown-wrapper">
+          <div class="preset-dropdown-trigger">
+            <span>Conclave presets</span>
+            <span>▼</span>
+          </div>
+        </div>
+        <div class="persona-chips">
+          <div class="persona-chip">
+            <div class="persona-chip-dot" style="background: #e74c3c;"></div>
+            <span class="persona-chip-name">Sales Closer</span>
+            <button class="persona-chip-remove">×</button>
+          </div>
+          <div class="persona-chip">
+            <div class="persona-chip-dot" style="background: #3498db;"></div>
+            <span class="persona-chip-name">Technical Expert</span>
+            <button class="persona-chip-remove">×</button>
+          </div>
+        </div>
+        <button class="persona-add-btn">+ Add persona</button>
+        <div class="persona-status">2 active</div>
+      </div>
+
+      <div class="status-section">
+        <div class="status-row">
+          <span class="status-label">API Keys</span>
+          <span class="status-indicator">
+            <span class="status-dot success"></span>
+            <span class="status-text">Configured</span>
+          </span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Session</span>
+          <span class="status-indicator">
+            <span class="status-dot success"></span>
+            <span class="status-text">Active</span>
+          </span>
+        </div>
+      </div>
+
+      <button class="primary-btn stop">Stop Session</button>
+    </div>
+  </div>
+
+  <!-- Popup with dropdown open -->
+  <div class="popup-wrapper">
+    <div class="label">Dropdown Open - Session Inactive</div>
+    <div class="popup">
+      <div class="popup-header">
+        <div class="logo"></div>
+        <h1>Wingman</h1>
+        <p class="subtitle">Real-Time AI Assistant for Google Meet</p>
+      </div>
+
+      <div class="persona-section">
+        <label class="persona-section-label">Active Personas</label>
+        <div class="preset-dropdown-wrapper">
+          <div class="preset-dropdown-trigger">
+            <span>Conclave presets</span>
+            <span>▲</span>
+          </div>
+          <div class="preset-dropdown-menu">
+            <div class="preset-option">
+              <div class="preset-option-dots">
+                <div class="preset-option-dot" style="background: #e74c3c;"></div>
+                <div class="preset-option-dot" style="background: #3498db;"></div>
+              </div>
+              <span class="preset-option-name">Sales Team</span>
+              <span class="preset-option-count">2 personas</span>
+            </div>
+            <div class="preset-option">
+              <div class="preset-option-dots">
+                <div class="preset-option-dot" style="background: #e74c3c;"></div>
+                <div class="preset-option-dot" style="background: #3498db;"></div>
+                <div class="preset-option-dot" style="background: #9b59b6;"></div>
+              </div>
+              <span class="preset-option-name">Enterprise Deal</span>
+              <span class="preset-option-count">3 personas</span>
+            </div>
+            <div class="preset-option">
+              <div class="preset-option-dots">
+                <div class="preset-option-dot" style="background: #27ae60;"></div>
+              </div>
+              <span class="preset-option-name">Discovery Only</span>
+              <span class="preset-option-count">1 persona</span>
+            </div>
+          </div>
+        </div>
+        <div class="persona-chips">
+          <div class="persona-chip">
+            <div class="persona-chip-dot" style="background: #e74c3c;"></div>
+            <span class="persona-chip-name">Sales Closer</span>
+            <button class="persona-chip-remove">×</button>
+          </div>
+          <div class="persona-chip">
+            <div class="persona-chip-dot" style="background: #3498db;"></div>
+            <span class="persona-chip-name">Technical Expert</span>
+            <button class="persona-chip-remove">×</button>
+          </div>
+        </div>
+        <button class="persona-add-btn">+ Add persona</button>
+        <div class="persona-status">2 active</div>
+      </div>
+
+      <div class="status-section">
+        <div class="status-row">
+          <span class="status-label">API Keys</span>
+          <span class="status-indicator">
+            <span class="status-dot success"></span>
+            <span class="status-text">Configured</span>
+          </span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Session</span>
+          <span class="status-indicator">
+            <span class="status-dot inactive"></span>
+            <span class="status-text">Inactive</span>
+          </span>
+        </div>
+      </div>
+
+      <button class="primary-btn start">Start Session</button>
+    </div>
+  </div>
+
+</body>
+</html>

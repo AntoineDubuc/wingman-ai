@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Conclave Tab</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      background: #fef7f2;
+      padding: 24px;
+    }
+    .container { max-width: 720px; display: flex; flex-direction: column; gap: 24px; }
+
+    .options-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(232, 117, 10, 0.12);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .form-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+
+    .form-section-description {
+      font-size: 14px;
+      color: #5f6368;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 8px;
+    }
+
+    .select-input {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #e8eaed;
+      border-radius: 8px;
+      background: #fff;
+      color: #202124;
+      cursor: pointer;
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    /* Preset card styling */
+    .conclave-presets-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preset-card {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 1px solid #e8eaed;
+    }
+
+    .preset-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .preset-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: #202124;
+    }
+
+    .preset-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .preset-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .preset-personas {
+      font-size: 13px;
+      color: #5f6368;
+      margin-bottom: 12px;
+    }
+
+    .preset-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+
+    .btn-secondary {
+      background: #fff;
+      color: #5f6368;
+      border: 1px solid #e8eaed;
+    }
+    .btn-secondary:hover { background: #f8f9fa; border-color: #dadce0; }
+
+    .btn-danger {
+      background: transparent;
+      color: #ea4335;
+      border: 1px solid #ea4335;
+    }
+    .btn-danger:hover { background: #ea4335; color: #fff; }
+
+    .api-key-section {
+      margin-bottom: 0;
+    }
+
+    .input-with-hint {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Conclave Settings Card -->
+    <div class="options-card">
+      <h2 class="form-section-title">Conclave Settings</h2>
+      <p class="form-section-description">
+        Configure how multiple personas work together during calls. The conclave leader guides post-call summaries.
+      </p>
+
+      <div class="api-key-section">
+        <label class="input-label">Conclave Leader</label>
+        <div class="input-with-hint">
+          <select class="select-input">
+            <option selected>Sales Closer</option>
+            <option>Technical Expert</option>
+            <option>Legal & Compliance</option>
+            <option>Discovery Coach</option>
+          </select>
+          <p class="input-hint">The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Presets Card -->
+    <div class="options-card">
+      <h2 class="form-section-title">Presets</h2>
+      <p class="form-section-description">
+        Save persona combinations for quick activation. Click a preset to instantly switch to that persona group.
+      </p>
+
+      <div class="conclave-presets-list">
+        <div class="preset-card">
+          <div class="preset-header">
+            <span class="preset-name">Sales Team</span>
+            <div class="preset-dots">
+              <div class="preset-dot" style="background: #e74c3c;"></div>
+              <div class="preset-dot" style="background: #3498db;"></div>
+            </div>
+          </div>
+          <div class="preset-personas">Sales Closer, Technical Expert</div>
+          <div class="preset-actions">
+            <button class="btn btn-sm btn-primary">Activate</button>
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-danger">Delete</button>
+          </div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header">
+            <span class="preset-name">Enterprise Deal</span>
+            <div class="preset-dots">
+              <div class="preset-dot" style="background: #e74c3c;"></div>
+              <div class="preset-dot" style="background: #3498db;"></div>
+              <div class="preset-dot" style="background: #9b59b6;"></div>
+            </div>
+          </div>
+          <div class="preset-personas">Sales Closer, Technical Expert, Legal & Compliance</div>
+          <div class="preset-actions">
+            <button class="btn btn-sm btn-primary">Activate</button>
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-danger">Delete</button>
+          </div>
+        </div>
+
+        <div class="preset-card">
+          <div class="preset-header">
+            <span class="preset-name">Discovery Only</span>
+            <div class="preset-dots">
+              <div class="preset-dot" style="background: #27ae60;"></div>
+            </div>
+          </div>
+          <div class="preset-personas">Discovery Coach</div>
+          <div class="preset-actions">
+            <button class="btn btn-sm btn-primary">Activate</button>
+            <button class="btn btn-sm btn-secondary">Edit</button>
+            <button class="btn btn-sm btn-danger">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" style="margin-top: 16px;">+ New Preset</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -124,6 +124,8 @@ try {
             confidence: message.data.confidence,
             timestamp: message.data.timestamp ? new Date(message.data.timestamp).getTime() : Date.now(),
             kbSource: message.data.kbSource as string | undefined,
+            // Hydra: pass through persona attribution (array of {id, name, color})
+            personas: message.data.personas as Array<{ id: string; name: string; color: string }> | undefined,
           };
           console.log('[ContentScript] Adding suggestion:', suggestion.text.substring(0, 50) + '...');
           overlay?.addSuggestion(suggestion);

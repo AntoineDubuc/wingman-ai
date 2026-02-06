@@ -6,11 +6,14 @@ import { CallSummarySection } from './sections/call-summary';
 import { ApiKeysSection } from './sections/api-keys';
 import { DriveSection } from './sections/drive';
 import { PersonaSection } from './sections/personas';
+import { ActivePersonasSection } from './sections/active-personas';
+import { ConclaveSection } from './sections/conclave';
 import { LangBuilderSection } from './sections/langbuilder';
 import { TabManager } from './sections/tabs';
 
 class OptionsController {
   private personas = new PersonaSection();
+  private activePersonas = new ActivePersonasSection();
 
   async init(): Promise<void> {
     const toast = new ToastManager();
@@ -46,6 +49,11 @@ class OptionsController {
     document.getElementById('open-tutorials')?.addEventListener('click', openTutorials);
     document.getElementById('open-tutorials-support')?.addEventListener('click', openTutorials);
 
+    // Listen for persona changes to refresh the active personas list
+    window.addEventListener('personas-changed', () => {
+      this.activePersonas.refresh();
+    });
+
     await Promise.all([
       new TabManager().init(),
       new ThemeSection().init(),
@@ -54,8 +62,10 @@ class OptionsController {
       new CallSummarySection().init(ctx),
       new ApiKeysSection().init(ctx),
       new DriveSection().init(ctx),
+      new ConclaveSection().init(ctx),
       new LangBuilderSection().init(ctx),
       this.personas.init(ctx),
+      this.activePersonas.init(ctx),
     ]);
   }
 }

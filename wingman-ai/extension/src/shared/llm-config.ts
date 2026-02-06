@@ -79,3 +79,35 @@ export const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1';
 
 /** Groq API base URL */
 export const GROQ_API_BASE = 'https://api.groq.com/openai/v1';
+
+/**
+ * Per-model Hydra stagger timing (ms between parallel persona calls).
+ * Based on latency testing with 1.5x buffer for variance.
+ * Used to prevent rate limiting during multi-persona bursts.
+ */
+export const MODEL_STAGGER_MS: Record<string, number> = {
+  // Gemini direct
+  'gemini-2.0-flash': 200,
+  'gemini-2.5-flash-preview-05-20': 200, // Estimated, same as 2.0
+
+  // Groq (fast LPU inference)
+  'meta-llama/llama-4-scout-17b-16e-instruct': 50,
+  'qwen/qwen3-32b': 120,
+  'llama-3.3-70b-versatile': 75,
+  'llama-3.1-8b-instant': 50,
+
+  // OpenRouter (varies by upstream provider)
+  'google/gemini-2.5-flash': 225,
+  'google/gemini-2.5-pro': 775,
+  'anthropic/claude-sonnet-4': 290,
+  'openai/gpt-4o': 135,
+  'openai/gpt-4o-mini': 400,
+  'meta-llama/llama-3.3-70b-instruct': 240,
+};
+
+/** Fallback stagger by provider if model not in MODEL_STAGGER_MS */
+export const PROVIDER_STAGGER_FALLBACK: Record<LLMProvider, number> = {
+  gemini: 200,
+  groq: 75,
+  openrouter: 350,
+};

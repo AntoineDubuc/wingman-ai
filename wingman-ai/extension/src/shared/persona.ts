@@ -18,6 +18,7 @@ export interface Persona {
   kbDocumentIds: string[];
   createdAt: number;
   updatedAt: number;
+  order: number;
 }
 
 // === COLOR PRESETS ===
@@ -205,7 +206,8 @@ export function createPersona(
   name: string,
   systemPrompt: string,
   color: string = DEFAULT_PERSONA_COLOR,
-  kbDocumentIds: string[] = []
+  kbDocumentIds: string[] = [],
+  order?: number
 ): Persona {
   const now = Date.now();
   return {
@@ -216,6 +218,7 @@ export function createPersona(
     kbDocumentIds,
     createdAt: now,
     updatedAt: now,
+    order: order ?? now,
   };
 }
 
@@ -232,6 +235,17 @@ const STORAGE_KEY_BUILTINS_SEEDED = 'builtInPersonasSeeded';
  */
 export async function migrateToPersonas(): Promise<void> {
   const existing = await getPersonas();
+
+  // Migrate: add order field to personas that don't have it
+  const needsOrderMigration = existing.some((p) => p.order === undefined);
+  if (needsOrderMigration && existing.length > 0) {
+    const migrated = existing.map((p, i) => ({
+      ...p,
+      order: p.order ?? i,
+    }));
+    await savePersonas(migrated);
+    console.log(`[Persona] Added order field to ${existing.length} personas`);
+  }
 
   if (existing.length === 0) {
     // Fresh install — create Default persona + all built-ins
@@ -250,9 +264,9 @@ export async function migrateToPersonas(): Promise<void> {
       // IndexedDB may not be available
     }
 
-    const defaultPersona = createPersona('Default', prompt, DEFAULT_PERSONA_COLOR, kbDocIds);
-    const builtIns = DEFAULT_PERSONA_TEMPLATES.map((t) =>
-      createPersona(t.name, t.systemPrompt, t.color)
+    const defaultPersona = createPersona('Default', prompt, DEFAULT_PERSONA_COLOR, kbDocIds, 0);
+    const builtIns = DEFAULT_PERSONA_TEMPLATES.map((t, i) =>
+      createPersona(t.name, t.systemPrompt, t.color, [], i + 1)
     );
 
     await savePersonas([defaultPersona, ...builtIns]);
@@ -268,9 +282,10 @@ export async function migrateToPersonas(): Promise<void> {
   if (flags[STORAGE_KEY_BUILTINS_SEEDED]) return;
 
   const existingNames = new Set(existing.map((p) => p.name));
+  const maxOrder = Math.max(...existing.map((p) => p.order ?? 0), -1);
   const newPersonas = DEFAULT_PERSONA_TEMPLATES
     .filter((t) => !existingNames.has(t.name))
-    .map((t) => createPersona(t.name, t.systemPrompt, t.color));
+    .map((t, i) => createPersona(t.name, t.systemPrompt, t.color, [], maxOrder + 1 + i));
 
   if (newPersonas.length > 0) {
     await savePersonas([...existing, ...newPersonas]);

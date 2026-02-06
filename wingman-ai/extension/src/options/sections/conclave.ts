@@ -137,9 +137,9 @@ export class ConclaveSection {
             </div>
             <div class="preset-personas">${namesHtml} ${warningHtml}</div>
             <div class="preset-actions">
-              <button type="button" class="btn btn-sm btn-primary preset-activate">Activate</button>
-              <button type="button" class="btn btn-sm btn-secondary preset-edit">Edit</button>
-              <button type="button" class="btn btn-sm btn-danger preset-delete">Delete</button>
+              <button type="button" class="btn btn-sm btn-primary preset-activate" title="Switch to this persona combination for your calls">Activate</button>
+              <button type="button" class="btn btn-sm btn-secondary preset-edit" title="Edit this preset">Edit</button>
+              <button type="button" class="btn btn-sm btn-danger preset-delete" title="Delete this preset">Delete</button>
             </div>
           </div>
         `;

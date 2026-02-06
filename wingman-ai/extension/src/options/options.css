@@ -1348,7 +1348,7 @@ body {
   box-shadow: var(--shadow-lg);
   font-size: var(--font-size-sm);
   font-weight: 500;
-  z-index: 1000;
+  z-index: 1010;
   opacity: 0;
   visibility: hidden;
   transition: all var(--transition-normal);
@@ -1704,6 +1704,86 @@ body {
   color: var(--color-primary);
 }
 
+/* Drag handle */
+.persona-drag-handle {
+  cursor: grab;
+  color: var(--color-text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.persona-card:hover .persona-drag-handle {
+  opacity: 1;
+}
+
+.persona-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Card action buttons */
+.persona-card-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.persona-card:hover .persona-card-actions {
+  opacity: 1;
+}
+
+.persona-icon-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.persona-icon-btn:hover {
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
+
+.persona-icon-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.persona-icon-btn--danger:hover {
+  color: var(--color-danger);
+}
+
+/* Drag and drop states */
+.persona-card.dragging {
+  opacity: 0.5;
+}
+
+.persona-card.drag-over {
+  border-color: var(--color-primary);
+  box-shadow: 0 -2px 0 0 var(--color-primary);
+}
+
+/* Touch devices: always show actions */
+@media (hover: none) {
+  .persona-card-actions {
+    opacity: 1;
+  }
+  .persona-drag-handle {
+    opacity: 1;
+  }
+}
+
 .persona-empty {
   text-align: center;
   padding: 2rem 1rem;
@@ -1973,7 +2053,11 @@ body {
 
 .preset-actions {
   display: flex;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
+}
+
+.preset-actions .btn-sm {
+  border-radius: var(--radius-md);
 }
 
 .btn-sm {
@@ -2006,12 +2090,13 @@ body {
 }
 
 .preset-editor-modal {
-  background: var(--color-bg-card);
+  background: var(--color-bg-surface);
+  border: 2px solid var(--color-primary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   width: 100%;
   max-width: 400px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(230, 126, 34, 0.15);
 }
 
 .preset-editor-modal h3 {

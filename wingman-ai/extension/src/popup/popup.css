@@ -390,6 +390,18 @@ body {
   position: relative;
 }
 
+/* Invisible extension to bridge button and dropdown for hover */
+.persona-add-row::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: transparent;
+  pointer-events: auto;
+}
+
 .persona-add-btn {
   width: 100%;
   padding: 6px 10px;
@@ -415,11 +427,10 @@ body {
 
 .persona-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% - 1px);
   left: 0;
   right: 0;
-  margin-top: 4px;
-  padding: 4px 0;
+  padding-top: 5px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
@@ -427,6 +438,26 @@ body {
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.persona-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.persona-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.persona-dropdown::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.persona-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }
 
 .persona-dropdown-item {
@@ -474,6 +505,20 @@ body {
 
 .preset-dropdown-wrapper {
   position: relative;
+  /* Extend wrapper to cover the absolutely-positioned menu for hover detection */
+  padding-bottom: 0;
+}
+
+/* Invisible extension to bridge trigger and menu for hover */
+.preset-dropdown-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .preset-dropdown-trigger {
@@ -513,9 +558,10 @@ body {
 
 .preset-dropdown-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% - 1px);
   left: 0;
   right: 0;
+  padding-top: 5px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
@@ -523,6 +569,26 @@ body {
   z-index: 100;
   max-height: 200px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
 }
 
 .preset-option {

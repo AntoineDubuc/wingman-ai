@@ -25,6 +25,7 @@ export class PersonaSection {
   private activeId: string | null = null;
   private editingPersona: Persona | null = null;
   private isDirty = false;
+  private dragSourceId: string | null = null;
 
   // DOM references — persona list & editor
   private listEl: HTMLElement | null = null;
@@ -222,38 +223,98 @@ export class PersonaSection {
 
     this.emptyEl.style.display = 'none';
 
-    for (const persona of this.personas) {
+    // Sort by order field for user-defined ordering
+    const sorted = [...this.personas].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    for (const persona of sorted) {
       const isActive = persona.id === this.activeId;
       const card = document.createElement('div');
       card.className = `persona-card${isActive ? ' active' : ''}`;
       card.dataset.id = persona.id;
+      card.draggable = true;
 
       const kbCount = persona.kbDocumentIds.length;
       const kbText = kbCount === 0
         ? 'No KB docs'
         : `${kbCount} KB doc${kbCount !== 1 ? 's' : ''}`;
+      const lastEdited = this.timeAgo(persona.updatedAt);
 
       card.innerHTML = `
+        <span class="persona-drag-handle">${icon('grip', 16)}</span>
         <span class="persona-card-dot" style="background:${persona.color}"></span>
         <div class="persona-card-info">
           <div class="persona-card-name">${this.escapeHtml(persona.name)}</div>
-          <div class="persona-card-meta">${kbText}</div>
+          <div class="persona-card-meta">${kbText} · Edited ${lastEdited}</div>
         </div>
-        ${isActive
-          ? '<span class="persona-card-badge">Active</span>'
-          : '<button class="persona-card-activate" type="button">Activate</button>'
-        }
+        ${isActive ? '<span class="persona-card-badge">Active</span>' : ''}
+        <div class="persona-card-actions">
+          <button class="persona-icon-btn" data-action="edit" title="Edit" aria-label="Edit ${this.escapeHtml(persona.name)}">${icon('edit', 16)}</button>
+          <button class="persona-icon-btn" data-action="export" title="Export" aria-label="Export ${this.escapeHtml(persona.name)}">${icon('download', 16)}</button>
+          <button class="persona-icon-btn persona-icon-btn--danger" data-action="delete" title="Delete" aria-label="Delete ${this.escapeHtml(persona.name)}">${icon('trash', 16)}</button>
+        </div>
       `;
 
-      // Click card → open editor
+      // Click handlers for card and action buttons
       card.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
-        if (target.classList.contains('persona-card-activate')) {
+        const actionBtn = target.closest('[data-action]') as HTMLElement | null;
+
+        if (actionBtn) {
           e.stopPropagation();
-          this.activatePersona(persona.id);
+          const action = actionBtn.dataset.action;
+          if (action === 'edit') this.openEditor(persona);
+          if (action === 'export') this.exportPersonaFromCard(persona);
+          if (action === 'delete') this.confirmDeleteFromCard(persona);
           return;
         }
-        this.openEditor(persona);
+
+        // Click on drag handle - do nothing (let drag handle it)
+        if (target.closest('.persona-drag-handle')) {
+          return;
+        }
+
+        // Click on card body = activate if not active, or open editor if active
+        if (!isActive) {
+          this.activatePersona(persona.id);
+        } else {
+          this.openEditor(persona);
+        }
+      });
+
+      // Drag and drop handlers
+      card.addEventListener('dragstart', (e) => {
+        // Close editor if open to avoid stale state
+        if (this.editingPersona) {
+          this.isDirty = false;
+          this.closeEditor();
+        }
+        this.dragSourceId = persona.id;
+        card.classList.add('dragging');
+        e.dataTransfer?.setData('text/plain', persona.id);
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        this.dragSourceId = null;
+      });
+
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (this.dragSourceId && this.dragSourceId !== persona.id) {
+          card.classList.add('drag-over');
+        }
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over');
+      });
+
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over');
+        if (this.dragSourceId && this.dragSourceId !== persona.id) {
+          this.reorderPersonas(this.dragSourceId, persona.id);
+        }
       });
 
       this.listEl.appendChild(card);
@@ -265,6 +326,28 @@ export class PersonaSection {
     await setActivePersonaId(id);
     const persona = this.personas.find((p) => p.id === id);
     this.ctx.showToast(`Switched to ${persona?.name ?? 'persona'}`, 'success');
+    this.renderList();
+  }
+
+  /** Reorder personas by moving source before target */
+  private async reorderPersonas(sourceId: string, targetId: string): Promise<void> {
+    const sourceIdx = this.personas.findIndex((p) => p.id === sourceId);
+    const targetIdx = this.personas.findIndex((p) => p.id === targetId);
+    if (sourceIdx < 0 || targetIdx < 0 || sourceIdx === targetIdx) return;
+
+    // Remove source and insert before target
+    const [moved] = this.personas.splice(sourceIdx, 1);
+    if (!moved) return;
+
+    const newTargetIdx = this.personas.findIndex((p) => p.id === targetId);
+    this.personas.splice(newTargetIdx, 0, moved);
+
+    // Update order fields based on new positions
+    this.personas.forEach((p, i) => {
+      p.order = i;
+    });
+
+    await savePersonas(this.personas);
     this.renderList();
   }
 
@@ -464,11 +547,15 @@ export class PersonaSection {
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const slug = this.editingPersona.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const slug = this.editingPersona.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'persona';
+      const filename = `wingman-persona-${slug}.json`;
       const a = document.createElement('a');
       a.href = url;
-      a.download = `wingman-persona-${slug}.json`;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
       this.ctx.showToast('Persona exported', 'success');
@@ -483,19 +570,69 @@ export class PersonaSection {
     }
   }
 
+  /** Export persona directly from card (without opening editor) */
+  private async exportPersonaFromCard(persona: Persona): Promise<void> {
+    const prev = this.editingPersona;
+    this.editingPersona = persona;
+    await this.exportPersona();
+    this.editingPersona = prev;
+  }
+
+  /** Confirm delete from card (without opening editor) */
+  private confirmDeleteFromCard(persona: Persona): void {
+    const name = persona.name;
+    const kbCount = persona.kbDocumentIds.length;
+    const kbWarning = kbCount > 0
+      ? ` This will also delete ${kbCount} Knowledge Base document${kbCount !== 1 ? 's' : ''}.`
+      : '';
+
+    // Block deleting last persona
+    if (this.personas.length <= 1) {
+      this.ctx.showToast('Cannot delete your only persona', 'error');
+      return;
+    }
+
+    this.ctx.showConfirmModal(
+      'Delete persona?',
+      `Delete "${name}"?${kbWarning}`,
+      () => this.deletePersonaFromCard(persona)
+    );
+  }
+
+  /** Delete persona directly from card (without opening editor) */
+  private async deletePersonaFromCard(persona: Persona): Promise<void> {
+    const prev = this.editingPersona;
+    this.editingPersona = persona;
+    await this.deletePersona();
+    this.editingPersona = prev;
+  }
+
   // === IMPORT ===
 
   private async importPersona(file: File): Promise<void> {
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
+      let data: unknown;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        this.ctx.showToast('Invalid JSON file', 'error');
+        return;
+      }
 
-      if (!data.wingmanPersona || data.version !== 1 || !data.persona) {
+      // Validate structure with detailed checks
+      const obj = data as Record<string, unknown>;
+      if (obj.wingmanPersona !== true || obj.version !== 1 || !obj.persona) {
+        console.error('[Persona] Import validation failed:', {
+          wingmanPersona: obj.wingmanPersona,
+          version: obj.version,
+          hasPersona: !!obj.persona,
+        });
         this.ctx.showToast('Not a valid Wingman persona file', 'error');
         return;
       }
 
-      const imported = data.persona as {
+      const imported = obj.persona as {
         name: string;
         color: string;
         systemPrompt: string;

@@ -39,7 +39,9 @@ class PopupController {
   private activeIds: string[] = [];
   private presets: ConclavePreset[] = [];
   private dropdownOpen = false;
+  private presetDropdownOpen = false;
   private hydraTooltipShown = false;
+  private dropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.elements = {
@@ -180,6 +182,31 @@ class PopupController {
         this.closeDropdown();
       }
     });
+
+    // Close dropdown when mouse leaves the add row area (with delay)
+    this.elements.personaAddRow.addEventListener('mouseleave', () => {
+      this.scheduleDropdownClose();
+    });
+
+    this.elements.personaAddRow.addEventListener('mouseenter', () => {
+      this.cancelDropdownClose();
+    });
+  }
+
+  private scheduleDropdownClose(): void {
+    if (this.dropdownOpen && !this.dropdownCloseTimeout) {
+      this.dropdownCloseTimeout = setTimeout(() => {
+        this.closeDropdown();
+        this.dropdownCloseTimeout = null;
+      }, 150);
+    }
+  }
+
+  private cancelDropdownClose(): void {
+    if (this.dropdownCloseTimeout) {
+      clearTimeout(this.dropdownCloseTimeout);
+      this.dropdownCloseTimeout = null;
+    }
   }
 
   private async toggleSession(): Promise<void> {
@@ -241,6 +268,9 @@ class PopupController {
   }
 
   private renderPresetButtons(): void {
+    // Don't re-render while dropdown is open - it destroys event listeners
+    if (this.presetDropdownOpen) return;
+
     // Find or create the presets container
     let presetsContainer = document.getElementById('persona-presets');
     if (!presetsContainer) {
@@ -295,12 +325,14 @@ class PopupController {
     // Bind dropdown toggle
     const trigger = presetsContainer.querySelector('#preset-trigger') as HTMLButtonElement;
     const menu = presetsContainer.querySelector('#preset-menu') as HTMLElement;
+    const wrapper = presetsContainer.querySelector('.preset-dropdown-wrapper') as HTMLElement;
 
     trigger?.addEventListener('click', (e) => {
       e.stopPropagation();
       if (this.isSessionActive) return;
       const isOpen = menu.style.display !== 'none';
       menu.style.display = isOpen ? 'none' : 'block';
+      this.presetDropdownOpen = !isOpen;
     });
 
     // Bind option clicks
@@ -309,14 +341,41 @@ class PopupController {
         if (this.isSessionActive) return;
         const id = (option as HTMLElement).dataset.id;
         menu.style.display = 'none';
+        this.presetDropdownOpen = false;
         if (id) await this.handlePresetActivate(id);
       });
     });
 
-    // Close dropdown when clicking outside
+    // Close dropdown when mouse leaves the entire wrapper/menu area
+    let closeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleClose = () => {
+      if (!closeTimeout) {
+        closeTimeout = setTimeout(() => {
+          menu.style.display = 'none';
+          this.presetDropdownOpen = false;
+          closeTimeout = null;
+        }, 150);
+      }
+    };
+
+    const cancelClose = () => {
+      if (closeTimeout) {
+        clearTimeout(closeTimeout);
+        closeTimeout = null;
+      }
+    };
+
+    wrapper?.addEventListener('mouseleave', scheduleClose);
+    wrapper?.addEventListener('mouseenter', cancelClose);
+    menu?.addEventListener('mouseleave', scheduleClose);
+    menu?.addEventListener('mouseenter', cancelClose);
+
+    // Also close on click outside
     document.addEventListener('click', (e) => {
       if (!presetsContainer?.contains(e.target as Node)) {
         menu.style.display = 'none';
+        this.presetDropdownOpen = false;
       }
     });
   }
@@ -336,6 +395,9 @@ class PopupController {
   }
 
   private renderPersonaChips(): void {
+    // Don't re-render while dropdown is open - it destroys event listeners
+    if (this.dropdownOpen) return;
+
     const chipsContainer = this.elements.personaChips;
     chipsContainer.innerHTML = '';
 
@@ -417,6 +479,15 @@ class PopupController {
         if (id) this.addPersona(id);
       });
     }
+
+    // Cancel close when mouse is over dropdown
+    this.elements.personaDropdown.addEventListener('mouseenter', () => {
+      this.cancelDropdownClose();
+    });
+
+    this.elements.personaDropdown.addEventListener('mouseleave', () => {
+      this.scheduleDropdownClose();
+    });
 
     this.elements.personaDropdown.style.display = 'block';
     this.dropdownOpen = true;

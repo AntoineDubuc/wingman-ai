@@ -51,6 +51,13 @@ sequenceDiagram
     DeepgramAPI-->>Deepgram: Connection established
     Deepgram-->>SW: true
 
+    Note over SW: Connect to Hume (if enabled)
+    SW->>Storage: get(['humeApiKey'])
+    alt Hume API key configured
+        SW->>SW: humeClient.connect()
+        SW->>SW: humeClient → Hume AI WebSocket
+    end
+
     Note over SW: Initialize UI
     SW->>Content: INIT_OVERLAY
     Content->>Overlay: new AIOverlay()
@@ -244,7 +251,9 @@ sequenceDiagram
     participant Content as Content Script
     participant SW as Service Worker
     participant DC as deepgramClient
+    participant HC as humeClient
     participant Deepgram as Deepgram API
+    participant Hume as Hume AI API
 
     loop Every ~128 frames (~2.7ms)
         Mic->>Worklet: Float32 audio data<br/>48kHz stereo
@@ -261,13 +270,21 @@ sequenceDiagram
     Content->>SW: { type: 'AUDIO_CHUNK', data: Int16[] }
 
     alt isSessionActive
-        SW->>DC: sendAudio(data)
-        DC->>DC: Append to audioBuffer
-
-        alt audioBuffer.length >= 4096
-            DC->>DC: flushBuffer()
-            DC->>DC: new Int16Array(audioBuffer)
-            DC->>Deepgram: WebSocket.send(ArrayBuffer)
+        Note over SW: Parallel audio routing
+        par Send to Deepgram (transcription)
+            SW->>DC: sendAudio(data)
+            DC->>DC: Append to audioBuffer
+            alt audioBuffer.length >= 4096
+                DC->>DC: flushBuffer()
+                DC->>Deepgram: WebSocket.send(ArrayBuffer)
+            end
+        and Send to Hume (emotions)
+            SW->>HC: sendAudio(data)
+            HC->>HC: Append to buffer
+            alt buffer threshold reached
+                HC->>HC: Wrap in WAV format
+                HC->>Hume: WebSocket.send(base64WAV)
+            end
         end
     else !isSessionActive
         SW->>SW: Discard audio (silent)
@@ -303,7 +320,7 @@ flowchart TB
 
     Listener --> |Process| Sender
 
-    Sender -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>drive_save_result<br/>cost_update| ContentListener
+    Sender -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>drive_save_result<br/>cost_update<br/>emotion_update| ContentListener
     ContentListener --> OverlayRender
 
 ```
@@ -427,6 +444,57 @@ sequenceDiagram
     SW->>CostTracker: getFinalCost()
     CostTracker-->>SW: Final cost data
     SW->>SW: Attach cost to call summary
+```
+
+## Emotion Detection Flow (Hume AI)
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+sequenceDiagram
+    participant Offscreen
+    participant SW as Service Worker
+    participant Hume as humeClient
+    participant HumeAPI as Hume AI API
+    participant Content as Content Script
+    participant Overlay
+
+    Note over Offscreen: Audio captured from tab/mic
+    Offscreen->>SW: AUDIO_CHUNK (Int16 PCM)
+
+    Note over SW: Parallel audio processing
+    SW->>Hume: sendAudio(pcmData)
+
+    Note over Hume: Buffer and wrap audio
+    Hume->>Hume: Accumulate samples
+    Hume->>Hume: Create WAV header<br/>(16kHz, 16-bit, mono)
+    Hume->>Hume: Base64 encode
+
+    alt Buffer threshold reached
+        Hume->>HumeAPI: WebSocket send<br/>{ type: 'audio_input',<br/>  data: base64WAV }
+    end
+
+    HumeAPI->>HumeAPI: Expression Measurement<br/>Analyze prosody
+
+    HumeAPI-->>Hume: { predictions: [...] }<br/>48 emotions with scores
+
+    Note over Hume: Simplify emotions
+    Hume->>Hume: Map 48 emotions → 4 states
+
+    alt High frustration/anger/contempt
+        Hume->>Hume: state = 'frustrated'
+    else High interest/concentration
+        Hume->>Hume: state = 'engaged'
+    else High confusion/contemplation
+        Hume->>Hume: state = 'thinking'
+    else Default
+        Hume->>Hume: state = 'neutral'
+    end
+
+    Hume->>SW: onEmotionCallback({ state, confidence, raw })
+    SW->>Content: { type: 'emotion_update', data: {...} }
+    Content->>Overlay: updateEmotion(data)
+    Overlay->>Overlay: Update emotion badge in header
+
 ```
 
 ## Multi-Provider LLM Routing

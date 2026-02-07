@@ -1,10 +1,11 @@
 # Audio Capture Pipeline
 
-Complete data flow from microphone/tab capture through AudioWorklet processing to Deepgram WebSocket.
+Complete data flow from microphone/tab capture through AudioWorklet processing to Deepgram (transcription) and Hume AI (emotion detection).
 
 > **Visual Diagrams:**
-> - [ARCHITECTURE.md - Data Flow: Audio to Transcript](../diagrams/ARCHITECTURE.md#data-flow-audio-to-transcript)
+> - [ARCHITECTURE.md - Data Flow: Audio to Transcript and Emotion](../diagrams/ARCHITECTURE.md#data-flow-audio-to-transcript-and-emotion)
 > - [SEQUENCES.md - Audio Chunk Flow](../diagrams/SEQUENCES.md#audio-chunk-flow)
+> - [SEQUENCES.md - Emotion Detection Flow](../diagrams/SEQUENCES.md#emotion-detection-flow-hume-ai)
 
 ## Pipeline Overview
 
@@ -21,9 +22,21 @@ Stereo interleaving [ch0, ch1, ch0, ch1...]
   ↓
 Message to Service Worker (AUDIO_CHUNK)
   ↓
-Deepgram Client Buffer (4096 samples threshold)
-  ↓
-WebSocket Binary Frame → Deepgram Nova-3
+┌─────────────────────────────────────────────────┐
+│            Parallel Audio Processing             │
+├────────────────────┬────────────────────────────┤
+│   Deepgram Path    │       Hume AI Path         │
+├────────────────────┼────────────────────────────┤
+│ Buffer (4096)      │ Buffer + WAV wrapper       │
+│        ↓           │          ↓                 │
+│ WebSocket Binary   │ WebSocket Base64 WAV       │
+│        ↓           │          ↓                 │
+│ Nova-3 STT         │ Expression Measurement     │
+│        ↓           │          ↓                 │
+│ Transcripts        │ 48 emotions → 4 states     │
+│        ↓           │          ↓                 │
+│ Overlay bubbles    │ Emotion badge in header    │
+└────────────────────┴────────────────────────────┘
 ```
 
 ## Audio Format Transformations
@@ -304,10 +317,79 @@ onTranscriptCallback({
 - After 5 fails, stop auto-reconnect
 - User must stop/restart session
 
+## Hume AI Emotion Detection
+
+**File**: `hume-client.ts` (singleton: `humeClient`)
+
+### Connection Details
+
+**URL**: `wss://api.hume.ai/v0/stream/models`
+
+**Auth**: API key in request body (not WebSocket header)
+
+### Audio Format for Hume
+
+Unlike Deepgram which accepts raw PCM, Hume requires WAV-wrapped audio:
+
+```typescript
+// Create WAV header for PCM data
+function createWAVHeader(dataLength: number): ArrayBuffer {
+  // 44-byte WAV header
+  // - Sample rate: 16000 Hz
+  // - Bits per sample: 16
+  // - Channels: 1 (mono)
+  // - Format: PCM
+}
+
+// Send as base64-encoded WAV
+const base64WAV = btoa(String.fromCharCode(...wavBytes));
+ws.send(JSON.stringify({
+  type: 'audio_input',
+  data: base64WAV,
+  models: { prosody: {} }
+}));
+```
+
+### Emotion Simplification
+
+Hume returns 48 emotions with confidence scores. We simplify to 4 actionable states:
+
+| Simplified State | Trigger Emotions | Visual |
+|------------------|------------------|--------|
+| **frustrated** | Anger, Contempt, Frustration, Annoyance | Red badge |
+| **engaged** | Interest, Excitement, Concentration | Green badge |
+| **thinking** | Confusion, Contemplation, Doubt | Yellow badge |
+| **neutral** | Default / low confidence | Gray badge |
+
+### Emotion Callback
+
+```typescript
+humeClient.setEmotionCallback((emotion: EmotionState) => {
+  // emotion = { state, confidence, topEmotions[] }
+  chrome.tabs.sendMessage(activeTabId, {
+    type: 'emotion_update',  // lowercase
+    data: emotion
+  });
+});
+```
+
+### Key Differences from Deepgram
+
+| Aspect | Deepgram | Hume AI |
+|--------|----------|---------|
+| **Purpose** | Speech-to-text | Emotion detection |
+| **Audio format** | Raw PCM binary | Base64 WAV |
+| **Auth** | Sec-WebSocket-Protocol | Request body |
+| **Output** | Transcript text | 48 emotion scores |
+| **Update frequency** | Per utterance | ~1-2 seconds |
+
 ## Critical Notes
 
 1. **Deepgram Auth**: Token must be in `Sec-WebSocket-Protocol` header, not URL query string
-2. **Stereo Interleaving**: Deepgram expects strict `[ch0, ch1, ch0, ch1...]` format
-3. **Endpointing**: Accumulates segments to prevent UI bubble splits
-4. **Silent Failures**: Discards audio if Deepgram disconnected (no crash)
-5. **Float32 → Int16**: Clamps to `[-1, 1]` before scaling to prevent overflow
+2. **Hume Auth**: API key in JSON message body, not WebSocket header
+3. **Stereo Interleaving**: Deepgram expects strict `[ch0, ch1, ch0, ch1...]` format
+4. **Hume Mono**: Hume receives mono audio (channel 0 only, or mixed)
+5. **Endpointing**: Accumulates segments to prevent UI bubble splits
+6. **Silent Failures**: Discards audio if Deepgram/Hume disconnected (no crash)
+7. **Float32 → Int16**: Clamps to `[-1, 1]` before scaling to prevent overflow
+8. **Parallel Processing**: Both clients receive the same AUDIO_CHUNK independently

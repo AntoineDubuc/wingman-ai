@@ -5,6 +5,9 @@ Complete trace from Deepgram transcript through KB search and Gemini API to over
 > **Visual Diagrams:**
 > - [SEQUENCES.md - Transcript to Suggestion Flow](../diagrams/SEQUENCES.md#transcript-to-suggestion-flow)
 > - [SEQUENCES.md - KB Search with Persona Scoping](../diagrams/SEQUENCES.md#kb-search-with-persona-scoping)
+> - [SEQUENCES.md - Emotion Detection Flow](../diagrams/SEQUENCES.md#emotion-detection-flow-hume-ai)
+
+**Note:** While transcription flows through Deepgram, emotion detection runs in parallel via Hume AI. Both receive the same audio chunks but process independently. See the [Audio Capture Pipeline](./AUDIO-CAPTURE-PIPELINE.md) for the parallel audio routing.
 
 ## Flow Diagram
 

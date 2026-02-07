@@ -36,6 +36,7 @@ Thumbs.db
 !ideation/implementation-plans/phase_17_groq_and_model_tuning/model-optimization/*.md
 !ideation/implementation-plans/phase_19_hydra/*.md
 !ideation/implementation-plans/phase_20_code_quality_refactor/*.md
+!ideation/implementation-plans/phase_24_persona_prompts_setup_assistant/*.md
 !CODE-DISCOVERY-PATTERN.md
 !docs/README.md
 !docs/GETTING-STARTED.md

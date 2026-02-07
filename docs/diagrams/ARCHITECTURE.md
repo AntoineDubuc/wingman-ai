@@ -27,6 +27,7 @@ graph TB
 
         subgraph "Services (Singletons)"
             Deepgram[deepgramClient<br/>WebSocket STT]
+            Hume[humeClient<br/>WebSocket Emotions]
             Gemini[geminiClient<br/>Multi-Provider LLM]
             Drive[driveService<br/>OAuth + Save]
             KB[kbDatabase<br/>IndexedDB]
@@ -43,6 +44,7 @@ graph TB
 
     subgraph "External APIs"
         DeepgramAPI[Deepgram API<br/>wss://api.deepgram.com<br/>Nova-3 STT]
+        HumeAPI[Hume AI API<br/>wss://api.hume.ai<br/>Expression Measurement]
         GeminiAPI[Gemini API<br/>Gemini 2.5 Flash<br/>Suggestions + Embeddings]
         OpenRouterAPI[OpenRouter API<br/>OpenAI-compatible<br/>Multi-model]
         GroqAPI[Groq API<br/>OpenAI-compatible<br/>Fast inference]
@@ -64,12 +66,14 @@ graph TB
 
     %% Service Worker to Services
     SW -->|sendAudio| Deepgram
+    SW -->|sendAudio| Hume
     SW -->|processTranscript| Gemini
     SW -->|saveTranscript| Drive
     SW -->|addTranscript| Collector
 
     %% Services to External APIs
     Deepgram <-->|WebSocket<br/>Sec-WebSocket-Protocol| DeepgramAPI
+    Hume <-->|WebSocket<br/>WAV-wrapped audio| HumeAPI
     Gemini <-->|Gemini REST API| GeminiAPI
     Gemini <-->|OpenAI-compatible| OpenRouterAPI
     Gemini <-->|OpenAI-compatible| GroqAPI
@@ -86,8 +90,9 @@ graph TB
     SW -->|chrome.alarms| SW
 
     %% Messages back to UI
-    SW -->|transcript<br/>suggestion<br/>call_summary<br/>cost_update| ContentScript
+    SW -->|transcript<br/>suggestion<br/>call_summary<br/>cost_update<br/>emotion_update| ContentScript
     ContentScript -->|display| Overlay
+    Hume -->|emotion_update| SW
 ```
 
 ## Message Type Convention
@@ -117,7 +122,7 @@ graph LR
 
 ```
 
-## Data Flow: Audio to Transcript
+## Data Flow: Audio to Transcript and Emotion
 
 ```mermaid
 flowchart TD
@@ -136,13 +141,20 @@ flowchart TD
     Convert1 --> Chunk1[AUDIO_CHUNK message]
     Convert2 --> Chunk2[AUDIO_CHUNK message]
 
-    Chunk1 --> Buffer[Service Worker<br/>deepgramClient.audioBuffer]
-    Chunk2 --> Buffer
+    Chunk1 --> SW[Service Worker]
+    Chunk2 --> SW
 
-    Buffer --> |threshold >= 4096| Flush[flushBuffer]
-    Flush --> WS[WebSocket.send<br/>ArrayBuffer]
+    SW --> Buffer1[deepgramClient.audioBuffer]
+    SW --> Buffer2[humeClient<br/>WAV wrapper]
 
-    WS --> Deepgram[Deepgram API<br/>Nova-3 STT]
+    Buffer1 --> |threshold >= 4096| Flush1[flushBuffer]
+    Buffer2 --> |threshold| Flush2[sendWAVChunk]
+
+    Flush1 --> WS1[WebSocket.send<br/>ArrayBuffer]
+    Flush2 --> WS2[WebSocket.send<br/>WAV-wrapped audio]
+
+    WS1 --> Deepgram[Deepgram API<br/>Nova-3 STT]
+    WS2 --> Hume[Hume AI API<br/>Expression Measurement]
 
     Deepgram --> Results{Results message}
     Results -->|interim| Interim[is_final=false<br/>Emit immediately]
@@ -153,7 +165,12 @@ flowchart TD
     Accumulate --> Callback
     Final --> Callback
 
+    Hume --> Emotions[48 emotions<br/>with confidence scores]
+    Emotions --> Simplify[Simplify to 4 states<br/>engaged/frustrated/thinking/neutral]
+    Simplify --> EmotionCallback[onEmotionCallback]
+
     Callback --> Display[Overlay displays<br/>transcript bubble]
+    EmotionCallback --> Badge[Overlay displays<br/>emotion badge in header]
 
 ```
 
@@ -254,8 +271,9 @@ chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
 | **Service Worker** | Orchestration, message routing, session lifecycle | Background |
 | **Content Script** | Mic capture, overlay injection, message bridge | Google Meet tab |
 | **Offscreen Document** | Tab audio capture (requires offscreen context) | Offscreen |
-| **Overlay** | UI rendering (Shadow DOM isolation) | Google Meet tab |
+| **Overlay** | UI rendering (Shadow DOM isolation), emotion badge | Google Meet tab |
 | **deepgramClient** | WebSocket STT connection | Service Worker |
+| **humeClient** | WebSocket emotion detection (Expression Measurement API) | Service Worker |
 | **geminiClient** | Multi-provider LLM for suggestions + embeddings | Service Worker |
 | **costTracker** | Live token cost tracking per session | Service Worker |
 | **driveService** | OAuth + file upload to Drive | Service Worker |

@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingman AI - Engineering Documentation</title>
+  <style>
+    :root {
+      --color-primary: #e8750a;
+      --color-primary-hover: #d4680a;
+      --color-accent: #3498db;
+      --color-success: #27ae60;
+      --color-warning: #f39c12;
+      --color-danger: #e74c3c;
+      --color-text: #cdd6f4;
+      --color-text-secondary: #a6adc8;
+      --color-bg: #1e1e2e;
+      --color-surface: #181825;
+      --color-border: #313244;
+      --color-code-bg: #11111b;
+      --color-code-text: #cdd6f4;
+      --color-sidebar: #181825;
+      --color-sidebar-hover: #1e1e2e;
+      --color-sidebar-active: #2a2a3e;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --sidebar-width: 280px;
+    }
+
+    [data-theme="light"] {
+      --color-text: #1a1a2e;
+      --color-text-secondary: #5f6368;
+      --color-bg: #f8f9fa;
+      --color-surface: #ffffff;
+      --color-border: #e1e4e8;
+      --color-code-bg: #1e1e2e;
+      --color-sidebar: #ffffff;
+      --color-sidebar-hover: #f0f0f0;
+      --color-sidebar-active: #fff3e6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--color-sidebar);
+      border-right: 1px solid var(--color-border);
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--color-border);
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+    }
+
+    .sidebar-header h1 {
+      color: #fff;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-header p {
+      color: rgba(255,255,255,0.85);
+      font-size: 0.8rem;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 0;
+      overflow-y: auto;
+    }
+
+    .nav-section {
+      margin-bottom: 8px;
+    }
+
+    .nav-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .nav-section-header:hover {
+      background: var(--color-sidebar-hover);
+    }
+
+    .nav-section-header .chevron {
+      transition: transform 0.2s;
+      font-size: 10px;
+    }
+
+    .nav-section.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .nav-section.collapsed .nav-items {
+      display: none;
+    }
+
+    .nav-items {
+      padding: 4px 0;
+    }
+
+    .nav-item {
+      display: block;
+      padding: 10px 20px 10px 32px;
+      color: var(--color-text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--color-sidebar-hover);
+    }
+
+    .nav-item.active {
+      background: var(--color-sidebar-active);
+      border-left-color: var(--color-primary);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .theme-toggle {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      color: var(--color-text);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .theme-toggle:hover {
+      background: var(--color-sidebar-hover);
+    }
+
+    /* Mobile hamburger */
+    .mobile-header {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      z-index: 101;
+      padding: 0 16px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hamburger {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .mobile-header h1 {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+    }
+
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    h2 {
+      font-size: 1.75rem;
+      margin: 48px 0 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--color-border);
+      color: var(--color-primary);
+    }
+
+    h2:first-child { margin-top: 0; }
+    h3 { font-size: 1.25rem; margin: 32px 0 16px; color: var(--color-text); }
+    h4 { font-size: 1.1rem; margin: 24px 0 12px; color: var(--color-text-secondary); }
+    p { margin-bottom: 16px; }
+    ul, ol { margin: 16px 0; padding-left: 24px; }
+    li { margin-bottom: 8px; }
+    strong { color: var(--color-primary); }
+    a { color: var(--color-accent); }
+
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.9em;
+      background: var(--color-code-bg);
+      color: var(--color-code-text);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    pre {
+      background: var(--color-code-bg);
+      color: var(--color-code-text);
+      padding: 20px;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 16px 0;
+      line-height: 1.5;
+    }
+
+    pre code { background: none; padding: 0; }
+
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95rem; }
+    th, td { padding: 12px 16px; text-align: left; border: 1px solid var(--color-border); }
+    th { background: var(--color-surface); font-weight: 600; }
+    tr:nth-child(even) { background: var(--color-surface); }
+
+    /* Tutorial step styling */
+    .step {
+      margin-bottom: 48px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .step-description {
+      color: var(--color-text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: var(--color-surface);
+      border-radius: 8px;
+      border-left: 3px solid var(--color-primary);
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+
+    .step-annotation strong {
+      color: var(--color-primary);
+    }
+
+    .card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .callout {
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      margin: 20px 0;
+      border-left: 4px solid;
+    }
+
+    .callout-tip { background: rgba(39, 174, 96, 0.1); border-color: var(--color-success); }
+    .callout-warning { background: rgba(243, 156, 18, 0.1); border-color: var(--color-warning); }
+    .callout-danger { background: rgba(231, 76, 60, 0.1); border-color: var(--color-danger); }
+
+    [data-theme="light"] .callout-tip { background: #ecfdf5; }
+    [data-theme="light"] .callout-warning { background: #fffbeb; }
+    [data-theme="light"] .callout-danger { background: #fef2f2; }
+
+    .diagram {
+      background: var(--color-code-bg);
+      color: var(--color-code-text);
+      padding: 24px;
+      border-radius: var(--radius);
+      font-family: monospace;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.4;
+      margin: 20px 0;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .metric {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .metric-value { font-size: 1.75rem; font-weight: 700; color: var(--color-primary); }
+    .metric-label { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 4px; }
+
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li { padding: 8px 0 8px 28px; position: relative; }
+    .checklist li::before { content: "☐"; position: absolute; left: 0; color: var(--color-text-secondary); }
+
+    .keyword { color: #c678dd; }
+    .string { color: #98c379; }
+    .comment { color: #5c6370; font-style: italic; }
+    .function { color: #61afef; }
+    .number { color: #d19a66; }
+
+    .footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--color-text-secondary);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--color-border);
+      margin-top: 60px;
+    }
+
+    /* Screenshot note */
+    .screenshot-note {
+      background: var(--color-surface);
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin: 16px 0;
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+    }
+
+    /* Mobile styles */
+    @media (max-width: 900px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.open {
+        display: block;
+      }
+
+      .mobile-header {
+        display: flex;
+      }
+
+      .main {
+        margin-left: 0;
+        padding-top: 60px;
+      }
+
+      .content {
+        padding: 24px 16px 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile header -->
+  <div class="mobile-header">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <h1>Wingman AI Docs</h1>
+  </div>
+
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Wingman AI</h1>
+      <p>Engineering Documentation</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- Product Section -->
+      <div class="nav-section" data-section="product">
+        <div class="nav-section-header" onclick="toggleSection('product')">
+          <span>Product</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="nav-items">
+          <div class="nav-item active" data-tab="overview">Overview</div>
+          <div class="nav-item" data-tab="getting-started">Getting Started</div>
+        </div>
+      </div>
+
+      <!-- User Guides Section -->
+      <div class="nav-section" data-section="guides">
+        <div class="nav-section-header" onclick="toggleSection('guides')">
+          <span>User Guides</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="nav-items">
+          <div class="nav-item" data-tab="personas">Creating Personas</div>
+          <div class="nav-item" data-tab="hydra">Hydra Mode</div>
+          <div class="nav-item" data-tab="knowledge-base">Knowledge Base</div>
+          <div class="nav-item" data-tab="call-summary">Call Summary</div>
+        </div>
+      </div>
+
+      <!-- Engineering Section -->
+      <div class="nav-section" data-section="engineering">
+        <div class="nav-section-header" onclick="toggleSection('engineering')">
+          <span>Engineering</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="nav-items">
+          <div class="nav-item" data-tab="architecture">Architecture</div>
+          <div class="nav-item" data-tab="refactoring">Refactoring</div>
+          <div class="nav-item" data-tab="clean-code">Clean Code</div>
+          <div class="nav-item" data-tab="ai-workflow">AI Workflow</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()">Toggle Light/Dark</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="content">
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- OVERVIEW TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content active" id="overview">
+        <h2>What is Wingman AI?</h2>
+        <p>Wingman AI is a real-time AI assistant for Google Meet calls. It listens to your conversations, transcribes them in real-time, and provides contextual suggestions to help you communicate more effectively.</p>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-value">Real-time</div>
+            <div class="metric-label">Transcription</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">AI-Powered</div>
+            <div class="metric-label">Suggestions</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">BYOK</div>
+            <div class="metric-label">Your Own API Keys</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">Private</div>
+            <div class="metric-label">No Server Required</div>
+          </div>
+        </div>
+
+        <h2>Key Features</h2>
+
+        <div class="card">
+          <div class="card-title">Real-Time Transcription</div>
+          <p>Uses Deepgram's Nova-3 model to transcribe your Google Meet calls with high accuracy. Distinguishes between you and other speakers.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">AI Suggestions</div>
+          <p>Powered by Google Gemini or Groq, get contextual response suggestions, talking points, and objection handling in real-time. Groq offers ultra-fast inference for snappier responses.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Personas</div>
+          <p>Create custom personas with specific expertise. A "Sales Closer" persona responds differently than a "Technical Expert".</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Hydra Mode</div>
+          <p>Run multiple personas simultaneously. Each persona watches for their area of expertise and only responds when relevant.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Knowledge Base</div>
+          <p>Upload PDFs, markdown, and text files. The AI searches your documents to provide accurate, sourced answers.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Call Summaries</div>
+          <p>After each call, get an AI-generated summary with key points, action items, and notable moments. Auto-save to Google Drive.</p>
+        </div>
+
+        <h2>BYOK Architecture</h2>
+        <div class="diagram">BYOK Architecture (Bring Your Own Keys)
+─────────────────────────────────────────
+
+┌─────────────────┐     ┌─────────────────┐
+│   Google Meet   │     │    Your APIs    │
+│    (Browser)    │     │  Deepgram +     │
+│                 │     │  Gemini or Groq │
+└────────┬────────┘     └────────▲────────┘
+         │                       │
+         │ Audio                 │ Direct API calls
+         ▼                       │ (no middleman)
+┌─────────────────────────────────────────┐
+│           Wingman AI Extension          │
+│  ┌─────────────┐  ┌─────────────────┐   │
+│  │   Content   │  │  Service Worker │   │
+│  │   Script    │◄─┤  (Background)   │   │
+│  │  (Overlay)  │  │                 │   │
+│  └─────────────┘  └─────────────────┘   │
+│         │                  │            │
+│         ▼                  ▼            │
+│  ┌─────────────┐  ┌─────────────────┐   │
+│  │   Shadow    │  │  chrome.storage │   │
+│  │    DOM      │  │  (API keys,     │   │
+│  │   (UI)      │  │   personas)     │   │
+│  └─────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────┘
+
+✓ No backend server
+✓ Your keys stay in your browser
+✓ Direct WebSocket to Deepgram
+✓ Direct REST to Gemini/Groq</div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- GETTING STARTED TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="getting-started">
+        <h2>Getting Started</h2>
+        <p>Follow these steps to set up Wingman AI and start your first assisted call.</p>
+
+        <h3>Step 1: Get Your API Keys</h3>
+        <p>Wingman AI uses a BYOK (Bring Your Own Keys) model. You'll need:</p>
+
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Deepgram API Key (Required)</div>
+          </div>
+          <p class="step-description">Deepgram provides speech-to-text transcription.</p>
+          <ol>
+            <li>Go to <a href="https://console.deepgram.com" target="_blank">console.deepgram.com</a></li>
+            <li>Create a free account (includes $200 credit)</li>
+            <li>Navigate to API Keys → Create Key</li>
+            <li>Copy the key</li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Google Gemini API Key (Option A)</div>
+          </div>
+          <p class="step-description">Gemini provides AI suggestions. Good balance of quality and cost.</p>
+          <ol>
+            <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></li>
+            <li>Sign in with your Google account</li>
+            <li>Click "Create API Key"</li>
+            <li>Copy the key</li>
+          </ol>
+        </div>
+
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Groq API Key (Option B)</div>
+          </div>
+          <p class="step-description">Groq offers extremely fast inference. Use it for snappier responses.</p>
+          <ol>
+            <li>Go to <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></li>
+            <li>Create a free account</li>
+            <li>Click "Create API Key"</li>
+            <li>Copy the key</li>
+          </ol>
+          <div class="step-annotation">
+            <strong>Note:</strong> You can use Gemini, Groq, or both. Configure your preferred provider in settings.
+          </div>
+        </div>
+
+        <h3>Step 2: Configure the Extension</h3>
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Enter Your API Keys</div>
+          </div>
+          <ol>
+            <li>Click the Wingman AI icon in your browser toolbar</li>
+            <li>Click "Options" or right-click → "Options"</li>
+            <li>Paste your Deepgram API key</li>
+            <li>Paste your Gemini and/or Groq API key</li>
+            <li>Click "Save"</li>
+          </ol>
+        </div>
+
+        <h3>Step 3: Start a Call</h3>
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Your First Assisted Call</div>
+          </div>
+          <ol>
+            <li>Join a Google Meet call</li>
+            <li>Click the Wingman AI popup icon</li>
+            <li>Select a persona from the dropdown (or use Default)</li>
+            <li>Click "Start Session"</li>
+            <li>Grant microphone permission when prompted</li>
+            <li>The overlay panel appears with transcripts and suggestions</li>
+          </ol>
+          <div class="step-annotation">
+            <strong>Tip:</strong> Drag the overlay panel by its header to reposition. Resize by dragging the bottom-right corner.
+          </div>
+        </div>
+
+        <h3>Step 4: End the Call</h3>
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-title">Getting Your Summary</div>
+          </div>
+          <ol>
+            <li>Click "Stop Session" in the popup when your call ends</li>
+            <li>If auto-summary is enabled, a summary appears in the overlay</li>
+            <li>Copy the summary or save it to Google Drive</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- PERSONAS TAB - VERBATIM FROM ORIGINAL TUTORIAL -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="personas">
+        <h2>Creating Personas</h2>
+        <p>Build expert personas with custom prompts and dedicated Knowledge Base documents</p>
+
+        <div class="screenshot-note">
+          <strong>Note:</strong> Screenshots require the <code>screenshots-new/</code> folder from <code>wingman-ai/extension/src/tutorials/</code> to be in the same directory as this HTML file.
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Open the Personas Tab</div>
+          </div>
+          <p class="step-description">
+            Go to Settings and click the Personas tab. You'll see a list of your personas with colored indicators, KB document counts, and edit controls.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="screenshots-new/09-personas-list-populated.png" target="_blank">
+              <img src="screenshots-new/09-personas-list-populated.png" alt="Personas list with multiple personas" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>What's a persona?</strong> A persona bundles a system prompt with specific Knowledge Base documents. Switch personas to change how Wingman thinks and what information it can access.
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Create a New Persona</div>
+          </div>
+          <p class="step-description">
+            Click "+ New Persona" to create a blank persona, or choose from 12 built-in templates (Sales Closer, Technical Expert, Discovery Coach, and more).
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="screenshots-new/03-personas-tab-empty.png" target="_blank">
+              <img src="screenshots-new/03-personas-tab-empty.png" alt="Empty personas tab with new persona button" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Templates:</strong> Start with a template to get pre-written prompts for common scenarios. You can always customize them later.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Name and Color</div>
+          </div>
+          <p class="step-description">
+            Give your persona a descriptive name and pick a color. The color appears in the popup dropdown and helps you quickly identify which persona is active.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="screenshots-new/12-persona-editor.png" target="_blank">
+              <img src="screenshots-new/12-persona-editor.png" alt="Persona editor with name and color fields" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Write the System Prompt</div>
+          </div>
+          <p class="step-description">
+            The system prompt defines your persona's expertise and behavior. Include what topics it should respond to, what it should stay silent on (respond with "---"), and any specific instructions.
+          </p>
+          <div class="step-annotation">
+            <strong>Prompt tips:</strong> Be specific about when to respond vs. stay silent. Include "WHEN TO RESPOND" and "WHEN TO STAY SILENT" sections for multi-persona (Hydra) mode.
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Attach Knowledge Base Documents</div>
+          </div>
+          <p class="step-description">
+            Drag and drop PDF, Markdown, or text files into the Knowledge Base section. These documents are scoped to this persona — only this persona can search them during calls.
+          </p>
+          <div class="step-annotation">
+            <strong>Best documents:</strong> Pricing guides, objection handling playbooks, competitor battle cards, product specs — anything the persona might need to reference.
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-title">Save and Activate</div>
+          </div>
+          <p class="step-description">
+            Click "Save Changes" to save your persona. Then open the popup and select it from the dropdown to make it active. The colored dot shows which persona is currently selected.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="screenshots-new/05-popup-default.png" target="_blank">
+              <img src="screenshots-new/05-popup-default.png" alt="Popup with persona selector" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Next:</strong> Learn how to run multiple personas simultaneously with Hydra mode, or save persona combinations as Conclave presets.
+          </div>
+        </div>
+
+        <h3>Built-in Persona Templates</h3>
+        <table>
+          <tr><th>Template</th><th>Best For</th></tr>
+          <tr><td>Sales Closer</td><td>Closing deals, handling objections</td></tr>
+          <tr><td>Technical Expert</td><td>Product demos, technical questions</td></tr>
+          <tr><td>Discovery Coach</td><td>Initial calls, needs analysis</td></tr>
+          <tr><td>Interview Coach</td><td>Job interviews, behavioral questions</td></tr>
+          <tr><td>Startup Founder</td><td>Investor pitches, fundraising</td></tr>
+          <tr><td>Customer Success</td><td>Support calls, retention</td></tr>
+        </table>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- HYDRA TAB - VERBATIM FROM ORIGINAL TUTORIAL -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="hydra">
+        <h2>Using Multiple Personas (Hydra)</h2>
+        <p>Activate up to 4 personas simultaneously — each expert responds only when their specialty is relevant</p>
+
+        <div class="screenshot-note">
+          <strong>Note:</strong> Screenshots require the <code>screenshots-new/</code> folder from <code>wingman-ai/extension/src/tutorials/</code> to be in the same directory as this HTML file.
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Understanding Hydra Mode</div>
+          </div>
+          <p class="step-description">
+            Hydra mode runs multiple personas in parallel during calls. Each persona sees the same conversation but only responds when the topic matches their expertise. Non-experts stay silent (respond with "---").
+          </p>
+          <div class="step-annotation">
+            <strong>Why "Hydra"?</strong> Like the mythical multi-headed creature, Wingman can have multiple "heads" (personas) active simultaneously, each watching for their area of expertise.
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Add Personas to Your Session</div>
+          </div>
+          <p class="step-description">
+            Open the popup and click "+ Add persona" to add more personas to your active session. You can have up to 4 personas active at once. Each appears as a chip with its colored dot.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="screenshots-new/10-popup-hydra-both.png" target="_blank">
+              <img src="screenshots-new/10-popup-hydra-both.png" alt="Popup showing multiple active personas" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Remove personas:</strong> Click the × button on any persona chip to remove it from your active session.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">How Self-Selection Works</div>
+          </div>
+          <p class="step-description">
+            When a transcript comes in, Wingman sends it to all active personas simultaneously. Each persona's system prompt should include "WHEN TO RESPOND" and "WHEN TO STAY SILENT" sections. Only relevant experts provide suggestions.
+          </p>
+          <div class="step-annotation">
+            <strong>Example:</strong> If someone asks about pricing, the Sales Closer responds while the Technical Expert stays silent. If they ask about API integrations, the Technical Expert responds instead.
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Viewing Multi-Persona Suggestions</div>
+          </div>
+          <p class="step-description">
+            When multiple personas respond, their suggestions appear in the overlay with their name and colored dot. This helps you see which expert is providing each suggestion and choose the most appropriate response.
+          </p>
+          <div class="step-annotation">
+            <strong>Best combinations:</strong> Sales Closer + Technical Expert for demos. Discovery Coach + Sales Closer for initial calls. Add Legal & Compliance for enterprise deals.
+          </div>
+        </div>
+
+        <h3>Multi-Persona Flow</h3>
+        <div class="diagram">Hydra Mode: Parallel Persona Processing
+────────────────────────────────────────
+
+         ┌──────────────┐
+         │  Transcript  │
+         │   arrives    │
+         └──────┬───────┘
+                │
+     ┌──────────┼──────────┐
+     │          │          │
+     ▼          ▼          ▼
+┌────────┐ ┌────────┐ ┌────────┐
+│ Sales  │ │  Tech  │ │ Legal  │
+│ Closer │ │ Expert │ │Compli. │
+└────┬───┘ └────┬───┘ └────┬───┘
+     │          │          │
+     ▼          ▼          ▼
+"Here's     "---"      "---"
+ how to     (silent)   (silent)
+ handle
+ that..."
+
+Only the relevant expert responds!</div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- KNOWLEDGE BASE TAB - VERBATIM FROM ORIGINAL TUTORIAL -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="knowledge-base">
+        <h2>Knowledge Base Upload &amp; Search</h2>
+        <p>Upload documents and use them to power smarter AI suggestions during calls</p>
+
+        <div class="screenshot-note">
+          <strong>Note:</strong> Screenshots require the <code>kb-upload-search/</code> folder from <code>wingman-ai/extension/src/tutorials/</code> to be in the same directory as this HTML file.
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Open Settings</div>
+          </div>
+          <p class="step-description">
+            Open the Wingman extension settings. You'll see all configuration sections including API Keys, Speaker Filter, Google Drive, Call Summary, Knowledge Base, and System Prompt.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/01-options-page.png" target="_blank">
+              <img src="kb-upload-search/01-options-page.png" alt="Full settings page" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Tip:</strong> You can access settings from the popup by clicking the gear icon, or right-click the extension icon and choose "Options".
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Find the Knowledge Base Section</div>
+          </div>
+          <p class="step-description">
+            Scroll down to the Knowledge Base section. You'll see a heading, description, and a file drop zone for uploading documents.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/02-kb-section.png" target="_blank">
+              <img src="kb-upload-search/02-kb-section.png" alt="Knowledge Base section" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>What it does:</strong> The Knowledge Base lets Wingman reference your documents during calls to give more accurate, context-aware suggestions.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Empty State</div>
+          </div>
+          <p class="step-description">
+            Before uploading anything, you'll see a "No documents yet" message with a hint to upload a battle card, FAQ, or product sheet.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/03-empty-state.png" target="_blank">
+              <img src="kb-upload-search/03-empty-state.png" alt="Empty state message" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Upload a Document</div>
+          </div>
+          <p class="step-description">
+            Drag a file onto the drop zone or click "browse" to select one. Supported formats: PDF, Markdown, and plain text (up to 10MB).
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/04-drop-zone.png" target="_blank">
+              <img src="kb-upload-search/04-drop-zone.png" alt="Drop zone with format hints" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Best documents to upload:</strong> Battle cards, product FAQs, competitor comparisons, pricing sheets, or any reference material you'd want at your fingertips during a call.
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Test Query (Hidden Until Upload)</div>
+          </div>
+          <p class="step-description">
+            The test query section stays hidden until you upload at least one document. This prevents searching against an empty knowledge base.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/05-test-hidden.png" target="_blank">
+              <img src="kb-upload-search/05-test-hidden.png" alt="Test query section hidden" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-title">Document Appears in List</div>
+          </div>
+          <p class="step-description">
+            After uploading, your document appears in the list with its filename, section count, and a delete button. The test query section becomes visible.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/06-document-uploaded.png" target="_blank">
+              <img src="kb-upload-search/06-document-uploaded.png" alt="Document in list after upload" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">7</div>
+            <div class="step-title">Try a Test Query</div>
+          </div>
+          <p class="step-description">
+            Type a question in the test input to verify Wingman can find relevant answers from your uploaded documents.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/07-query-typed.png" target="_blank">
+              <img src="kb-upload-search/07-query-typed.png" alt="Test query typed in input" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Try asking:</strong> Questions a prospect might ask during a call, like "What security certifications do you have?" or "How does your pricing work?"
+          </div>
+        </div>
+
+        <!-- Step 8 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">8</div>
+            <div class="step-title">Review Search Results</div>
+          </div>
+          <p class="step-description">
+            Click "Test" to see matching sections from your documents. The results show relevant text with source attribution, so you can verify the knowledge base has what Wingman needs.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="kb-upload-search/08-search-results.png" target="_blank">
+              <img src="kb-upload-search/08-search-results.png" alt="Search results from knowledge base" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Next:</strong> During your next Google Meet call, Wingman will automatically search these documents to give you better suggestions in real time.
+          </div>
+        </div>
+
+        <h3>How It Works: RAG Pipeline</h3>
+        <div class="diagram">Document Upload Flow
+───────────────────
+
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│  Upload  │ ──▶ │  Extract │ ──▶ │  Chunk   │
+│   PDF    │     │   Text   │     │   Text   │
+└──────────┘     └──────────┘     └──────────┘
+                                       │
+                                       ▼
+┌──────────┐     ┌──────────┐     ┌──────────┐
+│  Store   │ ◀── │  Create  │ ◀── │  Embed   │
+│ IndexedDB│     │  Vectors │     │  Chunks  │
+└──────────┘     └──────────┘     └──────────┘
+
+
+During Call:
+────────────
+                 ┌──────────────┐
+Conversation ──▶ │ Embed Query  │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Cosine       │
+                 │ Similarity   │
+                 │ Search       │
+                 └──────┬───────┘
+                        │
+                        ▼
+                 ┌──────────────┐
+                 │ Inject Top   │ ──▶ AI Suggestion
+                 │ Matches into │     with citation
+                 │ Prompt       │
+                 └──────────────┘</div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- CALL SUMMARY TAB - VERBATIM FROM ORIGINAL TUTORIAL -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="call-summary">
+        <h2>Configure Call Summary</h2>
+        <p>Set up automatic AI-generated summaries with action items after every call</p>
+
+        <div class="screenshot-note">
+          <strong>Note:</strong> Screenshots require the <code>summary-settings/</code> folder from <code>wingman-ai/extension/src/tutorials/</code> to be in the same directory as this HTML file.
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Open Settings</div>
+          </div>
+          <p class="step-description">
+            Open the Wingman settings page. You'll see all configuration sections including API Keys, Speaker Filter, Google Drive, Call Summary, Knowledge Base, and System Prompt.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/01-options-page.png" target="_blank">
+              <img src="summary-settings/01-options-page.png" alt="Full settings page" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Find the Call Summary Card</div>
+          </div>
+          <p class="step-description">
+            Scroll down to the "Call Summary" settings card. Both toggles — "Auto-generate call summary" and "Include key moments" — are enabled by default.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/02-summary-card-visible.png" target="_blank">
+              <img src="summary-settings/02-summary-card-visible.png" alt="Call Summary card with both toggles enabled" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>What it does:</strong> When enabled, Wingman automatically generates a structured summary with action items when your call ends. It uses one additional LLM API call per session.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Disable Auto-Summary</div>
+          </div>
+          <p class="step-description">
+            Click the "Auto-generate call summary" toggle to turn it off. The toggle switches to the gray/OFF position.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/03-summary-disabled.png" target="_blank">
+              <img src="summary-settings/03-summary-disabled.png" alt="Auto-generate toggle disabled" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Note:</strong> When auto-summary is off, no summary will be generated at the end of your calls. The "Include key moments" option becomes unavailable.
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-title">Key Moments Toggle Grays Out</div>
+          </div>
+          <p class="step-description">
+            With auto-summary disabled, the "Include key moments" toggle is grayed out and non-interactive. Key moments is a sub-feature that requires auto-summary to be enabled.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/04-moments-toggle-state.png" target="_blank">
+              <img src="summary-settings/04-moments-toggle-state.png" alt="Key moments toggle grayed out" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-title">Re-enable Auto-Summary</div>
+          </div>
+          <p class="step-description">
+            Click the toggle again to re-enable auto-summary. Both toggles return to their active state.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/05-summary-re-enabled.png" target="_blank">
+              <img src="summary-settings/05-summary-re-enabled.png" alt="Both toggles active again" loading="lazy">
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-title">Disable Key Moments Only</div>
+          </div>
+          <p class="step-description">
+            You can keep auto-summary enabled but turn off key moments independently. This gives you the summary and action items without the notable quotes section.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/06-moments-disabled.png" target="_blank">
+              <img src="summary-settings/06-moments-disabled.png" alt="Key moments off, auto-summary on" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>When to disable key moments:</strong> If you prefer a shorter, more concise summary focused on action items rather than quoted highlights from the conversation.
+          </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="step">
+          <div class="step-header">
+            <div class="step-number">7</div>
+            <div class="step-title">Settings Are Saved Automatically</div>
+          </div>
+          <p class="step-description">
+            Your settings are saved automatically when you toggle them. If you reload the page or restart the browser, your preferences will be preserved.
+          </p>
+          <div class="screenshot-wrapper">
+            <a href="summary-settings/07-settings-persisted.png" target="_blank">
+              <img src="summary-settings/07-settings-persisted.png" alt="Settings persisted after reload" loading="lazy">
+            </a>
+          </div>
+          <div class="step-annotation">
+            <strong>Next:</strong> Start a Google Meet call and end it normally. If auto-summary is enabled, you'll see the summary overlay appear automatically.
+          </div>
+        </div>
+
+        <h3>Summary Contents</h3>
+        <p>Each generated summary includes:</p>
+        <ul>
+          <li><strong>Key Points:</strong> Main topics discussed</li>
+          <li><strong>Action Items:</strong> Tasks and follow-ups with owners</li>
+          <li><strong>Key Moments:</strong> Notable quotes (if enabled)</li>
+          <li><strong>Metadata:</strong> Date, duration, participants</li>
+        </ul>
+
+        <h3>Google Drive Integration</h3>
+        <p>Connect Google Drive to auto-save summaries and transcripts:</p>
+        <ul>
+          <li>Summaries saved as Google Docs</li>
+          <li>Multiple format options: Google Doc, Markdown, Plain Text, JSON</li>
+          <li>Automatic folder organization</li>
+        </ul>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- ARCHITECTURE TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="architecture">
+        <h2>System Architecture</h2>
+        <p>Technical overview of Wingman AI's internal architecture.</p>
+
+        <h3>Component Overview</h3>
+        <div class="diagram">┌──────────────────────────────────────────────────────────────┐
+│                    Chrome Extension                           │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────┐     ┌─────────────────────────────┐    │
+│  │  Content Script │     │      Service Worker         │    │
+│  │                 │     │                             │    │
+│  │  • Overlay UI   │◄───►│  • Session management       │    │
+│  │  • Mic capture  │     │  • Deepgram WebSocket       │    │
+│  │  • Shadow DOM   │     │  • Gemini/Groq REST         │    │
+│  │                 │     │  • KB search                │    │
+│  └─────────────────┘     │  • Drive API                │    │
+│          │               └─────────────────────────────┘    │
+│          │                         │                        │
+│          ▼                         ▼                        │
+│  ┌─────────────────┐     ┌─────────────────────────────┐    │
+│  │ AudioWorklet    │     │    chrome.storage.local     │    │
+│  │                 │     │                             │    │
+│  │  • Resampling   │     │  • API keys                 │    │
+│  │  • PCM16 encode │     │  • Personas                 │    │
+│  │                 │     │  • Settings                 │    │
+│  └─────────────────┘     └─────────────────────────────┘    │
+│                                    │                        │
+│                                    ▼                        │
+│                          ┌─────────────────────────────┐    │
+│                          │       IndexedDB             │    │
+│                          │                             │    │
+│                          │  • KB documents             │    │
+│                          │  • Embeddings (768-dim)     │    │
+│                          │  • Metadata                 │    │
+│                          └─────────────────────────────┘    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+External Services:
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────┐
+│    Deepgram     │     │  Gemini / Groq  │     │ Google Drive│
+│                 │     │                 │     │             │
+│  • WebSocket    │     │  • REST API     │     │ • REST API  │
+│  • Nova-3 STT   │     │  • Suggestions  │     │ • OAuth 2.0 │
+│  • Real-time    │     │  • Embeddings   │     │             │
+└─────────────────┘     │  • Summaries    │     └─────────────┘
+                        └─────────────────┘</div>
+
+        <h3>Key Files</h3>
+        <table>
+          <tr><th>File</th><th>Purpose</th></tr>
+          <tr><td><code>service-worker.ts</code></td><td>Session lifecycle, API orchestration</td></tr>
+          <tr><td><code>content-script.ts</code></td><td>Mic capture, overlay injection</td></tr>
+          <tr><td><code>overlay.ts</code></td><td>Shadow DOM UI, transcripts, suggestions</td></tr>
+          <tr><td><code>deepgram-client.ts</code></td><td>WebSocket STT client</td></tr>
+          <tr><td><code>gemini-client.ts</code></td><td>LLM suggestions, embeddings, summaries</td></tr>
+          <tr><td><code>kb-database.ts</code></td><td>IndexedDB wrapper for KB</td></tr>
+          <tr><td><code>kb-search.ts</code></td><td>Cosine similarity search</td></tr>
+          <tr><td><code>drive-service.ts</code></td><td>Google Drive OAuth + upload</td></tr>
+          <tr><td><code>persona.ts</code></td><td>Persona data model, helpers</td></tr>
+        </table>
+
+        <h3>Data Flow</h3>
+        <div class="diagram">Audio Capture → Suggestion Flow
+─────────────────────────────────
+
+1. Content Script captures mic audio via AudioWorklet
+2. AudioWorklet resamples to 16kHz PCM16
+3. Sends AUDIO_CHUNK messages to Service Worker
+4. Service Worker forwards to Deepgram WebSocket
+5. Deepgram returns transcript
+6. Service Worker searches KB for context
+7. Service Worker sends to Gemini/Groq with:
+   - System prompt (from persona)
+   - KB context (if found)
+   - Recent conversation history
+   - Current transcript
+8. LLM returns suggestion
+9. Service Worker sends to Content Script
+10. Overlay displays suggestion</div>
+
+        <h3>Critical Conventions</h3>
+        <div class="callout callout-danger">
+          <strong>Message Types:</strong> Content script expects <strong>lowercase</strong> message types (<code>transcript</code>, <code>suggestion</code>). Service worker receives UPPERCASE (<code>START_SESSION</code>, <code>AUDIO_CHUNK</code>).
+        </div>
+
+        <div class="callout callout-warning">
+          <strong>Deepgram Auth:</strong> Browser WebSocket can't set Authorization headers. Use <code>Sec-WebSocket-Protocol</code>:
+          <pre><code>new WebSocket(url, ['token', apiKey]);</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <strong>Shadow DOM:</strong> Overlay uses closed Shadow DOM for style isolation from Google Meet.
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- REFACTORING TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="refactoring">
+        <h2>Refactoring Tutorial: From Monolith to Clean Components</h2>
+        <p><em>A step-by-step guide on safely breaking apart large files</em></p>
+
+        <h3>Part 1: The Problem</h3>
+        <p>We had a 2,463-line <code>overlay.ts</code> file that did everything. This is called a <strong>"God Class"</strong>:</p>
+        <ul>
+          <li>Renders transcripts</li>
+          <li>Handles drag-and-drop</li>
+          <li>Handles resizing</li>
+          <li>Manages themes</li>
+          <li>Shows summaries</li>
+          <li>812 lines of inline CSS</li>
+        </ul>
+
+        <div class="diagram">BEFORE                          AFTER
+┌─────────────────────┐        ┌─────────────────────┐
+│                     │        │      Overlay        │
+│                     │        │   (coordinator)     │
+│      overlay.ts     │        └──────────┬──────────┘
+│     2,463 lines     │                   │
+│                     │        ┌──────────┼──────────┐
+│   "Does everything" │        │          │          │
+│                     │        ▼          ▼          ▼
+└─────────────────────┘   ┌────────┐ ┌────────┐ ┌────────┐
+                          │Draggable│ │Resizable│ │  CSS   │
+                          │ 128 ln │ │ 130 ln │ │ 807 ln │
+                          └────────┘ └────────┘ └────────┘</div>
+
+        <h3>Part 2: The Extraction Pattern</h3>
+
+        <h4>Step 1: Identify the Boundary</h4>
+        <p>Find code that only uses its own state:</p>
+        <pre><code><span class="comment">// BEFORE: Inside overlay.ts</span>
+<span class="keyword">private</span> <span class="function">initDrag</span>(): <span class="keyword">void</span> {
+  <span class="keyword">let</span> startX = <span class="number">0</span>, startY = <span class="number">0</span>;  <span class="comment">// Only used here</span>
+  header.addEventListener(<span class="string">'mousedown'</span>, (e) => {
+    <span class="keyword">this</span>.isDragging = <span class="keyword">true</span>;      <span class="comment">// Only used here</span>
+    <span class="comment">// ... 30 more lines ...</span>
+  });
+}</code></pre>
+
+        <h4>Step 2: Define the Interface</h4>
+        <p>Write the code you <em>wish</em> existed:</p>
+        <pre><code><span class="comment">// What we WANT to write:</span>
+<span class="keyword">this</span>.draggable = <span class="keyword">new</span> <span class="function">Draggable</span>({
+  handle: header,
+  target: <span class="keyword">this</span>.panel,
+  isDisabled: () => <span class="keyword">this</span>.isMinimized,
+  onDragEnd: () => <span class="keyword">this</span>.savePosition(),
+});</code></pre>
+
+        <h4>Step 3: Create the Component</h4>
+        <pre><code><span class="comment">// AFTER: overlay/draggable.ts</span>
+<span class="keyword">export class</span> <span class="function">Draggable</span> {
+  <span class="keyword">private</span> isDragging = <span class="keyword">false</span>;
+
+  <span class="keyword">constructor</span>(<span class="keyword">private</span> options: DraggableOptions) {
+    <span class="keyword">this</span>.attach();
+  }
+
+  <span class="function">destroy</span>(): <span class="keyword">void</span> {
+    <span class="comment">// Clean up listeners</span>
+  }
+}</code></pre>
+
+        <h4>Step 4: Replace the Original</h4>
+        <pre><code><span class="comment">// AFTER: overlay.ts (10 lines instead of 40)</span>
+<span class="keyword">private</span> <span class="function">initDrag</span>(): <span class="keyword">void</span> {
+  <span class="keyword">const</span> header = <span class="keyword">this</span>.panel.querySelector(<span class="string">'.overlay-header'</span>);
+  <span class="keyword">this</span>.draggable = <span class="keyword">new</span> <span class="function">Draggable</span>({
+    handle: header,
+    target: <span class="keyword">this</span>.panel,
+    isDisabled: () => <span class="keyword">this</span>.isMinimized,
+    onDragEnd: () => <span class="keyword">this</span>.savePosition(),
+  });
+}</code></pre>
+
+        <h3>Part 3: Results</h3>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-value">-35%</div>
+            <div class="metric-label">Lines of Code</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">-33%</div>
+            <div class="metric-label">Bundle Size</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">+11</div>
+            <div class="metric-label">New Tests</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">131</div>
+            <div class="metric-label">Total Tests</div>
+          </div>
+        </div>
+
+        <h3>Part 4: Rules to Remember</h3>
+        <div class="card">
+          <div class="card-title">1. Extract, Don't Rewrite</div>
+          <p>Move existing working code to new files. Never rewrite from scratch.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">2. One Change at a Time</div>
+          <p>Each commit does ONE thing. If something breaks, you know exactly which change caused it.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">3. Test Before and After</div>
+          <p><code>npm test</code> → make changes → <code>npm run build</code> → <code>npm test</code></p>
+        </div>
+        <div class="card">
+          <div class="card-title">4. Preserve the Public API</div>
+          <p>The rest of the codebase shouldn't need to change.</p>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- CLEAN CODE TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="clean-code">
+        <h2>Clean Code Guide</h2>
+        <p><em>Production-quality code principles with real examples</em></p>
+
+        <h3>The Golden Rules</h3>
+        <div class="card">
+          <div class="card-title">1. Code is Read More Than Written</div>
+          <p>You write code once. Others read it hundreds of times. Optimize for readability.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Small is Beautiful</div>
+          <p>Small functions, small classes, small files. If something is big, it's doing too much.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">3. One Thing, One Place</div>
+          <p>Every piece of logic lives in exactly one place. Copying code = doing it wrong.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">4. Make It Work, Make It Right, Make It Fast</div>
+          <p>In that order. Don't optimize prematurely. Don't skip "make it right."</p>
+        </div>
+
+        <h3>The 30-Line Rule</h3>
+        <p>If a function exceeds 30 lines, it probably does more than one thing.</p>
+
+        <div class="callout callout-danger">
+          <strong>Bad:</strong> 239-line function doing 10 things
+        </div>
+
+        <div class="callout callout-tip">
+          <strong>Good:</strong> Main function delegates to focused sub-functions
+        </div>
+
+        <h3>No Magic Numbers</h3>
+        <div class="callout callout-danger">
+          <strong>Bad:</strong>
+          <pre><code><span class="keyword">if</span> (Date.now() - lastTime < <span class="number">15000</span>) <span class="keyword">return</span>;</code></pre>
+        </div>
+
+        <div class="callout callout-tip">
+          <strong>Good:</strong>
+          <pre><code><span class="keyword">const</span> TIMING = { COOLDOWN_MS: <span class="number">15_000</span> } <span class="keyword">as const</span>;
+<span class="keyword">if</span> (Date.now() - lastTime < TIMING.COOLDOWN_MS) <span class="keyword">return</span>;</code></pre>
+        </div>
+
+        <h3>Quick Reference</h3>
+        <table>
+          <tr><th>Metric</th><th>Perfect</th><th>Good</th><th>Refactor</th></tr>
+          <tr><td>Function lines</td><td>&lt; 10</td><td>10-20</td><td>&gt; 30</td></tr>
+          <tr><td>Class lines</td><td>&lt; 100</td><td>100-200</td><td>&gt; 300</td></tr>
+          <tr><td>File lines</td><td>&lt; 200</td><td>200-300</td><td>&gt; 400</td></tr>
+        </table>
+
+        <h3>Code Review Checklist</h3>
+        <ul class="checklist">
+          <li>Each function does ONE thing</li>
+          <li>No function exceeds 30 lines</li>
+          <li>Single responsibility per class</li>
+          <li>No magic numbers</li>
+          <li>CSS in CSS files, not JS</li>
+          <li>Errors handled at appropriate level</li>
+          <li>Unit tests for public functions</li>
+          <li>No commented-out code</li>
+        </ul>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- AI WORKFLOW TAB -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div class="tab-content" id="ai-workflow">
+        <h2>Working with AI Assistants</h2>
+        <p><em>Our process for getting quality code from AI coding assistants</em></p>
+
+        <h3>Core Principles</h3>
+
+        <div class="card">
+          <div class="card-title">1. No Plan Mode, Just Do</div>
+          <p>Skip endless planning. Investigate, propose briefly, get approval, execute.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">2. Bug Reports: Investigate First</div>
+          <p>When something's broken:</p>
+          <ol>
+            <li>Read code, trace the pipeline, check logs</li>
+            <li>Report: <strong>What's broken → Why → Proposed fix</strong></li>
+            <li>Wait for approval before touching code</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">3. Document Before Coding</div>
+          <p>For significant changes, create a plan as markdown. Forces thinking through the approach.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">4. Small Incremental Commits</div>
+          <p>One logical change per commit. If something breaks, easy to pinpoint.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">5. Test-Build-Test Loop</div>
+          <pre><code>npm run typecheck  <span class="comment"># After each edit</span>
+npm run build      <span class="comment"># Verify bundling</span>
+npm test           <span class="comment"># Catch regressions</span></code></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">6. Know When to Stop</div>
+          <p>If extraction is too risky, skip it. "Good enough" beats "perfect but broken."</p>
+        </div>
+
+        <h3>Investigation Template</h3>
+        <pre><code><span class="comment">## What's broken</span>
+[Plain-language description]
+
+<span class="comment">## Why</span>
+[Root cause - one or two sentences]
+
+<span class="comment">## Proposed fix</span>
+[What code change would solve it]
+
+<span class="comment">## What I didn't check</span>
+[Any gaps in the investigation]</code></pre>
+
+        <h3>When to Use AI vs. Manual</h3>
+        <table>
+          <tr><th>Task</th><th>AI-Assisted</th><th>Manual</th></tr>
+          <tr><td>Boilerplate code</td><td>✅</td><td></td></tr>
+          <tr><td>Refactoring</td><td>✅</td><td></td></tr>
+          <tr><td>Documentation</td><td>✅</td><td></td></tr>
+          <tr><td>Architecture decisions</td><td></td><td>✅</td></tr>
+          <tr><td>Security-critical code</td><td></td><td>✅</td></tr>
+          <tr><td>Debugging complex issues</td><td>Both</td><td>Both</td></tr>
+        </table>
+      </div>
+
+      <footer class="footer">
+        <p>Wingman AI Engineering Documentation</p>
+        <p>© 2024-2025 • Last updated: February 2025</p>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        // Update active nav item
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+
+        // Show corresponding content
+        const tabId = item.dataset.tab;
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+
+        // Scroll to top of content
+        document.querySelector('.main').scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Close sidebar on mobile
+        if (window.innerWidth <= 900) {
+          toggleSidebar();
+        }
+      });
+    });
+
+    // Section toggle
+    function toggleSection(sectionName) {
+      const section = document.querySelector(`.nav-section[data-section="${sectionName}"]`);
+      section.classList.toggle('collapsed');
+    }
+
+    // Mobile sidebar toggle
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.querySelector('.sidebar-overlay').classList.toggle('open');
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+
+    // Load saved theme (default to dark to match original tutorials)
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+    // Default is dark (no data-theme attribute = dark styles)
+  </script>
+</body>
+</html>

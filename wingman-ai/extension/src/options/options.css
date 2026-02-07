@@ -228,9 +228,9 @@ body {
 }
 
 .header-subtitle {
-  font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 400;
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
   margin-top: 2px;
 }
 
@@ -289,8 +289,8 @@ body {
 }
 
 .header-logo {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.9);
   padding: var(--spacing-xs);
@@ -1501,8 +1501,8 @@ body {
   }
 
   .header-logo {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
   }
 
   .header-title {
@@ -2151,6 +2151,77 @@ body {
   justify-content: flex-end;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
+}
+
+/* --------------------------------------------------------------------------
+   Hume AI (Emotion Detection) Section
+   -------------------------------------------------------------------------- */
+
+.hume-optional-section {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.section-header-with-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.optional-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-page);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .optional-badge {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.hume-fields {
+  background: var(--color-bg-page);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+[data-theme="dark"] .hume-fields {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.input-label-small {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.hume-test-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.hume-test-status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.hume-test-status.success {
+  color: var(--color-success);
+}
+
+.hume-test-status.error {
+  color: var(--color-danger);
 }
 
 /* Reduced motion support */

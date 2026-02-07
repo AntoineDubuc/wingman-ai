@@ -2,91 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mock Conclave Tab</title>
+  <title>Mock Conclave Tab - Dark Mode</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
-      background: #fef7f2;
-      padding: 24px;
-    }
-    .container { max-width: 720px; display: flex; flex-direction: column; gap: 24px; }
 
-    .options-card {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
+    /* Dark mode variables matching options.css [data-theme="dark"] */
+    :root {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-ring: rgba(243, 156, 18, 0.25);
+      --color-danger: #f87171;
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-text-inverse: #111827;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-bg-surface-glass: rgba(31, 41, 55, 0.75);
+      --color-border: #374151;
+      --color-border-light: #4b5563;
+      --gradient-primary: linear-gradient(135deg, #b45309, #d97706);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--color-bg-page) url('../../assets/header-banner.png') center/cover no-repeat fixed;
+      min-height: 100vh;
       padding: 24px;
-      border: 1px solid rgba(232, 117, 10, 0.12);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      color: var(--color-text-primary);
+    }
+
+    .container {
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Options card - matches options.css exactly */
+    .options-card {
+      background: var(--color-bg-surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
     }
 
     .form-section-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
-      color: #202124;
+      color: var(--color-text-primary);
       margin-bottom: 4px;
     }
 
     .form-section-description {
-      font-size: 14px;
-      color: #5f6368;
-      margin-bottom: 20px;
-      line-height: 1.5;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* API key section (used for leader picker) */
+    .api-key-section {
+      margin-bottom: 0;
     }
 
     .input-label {
       display: block;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      color: #202124;
+      color: var(--color-text-primary);
       margin-bottom: 8px;
     }
 
+    .input-with-hint {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Select input - matches options.css */
     .select-input {
       width: 100%;
       max-width: 400px;
-      padding: 10px 14px;
+      padding: 8px 16px;
+      font-family: inherit;
       font-size: 14px;
-      border: 1px solid #e8eaed;
-      border-radius: 8px;
-      background: #fff;
-      color: #202124;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
       cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    .select-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-ring);
     }
 
     .input-hint {
       font-size: 12px;
-      color: #5f6368;
-      margin-top: 6px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
       line-height: 1.4;
     }
 
-    /* Preset card styling */
+    /* Preset cards - matches options.css */
     .conclave-presets-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
 
     .preset-card {
       padding: 16px;
-      background: #f8f9fa;
-      border-radius: 12px;
-      border: 1px solid #e8eaed;
+      background: var(--color-bg-page);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
     }
 
     .preset-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .preset-name {
       font-weight: 600;
-      font-size: 15px;
-      color: #202124;
+      color: var(--color-text-primary);
     }
 
     .preset-dots {
@@ -102,15 +159,16 @@
 
     .preset-personas {
       font-size: 13px;
-      color: #5f6368;
-      margin-bottom: 12px;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
     }
 
     .preset-actions {
       display: flex;
-      gap: 8px;
+      gap: 4px;
     }
 
+    /* Button styles - match options.css */
     .btn {
       padding: 8px 14px;
       border-radius: 6px;
@@ -118,41 +176,43 @@
       font-weight: 500;
       cursor: pointer;
       border: none;
-      transition: all 0.15s;
+      font-family: inherit;
     }
 
     .btn-sm {
-      padding: 6px 12px;
+      padding: 4px 8px;
       font-size: 12px;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+      background: var(--gradient-primary);
       color: #fff;
     }
-    .btn-primary:hover { filter: brightness(1.05); }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
 
     .btn-secondary {
-      background: #fff;
-      color: #5f6368;
-      border: 1px solid #e8eaed;
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      border: 1px solid var(--color-border);
     }
-    .btn-secondary:hover { background: #f8f9fa; border-color: #dadce0; }
+
+    .btn-secondary:hover {
+      background: var(--color-border);
+      border-color: var(--color-border-light);
+    }
 
     .btn-danger {
       background: transparent;
-      color: #ea4335;
-      border: 1px solid #ea4335;
-    }
-    .btn-danger:hover { background: #ea4335; color: #fff; }
-
-    .api-key-section {
-      margin-bottom: 0;
+      color: var(--color-danger);
+      border: 1px solid var(--color-danger);
     }
 
-    .input-with-hint {
-      display: flex;
-      flex-direction: column;
+    .btn-danger:hover {
+      background: var(--color-danger);
+      color: white;
     }
   </style>
 </head>
@@ -171,7 +231,7 @@
           <select class="select-input">
             <option selected>Sales Closer</option>
             <option>Technical Expert</option>
-            <option>Legal & Compliance</option>
+            <option>Legal &amp; Compliance</option>
             <option>Discovery Coach</option>
           </select>
           <p class="input-hint">The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective.</p>
@@ -212,7 +272,7 @@
               <div class="preset-dot" style="background: #9b59b6;"></div>
             </div>
           </div>
-          <div class="preset-personas">Sales Closer, Technical Expert, Legal & Compliance</div>
+          <div class="preset-personas">Sales Closer, Technical Expert, Legal &amp; Compliance</div>
           <div class="preset-actions">
             <button class="btn btn-sm btn-primary">Activate</button>
             <button class="btn btn-sm btn-secondary">Edit</button>

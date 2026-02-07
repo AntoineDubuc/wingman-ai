@@ -15,6 +15,7 @@
 | File | Export | Purpose |
 |------|--------|---------|
 | `src/services/deepgram-client.ts` | `deepgramClient` | WebSocket STT (Nova-3) |
+| `src/services/hume-client.ts` | `humeClient` | WebSocket emotion detection (Expression Measurement API) |
 | `src/services/gemini-client.ts` | `geminiClient` | Multi-provider LLM client (Gemini, OpenRouter, Groq) for suggestions + embeddings + summaries |
 | `src/services/cost-tracker.ts` | `costTracker` | Session-scoped cost accumulator (Deepgram minutes + LLM tokens) |
 | `src/services/langbuilder-client.ts` | `langbuilderClient` | LangBuilder flow execution |
@@ -29,7 +30,7 @@
 
 | File | Purpose |
 |------|---------|
-| `src/content/overlay.ts` | Shadow DOM floating panel (transcripts, suggestions, summary, cost ticker) |
+| `src/content/overlay.ts` | Shadow DOM floating panel (transcripts, suggestions, summary, cost ticker, emotion badge) |
 | `src/content/audio-processor.worklet.js` | AudioWorklet: resample to 16kHz PCM16 |
 | `src/offscreen/audio-processor.js` | Tab audio capture AudioWorklet |
 
@@ -37,7 +38,7 @@
 
 | File | Purpose |
 |------|---------|
-| `src/options/sections/api-keys.ts` | API key inputs + provider selector (Gemini/OpenRouter/Groq) + model picker |
+| `src/options/sections/api-keys.ts` | API key inputs + provider selector (Gemini/OpenRouter/Groq) + Hume API key + model picker |
 | `src/options/sections/personas.ts` | Persona CRUD + KB document upload |
 | `src/options/sections/drive.ts` | Google Drive OAuth + format selection |
 | `src/options/sections/transcription.ts` | Deepgram endpointing + language settings + AI prompt tuning toggle |

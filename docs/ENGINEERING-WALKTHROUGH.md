@@ -54,40 +54,45 @@ Here's how data flows through the system:
 │  │  [Customer   │    │  │  Content    │   │  Service Worker  │ │   │
 │  │   talking]   │◄───┼──│  Script     │   │  (Background)    │ │   │
 │  │              │    │  │             │   │                  │ │   │
-│  │  ┌────────┐  │    │  │ • Mic capture│   │ • WebSocket     │ │   │
+│  │  ┌────────┐  │    │  │ • Mic capture│   │ • WebSocket×2   │ │   │
 │  │  │Overlay │  │    │  │ • Overlay UI │◄──│ • Message relay │ │   │
-│  │  │ Panel  │  │    │  └─────────────┘   └────────┬─────────┘ │   │
+│  │  │ Panel  │  │    │  │ • Emotion   │   │ • Parallel audio│ │   │
+│  │  │ +Badge │  │    │  └─────────────┘   └────────┬─────────┘ │   │
 │  │  └────────┘  │    │                             │      ▲     │   │
 │  └──────────────┘    │  ┌─────────────┐   ┌───────┴──────┴──┐ │   │
 │                      │  │ Options Page│──►│ chrome.storage  │ │   │
-│                      │  │ (Settings)  │   │ (Custom Prompt) │ │   │
+│                      │  │ (Settings)  │   │ (API Keys)      │ │   │
 │                      │  └─────────────┘   └─────────────────┘ │   │
 │                      └─────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────┼────────────────┘
-                                                     │ WebSocket
-                                                     │ + system prompt
+                                                     │ WebSocket (×2)
+                                                     │ Deepgram + Hume
                                                      ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         BACKEND SERVER                               │
+│                         EXTERNAL APIS (BYOK)                         │
 │                                                                      │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────────┐│
-│  │   FastAPI    │   │  Deepgram    │   │      Google Gemini       ││
-│  │  WebSocket   │──►│  (Speech to  │──►│   (AI Suggestions)       ││
-│  │   Handler    │   │   Text)      │   │   + Custom Prompt        ││
-│  └──────────────┘   └──────────────┘   │  ┌────────────────────┐  ││
-│                                         │  │   RAG Pipeline     │  ││
-│                                         │  │  (Knowledge Base)  │  ││
-│                                         │  └────────────────────┘  ││
-│                                         └──────────────────────────┘│
+│  │  Deepgram    │   │   Hume AI    │   │      LLM Providers       ││
+│  │  Nova-3 STT  │   │  Expression  │   │  • Gemini (default)      ││
+│  │  (WebSocket) │   │  Measurement │   │  • OpenRouter            ││
+│  └──────────────┘   │  (WebSocket) │   │  • Groq                  ││
+│         │           └──────────────┘   │  ┌────────────────────┐  ││
+│         │                  │           │  │   RAG Pipeline     │  ││
+│         ▼                  ▼           │  │  (Knowledge Base)  │  ││
+│    Transcripts        48 Emotions      │  └────────────────────┘  ││
+│                     → 4 States         └──────────────────────────┘│
+│                   (engaged/frustrated/                              │
+│                    thinking/neutral)                                │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key insight:** The system has three main "hops":
-1. **Browser → Backend**: Audio chunks over WebSocket
-2. **Backend → Deepgram**: Audio to text (external API)
-3. **Backend → LLM Provider**: Text to suggestions (Gemini, OpenRouter, or Groq)
+**Key insight:** The system has four main processing paths:
+1. **Browser → Deepgram**: Audio chunks over WebSocket → speech-to-text
+2. **Browser → Hume AI**: Audio chunks (WAV-wrapped) → emotion detection
+3. **Browser → LLM Provider**: Text to suggestions (Gemini, OpenRouter, or Groq)
+4. **Browser → Google Drive**: Transcript + summary save (post-call)
 
-Each hop adds latency, which is why we stream everything instead of waiting for complete data.
+Each hop adds latency, which is why we stream everything instead of waiting for complete data. Deepgram and Hume process audio in parallel.
 
 > **Note:** The current architecture is fully BYOK (Bring Your Own Keys) — no backend server required. The service worker connects directly to Deepgram via WebSocket and to the selected LLM provider via REST. The "backend server" sections below describe the original architecture for reference.
 

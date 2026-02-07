@@ -2,30 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mock Persona Editor</title>
+  <title>Mock Persona Editor - Dark Mode</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
-      background: #fef7f2;
-      padding: 24px;
+
+    /* Dark mode variables matching options.css [data-theme="dark"] */
+    :root {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-ring: rgba(243, 156, 18, 0.25);
+      --color-danger: #f87171;
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-bg-surface-glass: rgba(31, 41, 55, 0.75);
+      --color-border: #374151;
+      --color-border-light: #4b5563;
+      --gradient-primary: linear-gradient(135deg, #b45309, #d97706);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
     }
 
-    .options-card {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--color-bg-page) url('../../assets/header-banner.png') center/cover no-repeat fixed;
+      min-height: 100vh;
       padding: 24px;
-      max-width: 720px;
-      border: 1px solid rgba(232, 117, 10, 0.12);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      color: var(--color-text-primary);
+    }
+
+    /* Options card - matches options.css exactly */
+    .options-card {
+      background: var(--color-bg-surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      max-width: 800px;
     }
 
     .form-section-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
-      color: #202124;
-      margin-bottom: 20px;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
     }
 
     .form-group {
@@ -34,140 +61,166 @@
 
     .input-label {
       display: block;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      color: #202124;
+      color: var(--color-text-primary);
       margin-bottom: 8px;
     }
 
+    /* Text input - matches options.css */
     .text-input {
       width: 100%;
-      padding: 10px 14px;
+      max-width: 300px;
+      padding: 8px 16px;
+      font-family: inherit;
       font-size: 14px;
-      border: 1px solid #e8eaed;
-      border-radius: 8px;
-      background: #fff;
-      color: #202124;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
     }
 
     .text-input:focus {
       outline: none;
-      border-color: #e67e22;
-      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-ring);
     }
 
-    /* Color picker */
+    /* Color picker - matches options.css */
     .persona-color-picker {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
     }
 
-    .color-swatch {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
+    .persona-color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
       border: 2px solid transparent;
-      transition: all 0.15s;
-    }
-
-    .color-swatch:hover {
-      transform: scale(1.1);
-    }
-
-    .color-swatch.active {
-      border-color: #202124;
-      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #202124;
-    }
-
-    /* Prompt textarea */
-    .prompt-container {
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
       position: relative;
+    }
+
+    .persona-color-swatch:hover {
+      transform: scale(1.15);
+    }
+
+    .persona-color-swatch.selected {
+      border-color: var(--color-text-primary);
+    }
+
+    .persona-color-swatch.selected::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    /* Prompt textarea - matches options.css */
+    .prompt-container {
+      margin-bottom: 16px;
     }
 
     .prompt-textarea {
       width: 100%;
       min-height: 180px;
-      padding: 14px;
+      padding: 16px;
+      font-family: var(--font-mono);
       font-size: 13px;
-      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-      border: 1px solid #e8eaed;
-      border-radius: 8px;
-      background: #fff;
-      color: #202124;
-      resize: vertical;
       line-height: 1.6;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      resize: vertical;
     }
 
     .prompt-textarea:focus {
       outline: none;
-      border-color: #e67e22;
-      box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-ring);
     }
 
     .char-count {
-      text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
       font-size: 12px;
-      color: #5f6368;
-      margin-top: 6px;
+      color: var(--color-text-muted);
     }
 
-    /* KB Section */
+    /* KB Drop Zone - matches options.css */
     .kb-drop-zone {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      border: 2px dashed #e8eaed;
-      border-radius: 12px;
+      gap: 8px;
+      padding: 32px;
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.15s, background 0.15s, transform 0.15s;
       margin-bottom: 16px;
     }
 
     .kb-drop-zone:hover {
-      border-color: #e67e22;
-      background: rgba(232, 117, 10, 0.04);
+      border-color: var(--color-primary);
+      background: var(--color-primary-ring);
+      transform: translateY(-2px);
     }
 
     .kb-drop-icon {
-      color: #9aa0a6;
-      margin-bottom: 8px;
+      color: var(--color-text-muted);
+    }
+
+    .kb-drop-icon svg {
+      stroke: var(--color-text-muted);
     }
 
     .kb-drop-text {
       font-size: 14px;
-      color: #5f6368;
-      margin-bottom: 4px;
+      font-weight: 500;
+      color: var(--color-text-primary);
     }
 
     .kb-drop-hint {
       font-size: 12px;
-      color: #9aa0a6;
+      color: var(--color-text-muted);
     }
 
-    /* KB Document List */
+    /* KB Document List - matches options.css */
     .kb-doc-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
+      margin-top: 16px;
     }
 
     .kb-doc-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #e8eaed;
+      gap: 16px;
+      padding: 16px;
+      background: var(--color-bg-page);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .kb-doc-item:hover {
+      transform: translateX(2px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
 
     .kb-doc-icon {
-      font-size: 20px;
+      font-size: 24px;
+      flex-shrink: 0;
+      color: var(--color-text-muted);
     }
 
     .kb-doc-info {
@@ -176,74 +229,114 @@
     }
 
     .kb-doc-name {
-      font-size: 13px;
+      display: block;
+      font-size: 14px;
       font-weight: 500;
-      color: #202124;
+      color: var(--color-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .kb-doc-meta {
-      font-size: 11px;
-      color: #5f6368;
+      display: block;
+      font-size: 12px;
+      color: var(--color-text-muted);
       margin-top: 2px;
     }
 
-    .kb-doc-remove {
-      width: 28px;
-      height: 28px;
-      border: none;
+    .kb-doc-delete {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
       background: transparent;
-      color: #9aa0a6;
+      border: 1px solid transparent;
+      border-radius: 4px;
       cursor: pointer;
-      border-radius: 6px;
-      font-size: 16px;
-      transition: all 0.15s;
+      font-size: 14px;
+      color: var(--color-text-muted);
+      flex-shrink: 0;
     }
 
-    .kb-doc-remove:hover {
-      background: #fce8e6;
-      color: #ea4335;
+    .kb-doc-delete:hover {
+      background: rgba(234, 67, 53, 0.1);
+      border-color: var(--color-danger);
+      color: var(--color-danger);
     }
 
-    /* Button row */
+    /* Button row - matches options.css */
     .button-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
       margin-top: 24px;
       padding-top: 20px;
-      border-top: 1px solid #e8eaed;
+      border-top: 1px solid var(--color-border);
     }
 
     .button-group {
       display: flex;
-      gap: 8px;
+      gap: 16px;
     }
 
-    .btn {
-      padding: 10px 18px;
-      border-radius: 8px;
+    /* Buttons - match options.css */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 24px;
+      min-width: 140px;
+      font-family: inherit;
       font-size: 14px;
       font-weight: 500;
-      cursor: pointer;
+      color: #ffffff;
+      background: var(--gradient-primary);
       border: none;
-      transition: all 0.15s;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-      color: #fff;
+    .btn-primary:hover {
+      filter: brightness(1.1);
     }
 
     .btn-secondary {
-      background: #fff;
-      color: #5f6368;
-      border: 1px solid #e8eaed;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 24px;
+      min-width: 140px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+      background: rgba(234, 67, 53, 0.05);
     }
 
     .btn-danger {
-      background: transparent;
-      color: #ea4335;
-      border: 1px solid #ea4335;
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--color-danger);
+      color: #ffffff;
     }
   </style>
 </head>
@@ -259,14 +352,14 @@
     <div class="form-group">
       <label class="input-label">Color tag</label>
       <div class="persona-color-picker">
-        <div class="color-swatch active" style="background: #e74c3c;"></div>
-        <div class="color-swatch" style="background: #3498db;"></div>
-        <div class="color-swatch" style="background: #9b59b6;"></div>
-        <div class="color-swatch" style="background: #27ae60;"></div>
-        <div class="color-swatch" style="background: #f39c12;"></div>
-        <div class="color-swatch" style="background: #1abc9c;"></div>
-        <div class="color-swatch" style="background: #e91e63;"></div>
-        <div class="color-swatch" style="background: #607d8b;"></div>
+        <div class="persona-color-swatch selected" style="background: #e74c3c;"></div>
+        <div class="persona-color-swatch" style="background: #3498db;"></div>
+        <div class="persona-color-swatch" style="background: #9b59b6;"></div>
+        <div class="persona-color-swatch" style="background: #27ae60;"></div>
+        <div class="persona-color-swatch" style="background: #f39c12;"></div>
+        <div class="persona-color-swatch" style="background: #1abc9c;"></div>
+        <div class="persona-color-swatch" style="background: #e91e63;"></div>
+        <div class="persona-color-swatch" style="background: #607d8b;"></div>
       </div>
     </div>
 
@@ -307,39 +400,39 @@ WHEN TO STAY SILENT (respond with "---"):
 
       <div class="kb-doc-list">
         <div class="kb-doc-item">
-          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <span class="kb-doc-icon">&#128196;</span>
           <div class="kb-doc-info">
             <div class="kb-doc-name">pricing-guide-2024.pdf</div>
-            <div class="kb-doc-meta">24 sections · 156 KB</div>
+            <div class="kb-doc-meta">24 sections - 156 KB</div>
           </div>
-          <button class="kb-doc-remove">×</button>
+          <button class="kb-doc-delete">&#215;</button>
         </div>
         <div class="kb-doc-item">
-          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <span class="kb-doc-icon">&#128196;</span>
           <div class="kb-doc-info">
             <div class="kb-doc-name">objection-handling-playbook.md</div>
-            <div class="kb-doc-meta">18 sections · 42 KB</div>
+            <div class="kb-doc-meta">18 sections - 42 KB</div>
           </div>
-          <button class="kb-doc-remove">×</button>
+          <button class="kb-doc-delete">&#215;</button>
         </div>
         <div class="kb-doc-item">
-          <img src="../../assets/icons/icon-document.png" class="kb-doc-icon" width="20" height="20" alt="">
+          <span class="kb-doc-icon">&#128196;</span>
           <div class="kb-doc-info">
             <div class="kb-doc-name">competitor-battlecards.pdf</div>
-            <div class="kb-doc-meta">31 sections · 203 KB</div>
+            <div class="kb-doc-meta">31 sections - 203 KB</div>
           </div>
-          <button class="kb-doc-remove">×</button>
+          <button class="kb-doc-delete">&#215;</button>
         </div>
       </div>
     </div>
 
     <div class="button-row">
-      <button class="btn btn-secondary">Cancel</button>
+      <button class="btn-secondary">Cancel</button>
       <div class="button-group">
-        <button class="btn btn-secondary">Export</button>
-        <button class="btn btn-secondary">Duplicate</button>
-        <button class="btn btn-danger">Delete</button>
-        <button class="btn btn-primary">Save</button>
+        <button class="btn-secondary">Export</button>
+        <button class="btn-secondary">Duplicate</button>
+        <button class="btn-secondary btn-danger">Delete</button>
+        <button class="btn-primary">Save</button>
       </div>
     </div>
   </div>

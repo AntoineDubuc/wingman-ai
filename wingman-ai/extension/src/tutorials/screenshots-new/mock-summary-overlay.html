@@ -2,198 +2,329 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mock Summary Overlay States</title>
+  <title>Mock Summary Overlay States - Dark Mode</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Dark mode variables matching overlay.css :host(.dark) */
+    :root {
+      --overlay-bg: #1f2937;
+      --overlay-bg-secondary: #374151;
+      --overlay-bg-tertiary: #4b5563;
+      --overlay-text: #f3f4f6;
+      --overlay-text-secondary: #9ca3af;
+      --overlay-text-muted: #6b7280;
+      --overlay-border: #4b5563;
+      --overlay-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --header-gradient: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f3f4f6;
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #111827 url('../../assets/header-banner.png') center/cover no-repeat fixed;
+      min-height: 100vh;
       padding: 24px;
       display: flex;
       flex-wrap: wrap;
       gap: 24px;
     }
+
     .state-container {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .state-label {
       font-size: 12px;
-      color: #6b7280;
+      color: var(--overlay-text-muted);
       text-align: center;
     }
+
+    /* Overlay panel - matches overlay.css exactly */
     .overlay {
-      width: 340px;
-      background: #2d3748;
+      width: 350px;
+      background: var(--overlay-bg);
       border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: var(--overlay-shadow);
       overflow: hidden;
-      color: #fff;
+      display: flex;
+      flex-direction: column;
     }
+
+    /* Header - matches overlay.css */
     .overlay-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid #4a5568;
+      padding: 8px 12px;
+      background: var(--header-gradient);
+      color: white;
+      flex-shrink: 0;
     }
-    .overlay-title {
-      font-size: 16px;
-      font-weight: 600;
-    }
-    .header-actions {
+
+    .drag-handle {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .status-dot {
+
+    .status-indicator {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #48bb78;
+      background: #34a853;
+      flex-shrink: 0;
     }
-    .status-dot.loading {
-      background: #ed8936;
-      animation: pulse 1.5s infinite;
+
+    .status-indicator.loading {
+      background: #f59e0b;
+      animation: statusPulse 2s ease-in-out infinite;
     }
-    @keyframes pulse {
+
+    .status-indicator.purple {
+      background: #8b5cf6;
+    }
+
+    @keyframes statusPulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
-    .close-btn {
-      width: 24px;
-      height: 24px;
-      border: none;
+
+    .title {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .controls button {
       background: transparent;
-      color: #a0aec0;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
-      font-size: 18px;
+      padding: 4px;
       border-radius: 4px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
     }
-    .close-btn:hover { background: #4a5568; }
-    .overlay-content {
-      padding: 20px;
+
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
     }
-    .section-label {
-      font-size: 11px;
+
+    /* Post-call toggle - matches overlay.css */
+    .post-call-toggle {
+      display: flex;
+      gap: 0;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--overlay-border);
+      background: var(--overlay-bg);
+      flex-shrink: 0;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 5px 12px;
+      border: 1px solid var(--overlay-border);
+      background: var(--overlay-bg);
+      color: var(--overlay-text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+    .toggle-btn:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+
+    .toggle-btn.active {
+      background: var(--overlay-bg-tertiary);
+      color: var(--overlay-text);
       font-weight: 600;
-      color: #ed8936;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    }
+
+    /* Summary content - matches overlay.css */
+    .summary {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px;
+    }
+
+    .summary-section {
       margin-bottom: 12px;
     }
-    .summary-list {
-      list-style: disc;
-      padding-left: 20px;
-      margin-bottom: 20px;
+
+    .summary-section h3 {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--overlay-text-secondary);
+      margin: 0 0 8px 0;
     }
-    .summary-list li {
+
+    .summary-bullets {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .summary-bullets li {
+      color: var(--overlay-text);
+      padding: 4px 0;
+      line-height: 1.5;
       font-size: 13px;
-      color: #e2e8f0;
-      margin-bottom: 6px;
-      line-height: 1.4;
     }
-    .action-items {
-      margin-bottom: 20px;
+
+    .summary-bullets li::before {
+      content: "\2022";
+      color: var(--overlay-text-secondary);
+      margin-right: 8px;
     }
+
+    /* Action items - matches overlay.css */
     .action-item {
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 8px;
+      padding: 6px 0;
     }
-    .action-tag {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 6px;
+
+    .owner-badge {
+      display: inline-block;
+      padding: 1px 6px;
       border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
       flex-shrink: 0;
+      margin-top: 2px;
     }
-    .action-tag.you {
-      background: #ed8936;
-      color: #fff;
-    }
-    .action-tag.them {
-      background: #4a5568;
-      color: #e2e8f0;
-    }
+
+    .owner-badge.you { background: #e67e22; color: #fff; }
+    .owner-badge.them { background: #3b82f6; color: #fff; }
+
     .action-text {
+      color: var(--overlay-text);
+      line-height: 1.5;
       font-size: 13px;
-      color: #e2e8f0;
-      line-height: 1.4;
     }
-    .moments-section {
-      margin-bottom: 16px;
-    }
-    .moments-header {
+
+    /* Key moments - matches overlay.css */
+    .key-moments-toggle {
       display: flex;
       align-items: center;
       gap: 6px;
       cursor: pointer;
-      margin-bottom: 8px;
+      user-select: none;
+      padding: 4px 0;
     }
-    .moments-arrow {
+
+    .key-moments-toggle h3 { margin: 0; cursor: pointer; }
+
+    .key-moments-arrow {
       font-size: 10px;
-      color: #a0aec0;
+      color: var(--overlay-text-secondary);
+      transition: transform 0.2s;
     }
-    .moments-list {
-      padding-left: 16px;
+
+    .key-moments-arrow.expanded { transform: rotate(90deg); }
+
+    .key-moments-list {
+      display: none;
+      padding: 0;
+      margin: 0;
     }
-    .moment-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .moment-bar {
-      width: 3px;
-      height: 100%;
-      min-height: 16px;
-      border-radius: 2px;
-    }
-    .moment-bar.orange { background: #ed8936; }
-    .moment-bar.blue { background: #4299e1; }
-    .moment-bar.green { background: #48bb78; }
-    .moment-text {
-      font-size: 13px;
-      color: #e2e8f0;
-      font-style: italic;
-      line-height: 1.4;
-    }
-    .overlay-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 20px;
-      border-top: 1px solid #4a5568;
-    }
-    .copy-btn {
-      padding: 8px 16px;
-      background: #4a5568;
-      color: #fff;
-      border: none;
+
+    .key-moments-list.expanded { display: block; }
+
+    .key-moment {
+      padding: 8px 12px;
+      margin: 4px 0;
       border-radius: 6px;
+      background: var(--overlay-bg-secondary);
+      border-left: 3px solid #9ca3af;
+      color: var(--overlay-text);
+      font-style: italic;
+      line-height: 1.5;
       font-size: 13px;
-      font-weight: 500;
+    }
+
+    .key-moment.signal { border-left-color: #22c55e; }
+    .key-moment.objection { border-left-color: #ef4444; }
+    .key-moment.decision { border-left-color: #3b82f6; }
+
+    /* Footer - matches overlay.css */
+    .summary-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-top: 1px solid var(--overlay-border);
+      background: var(--overlay-bg);
+      flex-shrink: 0;
+    }
+
+    .copy-btn {
+      background: var(--overlay-bg-secondary);
+      border: 1px solid var(--overlay-border);
+      color: var(--overlay-text);
+      padding: 5px 14px;
+      border-radius: 6px;
       cursor: pointer;
-    }
-    .copy-btn:hover { background: #5a6b7c; }
-    .copy-btn.copied {
-      background: #48bb78;
-    }
-    .drive-status {
       font-size: 12px;
-      color: #ed8936;
+      font-weight: 500;
+      font-family: inherit;
     }
+
+    .copy-btn:hover { background: var(--overlay-bg-tertiary); }
+
+    .copy-btn.copied {
+      background: #4ade80;
+      color: #111827;
+      border-color: #4ade80;
+    }
+
+    .drive-status {
+      font-size: 11px;
+      color: var(--overlay-text-secondary);
+    }
+
     /* Loading state */
-    .loading-content {
+    .loading-pulse {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 40px 20px;
-      text-align: center;
-    }
-    .loading-text {
+      color: var(--overlay-text-secondary);
       font-size: 14px;
-      color: #a0aec0;
+    }
+
+    .loading-pulse::after {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-left: 8px;
+      border-radius: 50%;
+      background: var(--overlay-text-secondary);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
     }
   </style>
 </head>
@@ -204,13 +335,13 @@
     <div class="state-label">01 - Loading State</div>
     <div class="overlay">
       <div class="overlay-header">
-        <span class="overlay-title">Generating Summary...</span>
-        <div class="header-actions">
-          <div class="status-dot loading"></div>
+        <div class="drag-handle">
+          <span class="status-indicator loading"></span>
+          <span class="title">Generating Summary...</span>
         </div>
       </div>
-      <div class="loading-content">
-        <p class="loading-text">Analyzing your conversation...</p>
+      <div class="summary">
+        <div class="loading-pulse">Analyzing your conversation</div>
       </div>
     </div>
   </div>
@@ -220,268 +351,231 @@
     <div class="state-label">02 - Summary Card</div>
     <div class="overlay">
       <div class="overlay-header">
-        <span class="overlay-title">Call Summary</span>
-        <div class="header-actions">
-          <div class="status-dot"></div>
-          <button class="close-btn">&times;</button>
+        <div class="drag-handle">
+          <span class="status-indicator purple"></span>
+          <span class="title">Call Summary</span>
+        </div>
+        <div class="controls">
+          <button>&#8722;</button>
+          <button>&#215;</button>
         </div>
       </div>
-      <div class="overlay-content">
-        <div class="section-label">Summary</div>
-        <ul class="summary-list">
-          <li>Discussed enterprise plan pricing at $50/seat/month</li>
-          <li>Prospect confirmed Q2 budget approval</li>
-          <li>Agreed on follow-up call with CTO next week</li>
-        </ul>
-        <div class="section-label">Action Items</div>
-        <div class="action-items">
+      <div class="post-call-toggle">
+        <button class="toggle-btn active">Summary</button>
+        <button class="toggle-btn">Timeline</button>
+      </div>
+      <div class="summary">
+        <div class="summary-section">
+          <h3>Summary</h3>
+          <ul class="summary-bullets">
+            <li>Discussed enterprise plan pricing at $50/seat/month</li>
+            <li>Prospect confirmed Q2 budget approval</li>
+            <li>Agreed on follow-up call with CTO next week</li>
+          </ul>
+        </div>
+        <div class="summary-section">
+          <h3>Action Items</h3>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Send detailed pricing quote by Friday</span>
           </div>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Share SOC2 compliance report</span>
           </div>
           <div class="action-item">
-            <span class="action-tag them">THEM</span>
+            <span class="owner-badge them">THEM</span>
             <span class="action-text">Loop in CTO for technical deep-dive</span>
           </div>
         </div>
-        <div class="moments-section">
-          <div class="moments-header">
-            <span class="moments-arrow">&#9654;</span>
-            <span class="section-label" style="margin-bottom: 0;">Key Moments (3)</span>
+        <div class="summary-section">
+          <div class="key-moments-toggle">
+            <span class="key-moments-arrow">&#9654;</span>
+            <h3>Key Moments (3)</h3>
           </div>
         </div>
       </div>
-      <div class="overlay-footer">
+      <div class="summary-footer">
         <button class="copy-btn">Copy</button>
       </div>
     </div>
   </div>
 
-  <!-- State 3: Action Items focus -->
+  <!-- State 3: Key Moments Expanded -->
   <div class="state-container">
-    <div class="state-label">03 - Action Items</div>
+    <div class="state-label">03 - Key Moments Expanded</div>
     <div class="overlay">
       <div class="overlay-header">
-        <span class="overlay-title">Call Summary</span>
-        <div class="header-actions">
-          <div class="status-dot"></div>
-          <button class="close-btn">&times;</button>
+        <div class="drag-handle">
+          <span class="status-indicator purple"></span>
+          <span class="title">Call Summary</span>
+        </div>
+        <div class="controls">
+          <button>&#8722;</button>
+          <button>&#215;</button>
         </div>
       </div>
-      <div class="overlay-content">
-        <div class="section-label">Summary</div>
-        <ul class="summary-list">
-          <li>Discussed enterprise plan pricing at $50/seat/month</li>
-          <li>Prospect confirmed Q2 budget approval</li>
-          <li>Agreed on follow-up call with CTO next week</li>
-        </ul>
-        <div class="section-label">Action Items</div>
-        <div class="action-items" style="background: rgba(237, 137, 54, 0.1); padding: 12px; margin: -8px; margin-bottom: 12px; border-radius: 8px;">
+      <div class="post-call-toggle">
+        <button class="toggle-btn active">Summary</button>
+        <button class="toggle-btn">Timeline</button>
+      </div>
+      <div class="summary">
+        <div class="summary-section">
+          <h3>Summary</h3>
+          <ul class="summary-bullets">
+            <li>Discussed enterprise plan pricing at $50/seat/month</li>
+            <li>Prospect confirmed Q2 budget approval</li>
+            <li>Agreed on follow-up call with CTO next week</li>
+          </ul>
+        </div>
+        <div class="summary-section">
+          <h3>Action Items</h3>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Send detailed pricing quote by Friday</span>
           </div>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Share SOC2 compliance report</span>
           </div>
           <div class="action-item">
-            <span class="action-tag them">THEM</span>
+            <span class="owner-badge them">THEM</span>
             <span class="action-text">Loop in CTO for technical deep-dive</span>
           </div>
         </div>
-        <div class="moments-section">
-          <div class="moments-header">
-            <span class="moments-arrow">&#9654;</span>
-            <span class="section-label" style="margin-bottom: 0;">Key Moments (3)</span>
+        <div class="summary-section">
+          <div class="key-moments-toggle">
+            <span class="key-moments-arrow expanded">&#9654;</span>
+            <h3>Key Moments (3)</h3>
+          </div>
+          <div class="key-moments-list expanded">
+            <div class="key-moment signal">"We have budget approved for Q2"</div>
+            <div class="key-moment objection">"We are also evaluating Competitor X"</div>
+            <div class="key-moment decision">"Let's schedule the CTO call for next Tuesday"</div>
           </div>
         </div>
       </div>
-      <div class="overlay-footer">
+      <div class="summary-footer">
         <button class="copy-btn">Copy</button>
       </div>
     </div>
   </div>
 
-  <!-- State 4: Key Moments Expanded -->
+  <!-- State 4: Copied feedback -->
   <div class="state-container">
-    <div class="state-label">04 - Key Moments Expanded</div>
+    <div class="state-label">04 - Copied Feedback</div>
     <div class="overlay">
       <div class="overlay-header">
-        <span class="overlay-title">Call Summary</span>
-        <div class="header-actions">
-          <div class="status-dot"></div>
-          <button class="close-btn">&times;</button>
+        <div class="drag-handle">
+          <span class="status-indicator purple"></span>
+          <span class="title">Call Summary</span>
+        </div>
+        <div class="controls">
+          <button>&#8722;</button>
+          <button>&#215;</button>
         </div>
       </div>
-      <div class="overlay-content">
-        <div class="section-label">Summary</div>
-        <ul class="summary-list">
-          <li>Discussed enterprise plan pricing at $50/seat/month</li>
-          <li>Prospect confirmed Q2 budget approval</li>
-          <li>Agreed on follow-up call with CTO next week</li>
-        </ul>
-        <div class="section-label">Action Items</div>
-        <div class="action-items">
+      <div class="post-call-toggle">
+        <button class="toggle-btn active">Summary</button>
+        <button class="toggle-btn">Timeline</button>
+      </div>
+      <div class="summary">
+        <div class="summary-section">
+          <h3>Summary</h3>
+          <ul class="summary-bullets">
+            <li>Discussed enterprise plan pricing at $50/seat/month</li>
+            <li>Prospect confirmed Q2 budget approval</li>
+            <li>Agreed on follow-up call with CTO next week</li>
+          </ul>
+        </div>
+        <div class="summary-section">
+          <h3>Action Items</h3>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Send detailed pricing quote by Friday</span>
           </div>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Share SOC2 compliance report</span>
           </div>
           <div class="action-item">
-            <span class="action-tag them">THEM</span>
+            <span class="owner-badge them">THEM</span>
             <span class="action-text">Loop in CTO for technical deep-dive</span>
           </div>
         </div>
-        <div class="moments-section">
-          <div class="moments-header">
-            <span class="moments-arrow">&#9660;</span>
-            <span class="section-label" style="margin-bottom: 0;">Key Moments (3)</span>
+        <div class="summary-section">
+          <div class="key-moments-toggle">
+            <span class="key-moments-arrow expanded">&#9654;</span>
+            <h3>Key Moments (3)</h3>
           </div>
-          <div class="moments-list">
-            <div class="moment-item">
-              <div class="moment-bar orange"></div>
-              <span class="moment-text">"We have budget approved for Q2"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar blue"></div>
-              <span class="moment-text">"We are also evaluating Competitor X"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar green"></div>
-              <span class="moment-text">"Let's schedule the CTO call for next Tuesday"</span>
-            </div>
+          <div class="key-moments-list expanded">
+            <div class="key-moment signal">"We have budget approved for Q2"</div>
+            <div class="key-moment objection">"We are also evaluating Competitor X"</div>
+            <div class="key-moment decision">"Let's schedule the CTO call for next Tuesday"</div>
           </div>
         </div>
       </div>
-      <div class="overlay-footer">
-        <button class="copy-btn">Copy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- State 5: Copied feedback -->
-  <div class="state-container">
-    <div class="state-label">05 - Copied Feedback</div>
-    <div class="overlay">
-      <div class="overlay-header">
-        <span class="overlay-title">Call Summary</span>
-        <div class="header-actions">
-          <div class="status-dot"></div>
-          <button class="close-btn">&times;</button>
-        </div>
-      </div>
-      <div class="overlay-content">
-        <div class="section-label">Summary</div>
-        <ul class="summary-list">
-          <li>Discussed enterprise plan pricing at $50/seat/month</li>
-          <li>Prospect confirmed Q2 budget approval</li>
-          <li>Agreed on follow-up call with CTO next week</li>
-        </ul>
-        <div class="section-label">Action Items</div>
-        <div class="action-items">
-          <div class="action-item">
-            <span class="action-tag you">YOU</span>
-            <span class="action-text">Send detailed pricing quote by Friday</span>
-          </div>
-          <div class="action-item">
-            <span class="action-tag you">YOU</span>
-            <span class="action-text">Share SOC2 compliance report</span>
-          </div>
-          <div class="action-item">
-            <span class="action-tag them">THEM</span>
-            <span class="action-text">Loop in CTO for technical deep-dive</span>
-          </div>
-        </div>
-        <div class="moments-section">
-          <div class="moments-header">
-            <span class="moments-arrow">&#9660;</span>
-            <span class="section-label" style="margin-bottom: 0;">Key Moments (3)</span>
-          </div>
-          <div class="moments-list">
-            <div class="moment-item">
-              <div class="moment-bar orange"></div>
-              <span class="moment-text">"We have budget approved for Q2"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar blue"></div>
-              <span class="moment-text">"We are also evaluating Competitor X"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar green"></div>
-              <span class="moment-text">"Let's schedule the CTO call for next Tuesday"</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="overlay-footer">
+      <div class="summary-footer">
         <button class="copy-btn copied">Copied!</button>
       </div>
     </div>
   </div>
 
-  <!-- State 6: With Drive status -->
+  <!-- State 5: With Drive status -->
   <div class="state-container">
-    <div class="state-label">06 - Saved to Drive</div>
+    <div class="state-label">05 - Saved to Drive</div>
     <div class="overlay">
       <div class="overlay-header">
-        <span class="overlay-title">Call Summary</span>
-        <div class="header-actions">
-          <div class="status-dot"></div>
-          <button class="close-btn">&times;</button>
+        <div class="drag-handle">
+          <span class="status-indicator purple"></span>
+          <span class="title">Call Summary</span>
+        </div>
+        <div class="controls">
+          <button>&#8722;</button>
+          <button>&#215;</button>
         </div>
       </div>
-      <div class="overlay-content">
-        <div class="section-label">Summary</div>
-        <ul class="summary-list">
-          <li>Discussed enterprise plan pricing at $50/seat/month</li>
-          <li>Prospect confirmed Q2 budget approval</li>
-          <li>Agreed on follow-up call with CTO next week</li>
-        </ul>
-        <div class="section-label">Action Items</div>
-        <div class="action-items">
+      <div class="post-call-toggle">
+        <button class="toggle-btn active">Summary</button>
+        <button class="toggle-btn">Timeline</button>
+      </div>
+      <div class="summary">
+        <div class="summary-section">
+          <h3>Summary</h3>
+          <ul class="summary-bullets">
+            <li>Discussed enterprise plan pricing at $50/seat/month</li>
+            <li>Prospect confirmed Q2 budget approval</li>
+            <li>Agreed on follow-up call with CTO next week</li>
+          </ul>
+        </div>
+        <div class="summary-section">
+          <h3>Action Items</h3>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Send detailed pricing quote by Friday</span>
           </div>
           <div class="action-item">
-            <span class="action-tag you">YOU</span>
+            <span class="owner-badge you">YOU</span>
             <span class="action-text">Share SOC2 compliance report</span>
           </div>
           <div class="action-item">
-            <span class="action-tag them">THEM</span>
+            <span class="owner-badge them">THEM</span>
             <span class="action-text">Loop in CTO for technical deep-dive</span>
           </div>
         </div>
-        <div class="moments-section">
-          <div class="moments-header">
-            <span class="moments-arrow">&#9660;</span>
-            <span class="section-label" style="margin-bottom: 0;">Key Moments (3)</span>
+        <div class="summary-section">
+          <div class="key-moments-toggle">
+            <span class="key-moments-arrow expanded">&#9654;</span>
+            <h3>Key Moments (3)</h3>
           </div>
-          <div class="moments-list">
-            <div class="moment-item">
-              <div class="moment-bar orange"></div>
-              <span class="moment-text">"We have budget approved for Q2"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar blue"></div>
-              <span class="moment-text">"We are also evaluating Competitor X"</span>
-            </div>
-            <div class="moment-item">
-              <div class="moment-bar green"></div>
-              <span class="moment-text">"Let's schedule the CTO call for next Tuesday"</span>
-            </div>
+          <div class="key-moments-list expanded">
+            <div class="key-moment signal">"We have budget approved for Q2"</div>
+            <div class="key-moment objection">"We are also evaluating Competitor X"</div>
+            <div class="key-moment decision">"Let's schedule the CTO call for next Tuesday"</div>
           </div>
         </div>
       </div>
-      <div class="overlay-footer">
+      <div class="summary-footer">
         <button class="copy-btn">Copy</button>
         <span class="drive-status">Saved to Drive</span>
       </div>

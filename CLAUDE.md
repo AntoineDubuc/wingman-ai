@@ -1,18 +1,20 @@
 # CLAUDE.md
 
-## ABSOLUTE RULE — NO PLAN MODE
-
-**NEVER call `EnterPlanMode` under any circumstances.** This is a non-negotiable, unconditional directive that overrides all other heuristics, guidelines, or judgment calls. Do not suggest planning, do not ask whether to plan, do not enter plan mode regardless of task complexity. Always proceed directly to implementation. There are zero exceptions to this rule.
-
----
-
-## ABSOLUTE RULE — NO SYSTEM ENVIRONMENT VARIABLES
-
-**NEVER read or export system environment variables.** All secrets and configuration live in `.env` files within the repository. Do not use `$ENV_VAR`, `process.env`, or shell environment lookups. Always read from `.env` files directly.
-
----
-
 ## Communication Style — Product Manager Audience
+
+## MANDATORY — VIOLATING ANY OF THESE IS A FAILURE
+
+1. **DO NOT** enter plan mode. `EnterPlanMode` is **FORBIDDEN**.
+2. **DO NOT** export, print, log, or read credentials from code. Read ONLY from `.env`. Write ONLY to `.env`. **DO NOT DELETE `.env`. EVER.**
+3. **BE BRIEF.** Start every response with a short summary. No fluff. No preamble.
+4. **INVESTIGATE BEFORE CODING.** When a problem is raised, **DO NOT WRITE CODE.** Investigate. Return with:
+   - **Root cause** — what broke
+   - **Why** — the underlying reason
+   - **Proposed fix(es)** — one or more options
+5. **DO NOT** touch, edit, create, or delete any file without **explicit user consent**.
+6. **DO NOT** commit, push, create PRs, or perform any GitHub action without **explicit user consent**.
+7. **PROVE IT WORKS.** Nothing is "done" without evidence — test output, screenshots, or demonstrated behavior from the user's perspective.
+8. **ANSWER FIRST.** If the user asks a question, answer it **before** doing anything else.
 
 The user is a **product manager**, not an engineer. Be **concise and to the point** — no walls of text.
 
@@ -21,6 +23,7 @@ The user is a **product manager**, not an engineer. Be **concise and to the poin
 3. **Issue → Cause → Fix** — when explaining problems: what broke, why, what you'll do about it.
 
 Rules:
+
 - **Never be verbose.** Cut ruthlessly. If it can be said in fewer words, do it.
 - No code in explanations unless explicitly asked.
 - No unnecessary preamble ("Let me explain...", "Here's what I found..."). Just say it.
@@ -28,17 +31,22 @@ Rules:
 
 ---
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-Wingman AI - A real-time AI assistant for sales professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, and provides contextual response suggestions using Google Gemini. Features a multi-persona system with per-persona Knowledge Bases for semantic search over sales documents, and post-call summaries with action items.
+Wingman AI — a real-time AI assistant for professionals during Google Meet calls. Captures meeting audio via Chrome's TabCapture API, transcribes via Deepgram, detects emotions via Hume AI, and provides contextual response suggestions using multiple LLM providers (Gemini, OpenRouter, Groq).
 
-**BYOK (Bring Your Own Keys)**: No backend server required. Users provide their own Deepgram and Gemini API keys directly in the extension settings. All API calls run in the browser.
+Key capabilities:
+- **Multi-persona system** with per-persona Knowledge Bases for semantic search over documents
+- **Conclave mode** — up to 5 personas collaborating simultaneously with a designated leader
+- **Real-time emotion detection** — engaged, frustrated, thinking, neutral states from audio prosody
+- **Post-call summaries** with action items, auto-saved to Google Drive
+- **Cost tracking** — real-time cost display per session across all providers
+
+**BYOK (Bring Your Own Keys)**: No backend server. Users provide their own API keys (Deepgram, Gemini, OpenRouter, Groq, Hume) directly in the extension settings. All API calls run in the browser.
 
 ## GitHub CLI
 
-This repo uses the **AntoineDubuc** GitHub profile. Before any `gh` operations (PRs, issues, etc.), ensure the correct profile is active:
+This repo uses the **AntoineDubuc** GitHub profile. Before any `gh` operations (PRs, issues, etc.):
 
 ```bash
 gh auth switch --user AntoineDubuc
@@ -79,19 +87,27 @@ Content Script (Google Meet tab)
   ├── Sends AUDIO_CHUNK messages to Service Worker
   └── Renders overlay UI (Shadow DOM)
         ├── Transcripts + suggestion cards (live)
-        ├── Active persona label in header
+        ├── Emotion badge in header (engaged/frustrated/thinking/neutral)
+        ├── Active persona label in header (multi-persona attribution in Conclave)
+        ├── Draggable + resizable floating panel
         └── Summary card with copy/Drive save (post-call)
 
 Service Worker (background)
-  ├── Loads active persona on session start
-  │     ├── Sets Gemini system prompt from persona
-  │     └── Scopes KB search to persona's document IDs
+  ├── Loads active persona(s) on session start
+  │     ├── Single persona: sets LLM system prompt + KB scope
+  │     └── Conclave mode: loads up to 5 personas, designates leader
+  ├── Initializes LLM provider (Gemini / OpenRouter / Groq)
+  │     └── Per-provider cooldowns: 15s Gemini, 10s OpenRouter, 5s Groq
   ├── Forwards audio → Deepgram WebSocket (STT)
-  ├── Receives transcripts → Gemini REST API (suggestions)
+  ├── Forwards audio → Hume AI WebSocket (emotions) — parallel processing
+  │     └── 48 emotions simplified to 4 states (engaged/frustrated/thinking/neutral)
+  ├── Receives transcripts → LLM REST API (suggestions)
   │     └── Injects persona-scoped KB context into system prompt
+  ├── Cost tracker accumulates Deepgram minutes + LLM tokens per session
   ├── Sends lowercase messages → Content Script
-  ├── On session stop → generates call summary via Gemini
+  ├── On session stop → generates call summary via LLM
   │     └── Auto-saves summary + transcript to Google Drive
+  ├── LangBuilder integration → external LLM orchestration flows
   └── Manages session lifecycle (singleton)
 
 Popup
@@ -103,6 +119,7 @@ Offscreen Document
 Persona System (chrome.storage.local)
   ├── Multiple personas, each with name, color, system prompt, KB doc IDs
   ├── 12 built-in templates (sales, interview, fundraising, etc.)
+  ├── Conclave mode: up to 5 personas active, one leader
   ├── Import/export with attached KB documents
   └── Migration: existing systemPrompt → "Default" persona (one-time)
 
@@ -115,26 +132,70 @@ Knowledge Base (IndexedDB)
 
 ### Key Components
 
-- **`src/background/service-worker.ts`**: Session lifecycle, Deepgram/Gemini orchestration, TabCapture, call summary generation
-- **`src/content/content-script.ts`**: Mic capture via AudioWorklet, message bridge, overlay injection
-- **`src/content/overlay.ts`**: Shadow DOM (closed) floating panel — transcripts, suggestion cards, and summary display
-- **`src/content/audio-processor.worklet.js`**: AudioWorklet processor — stereo-to-mono, linear interpolation resampling, Float32→Int16
-- **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
+#### Background & Services
+- **`src/background/service-worker.ts`**: Session lifecycle, Deepgram/LLM/Hume orchestration, TabCapture, call summary, LangBuilder dispatch
 - **`src/services/deepgram-client.ts`**: WebSocket client for Deepgram Nova-3 STT
-- **`src/services/gemini-client.ts`**: REST client for Gemini 2.5 Flash — suggestions, embeddings, and call summaries
-- **`src/services/drive-service.ts`**: Google Drive API with cross-browser OAuth support. Tries `chrome.identity.getAuthToken()` first, falls back to `launchWebAuthFlow` for Vivaldi/other Chromium browsers. Supports four formats: native Google Doc (default), Markdown, plain text, and JSON
+- **`src/services/hume-client.ts`**: WebSocket client for Hume AI Expression Measurement — emotion detection from audio prosody
+- **`src/services/gemini-client.ts`**: REST client for LLM providers (Gemini, OpenRouter, Groq) — suggestions, embeddings, call summaries
+- **`src/services/langbuilder-client.ts`**: REST client for external LLM orchestration flows
+- **`src/services/cost-tracker.ts`**: Session-scoped cost accumulator — Deepgram minutes, LLM tokens, pricing lookup
+- **`src/services/drive-service.ts`**: Google Drive API with cross-browser OAuth. Tries `chrome.identity.getAuthToken()` first, falls back to `launchWebAuthFlow`. Supports native Google Doc, Markdown, plain text, JSON
 - **`src/services/transcript-collector.ts`**: Collects transcripts during session, triggers Drive auto-save
 - **`src/services/call-summary.ts`**: Prompt builder and markdown formatter for post-call summaries
+
+#### Knowledge Base
 - **`src/services/kb/kb-database.ts`**: IndexedDB wrapper for documents and 768-dim embedding vectors
-- **`src/services/kb/kb-search.ts`**: Semantic search using cosine similarity over Gemini embeddings, supports document ID filtering for persona scoping
+- **`src/services/kb/kb-search.ts`**: Semantic search using cosine similarity, supports document ID filtering for persona scoping
 - **`src/services/kb/extractors.ts`**: Text extraction from PDF (`pdfjs-dist`), Markdown (`marked`), and plain text
-- **`src/shared/persona.ts`**: Persona data model, active persona helpers, migration from legacy `systemPrompt` storage
+
+#### Content Script & Overlay
+- **`src/content/content-script.ts`**: Mic capture via AudioWorklet, message bridge, overlay injection
+- **`src/content/overlay.ts`**: Shadow DOM (closed) floating panel — transcripts, suggestion cards, emotion badge, summary display
+- **`src/content/overlay/draggable.ts`**: Drag-to-move for overlay panel
+- **`src/content/overlay/resizable.ts`**: Resize handles for overlay panel
+- **`src/content/audio-processor.worklet.js`**: AudioWorklet processor — stereo-to-mono, linear interpolation resampling, Float32→Int16
+
+#### Shared Modules
+- **`src/shared/persona.ts`**: Persona data model, active persona helpers, Conclave helpers (`getActivePersonas`, `getConclaveLeader`), migration from legacy storage
 - **`src/shared/default-personas.ts`**: 12 built-in persona templates with detailed system prompts
+- **`src/shared/llm-config.ts`**: `LLMProvider` type, provider configs, model lists, API base URLs, cooldowns
+- **`src/shared/pricing.ts`**: Per-model pricing data, `CostSnapshot`/`CostEstimate` types, free-tier detection
+- **`src/shared/model-tuning.ts`**: Per-model-family tuning profiles, tuning modes (`off`/`once`/`auto`)
+- **`src/shared/constants.ts`**: Storage keys, message types, `EmotionState` type, Hume/LangBuilder config constants
+- **`src/shared/default-prompt.ts`**: Default system prompt fallback
+
+#### Options Page
+- **`src/options/options.ts`**: Thin controller composing section modules
+- **`src/options/sections/api-keys.ts`**: API key management for all providers
+- **`src/options/sections/personas.ts`**: Persona editor with KB management
+- **`src/options/sections/conclave.ts`**: Conclave leader picker, preset management
+- **`src/options/sections/active-personas.ts`**: Toggle personas on/off (max 5 for Conclave)
+- **`src/options/sections/langbuilder.ts`**: LangBuilder URL/API key config, flow selection
+- **`src/options/sections/transcription.ts`**: Deepgram settings (endpointing, language)
+- **`src/options/sections/call-summary.ts`**: Summary toggle and format settings
+- **`src/options/sections/drive.ts`**: Google Drive OAuth and save preferences
+- **`src/options/sections/speaker-filter.ts`**: Speaker identification settings
+- **`src/options/sections/theme.ts`**: Dark/light theme toggle
+- **`src/options/sections/tabs.ts`**: Tab navigation management
+- **`src/options/sections/icons.ts`**: Dynamic SVG icon system
+- **`src/options/sections/shared.ts`**: `ToastManager`, `ModalManager` shared utilities
+
+#### Other Entry Points
 - **`src/popup/popup.ts`**: Session controls and active persona selector dropdown
-- **`src/options/options.ts`**: Thin controller composing section modules (see below)
-- **`src/options/sections/`**: Modular options sections — `api-keys`, `drive`, `personas` (includes KB management), `transcription`, `call-summary`, `theme`, `speaker-filter`, plus `shared` utilities (`ToastManager`, `ModalManager`)
-- **`src/tutorials/`**: Interactive HTML tutorials for KB and call summary features
-- **`src/validation/`**: In-extension validation tests for KB pipeline (embeddings, extraction, IndexedDB, cosine search, e2e)
+- **`src/offscreen/offscreen.ts`**: Offscreen document for tab audio capture
+- **`src/validation/`**: In-extension validation tests for KB pipeline
+
+#### Tutorials (9 pages + index)
+- **`src/tutorials/index.html`**: Tutorial home and navigation
+- **`src/tutorials/getting-started.html`**: Initial setup guide
+- **`src/tutorials/personas.html`**: Create and manage personas
+- **`src/tutorials/kb-upload-search.html`**: Knowledge Base workflow
+- **`src/tutorials/summary-settings.html`**: Configure call summaries
+- **`src/tutorials/summary-overlay.html`**: Summary display and saving
+- **`src/tutorials/hydra.html`**: Multi-persona mode guide
+- **`src/tutorials/conclave.html`**: Conclave presets and leader selection
+- **`src/tutorials/call-settings.html`**: Transcription and suggestion settings
+- **`src/tutorials/engineering-docs.html`**: Deep technical documentation
 
 ## Critical Conventions
 
@@ -152,33 +213,50 @@ new WebSocket(url, ['token', apiKey]);
 
 Never use: `wss://api.deepgram.com/v1/listen?token=xxx` (returns 401).
 
+### Hume AI WebSocket authentication
+
+Hume AI uses a different auth pattern — the API key is sent in the request body, not the WebSocket header. Audio must be wrapped in WAV format and base64 encoded before sending. The 48 raw emotions are mapped to 4 simplified states via weighted scoring in `hume-client.ts`.
+
+### Multi-provider LLM support
+
+`gemini-client.ts` supports three providers via `setProviderConfig()`:
+- **Gemini** (default) — 15s suggestion cooldown
+- **OpenRouter** — 10s cooldown, models include Claude 3.5 Sonnet, GPT-4o, Llama 3.3 70B
+- **Groq** — 5s cooldown, models include Mixtral 8x7B, Llama 3.1 70B
+
+Provider selection is stored in `chrome.storage.local`. The LLM decides whether to provide a suggestion or respond with `---` to stay silent.
+
 ### Service clients are singletons
 
-`deepgramClient`, `geminiClient`, `transcriptCollector`, `driveService`, and `kbDatabase` are all exported as singleton instances from their respective modules.
+`deepgramClient`, `humeClient`, `geminiClient`, `transcriptCollector`, `driveService`, `kbDatabase`, `costTracker`, and `langbuilderClient` are all exported as singleton instances from their respective modules.
 
-### Persona system and KB scoping
+### Persona system, KB scoping, and Conclave
 
-Each persona has a `systemPrompt` and `kbDocumentIds` array. On session start, the service worker loads the active persona, sets the Gemini system prompt, and scopes KB search to that persona's documents. The `migrateToPersonas()` function handles one-time migration from the legacy `systemPrompt` storage key and seeds built-in templates. It is idempotent.
+Each persona has a `systemPrompt` and `kbDocumentIds` array. On session start, the service worker loads the active persona, sets the LLM system prompt, and scopes KB search to that persona's documents.
 
-### Gemini suggestion cooldown
+**Conclave mode**: Up to 5 personas active simultaneously. One persona is designated as the "conclave leader" (coordinator). Suggestions are attributed to the persona that generated them, shown with color dots in the overlay. Conclave presets can be saved and restored.
 
-The Gemini client enforces a 15-second cooldown between suggestions to manage API quota. The LLM decides whether to provide a suggestion or respond with `---` to stay silent.
+The `migrateToPersonas()` function handles one-time migration from the legacy `systemPrompt` storage key and seeds built-in templates. It is idempotent.
+
+### Cost tracking
+
+`cost-tracker.ts` accumulates per-session costs: Deepgram audio minutes, LLM input/output tokens, suggestion count. Pricing data lives in `src/shared/pricing.ts` with per-model rates. Free-tier providers are detected to suppress cost display.
 
 ### AudioWorklet files are plain JavaScript
 
-`audio-processor.worklet.js` and `audio-processor.js` are plain JS (not TypeScript). They run in a separate AudioWorklet thread and cannot import modules. They are listed as web-accessible resources in `manifest.json`.
+`audio-processor.worklet.js` is plain JS (not TypeScript). It runs in a separate AudioWorklet thread and cannot import modules. Listed as a web-accessible resource in `manifest.json`.
 
 ### Shadow DOM isolation
 
-The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from Google Meet. All CSS is injected inline into the shadow root.
+The overlay (`overlay.ts`) uses a **closed** Shadow DOM to isolate styles from Google Meet. All CSS is injected inline into the shadow root. The panel is draggable and resizable via `draggable.ts` and `resizable.ts`.
 
 ### Options page is section-based
 
-`options.ts` is a thin controller that composes independent section classes from `src/options/sections/`. Each section manages its own DOM bindings and storage. Shared UI (toasts, modals) is passed via a context object. Sections initialize in parallel via `Promise.all()`. Supports Cmd/Ctrl+S to save persona editor and beforeunload warning for unsaved changes.
+`options.ts` is a thin controller that composes 13 independent section classes from `src/options/sections/`. Each section manages its own DOM bindings and storage. Shared UI (toasts, modals) is passed via a context object. Sections initialize in parallel via `Promise.all()`. Supports Cmd/Ctrl+S to save persona editor and beforeunload warning for unsaved changes.
 
 ### KB context is injected gracefully
 
-When generating suggestions, the Gemini client dynamically imports KB search and prepends matching context to the system prompt (with source filename attribution). Search is scoped to the active persona's `kbDocumentIds`. KB failures are caught silently — suggestions still work without KB.
+When generating suggestions, the Gemini client prepends matching KB context to the system prompt (with source filename attribution). Search is scoped to the active persona's `kbDocumentIds`. KB failures are caught silently — suggestions still work without KB.
 
 ### Deepgram endpointing and segment grouping
 
@@ -190,11 +268,15 @@ The Drive service tries `chrome.identity.getAuthToken()` first (Chrome-native). 
 
 ### Google Docs rich formatting via HTML conversion
 
-The Drive service creates native Google Docs by uploading HTML with `mimeType: 'application/vnd.google-apps.document'` in the file metadata and `Content-Type: text/html` for the body. The Drive API converts HTML → native Google Doc automatically. No additional OAuth scopes needed beyond `drive.file`. All styling must use **inline styles** (not `<style>` blocks) — the conversion strips CSS classes and external styles. Supported: headings, bold/italic, tables with cell backgrounds, colored text, lists, links, horizontal rules. Not supported: flexbox, grid, border-radius, page breaks. Google Docs use `https://docs.google.com/document/d/{id}/edit` URLs (not `drive.google.com/file/d/`).
+The Drive service creates native Google Docs by uploading HTML with `mimeType: 'application/vnd.google-apps.document'` and `Content-Type: text/html`. The Drive API converts HTML → native Google Doc automatically. All styling must use **inline styles** (not `<style>` blocks). Supported: headings, bold/italic, tables, colored text, lists, links, horizontal rules. Not supported: flexbox, grid, border-radius.
 
 ### Call summary truncation strategy
 
-For long conversations, `buildSummaryPrompt()` keeps the first 50 + last 400 transcript entries. This fits within Gemini's context window while preserving conversation framing and recent detail.
+For long conversations, `buildSummaryPrompt()` keeps the first 50 + last 400 transcript entries. This fits within the LLM's context window while preserving conversation framing and recent detail.
+
+### LangBuilder integration
+
+External LLM orchestration via `langbuilder-client.ts`. Configured with URL + API key in the options page. Supports listing flows, running flows with input, diagnosing, and aborting. Message types: `RUN_LANGBUILDER_FLOW`, `CANCEL_LANGBUILDER_FLOW`.
 
 ## Build & TypeScript
 

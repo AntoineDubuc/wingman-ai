@@ -30,6 +30,10 @@ USER (Popup)
                           │   └─[WebSocket OPEN]──→ Deepgram Nova-3
                           │       └─ Auth via Sec-WebSocket-Protocol
                           │
+                          ├─ humeClient.connect() (if Hume API key configured)
+                          │   └─[WebSocket OPEN]──→ Hume AI Expression Measurement
+                          │       └─ Auth via request body
+                          │
                           ├─ transcriptCollector.startSession()
                           │
                           ├─ ensureContentScriptAndInitOverlay()
@@ -71,8 +75,10 @@ USER (Popup)
 - Reads from `chrome.storage.local`:
   - `deepgramApiKey`
   - `geminiApiKey` (or active provider's key)
+  - `humeApiKey` (optional — emotion detection)
   - `speakerFilterEnabled`
-- Returns error if keys missing
+- Returns error if required keys missing (Deepgram + LLM provider)
+- Hume is optional — emotion detection disabled if key not configured
 - Finds active Google Meet tab
 - Returns error if no tab found
 
@@ -132,6 +138,24 @@ new WebSocket(url, ['token', apiKey]);
 
 **Timeout**: 10 seconds for connection
 **Reconnect**: Exponential backoff (max 5 attempts)
+
+### 7b. Connect to Hume AI WebSocket (Optional)
+**File**: `hume-client.ts`
+
+If `humeApiKey` is configured, the service worker connects to Hume AI for emotion detection:
+
+```typescript
+// Connect to Hume Expression Measurement API
+humeClient.connect(apiKey);
+```
+
+**WebSocket URL**: `wss://api.hume.ai/v0/stream/models`
+
+**Auth**: API key sent in request body (not WebSocket header)
+
+**Audio Format**: PCM wrapped in WAV format, base64 encoded
+
+**Output**: 48 emotions with confidence scores, simplified to 4 states (engaged/frustrated/thinking/neutral)
 
 ### 8. Ensure Content Script + Init Overlay
 **File**: `service-worker.ts:657-722`
@@ -199,12 +223,14 @@ After the session is marked active, `startCostAlarm()` creates a `chrome.alarms`
 | `activePersonaId` | Read | Currently selected persona ID |
 | `llmProvider` | Read | `gemini`, `openrouter`, or `groq` |
 | `llmModel` | Read | Model selection for active provider |
+| `humeApiKey` | Read | Hume AI API key (optional) |
 | `suggestionCooldownMs` | Read | Cooldown between suggestions |
 | `promptTuningMode` | Read | Model tuning profile |
 | In-memory | Set | `isSessionActive = true` |
 | In-memory | Set | `activeTabId = tab.id` |
 | In-memory | Set | `isCapturing = true` |
 | In-memory | Set | `costTracker` session started with pricing |
+| In-memory | Set | `humeClient` connected (if API key configured) |
 | chrome.alarms | Set | Cost alarm (1-minute interval) |
 
 ## Error Handling
@@ -226,6 +252,7 @@ After the session is marked active, `startCostAlarm()` creates a `chrome.alarms`
 | `INIT_OVERLAY` | UPPER | Service Worker | Content Script | Create overlay UI |
 | `START_DUAL_CAPTURE` | UPPER | Service Worker | Offscreen | Start mic + tab capture |
 | `MIC_PERMISSION_RESULT` | UPPER | Permission popup | Service Worker | Permission grant result |
+| `emotion_update` | lower | Service Worker | Content Script | Emotion state from Hume AI |
 
 ## Code References
 
@@ -240,5 +267,6 @@ After the session is marked active, `startCostAlarm()` creates a `chrome.alarms`
 | `costTracker.startSession()` | service-worker.ts | — | Lock in per-token pricing |
 | `startCostAlarm()` | service-worker.ts | — | 1-min chrome.alarm for cost updates |
 | `deepgramClient.connect()` | deepgram-client.ts | 90-181 | WebSocket connection |
+| `humeClient.connect()` | hume-client.ts | — | Hume AI WebSocket connection |
 | `ensureContentScriptAndInitOverlay()` | service-worker.ts | 657-722 | Script injection + overlay |
 | `new AIOverlay()` | overlay.ts | 95-100+ | Shadow DOM setup |

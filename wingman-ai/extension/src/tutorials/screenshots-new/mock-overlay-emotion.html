@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay with Emotion Badge - Dark Mode</title>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* Exact CSS from overlay.css - dark mode variables */
+    :root {
+      --overlay-bg: #1f2937;
+      --overlay-bg-secondary: #374151;
+      --overlay-bg-tertiary: #4b5563;
+      --overlay-text: #f3f4f6;
+      --overlay-text-secondary: #9ca3af;
+      --overlay-text-muted: #6b7280;
+      --overlay-border: #4b5563;
+      --overlay-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --overlay-panel-border: rgba(255, 255, 255, 0.1);
+      --overlay-resize-color: #6b7280;
+      --bubble-self-bg: rgba(243, 156, 18, 0.15);
+      --header-gradient: linear-gradient(135deg, #7c2d12 0%, #b45309 100%);
+    }
+
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #111827 url('../../assets/header-banner.png') center/cover no-repeat fixed;
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    .overlay-panel {
+      position: relative;
+      width: 380px;
+      height: 500px;
+      background: var(--overlay-bg);
+      border-radius: 12px;
+      box-shadow: var(--overlay-shadow);
+      border: 1px solid var(--overlay-panel-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .overlay-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--header-gradient);
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .drag-handle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34a853;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .persona-label {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+
+    /* Emotion Badge - exact styles */
+    .emotion-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 8px;
+    }
+
+    .emotion-badge.frustrated {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .emotion-badge.engaged {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .emotion-badge.thinking {
+      background: #f59e0b;
+      color: #ffffff;
+    }
+
+    .emotion-badge.neutral {
+      background: #6b7280;
+      color: #ffffff;
+    }
+
+    .cost-ticker {
+      font-size: 11px;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      opacity: 0.6;
+      margin-left: auto;
+      margin-right: 8px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .controls button {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .font-controls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      margin-right: 4px;
+      border-right: 1px solid rgba(255, 255, 255, 0.3);
+      padding-right: 8px;
+    }
+
+    .font-controls button {
+      width: 24px;
+      height: 22px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .overlay-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .overlay-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .post-call-toggle {
+      display: flex;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--overlay-border);
+      background: var(--overlay-bg);
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 5px 12px;
+      border: 1px solid var(--overlay-border);
+      background: var(--overlay-bg);
+      color: var(--overlay-text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+    .toggle-btn:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+
+    .toggle-btn.active {
+      background: var(--overlay-bg-tertiary);
+      color: var(--overlay-text);
+      font-weight: 600;
+    }
+
+    .timeline {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .speaker-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--overlay-text-secondary);
+      margin-top: 10px;
+      margin-bottom: 2px;
+      padding: 0 4px;
+    }
+
+    .speaker-label.self { text-align: right; }
+
+    .bubble {
+      max-width: 85%;
+      padding: 8px 12px;
+      margin-bottom: 2px;
+      word-wrap: break-word;
+    }
+
+    .bubble.participant {
+      align-self: flex-start;
+      background: var(--overlay-bg-secondary);
+      border-radius: 12px 12px 12px 4px;
+    }
+
+    .bubble.self {
+      align-self: flex-end;
+      background: var(--bubble-self-bg);
+      border-radius: 12px 12px 4px 12px;
+    }
+
+    .bubble.wingman {
+      align-self: stretch;
+      max-width: 100%;
+      background: var(--overlay-bg-secondary);
+      border-left: 3px solid #e67e22;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 6px 0;
+    }
+
+    .bubble-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--overlay-text);
+    }
+
+    .bubble-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .wingman-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--overlay-text-secondary);
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      background: rgba(230, 126, 34, 0.25);
+      color: #f39c12;
+    }
+
+    .resize-handle {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+      background: radial-gradient(circle, var(--overlay-resize-color) 1px, transparent 1px);
+      background-size: 4px 4px;
+      background-position: 4px 4px;
+    }
+
+    /* Demo layout */
+    .demo-container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .demo-label {
+      color: #9ca3af;
+      font-size: 12px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <!-- Frustrated State -->
+    <div>
+      <div class="demo-label">Frustrated State</div>
+      <div class="overlay-panel">
+        <div class="overlay-header">
+          <div class="drag-handle">
+            <span class="status-indicator"></span>
+            <span class="title">Wingman</span>
+            <span class="persona-label">Cloud Solutions Sales</span>
+            <span class="emotion-badge frustrated">FRUSTRATED</span>
+          </div>
+          <span class="cost-ticker">~$0.12</span>
+          <div class="controls">
+            <div class="font-controls">
+              <button>A−</button>
+              <button>A+</button>
+            </div>
+            <button>−</button>
+            <button>×</button>
+          </div>
+        </div>
+        <div class="overlay-body">
+          <div class="overlay-content">
+            <div class="post-call-toggle">
+              <button class="toggle-btn active">Summary</button>
+              <button class="toggle-btn">Timeline</button>
+            </div>
+            <div class="timeline">
+              <div class="speaker-label">Customer</div>
+              <div class="bubble participant">
+                <span class="bubble-text">I've been waiting for 20 minutes and nobody has answered my question!</span>
+              </div>
+
+              <div class="speaker-label self">You</div>
+              <div class="bubble self">
+                <span class="bubble-text">I completely understand your frustration, and I apologize for the wait.</span>
+              </div>
+
+              <div class="bubble wingman">
+                <div class="bubble-header">
+                  <span class="wingman-label">Wingman</span>
+                  <span class="badge">SUGGESTION</span>
+                </div>
+                <span class="bubble-text">Acknowledge their frustration directly: "I hear you, and I'm sorry this has been frustrating. Let me personally ensure we resolve this right now."</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="resize-handle"></div>
+      </div>
+    </div>
+
+    <!-- Engaged State -->
+    <div>
+      <div class="demo-label">Engaged State</div>
+      <div class="overlay-panel">
+        <div class="overlay-header">
+          <div class="drag-handle">
+            <span class="status-indicator"></span>
+            <span class="title">Wingman</span>
+            <span class="persona-label">Cloud Solutions Sales</span>
+            <span class="emotion-badge engaged">ENGAGED</span>
+          </div>
+          <span class="cost-ticker">~$0.08</span>
+          <div class="controls">
+            <div class="font-controls">
+              <button>A−</button>
+              <button>A+</button>
+            </div>
+            <button>−</button>
+            <button>×</button>
+          </div>
+        </div>
+        <div class="overlay-body">
+          <div class="overlay-content">
+            <div class="post-call-toggle">
+              <button class="toggle-btn active">Summary</button>
+              <button class="toggle-btn">Timeline</button>
+            </div>
+            <div class="timeline">
+              <div class="speaker-label">Customer</div>
+              <div class="bubble participant">
+                <span class="bubble-text">That's really interesting! Tell me more about how the integration works.</span>
+              </div>
+
+              <div class="speaker-label self">You</div>
+              <div class="bubble self">
+                <span class="bubble-text">Great question! Our API connects seamlessly with your existing CRM.</span>
+              </div>
+
+              <div class="bubble wingman">
+                <div class="bubble-header">
+                  <span class="wingman-label">Wingman</span>
+                  <span class="badge">SUGGESTION</span>
+                </div>
+                <span class="bubble-text">They're showing strong interest. Now's the time to offer a live demo: "Would you like to see this in action with a quick screen share?"</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="resize-handle"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

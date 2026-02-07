@@ -27,8 +27,8 @@ Architecture and sequence diagrams (Mermaid format, render on GitHub).
 
 | Diagram | File | Description |
 |---------|------|-------------|
-| **System Architecture** | [ARCHITECTURE.md](diagrams/ARCHITECTURE.md) | Component relationships, message flows, data storage |
-| **Sequence Diagrams** | [SEQUENCES.md](diagrams/SEQUENCES.md) | Session start, transcript flow, audio pipeline, Drive OAuth |
+| **System Architecture** | [ARCHITECTURE.md](diagrams/ARCHITECTURE.md) | Component relationships, message flows, data storage, parallel audio processing |
+| **Sequence Diagrams** | [SEQUENCES.md](diagrams/SEQUENCES.md) | Session start, transcript flow, audio pipeline, emotion detection, Drive OAuth |
 
 ### Flow Diagrams
 
@@ -36,8 +36,8 @@ End-to-end traces of critical features with code references.
 
 | Flow | File | Description |
 |------|------|-------------|
-| **Session Start** | [SESSION-START-FLOW.md](flows/SESSION-START-FLOW.md) | User clicks Start → active session with live transcription |
-| **Audio Capture** | [AUDIO-CAPTURE-PIPELINE.md](flows/AUDIO-CAPTURE-PIPELINE.md) | Microphone → AudioWorklet → Deepgram WebSocket |
+| **Session Start** | [SESSION-START-FLOW.md](flows/SESSION-START-FLOW.md) | User clicks Start → active session with live transcription + emotion detection |
+| **Audio Capture** | [AUDIO-CAPTURE-PIPELINE.md](flows/AUDIO-CAPTURE-PIPELINE.md) | Microphone → AudioWorklet → Deepgram (STT) + Hume AI (emotions) in parallel |
 | **Transcript → Suggestion** | [TRANSCRIPT-TO-SUGGESTION-FLOW.md](flows/TRANSCRIPT-TO-SUGGESTION-FLOW.md) | Deepgram transcript → KB search → Gemini → overlay |
 | **Session Stop & Summary** | [SESSION-STOP-AND-SUMMARY-FLOW.md](flows/SESSION-STOP-AND-SUMMARY-FLOW.md) | Stop session → call summary → Drive save → overlay |
 

@@ -7,6 +7,9 @@ client_secret*.json
 # Root assets (logos, images)
 /assets/
 
+# Internal planning docs (ideation, implementation plans, mockups)
+/ideation/
+
 # Playwright MCP cache
 .playwright-mcp/
 
@@ -21,23 +24,6 @@ Thumbs.db
 # Markdown files (internal docs, plans, templates)
 *.md
 !wingman-ai/LICENSE
-!ideation/implementation-plans/phase_8_chrome_web_store/WINGMAN-PRIVACY-POLICY.md
-!ideation/implementation-plans/phase_8_chrome_web_store/WINGMAN-TERMS-OF-SERVICE.md
-!ideation/implementation-plans/phase_8_chrome_web_store/UPDATE-PROCESS.md
-!ideation/implementation-plans/phase_10/IMPLEMENTATION-PLAN-OVERLAY-UNIFIED-TIMELINE.md
-!ideation/implementation-plans/phase_12_persona_storage/ideation.md
-!ideation/implementation-plans/phase_12_persona_storage/IMPLEMENTATION-PLAN-PERSONA-SELECTOR.md
-!ideation/implementation-plans/phase_12_persona_storage/IMPLEMENTATION-PLAN-PERSONA-AND-UI-REFINEMENTS.md
-!ideation/implementation-plans/phase_13_overlay_persona_picker/ideation.md
-!ideation/implementation-plans/phase_16_openrouter/ideation.md
-!ideation/implementation-plans/phase_16_openrouter/IMPLEMENTATION-PLAN-OPENROUTER.md
-!ideation/implementation-plans/phase_17_groq_and_model_tuning/ideation.md
-!ideation/implementation-plans/phase_17_groq_and_model_tuning/IMPLEMENTATION-PLAN-GROQ.md
-!ideation/implementation-plans/phase_17_groq_and_model_tuning/model-optimization/*.md
-!ideation/implementation-plans/phase_19_hydra/*.md
-!ideation/implementation-plans/phase_20_code_quality_refactor/*.md
-!ideation/implementation-plans/phase_24_persona_prompts_setup_assistant/*.md
-!CODE-DISCOVERY-PATTERN.md
 !docs/README.md
 !docs/GETTING-STARTED.md
 !docs/CODE-PATTERNS.md

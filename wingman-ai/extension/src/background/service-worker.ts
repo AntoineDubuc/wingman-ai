@@ -35,6 +35,7 @@ interface SessionPersona {
   color: string;
   systemPrompt: string;
   kbDocumentIds: string[];
+  modelPrompts?: Record<string, string>;
 }
 let sessionPersonas: SessionPersona[] = [];
 // Track suggestion counts per persona for summary attribution
@@ -292,6 +293,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
         color: p.color,
         systemPrompt: p.systemPrompt,
         kbDocumentIds: p.kbDocumentIds,
+        modelPrompts: p.modelPrompts,
       }));
 
       // Log persona names
@@ -300,7 +302,13 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
 
       // For backward compat + single-persona optimization, set the first persona's prompt/KB
       const primary = sessionPersonas[0]!;
-      geminiClient.setSystemPrompt(primary.systemPrompt);
+      const activeModelId = geminiClient.getActiveModel();
+      const modelPrompt = primary.modelPrompts?.[activeModelId];
+      geminiClient.setSystemPrompt(modelPrompt ?? primary.systemPrompt);
+      console.log(modelPrompt
+        ? `[ServiceWorker] Using model-optimized prompt for ${activeModelId}`
+        : `[ServiceWorker] Using generic prompt (no model-specific version)`
+      );
       geminiClient.setKBDocumentFilter(primary.kbDocumentIds);
     } else {
       // Fallback to legacy system prompt

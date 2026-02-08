@@ -19,6 +19,70 @@ export interface Persona {
   createdAt: number;
   updatedAt: number;
   order: number;
+  modelPrompts?: Record<string, string>;
+  promptVersions?: PromptVersion[];
+}
+
+// === PROMPT ASSISTANT TYPES (Phase 24) ===
+
+export interface PromptVersion {
+  version: number;
+  timestamp: number;
+  summary: string;
+  source: 'assistant' | 'manual' | 'template' | 'restored' | 'imported';
+  targetModel: string;
+  prompt: string;
+  testResults?: VersionTestResults;
+  testQuestions?: TestQuestion[];
+}
+
+export interface VersionTestResults {
+  passed: number;
+  total: number;
+  cost: number;
+  timestamp: number;
+  modelId?: string;
+}
+
+export interface TestQuestion {
+  text: string;
+  expectedBehavior: 'respond' | 'silent';
+  category?: 'kb' | 'custom';
+  source?: 'auto' | 'user';
+  groupLabel?: string;
+  behaviorHint?: string;
+  tags?: string[];
+}
+
+export interface TestResult {
+  question: TestQuestion;
+  response: string;
+  status: 'pass' | 'fail' | 'error';
+  failureReason?: 'wrong-behavior' | 'should-have-responded' | 'off-topic' | 'should-be-silent';
+  errorMessage?: string;
+  cost: number;
+  latencyMs: number;
+}
+
+export interface ComparisonTestResult {
+  question: TestQuestion;
+  current: TestResult;
+  compared: TestResult;
+}
+
+// === KB TEST TYPES (Phase 24 — Task 10) ===
+
+export interface KBTestQuestion extends TestQuestion {
+  kbContext?: string;
+  expectedCitation?: string;
+  testType: 'real-citation' | 'impossible-knowledge' | 'missing-data';
+}
+
+export interface KBTestResult extends TestResult {
+  kbChunkRetrieved: boolean;
+  similarityScore: number | null;
+  sourceFilename: string | null;
+  citationCorrect: boolean | null;
 }
 
 // === COLOR PRESETS ===

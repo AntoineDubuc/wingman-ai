@@ -555,6 +555,13 @@
             </div>
           </div>
 
+          <!-- Prompt Setup Assistant Actions -->
+          <div class="prompt-actions" id="persona-prompt-actions">
+            <button id="btn-prompt-assistant" class="btn-primary btn-small" type="button">Prompt Setup Assistant</button>
+            <button id="btn-test-prompt" class="btn-secondary btn-small btn-hover-success" type="button">Test Current Prompts</button>
+            <button id="btn-version-history" class="btn-secondary btn-small" type="button">Version History <span id="version-history-badge" class="persona-card-badge" hidden></span></button>
+          </div>
+
           <!-- Knowledge Base Section -->
           <div class="form-group">
             <label class="input-label">Knowledge Base</label>
@@ -833,6 +840,50 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Prompt Setup Assistant: Chat overlay -->
+    <div id="assistant-chat-overlay" class="modal-overlay" hidden>
+      <div class="modal assistant-chat-modal">
+        <div class="assistant-chat-header">
+          <div class="assistant-chat-title-row">
+            <h3 class="modal-title">Prompt Setup Assistant</h3>
+            <span class="chat-cost-hint">Powered by Gemini · ~$0.001</span>
+          </div>
+          <button class="assistant-chat-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="assistant-chat-body">
+          <div class="chat-messages" id="chat-messages"></div>
+        </div>
+        <div class="assistant-chat-input-row" id="chat-input-row">
+          <textarea id="chat-input" class="chat-input" placeholder="Describe your use case..." rows="1"></textarea>
+          <button id="chat-send-btn" class="btn-primary btn-small chat-send-btn" type="button">Send</button>
+        </div>
+        <div class="assistant-chat-footer" id="chat-footer">
+          <!-- Footer buttons injected by JS depending on state -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompt Setup Assistant: Test harness overlay -->
+    <div id="test-harness-overlay" class="modal-overlay" hidden>
+      <div class="modal test-harness-modal">
+        <div class="test-harness-header">
+          <h3 class="modal-title" id="test-harness-title">Prompt Tester</h3>
+          <button class="test-harness-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="test-harness-body" id="test-harness-body">
+          <!-- Tabs + content injected by JS -->
+        </div>
+        <div class="test-harness-footer" id="test-harness-footer">
+          <!-- Footer buttons injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompt Setup Assistant: Version history panel -->
+    <div id="version-history-panel" hidden>
+      <!-- Version history replaces persona editor content -->
     </div>
   </div>
 

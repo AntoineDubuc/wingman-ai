@@ -14,6 +14,24 @@ import { DEFAULT_SYSTEM_PROMPT } from '../../shared/default-prompt';
 import { kbDatabase, ingestDocument, isIngesting } from '../../services/kb/kb-database';
 import { searchKB } from '../../services/kb/kb-search';
 import { icon } from './icons';
+import { openChatModal, closeChatModal, onUserSend, onQuickReply, onTemplateAction, addBotMessage, renderFooter, showTemplatePreview, setInputVisible } from './prompt-assistant-chat';
+import { openTestHarness, closeTestHarness } from './prompt-test-harness';
+import { openVersionHistory, closeVersionHistory } from './prompt-version-history';
+import { openReviewModal, closeReviewModal } from './prompt-review-modal';
+import { getPromptVersions } from '../../services/prompt-version';
+import {
+  generatePrompt,
+  getActiveModelInfo,
+  getDiscoveredParams,
+  sendMessage,
+  isDiscoveryComplete,
+  startDiscovery,
+  resetState as resetAssistantState,
+  getGenerationCount,
+  setKBStatus,
+} from '../../services/prompt-assistant-engine';
+import { adaptPromptForModel } from '../../services/prompt-adapter';
+import { matchTemplate } from '../../services/prompt-template-matcher';
 
 const MIN_PROMPT_LENGTH = 100;
 const MAX_PROMPT_LENGTH = 10000;
@@ -46,6 +64,12 @@ export class PersonaSection {
   private importProgress: HTMLElement | null = null;
   private importFill: HTMLElement | null = null;
   private importText: HTMLElement | null = null;
+
+  // DOM references — prompt assistant actions
+  private promptAssistantBtn: HTMLButtonElement | null = null;
+  private testPromptBtn: HTMLButtonElement | null = null;
+  private versionHistoryBtn: HTMLButtonElement | null = null;
+  private versionBadge: HTMLElement | null = null;
 
   // DOM references — embedded KB section
   private kbDropZone: HTMLElement | null = null;
@@ -105,6 +129,12 @@ export class PersonaSection {
     this.kbTestBtn = document.getElementById('persona-kb-test-btn') as HTMLButtonElement;
     this.kbTestResults = document.getElementById('persona-kb-test-results');
 
+    // Bind DOM — prompt assistant actions
+    this.promptAssistantBtn = document.getElementById('btn-prompt-assistant') as HTMLButtonElement;
+    this.testPromptBtn = document.getElementById('btn-test-prompt') as HTMLButtonElement;
+    this.versionHistoryBtn = document.getElementById('btn-version-history') as HTMLButtonElement;
+    this.versionBadge = document.getElementById('version-history-badge');
+
     // Event listeners — persona actions
     document.getElementById('persona-new-btn')?.addEventListener('click', () => this.createNew());
     this.saveBtn?.addEventListener('click', () => this.save());
@@ -138,12 +168,16 @@ export class PersonaSection {
       e.preventDefault();
       this.kbDropZone?.classList.remove('drag-over', 'drag-invalid');
       const files = (e as DragEvent).dataTransfer?.files;
-      if (files) this.handleKBFiles(files);
+      if (files) this.handleKBFiles(Array.from(files));
     });
-    this.kbFileInput?.addEventListener('change', () => {
+    this.kbFileInput?.addEventListener('change', async () => {
       const files = this.kbFileInput?.files;
-      if (files) this.handleKBFiles(files);
-      if (this.kbFileInput) this.kbFileInput.value = '';
+      if (files && files.length > 0) {
+        // Snapshot files before clearing the input (FileList is live)
+        const fileArray = Array.from(files);
+        if (this.kbFileInput) this.kbFileInput.value = '';
+        await this.handleKBFiles(fileArray);
+      }
     });
 
     // Event listeners — KB test query
@@ -154,6 +188,9 @@ export class PersonaSection {
 
     // Render color swatches
     this.renderColorPicker();
+
+    // Bind prompt assistant action buttons
+    this.bindPromptActions();
 
     // Load and render
     await this.load();
@@ -183,10 +220,36 @@ export class PersonaSection {
 
     this.promptTextarea.classList.remove('error');
 
+    // Check if prompt actually changed from last version
+    const lastVersion = this.editingPersona.promptVersions?.length
+      ? this.editingPersona.promptVersions[this.editingPersona.promptVersions.length - 1]
+      : undefined;
+    const promptChanged = !lastVersion || lastVersion.prompt !== prompt;
+
     // Update persona — kbDocumentIds is already kept up-to-date by upload/delete
     this.editingPersona.name = name;
     this.editingPersona.systemPrompt = prompt;
     this.editingPersona.updatedAt = Date.now();
+
+    // Create a new version if the prompt text changed
+    if (promptChanged) {
+      if (!this.editingPersona.promptVersions) {
+        this.editingPersona.promptVersions = [];
+      }
+      const maxVersion = this.editingPersona.promptVersions.reduce(
+        (max, v) => Math.max(max, v.version), 0
+      );
+      const summary = this.generateVersionSummary(prompt, 'manual');
+      const modelInfo = await getActiveModelInfo();
+      this.editingPersona.promptVersions.push({
+        version: maxVersion + 1,
+        timestamp: Date.now(),
+        summary,
+        source: 'manual',
+        targetModel: modelInfo.modelId,
+        prompt,
+      });
+    }
 
     // Save to storage
     const idx = this.personas.findIndex((p) => p.id === this.editingPersona!.id);
@@ -198,9 +261,19 @@ export class PersonaSection {
 
     await savePersonas(this.personas);
     this.isDirty = false;
-    this.ctx.showToast('Persona saved', 'success');
+
+    if (promptChanged) {
+      const latestVersion = this.editingPersona.promptVersions!.length;
+      const latest = this.editingPersona.promptVersions![latestVersion - 1];
+      const modelLabel = latest?.targetModel?.split('/').pop() ?? 'manual edit';
+      this.ctx.showToast(`Prompt saved as v${latestVersion} (${modelLabel})`, 'success');
+      await this.updateVersionBadge();
+    } else {
+      this.ctx.showToast('Persona saved', 'success');
+    }
     this.renderList();
     this.notifyPersonasChanged();
+    await this.updateButtonStates();
   };
 
   // === PRIVATE METHODS ===
@@ -384,6 +457,10 @@ export class PersonaSection {
     this.editorEl.hidden = false;
     this.editorEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     this.isDirty = false;
+
+    // Update prompt assistant button states and version badge
+    await this.updateButtonStates();
+    await this.updateVersionBadge();
   }
 
   private closeEditor(): void {
@@ -406,7 +483,7 @@ export class PersonaSection {
   private createNew(): void {
     const persona = createPersona(
       'New Persona',
-      DEFAULT_SYSTEM_PROMPT,
+      '',
       this.nextAvailableColor(),
       []
     );
@@ -767,7 +844,7 @@ export class PersonaSection {
   }
 
   /** Handle file drop or selection — process sequentially */
-  private async handleKBFiles(files: FileList): Promise<void> {
+  private async handleKBFiles(files: File[]): Promise<void> {
     if (isIngesting()) {
       this.ctx.showToast('Processing in progress. Please wait.', 'error');
       return;
@@ -780,7 +857,7 @@ export class PersonaSection {
       return;
     }
 
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       await this.processKBFile(file);
     }
   }
@@ -1001,6 +1078,469 @@ export class PersonaSection {
         this.kbTestBtn.disabled = false;
         this.kbTestBtn.textContent = 'Test';
       }
+    }
+  }
+
+  // === PROMPT ASSISTANT WIRING ===
+
+  private bindPromptActions(): void {
+    // Prompt Setup Assistant button
+    this.promptAssistantBtn?.addEventListener('click', () => {
+      if (!this.editingPersona) return;
+      startDiscovery();
+      // Populate KB status so the engine knows about attached documents
+      void this.getKBDocNames().then(names => setKBStatus(names));
+      openChatModal({
+        personaId: this.editingPersona.id,
+        personaName: this.editingPersona.name,
+        onGenerate: async () => {
+          await this.handleGenerate();
+        },
+        onClose: () => {
+          resetAssistantState();
+        },
+        showConfirmModal: this.ctx.showConfirmModal,
+      });
+
+      // Wire quick-reply button actions
+      let discoveryTurns = 0;
+      let matchedTemplate: { name: string; prompt: string } | null = null;
+
+      onQuickReply((action) => {
+        if (action === 'generate') {
+          void this.handleGenerate();
+        } else if (action === 'continue') {
+          document.getElementById('chat-input')?.focus();
+        } else if (action === 'use-template') {
+          // User chose to use matched template as-is
+          if (matchedTemplate) {
+            void this.applyTemplatePrompt(matchedTemplate.prompt, matchedTemplate.name);
+          }
+        } else if (action === 'customize-template') {
+          // User wants to customize — continue discovery with template context
+          renderFooter('discovery');
+          addBotMessage(
+            `Great, let's customize the "${matchedTemplate?.name}" template. What would you like to change or add?`,
+          );
+          document.getElementById('chat-input')?.focus();
+        }
+      });
+
+      // Wire template footer actions (Back / Use as-is / Customize)
+      onTemplateAction((action) => {
+        if (action === 'use-asis' && matchedTemplate) {
+          void this.applyTemplatePrompt(matchedTemplate.prompt, matchedTemplate.name);
+        } else if (action === 'customize') {
+          renderFooter('discovery');
+          addBotMessage(
+            `Let's customize the "${matchedTemplate?.name}" template. What would you like to change?`,
+          );
+          document.getElementById('chat-input')?.focus();
+        } else if (action === 'back') {
+          renderFooter('discovery');
+        }
+      });
+
+      // Wire user input → discovery engine → bot reply
+      onUserSend(async (text) => {
+        try {
+          discoveryTurns++;
+
+          // On first message, run template matching in parallel with discovery
+          const [botReply, templateMatch] = await Promise.all([
+            sendMessage(text),
+            discoveryTurns === 1 ? matchTemplate(text).catch(() => null) : Promise.resolve(null),
+          ]);
+
+          // Strip any JSON block from the display text
+          const displayText = botReply.replace(/```json[\s\S]*?```/g, '').trim();
+
+          // If we got a template match on first turn, offer it with a preview
+          if (templateMatch && discoveryTurns === 1) {
+            matchedTemplate = {
+              name: templateMatch.templateName,
+              prompt: templateMatch.template.systemPrompt,
+            };
+            addBotMessage(displayText);
+            addBotMessage(
+              `I found a built-in template that matches: "${templateMatch.templateName}" (${Math.round(templateMatch.similarity * 100)}% match). You can use it as-is or customize it.`,
+              {
+                quickReplies: [
+                  { label: 'Use this template', action: 'use-template', primary: true },
+                  { label: 'Customize it', action: 'customize-template' },
+                  { label: 'Skip, build from scratch', action: 'continue' },
+                ],
+              },
+            );
+            showTemplatePreview(templateMatch.templateName, templateMatch.template.systemPrompt);
+            renderFooter('template');
+            return;
+          }
+
+          if (isDiscoveryComplete()) {
+            // Build a human-readable summary from discovered params
+            const params = getDiscoveredParams();
+            const summaryItems: string[] = [];
+            if (params.useCase) summaryItems.push(`Use case: ${params.useCase}`);
+            if (params.tone) summaryItems.push(`Tone: ${params.tone}`);
+            if (params.silenceRules) summaryItems.push(`Silence: ${params.silenceRules}`);
+            if (params.competitors && params.competitors.length > 0) {
+              summaryItems.push(`Competitors: ${params.competitors.join(', ')}`);
+            }
+            if (params.templateMatch) summaryItems.push(`Template match: ${params.templateMatch}`);
+
+            // Show the bot's text (minus JSON) + summary box
+            const cleanText = displayText.replace(/here'?s.*summary.*:?\s*$/i, '').trim();
+            addBotMessage(
+              cleanText || "Got it! Here's what I'll build your prompt around:",
+              {
+                summaryBox: summaryItems.length > 0
+                  ? { header: 'Prompt Summary', items: summaryItems }
+                  : undefined,
+                quickReplies: [
+                  { label: 'Generate Prompt', action: 'generate', primary: true },
+                  { label: 'Add more details', action: 'continue' },
+                ],
+              },
+            );
+            renderFooter('discovery');
+          } else {
+            // After 2+ turns, offer quick-reply shortcuts
+            addBotMessage(displayText, discoveryTurns >= 2 ? {
+              quickReplies: [
+                { label: 'Generate Prompt', action: 'generate', primary: true },
+                { label: 'Tell me more', action: 'continue' },
+              ],
+            } : undefined);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Something went wrong';
+          addBotMessage(msg, { isError: true });
+          renderFooter('error');
+        }
+      });
+    });
+
+    // Test Current Prompts button
+    this.testPromptBtn?.addEventListener('click', () => {
+      if (!this.editingPersona || !this.promptTextarea?.value) return;
+      this.openTestHarnessFromEditor();
+    });
+
+    // Version History button
+    this.versionHistoryBtn?.addEventListener('click', () => {
+      if (!this.editingPersona) return;
+      this.openVersionHistoryPanel();
+    });
+  }
+
+  private async handleGenerate(): Promise<void> {
+    if (!this.editingPersona) return;
+
+    // Show spinner immediately
+    renderFooter('generating');
+    setInputVisible(false);
+
+    const params = getDiscoveredParams();
+    const kbDocNames = await this.getKBDocNames();
+
+    try {
+      const { promptText, testQuestions } = await generatePrompt(params, kbDocNames);
+      const modelInfo = await getActiveModelInfo();
+      const { prompt: adaptedPrompt } = adaptPromptForModel(promptText, modelInfo.modelId);
+
+      openReviewModal({
+        promptText: adaptedPrompt,
+        testQuestions,
+        modelId: modelInfo.modelId,
+        generationNumber: getGenerationCount(),
+        onSave: async (text, modelId, selectedQuestions) => {
+          await this.saveGeneratedPrompt(text, modelId, 'assistant', selectedQuestions);
+        },
+        onTest: (text, modelId, questions) => {
+          this.openTestHarnessWithPrompt(text, modelId, questions);
+        },
+        onRefine: () => {
+          closeReviewModal();
+          setInputVisible(true);
+          renderFooter('discovery');
+        },
+        onClose: () => {
+          closeReviewModal();
+          closeChatModal();
+        },
+      });
+    } catch (err) {
+      console.error('[PersonaEditor] Generation failed:', err);
+      const msg = err instanceof Error ? err.message : 'Generation failed';
+      addBotMessage(msg, { isError: true });
+      renderFooter('error');
+      setInputVisible(true);
+    }
+  }
+
+  private async saveGeneratedPrompt(
+    promptText: string,
+    modelId: string,
+    source: 'manual' | 'assistant',
+    testQuestions?: Array<{ text: string; expectedBehavior: 'respond' | 'silent' }>,
+  ): Promise<void> {
+    if (!this.editingPersona) return;
+
+    // Update persona in memory
+    this.editingPersona.systemPrompt = promptText;
+    if (!this.editingPersona.modelPrompts) {
+      this.editingPersona.modelPrompts = {};
+    }
+    this.editingPersona.modelPrompts[modelId] = promptText;
+    this.editingPersona.updatedAt = Date.now();
+
+    // Build version inline to avoid reading from storage (persona may not be saved yet)
+    const summary = this.generateVersionSummary(promptText, source);
+    if (!this.editingPersona.promptVersions) {
+      this.editingPersona.promptVersions = [];
+    }
+    const maxVersion = this.editingPersona.promptVersions.reduce(
+      (max, v) => Math.max(max, v.version), 0
+    );
+    this.editingPersona.promptVersions.push({
+      version: maxVersion + 1,
+      timestamp: Date.now(),
+      summary,
+      source,
+      targetModel: modelId,
+      prompt: promptText,
+      testQuestions: testQuestions?.map(q => ({
+        text: q.text,
+        expectedBehavior: q.expectedBehavior,
+        source: 'auto' as const,
+      })),
+    });
+
+    // Ensure persona is in the array (may be new and not yet saved)
+    const idx = this.personas.findIndex((p) => p.id === this.editingPersona!.id);
+    if (idx >= 0) {
+      this.personas[idx] = this.editingPersona;
+    } else {
+      this.personas.push(this.editingPersona);
+    }
+
+    // Single write to storage
+    await savePersonas(this.personas);
+
+    // Update editor UI
+    if (this.promptTextarea) {
+      this.promptTextarea.value = promptText;
+      this.updateCharCount();
+    }
+
+    // Update version badge
+    await this.updateVersionBadge();
+
+    // Close modals
+    closeReviewModal();
+    closeChatModal();
+
+    // Show success toast with model info
+    const latestVersion = maxVersion + 1;
+    const modelLabel = modelId.split('/').pop() ?? modelId;
+    this.ctx.showToast(`Prompt saved as v${latestVersion} (${modelLabel})`, 'success');
+
+    this.isDirty = false;
+
+    // Re-render persona list to show the new/updated persona
+    this.renderList();
+
+    // Re-check button states (prompt now exists → enable Test/Version History)
+    await this.updateButtonStates();
+  }
+
+  private generateVersionSummary(promptText: string, source: 'manual' | 'assistant'): string {
+    // Extract a meaningful summary from the prompt text
+    // Try to find the first markdown heading
+    const headingMatch = /^#+\s+(.+)/m.exec(promptText);
+    if (headingMatch?.[1]) {
+      const heading = headingMatch[1].replace(/\s*[-—]+\s*System Prompt$/i, '').trim();
+      if (heading.length > 0 && heading.length < 80) {
+        return source === 'assistant' ? `Assistant: ${heading}` : heading;
+      }
+    }
+    // Fall back to first non-empty line, truncated
+    const firstLine = promptText.split('\n').find(l => l.trim().length > 0)?.trim() ?? '';
+    if (firstLine.length > 60) {
+      return firstLine.slice(0, 57) + '...';
+    }
+    return source === 'assistant' ? 'Generated by Setup Assistant' : 'Manual edit';
+  }
+
+  private async applyTemplatePrompt(promptText: string, templateName: string): Promise<void> {
+    if (!this.editingPersona) return;
+
+    const modelInfo = await getActiveModelInfo();
+    const { prompt: adapted } = adaptPromptForModel(promptText, modelInfo.modelId);
+    await this.saveGeneratedPrompt(adapted, modelInfo.modelId, 'assistant');
+    this.ctx.showToast(`Applied "${templateName}" template`, 'success');
+  }
+
+  private async getKBDocNames(): Promise<string[]> {
+    if (!this.editingPersona?.kbDocumentIds?.length) return [];
+    try {
+      const docs = await kbDatabase.getDocuments();
+      return docs
+        .filter((d) => this.editingPersona!.kbDocumentIds.includes(d.id))
+        .map((d) => d.filename);
+    } catch {
+      return [];
+    }
+  }
+
+  private async openTestHarnessFromEditor(): Promise<void> {
+    if (!this.editingPersona || !this.promptTextarea) return;
+    const modelInfo = await getActiveModelInfo();
+
+    // Always read fresh from storage to get stored test questions
+    const { getPromptVersions } = await import('../../services/prompt-version');
+    const storedVersions = await getPromptVersions(this.editingPersona.id);
+    const latestVersion = storedVersions.length > 0 ? storedVersions[0] : null; // sorted newest-first
+    const sampleQuestions = latestVersion?.testQuestions;
+
+    openTestHarness({
+      promptText: this.promptTextarea.value,
+      modelId: modelInfo.modelId,
+      personaId: this.editingPersona.id,
+      personaName: this.editingPersona.name,
+      context: 'editor',
+      sampleQuestions,
+      onClose: () => {
+        closeTestHarness();
+      },
+      onEditFix: () => {
+        closeTestHarness();
+        this.promptTextarea?.focus();
+      },
+    });
+  }
+
+  private async openTestHarnessWithPrompt(
+    promptText: string,
+    modelId: string,
+    testQuestions?: Array<{ text: string; expectedBehavior: 'respond' | 'silent'; groupLabel?: string; behaviorHint?: string }>,
+  ): Promise<void> {
+    if (!this.editingPersona) return;
+    // Convert GeneratedTestQuestion[] to TestQuestion[] for the harness
+    const sampleQuestions = testQuestions?.map(q => ({
+      text: q.text,
+      expectedBehavior: q.expectedBehavior,
+      groupLabel: q.groupLabel,
+      behaviorHint: q.behaviorHint,
+      source: 'auto' as const,
+    }));
+    openTestHarness({
+      promptText,
+      modelId,
+      personaId: this.editingPersona.id,
+      personaName: this.editingPersona.name,
+      context: 'review',
+      sampleQuestions,
+      onClose: () => {
+        closeTestHarness();
+      },
+      onSave: async () => {
+        await this.saveGeneratedPrompt(promptText, modelId, 'assistant', testQuestions);
+        closeTestHarness();
+      },
+      onEditFix: () => {
+        closeTestHarness();
+        this.promptTextarea?.focus();
+      },
+    });
+  }
+
+  private openVersionHistoryPanel(): void {
+    if (!this.editingPersona) return;
+    openVersionHistory({
+      personaId: this.editingPersona.id,
+      personaName: this.editingPersona.name,
+      onBack: () => {
+        closeVersionHistory();
+      },
+      onTest: (version) => {
+        if (!this.editingPersona) return;
+        openTestHarness({
+          promptText: version.prompt,
+          modelId: version.targetModel || 'gemini-2.5-flash',
+          personaId: this.editingPersona.id,
+          personaName: this.editingPersona.name,
+          versionNumber: version.version,
+          context: 'history',
+          onClose: () => {
+            closeTestHarness();
+          },
+          onRestore: async () => {
+            if (this.promptTextarea) {
+              this.promptTextarea.value = version.prompt;
+              this.updateCharCount();
+              this.isDirty = true;
+            }
+            closeTestHarness();
+            closeVersionHistory();
+          },
+        });
+      },
+      onRestore: async (restoredVersion) => {
+        if (!this.editingPersona || !this.promptTextarea) return;
+        // Update in-memory persona and editor textarea
+        this.editingPersona.systemPrompt = restoredVersion.prompt;
+        this.promptTextarea.value = restoredVersion.prompt;
+        this.updateCharCount();
+        await this.updateVersionBadge();
+        // Reload persona from storage to sync promptVersions
+        const stored = await chrome.storage.local.get('personas');
+        const personas = (stored['personas'] as typeof this.personas) ?? [];
+        const fresh = personas.find(p => p.id === this.editingPersona!.id);
+        if (fresh) {
+          this.editingPersona.promptVersions = fresh.promptVersions;
+        }
+        this.isDirty = false;
+      },
+    });
+  }
+
+  private async updateVersionBadge(): Promise<void> {
+    if (!this.editingPersona || !this.versionBadge) return;
+    const versions = await getPromptVersions(this.editingPersona.id);
+    if (versions.length > 0) {
+      this.versionBadge.textContent = `v${versions.length}`;
+      this.versionBadge.hidden = false;
+    } else {
+      this.versionBadge.hidden = true;
+    }
+  }
+
+  private async updateButtonStates(): Promise<void> {
+    const storage = await chrome.storage.local.get(['geminiApiKey', 'llmProvider', 'openrouterApiKey', 'groqApiKey']);
+    const hasGeminiKey = !!(storage.geminiApiKey as string);
+    const hasPrompt = !!(this.promptTextarea?.value?.trim());
+
+    // Check active provider's key for test functionality
+    const provider = (storage.llmProvider as string) ?? 'gemini';
+    let hasProviderKey = hasGeminiKey;
+    if (provider === 'openrouter') hasProviderKey = !!(storage.openrouterApiKey as string);
+    else if (provider === 'groq') hasProviderKey = !!(storage.groqApiKey as string);
+
+    // Prompt Assistant: always uses Gemini key
+    if (this.promptAssistantBtn) {
+      this.promptAssistantBtn.disabled = !hasGeminiKey;
+    }
+
+    // Test: needs prompt + active provider's key
+    if (this.testPromptBtn) {
+      this.testPromptBtn.disabled = !hasPrompt || !hasProviderKey;
+    }
+
+    // Version History: needs prompt
+    if (this.versionHistoryBtn) {
+      this.versionHistoryBtn.disabled = !hasPrompt;
     }
   }
 

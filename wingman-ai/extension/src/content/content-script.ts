@@ -9,6 +9,7 @@
  */
 
 import { AIOverlay } from './overlay';
+import { removeDockMargin } from './overlay/margin-injector';
 
 let overlay: AIOverlay | null = null;
 let extensionValid = true;
@@ -31,6 +32,7 @@ function isExtensionValid(): boolean {
 function handleExtensionInvalidated(): void {
   if (!extensionValid) return;
   extensionValid = false;
+  removeDockMargin();
   console.log('[ContentScript] Extension context invalidated, cleaning up');
 }
 

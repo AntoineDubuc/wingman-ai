@@ -821,6 +821,76 @@
 }
 
 
+/* ── Docked Mode ── */
+.overlay-panel[data-dock="left"],
+.overlay-panel[data-dock="right"] {
+  top: 0;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  resize: none;
+  transition: left 200ms ease, right 200ms ease, top 200ms ease, height 200ms ease,
+              border-radius 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+
+.overlay-panel[data-dock="left"] {
+  left: 0;
+  right: auto;
+  border-radius: 0 12px 12px 0;
+}
+
+.overlay-panel[data-dock="right"] {
+  right: 0;
+  left: auto;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Hide corner resize handle when docked */
+.overlay-panel[data-dock="left"] .resize-handle,
+.overlay-panel[data-dock="right"] .resize-handle {
+  display: none;
+}
+
+/* No grab cursor when docked (drag disabled) */
+.overlay-panel[data-dock="left"] .overlay-header,
+.overlay-panel[data-dock="right"] .overlay-header {
+  cursor: default;
+}
+
+/* Dock resize handle (vertical edge strip) */
+.dock-resize-handle {
+  position: absolute;
+  top: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 10;
+  background: transparent;
+}
+
+.dock-resize-handle:hover {
+  background: rgba(230, 126, 34, 0.15);
+}
+
+.overlay-panel[data-dock="left"] .dock-resize-handle {
+  right: 0;
+}
+
+.overlay-panel[data-dock="right"] .dock-resize-handle {
+  left: 0;
+}
+
+/* Minimized circle at docked edge */
+.overlay-panel[data-dock="left"].minimized {
+  left: 0;
+  right: auto;
+}
+
+.overlay-panel[data-dock="right"].minimized {
+  right: 0;
+  left: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   @keyframes bubbleIn { from, to { opacity: 1; transform: none; } }
   @keyframes wingmanIn { from, to { opacity: 1; transform: none; } }

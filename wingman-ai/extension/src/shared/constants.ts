@@ -136,6 +136,15 @@ export const UI = {
 
   /** Overlay z-index (must be above Google Meet UI) */
   OVERLAY_Z_INDEX: 999999,
+
+  /** Default docked panel width */
+  OVERLAY_DOCKED_DEFAULT_WIDTH: 350,
+
+  /** Minimum docked panel width */
+  OVERLAY_DOCKED_MIN_WIDTH: 280,
+
+  /** Maximum docked panel width */
+  OVERLAY_DOCKED_MAX_WIDTH: 600,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,6 +203,8 @@ export const STORAGE_KEYS = {
 
   // UI
   THEME: 'theme',
+  OVERLAY_DOCK_MODE: 'overlayDockMode',
+  OVERLAY_DOCKED_WIDTH: 'overlayDockedWidth',
   OVERLAY_POSITION: 'overlayPosition',
   OVERLAY_SIZE: 'overlaySize',
   OVERLAY_MINIMIZED: 'overlayMinimized',
@@ -286,6 +297,10 @@ export const ICONS = {
   CLOSE: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
 
   WINGMAN: '<svg class="wingman-icon" width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1l1.5 4.5L13 7l-4.5 1.5L7 13l-1.5-4.5L1 7l4.5-1.5z"/></svg>',
+
+  DOCK: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="1" width="5" height="12" rx="1" fill="currentColor" opacity="0.4"/></svg>',
+
+  UNDOCK: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1" stroke-dasharray="2 1"/></svg>',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -296,6 +311,9 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 export type LLMProvider = 'gemini' | 'openrouter' | 'groq';
 export type Theme = 'light' | 'dark';
 export type DriveFileFormat = 'google-doc' | 'markdown' | 'text' | 'json';
+
+/** Dock mode for the overlay panel */
+export type DockMode = 'floating' | 'dock-left' | 'dock-right';
 
 /** Simplified emotion states derived from Hume's 48 emotions */
 export type EmotionState = 'engaged' | 'neutral' | 'frustrated' | 'thinking';

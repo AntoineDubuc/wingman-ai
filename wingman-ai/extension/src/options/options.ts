@@ -9,6 +9,7 @@ import { PersonaSection } from './sections/personas';
 import { ActivePersonasSection } from './sections/active-personas';
 import { ConclaveSection } from './sections/conclave';
 import { LangBuilderSection } from './sections/langbuilder';
+import { PanelLayoutSection } from './sections/panel-layout';
 import { TabManager } from './sections/tabs';
 
 class OptionsController {
@@ -59,6 +60,7 @@ class OptionsController {
       new ThemeSection().init(),
       new TranscriptionSection().init(ctx),
       new SpeakerFilterSection().init(ctx),
+      new PanelLayoutSection().init(),
       new CallSummarySection().init(ctx),
       new ApiKeysSection().init(ctx),
       new DriveSection().init(ctx),

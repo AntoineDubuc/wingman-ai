@@ -29,6 +29,12 @@ export interface ResizableOptions {
 
   /** If true, resizing is disabled */
   isDisabled?: () => boolean;
+
+  /** When true, only width is adjustable (height stays fixed) */
+  widthOnly?: boolean;
+
+  /** Which edge the resize handle sits on. Inverts deltaX for 'left'. */
+  edge?: 'left' | 'right';
 }
 
 const DEFAULTS = {
@@ -111,7 +117,7 @@ export class Resizable {
     this.startWidth = this.options.target.offsetWidth;
     this.startHeight = this.options.target.offsetHeight;
 
-    this.options.handle.style.cursor = 'nwse-resize';
+    this.options.handle.style.cursor = this.options.widthOnly ? 'ew-resize' : 'nwse-resize';
   }
 
   private onMouseMove(e: MouseEvent): void {
@@ -119,19 +125,22 @@ export class Resizable {
       return;
     }
 
-    const deltaX = e.clientX - this.startX;
-    const deltaY = e.clientY - this.startY;
+    const rawDeltaX = e.clientX - this.startX;
+    const deltaX = this.options.edge === 'left' ? -rawDeltaX : rawDeltaX;
 
     const minW = this.options.minWidth ?? DEFAULTS.minWidth;
     const maxW = this.getMaxWidth();
-    const minH = this.options.minHeight ?? DEFAULTS.minHeight;
-    const maxH = this.getMaxHeight();
 
     const newWidth = Math.max(minW, Math.min(maxW, this.startWidth + deltaX));
-    const newHeight = Math.max(minH, Math.min(maxH, this.startHeight + deltaY));
-
     this.options.target.style.width = `${newWidth}px`;
-    this.options.target.style.height = `${newHeight}px`;
+
+    if (!this.options.widthOnly) {
+      const deltaY = e.clientY - this.startY;
+      const minH = this.options.minHeight ?? DEFAULTS.minHeight;
+      const maxH = this.getMaxHeight();
+      const newHeight = Math.max(minH, Math.min(maxH, this.startHeight + deltaY));
+      this.options.target.style.height = `${newHeight}px`;
+    }
   }
 
   private onMouseUp(): void {
@@ -140,7 +149,7 @@ export class Resizable {
     }
 
     this.isResizing = false;
-    this.options.handle.style.cursor = 'nwse-resize';
+    this.options.handle.style.cursor = this.options.widthOnly ? 'ew-resize' : 'nwse-resize';
 
     // Notify with final dimensions
     this.options.onResizeEnd?.({

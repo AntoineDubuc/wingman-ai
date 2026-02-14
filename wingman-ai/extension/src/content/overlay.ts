@@ -44,10 +44,12 @@ interface TimelineEntry {
   personas?: Array<{ id: string; name: string; color: string }>;
 }
 
-import { ICONS, UI, LIMITS } from '../shared/constants';
-import type { EmotionState, EmotionUpdate } from '../shared/constants';
+import { ICONS, UI, LIMITS, STORAGE_KEYS } from '../shared/constants';
+import type { DockMode, EmotionState, EmotionUpdate } from '../shared/constants';
 import { Draggable } from './overlay/draggable';
 import { Resizable } from './overlay/resizable';
+import { Dockable } from './overlay/dockable';
+import { removeDockMargin } from './overlay/margin-injector';
 
 export class AIOverlay {
   public container: HTMLDivElement;
@@ -56,6 +58,7 @@ export class AIOverlay {
   private isMinimized = false;
   private draggable: Draggable | null = null;
   private resizable: Resizable | null = null;
+  private dockable: Dockable | null = null;
   private onCloseCallback?: () => void;
   private fontSize: number = UI.FONT_SIZE_DEFAULT;
   private readonly MIN_FONT_SIZE = UI.FONT_SIZE_MIN;
@@ -93,6 +96,7 @@ export class AIOverlay {
   private langBuilderCancelBtn: HTMLButtonElement | null = null;
   private activeNavTab: 'chat' | 'langbuilder' = 'chat';
   private layoutToggleBtn: HTMLButtonElement | null = null;
+  private dockToggleBtn: HTMLButtonElement | null = null;
   private layoutMode: 'single' | 'side-by-side' = 'single';
   private singlePanelWidth: string | null = null;
   private langBuilderConfigured = false;
@@ -116,6 +120,7 @@ export class AIOverlay {
 
     this.initDrag();
     this.initResize();
+    this.initDockable();
     this.initScrollDetection();
     this.restorePosition();
     this.loadTheme();
@@ -317,6 +322,9 @@ export class AIOverlay {
             <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
             <button class="font-increase-btn" title="Increase font size">A+</button>
           </div>
+          <button class="dock-toggle-btn" title="Sidebar Right" aria-label="Sidebar Right">
+            ${ICONS.DOCK}
+          </button>
           <button class="layout-toggle-btn" title="Toggle side-by-side" style="display:none;">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
           </button>
@@ -386,6 +394,7 @@ export class AIOverlay {
     // Store nav/body references
     this.overlayNav = panel.querySelector('.overlay-nav') as HTMLElement;
     this.layoutToggleBtn = panel.querySelector('.layout-toggle-btn') as HTMLButtonElement;
+    this.dockToggleBtn = panel.querySelector('.dock-toggle-btn') as HTMLButtonElement;
 
     // LangBuilder panel references
     this.langBuilderPanel = panel.querySelector('.langbuilder-panel') as HTMLElement;
@@ -410,6 +419,13 @@ export class AIOverlay {
     chatNavBtn?.addEventListener('click', (e) => { e.stopPropagation(); this.setActiveNavTab('chat'); });
     lbNavBtn?.addEventListener('click', (e) => { e.stopPropagation(); this.setActiveNavTab('langbuilder'); });
 
+    // Dock toggle
+    this.dockToggleBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.dockable?.toggle();
+      this.updateDockToggleButton();
+    });
+
     // Layout toggle
     this.layoutToggleBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -428,9 +444,51 @@ export class AIOverlay {
     this.draggable = new Draggable({
       handle: header,
       target: this.panel,
-      isDisabled: () => this.isMinimized,
+      isDisabled: () => this.isMinimized || (this.dockable?.isDocked() ?? false),
       onDragEnd: () => this.savePosition(),
     });
+  }
+
+  /**
+   * Initialize dockable behavior
+   */
+  private initDockable(): void {
+    this.dockable = new Dockable({
+      panel: this.panel,
+      onRestorePosition: () => this.restoreFloatingPosition(),
+      onLayoutModeReset: () => {
+        if (this.layoutMode === 'side-by-side') {
+          this.setLayoutMode('single');
+        }
+      },
+      onDockChange: (_mode: DockMode) => {
+        // Hide layout toggle when docked, show when floating (if LangBuilder configured)
+        if (this.layoutToggleBtn) {
+          this.layoutToggleBtn.style.display =
+            this.dockable?.isDocked() ? 'none' : (this.langBuilderConfigured ? 'flex' : 'none');
+        }
+        this.updateDockToggleButton();
+      },
+    });
+  }
+
+  /**
+   * Update dock toggle button icon, tooltip, and aria-label.
+   */
+  private updateDockToggleButton(): void {
+    if (!this.dockToggleBtn) return;
+    const docked = this.dockable?.isDocked() ?? false;
+    if (docked) {
+      this.dockToggleBtn.innerHTML = ICONS.UNDOCK;
+      this.dockToggleBtn.title = 'Undock';
+      this.dockToggleBtn.setAttribute('aria-label', 'Undock');
+    } else {
+      const side = this.dockable?.getLastDockSide() ?? 'dock-right';
+      const label = side === 'dock-left' ? 'Sidebar Left' : 'Sidebar Right';
+      this.dockToggleBtn.innerHTML = ICONS.DOCK;
+      this.dockToggleBtn.title = label;
+      this.dockToggleBtn.setAttribute('aria-label', label);
+    }
   }
 
   /**
@@ -1493,13 +1551,17 @@ export class AIOverlay {
     }
     this.clearTimeline();
     this.panel.style.display = 'flex';
+    // Re-apply dock CSS after display:flex (must come after)
+    this.dockable?.reapply();
   }
 
   /**
    * Hide the overlay. Preserves summary state for post-call toggle.
+   * Removes dock margin so Meet content returns to normal.
    */
   hide(): void {
     this.panel.style.display = 'none';
+    removeDockMargin();
     // Do NOT clear currentSummary — preserves post-call toggle state
   }
 
@@ -1523,9 +1585,11 @@ export class AIOverlay {
   }
 
   /**
-   * Save position and size to storage
+   * Save position and size to storage.
+   * Skips when docked to avoid corrupting floating coords.
    */
   private savePosition(): void {
+    if (this.dockable?.isDocked()) return;
     try {
       if (!chrome.runtime?.id) return;
       const rect = this.panel.getBoundingClientRect();
@@ -1543,40 +1607,77 @@ export class AIOverlay {
   }
 
   /**
-   * Restore position and size from storage
+   * Restore position, size, dock mode, and font size from storage.
+   * Single storage read to avoid race conditions between dock and position restore.
    */
   private restorePosition(): void {
     try {
       if (!chrome.runtime?.id) return;
-      chrome.storage.local.get(['overlayPosition', 'overlayMinimized', 'overlayFontSize'], (result) => {
-        if (result.overlayPosition) {
-          const pos = result.overlayPosition;
-          const vw = window.innerWidth;
-          const vh = window.innerHeight;
-          const w = pos.width || 350;
-          const h = pos.height || 450;
+      chrome.storage.local.get(
+        ['overlayPosition', 'overlayMinimized', 'overlayFontSize',
+         STORAGE_KEYS.OVERLAY_DOCK_MODE, STORAGE_KEYS.OVERLAY_DOCKED_WIDTH],
+        (result) => {
+          // Apply dock mode first — if docked, skip floating position restore
+          this.dockable?.applyInitialState(
+            result[STORAGE_KEYS.OVERLAY_DOCK_MODE],
+            result[STORAGE_KEYS.OVERLAY_DOCKED_WIDTH],
+          );
 
-          const left = Math.max(0, Math.min(pos.left, vw - Math.min(w, 100)));
-          const top = Math.max(0, Math.min(pos.top, vh - Math.min(h, 60)));
+          // Only restore floating position if NOT docked
+          if (!this.dockable?.isDocked()) {
+            this.applyFloatingPosition(result);
+          }
 
-          this.panel.style.left = `${left}px`;
-          this.panel.style.top = `${top}px`;
-          this.panel.style.right = 'auto';
-          if (pos.width) {
-            this.panel.style.width = `${pos.width}px`;
+          if (result.overlayMinimized) {
+            this.isMinimized = result.overlayMinimized;
+            this.panel.classList.toggle('minimized', this.isMinimized);
           }
-          if (pos.height) {
-            this.panel.style.height = `${pos.height}px`;
+          if (result.overlayFontSize) {
+            this.fontSize = result.overlayFontSize;
+            this.applyFontSize();
           }
-        }
-        if (result.overlayMinimized) {
-          this.isMinimized = result.overlayMinimized;
-          this.panel.classList.toggle('minimized', this.isMinimized);
-        }
-        if (result.overlayFontSize) {
-          this.fontSize = result.overlayFontSize;
-          this.applyFontSize();
-        }
+        },
+      );
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Apply floating position from storage result.
+   * Extracted so it can be called from both restorePosition and restoreFloatingPosition.
+   */
+  private applyFloatingPosition(result: Record<string, unknown>): void {
+    if (result.overlayPosition) {
+      const pos = result.overlayPosition as { left: number; top: number; width?: number; height?: number };
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const w = pos.width || 350;
+      const h = pos.height || 450;
+
+      const left = Math.max(0, Math.min(pos.left, vw - Math.min(w, 100)));
+      const top = Math.max(0, Math.min(pos.top, vh - Math.min(h, 60)));
+
+      this.panel.style.left = `${left}px`;
+      this.panel.style.top = `${top}px`;
+      this.panel.style.right = 'auto';
+      if (pos.width) {
+        this.panel.style.width = `${pos.width}px`;
+      }
+      if (pos.height) {
+        this.panel.style.height = `${pos.height}px`;
+      }
+    }
+  }
+
+  /**
+   * Restore floating position from storage (called when undocking).
+   */
+  private restoreFloatingPosition(): void {
+    try {
+      if (!chrome.runtime?.id) return;
+      chrome.storage.local.get(['overlayPosition'], (result) => {
+        this.applyFloatingPosition(result);
       });
     } catch {
       // Extension context invalidated, ignore
@@ -1659,5 +1760,6 @@ export class AIOverlay {
   destroy(): void {
     this.draggable?.destroy();
     this.resizable?.destroy();
+    this.dockable?.destroy();
   }
 }

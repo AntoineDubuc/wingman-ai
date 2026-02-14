@@ -80,6 +80,7 @@
     .step:nth-child(3) { animation-delay: 0.2s; }
     .step:nth-child(4) { animation-delay: 0.25s; }
     .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
 
     @keyframes fadeInUp {
       to {
@@ -189,8 +190,9 @@
   <header>
     <a href="index.html" class="back-link">&larr; All Tutorials</a>
     <h1>Call Settings</h1>
-    <p>Configure transcription sensitivity, suggestion frequency, speaker filter, and call summaries</p>
+    <p>Configure panel layout, transcription sensitivity, suggestion frequency, speaker filter, and call summaries</p>
     <div class="progress-bar">
+      <div class="progress-dot active"></div>
       <div class="progress-dot active"></div>
       <div class="progress-dot active"></div>
       <div class="progress-dot active"></div>
@@ -221,6 +223,23 @@
     <div class="step">
       <div class="step-header">
         <div class="step-number">2</div>
+        <div class="step-title">Choose Panel Layout</div>
+      </div>
+      <p class="step-description">
+        Panel Layout controls how the Wingman overlay appears on your Google Meet page. Choose between three modes:
+      </p>
+      <div class="step-annotation">
+        <strong>Floating</strong> (default) — Drag the panel anywhere on screen. Resize freely.<br>
+        <strong>Sidebar Left</strong> — Snaps to the left edge at full height. Google Meet shifts right so nothing is hidden.<br>
+        <strong>Sidebar Right</strong> — Same as left, but on the right edge.<br><br>
+        You can also toggle docking mid-call using the dock button in the overlay header.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
         <div class="step-title">Adjust Endpointing</div>
       </div>
       <p class="step-description">
@@ -231,10 +250,10 @@
       </div>
     </div>
 
-    <!-- Step 3 -->
+    <!-- Step 4 -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">3</div>
+        <div class="step-number">4</div>
         <div class="step-title">Configure Speaker Filter</div>
       </div>
       <p class="step-description">
@@ -245,10 +264,10 @@
       </div>
     </div>
 
-    <!-- Step 4 -->
+    <!-- Step 5 -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">4</div>
+        <div class="step-number">5</div>
         <div class="step-title">Suggestion Cooldown</div>
       </div>
       <p class="step-description">
@@ -259,10 +278,10 @@
       </div>
     </div>
 
-    <!-- Step 5 -->
+    <!-- Step 6 -->
     <div class="step">
       <div class="step-header">
-        <div class="step-number">5</div>
+        <div class="step-number">6</div>
         <div class="step-title">Call Summary Options</div>
       </div>
       <p class="step-description">

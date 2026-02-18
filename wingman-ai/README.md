@@ -207,7 +207,7 @@ npm run format
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Proprietary — Copyright (c) 2025-2026 Antoine Dubuc. All rights reserved. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 

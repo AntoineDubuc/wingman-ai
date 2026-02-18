@@ -360,6 +360,7 @@ export class GeminiClient {
       id: string;
       name: string;
       color: string;
+      icon?: string;
       systemPrompt: string;
       kbDocumentIds: string[];
     }
@@ -369,6 +370,7 @@ export class GeminiClient {
     personaId: string;
     personaName: string;
     personaColor: string;
+    personaIcon?: string;
     kbSource?: string | null;
   } | null> {
     // Only process final transcripts
@@ -519,6 +521,7 @@ export class GeminiClient {
         personaId: persona.id,
         personaName: persona.name,
         personaColor: persona.color,
+        personaIcon: persona.icon,
         kbSource,
       };
     } catch (error) {

@@ -15,6 +15,7 @@ import {
   type Persona,
   type ConclavePreset,
 } from '../shared/persona';
+import { getIconUrl } from '../shared/persona-icons';
 
 class PopupController {
   private elements: {
@@ -296,7 +297,7 @@ class PopupController {
           .map((id) => this.allPersonas.find((p) => p.id === id))
           .filter((p): p is Persona => !!p);
         const dotsHtml = presetPersonas
-          .map((p) => `<span class="preset-option-dot" style="background: ${p.color};"></span>`)
+          .map((p) => this.personaIndicator(p, 12, 'preset-option-dot'))
           .join('');
         const personaCount = presetPersonas.length;
 
@@ -409,7 +410,7 @@ class PopupController {
       const chip = document.createElement('div');
       chip.className = 'persona-chip';
       chip.innerHTML = `
-        <span class="persona-chip-dot" style="background: ${persona.color}"></span>
+        ${this.personaIndicator(persona, 14, 'persona-chip-dot')}
         <span class="persona-chip-name">${this.escapeHtml(persona.name)}</span>
         <button class="persona-chip-remove" data-id="${persona.id}" title="${this.isSessionActive ? 'Stop session to change personas' : 'Remove'}"${this.isSessionActive || activePersonas.length <= 1 ? ' disabled' : ''}>×</button>
       `;
@@ -466,7 +467,7 @@ class PopupController {
     this.elements.personaDropdown.innerHTML = inactivePersonas
       .map(p => `
         <div class="persona-dropdown-item" data-id="${p.id}">
-          <span class="persona-dropdown-item-dot" style="background: ${p.color}"></span>
+          ${this.personaIndicator(p, 12, 'persona-dropdown-item-dot')}
           <span class="persona-dropdown-item-name">${this.escapeHtml(p.name)}</span>
         </div>
       `)
@@ -550,6 +551,13 @@ class PopupController {
       setTimeout(dismiss, 5000);
       tooltip.addEventListener('click', dismiss);
     }, 500);
+  }
+
+  private personaIndicator(persona: Persona, size: number, cssClass: string): string {
+    if (persona.icon) {
+      return `<img class="${cssClass}" src="${getIconUrl(persona.icon)}" width="${size}" height="${size}" alt="" loading="lazy" style="border-radius:3px;">`;
+    }
+    return `<span class="${cssClass}" style="background: ${persona.color}"></span>`;
   }
 
   private escapeHtml(text: string): string {

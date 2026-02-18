@@ -14,6 +14,7 @@ export interface Persona {
   id: string;
   name: string;
   color: string;
+  icon?: string; // OpenMoji hexcode, e.g. "1F600"
   systemPrompt: string;
   kbDocumentIds: string[];
   createdAt: number;

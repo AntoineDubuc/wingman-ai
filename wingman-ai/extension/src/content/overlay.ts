@@ -17,7 +17,7 @@ export interface Suggestion {
   timestamp: number;
   kbSource?: string;
   // Hydra multi-persona attribution
-  personas?: Array<{ id: string; name: string; color: string }>;
+  personas?: Array<{ id: string; name: string; color: string; icon?: string }>;
 }
 
 export interface Transcript {
@@ -41,7 +41,7 @@ interface TimelineEntry {
   kbSource?: string;
   element?: HTMLElement;
   // Hydra multi-persona attribution
-  personas?: Array<{ id: string; name: string; color: string }>;
+  personas?: Array<{ id: string; name: string; color: string; icon?: string }>;
 }
 
 import { ICONS, UI, LIMITS, STORAGE_KEYS } from '../shared/constants';
@@ -166,7 +166,7 @@ export class AIOverlay {
     const updatePersonaDisplay = () => {
       try {
         chrome.storage.local.get(['personas', 'activePersonaIds', 'activePersonaId'], (result) => {
-          const personas = result.personas as { id: string; name: string; color: string }[] | undefined;
+          const personas = result.personas as { id: string; name: string; color: string; icon?: string }[] | undefined;
           // Hydra: prefer activePersonaIds array, fall back to single activePersonaId
           let activeIds: string[] = result.activePersonaIds as string[] | undefined ?? [];
           if (activeIds.length === 0 && result.activePersonaId) {
@@ -185,7 +185,7 @@ export class AIOverlay {
           // Find all active personas
           const activePersonas = activeIds
             .map(id => personas.find(p => p.id === id))
-            .filter((p): p is { id: string; name: string; color: string } => !!p);
+            .filter((p): p is { id: string; name: string; color: string; icon?: string } => !!p);
 
           if (activePersonas.length === 0) {
             dotsContainer.innerHTML = '';
@@ -193,9 +193,11 @@ export class AIOverlay {
             return;
           }
 
-          // Render dots
+          // Render dots/icons
           dotsContainer.innerHTML = activePersonas
-            .map(p => `<span class="persona-dot" style="width:8px;height:8px;border-radius:50%;background:${p.color};" title="${this.escapeHtml(p.name)}"></span>`)
+            .map(p => p.icon
+              ? `<img style="width:16px;height:16px;border-radius:3px;" src="https://cdn.jsdelivr.net/npm/openmoji@15.1/color/svg/${p.icon}.svg" alt="" title="${this.escapeHtml(p.name)}">`
+              : `<span class="persona-dot" style="width:8px;height:8px;border-radius:50%;background:${p.color};" title="${this.escapeHtml(p.name)}"></span>`)
             .join('');
 
           // For single persona: show name, for multi: show count or hide
@@ -865,9 +867,11 @@ export class AIOverlay {
     try {
       const personas = entry.personas;
       if (personas && personas.length > 0) {
-        // Build persona dots + names
+        // Build persona dots/icons + names
         const dotsHtml = personas
-          .map(p => `<span style="width:6px;height:6px;border-radius:50%;background:${p.color};display:inline-block;"></span>`)
+          .map(p => p.icon
+            ? `<img style="width:14px;height:14px;border-radius:2px;display:inline-block;" src="https://cdn.jsdelivr.net/npm/openmoji@15.1/color/svg/${p.icon}.svg" alt="">`
+            : `<span style="width:6px;height:6px;border-radius:50%;background:${p.color};display:inline-block;"></span>`)
           .join('');
         const namesHtml = personas.map(p => this.escapeHtml(p.name)).join(', ');
         personaHtml = `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:4px;">${dotsHtml}</span>` +

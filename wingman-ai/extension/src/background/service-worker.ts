@@ -33,6 +33,7 @@ interface SessionPersona {
   id: string;
   name: string;
   color: string;
+  icon?: string;
   systemPrompt: string;
   kbDocumentIds: string[];
   modelPrompts?: Record<string, string>;
@@ -291,6 +292,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
         id: p.id,
         name: p.name,
         color: p.color,
+        icon: p.icon,
         systemPrompt: p.systemPrompt,
         kbDocumentIds: p.kbDocumentIds,
         modelPrompts: p.modelPrompts,
@@ -538,6 +540,7 @@ async function processTranscriptHydra(transcript: Transcript): Promise<void> {
         personaId: string;
         personaName: string;
         personaColor: string;
+        personaIcon?: string;
         kbSource?: string | null;
       } | null>((resolve) => {
         setTimeout(async () => {
@@ -565,6 +568,7 @@ async function processTranscriptHydra(transcript: Transcript): Promise<void> {
     personaId: string;
     personaName: string;
     personaColor: string;
+    personaIcon?: string;
     kbSource?: string | null;
   };
 
@@ -603,6 +607,7 @@ async function processTranscriptHydra(transcript: Transcript): Promise<void> {
       id: s.personaId,
       name: s.personaName,
       color: s.personaColor,
+      icon: s.personaIcon,
     }));
 
     // Track suggestion counts per persona (each persona in group gets credit)

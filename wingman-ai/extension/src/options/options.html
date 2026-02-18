@@ -548,6 +548,27 @@
             <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" maxlength="60">
           </div>
 
+          <!-- Icon picker -->
+          <div class="form-group">
+            <label class="input-label">Icon <span class="label-hint">(optional)</span></label>
+            <div id="persona-icon-picker" class="icon-picker">
+              <div class="icon-search-wrapper">
+                <span class="icon-search-icon">&#128269;</span>
+                <input type="text" id="persona-icon-search" class="text-input icon-search-input" placeholder="Search 4,000+ icons...">
+                <button id="persona-icon-search-clear" class="icon-search-clear" hidden>&times;</button>
+              </div>
+              <div id="persona-icon-selected" class="icon-selected-row" hidden>
+                <span>Selected:</span>
+                <img id="persona-icon-selected-img" class="icon-selected-img" width="32" height="32" alt="">
+                <button id="persona-icon-clear-btn" class="link-btn link-btn--danger">Clear</button>
+              </div>
+              <div id="persona-icon-grid-label" class="icon-grid-label">Quick picks</div>
+              <div id="persona-icon-grid" class="icon-grid"></div>
+              <div id="persona-icon-loading" class="icon-loading" hidden>Loading icons...</div>
+              <div id="persona-icon-empty" class="icon-empty" hidden>No icons found. Try different keywords like "face", "work", "animal".</div>
+            </div>
+          </div>
+
           <!-- Color picker -->
           <div class="form-group">
             <label class="input-label">Color tag</label>
@@ -830,6 +851,7 @@
     <!-- Footer with version -->
     <footer class="options-footer">
       <span class="version">v1.0.0</span>
+      <span class="attribution">Icons by <a href="https://openmoji.org/" target="_blank" rel="noopener">OpenMoji</a> &mdash; CC BY-SA 4.0</span>
     </footer>
 
     <!-- Toast notification component -->

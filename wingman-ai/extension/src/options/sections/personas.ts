@@ -14,6 +14,8 @@ import { DEFAULT_SYSTEM_PROMPT } from '../../shared/default-prompt';
 import { kbDatabase, ingestDocument, isIngesting } from '../../services/kb/kb-database';
 import { searchKB } from '../../services/kb/kb-search';
 import { icon } from './icons';
+import { getIconUrl, loadEmojiData, searchIcons, QUICK_PICK_ICONS } from '../../shared/persona-icons';
+import type { OpenMojiEntry } from '../../shared/persona-icons';
 import { openChatModal, closeChatModal, onUserSend, onQuickReply, onTemplateAction, addBotMessage, renderFooter, showTemplatePreview, setInputVisible } from './prompt-assistant-chat';
 import { openTestHarness, closeTestHarness } from './prompt-test-harness';
 import { openVersionHistory, closeVersionHistory } from './prompt-version-history';
@@ -65,6 +67,19 @@ export class PersonaSection {
   private importFill: HTMLElement | null = null;
   private importText: HTMLElement | null = null;
 
+  // DOM references — icon picker
+  private iconSearchInput: HTMLInputElement | null = null;
+  private iconSearchClear: HTMLButtonElement | null = null;
+  private iconSelectedRow: HTMLElement | null = null;
+  private iconSelectedImg: HTMLImageElement | null = null;
+  private iconClearBtn: HTMLButtonElement | null = null;
+  private iconGrid: HTMLElement | null = null;
+  private iconGridLabel: HTMLElement | null = null;
+  private iconLoading: HTMLElement | null = null;
+  private iconEmpty: HTMLElement | null = null;
+  private iconSearchTimer: ReturnType<typeof setTimeout> | null = null;
+  private quickPickEntries: OpenMojiEntry[] | null = null;
+
   // DOM references — prompt assistant actions
   private promptAssistantBtn: HTMLButtonElement | null = null;
   private testPromptBtn: HTMLButtonElement | null = null;
@@ -114,6 +129,17 @@ export class PersonaSection {
     this.importProgress = document.getElementById('persona-import-progress');
     this.importFill = document.getElementById('persona-import-fill');
     this.importText = document.getElementById('persona-import-text');
+
+    // Bind DOM — icon picker
+    this.iconSearchInput = document.getElementById('persona-icon-search') as HTMLInputElement;
+    this.iconSearchClear = document.getElementById('persona-icon-search-clear') as HTMLButtonElement;
+    this.iconSelectedRow = document.getElementById('persona-icon-selected');
+    this.iconSelectedImg = document.getElementById('persona-icon-selected-img') as HTMLImageElement;
+    this.iconClearBtn = document.getElementById('persona-icon-clear-btn') as HTMLButtonElement;
+    this.iconGrid = document.getElementById('persona-icon-grid');
+    this.iconGridLabel = document.getElementById('persona-icon-grid-label');
+    this.iconLoading = document.getElementById('persona-icon-loading');
+    this.iconEmpty = document.getElementById('persona-icon-empty');
 
     // Bind DOM — embedded KB section
     this.kbDropZone = document.getElementById('persona-kb-drop-zone');
@@ -189,6 +215,9 @@ export class PersonaSection {
     // Render color swatches
     this.renderColorPicker();
 
+    // Bind icon picker events
+    this.bindIconPicker();
+
     // Bind prompt assistant action buttons
     this.bindPromptActions();
 
@@ -230,6 +259,7 @@ export class PersonaSection {
     this.editingPersona.name = name;
     this.editingPersona.systemPrompt = prompt;
     this.editingPersona.updatedAt = Date.now();
+    // icon is already updated in-place by the icon picker click handler
 
     // Create a new version if the prompt text changed
     if (promptChanged) {
@@ -312,9 +342,13 @@ export class PersonaSection {
         : `${kbCount} KB doc${kbCount !== 1 ? 's' : ''}`;
       const lastEdited = this.timeAgo(persona.updatedAt);
 
+      const indicator = persona.icon
+        ? `<img class="persona-card-icon" src="${getIconUrl(persona.icon)}" width="24" height="24" alt="" loading="lazy">`
+        : `<span class="persona-card-dot" style="background:${persona.color}"></span>`;
+
       card.innerHTML = `
         <span class="persona-drag-handle">${icon('grip', 16)}</span>
-        <span class="persona-card-dot" style="background:${persona.color}"></span>
+        ${indicator}
         <div class="persona-card-info">
           <div class="persona-card-name">${this.escapeHtml(persona.name)}</div>
           <div class="persona-card-meta">${kbText} · Edited ${lastEdited}</div>
@@ -447,8 +481,12 @@ export class PersonaSection {
     this.updateCharCount();
     this.promptTextarea.classList.remove('error');
 
-    // Select color
+    // Select color and icon
     this.selectColor(persona.color);
+    this.updateIconSelection();
+    if (this.iconSearchInput) this.iconSearchInput.value = '';
+    if (this.iconSearchClear) this.iconSearchClear.hidden = true;
+    void this.renderQuickPicks();
 
     // Init KB and render persona's documents
     await this.initKB();
@@ -570,6 +608,7 @@ export class PersonaSection {
       this.editingPersona.color,
       [...this.editingPersona.kbDocumentIds]
     );
+    if (this.editingPersona.icon) copy.icon = this.editingPersona.icon;
 
     this.personas.push(copy);
     await savePersonas(this.personas);
@@ -617,6 +656,7 @@ export class PersonaSection {
         persona: {
           name: this.editingPersona.name,
           color: this.editingPersona.color,
+          icon: this.editingPersona.icon,
           systemPrompt: this.editingPersona.systemPrompt,
           kbDocuments,
         },
@@ -712,6 +752,7 @@ export class PersonaSection {
       const imported = obj.persona as {
         name: string;
         color: string;
+        icon?: string;
         systemPrompt: string;
         kbDocuments?: { filename: string; fileType: string; textContent: string }[];
       };
@@ -772,6 +813,7 @@ export class PersonaSection {
         imported.color || DEFAULT_PERSONA_COLOR,
         kbDocIds
       );
+      if (imported.icon) persona.icon = imported.icon;
 
       this.personas.push(persona);
       await savePersonas(this.personas);
@@ -817,6 +859,143 @@ export class PersonaSection {
     const swatches = this.colorPicker.querySelectorAll('.persona-color-swatch');
     for (const s of swatches) {
       s.classList.toggle('selected', (s as HTMLElement).dataset.color === color);
+    }
+  }
+
+  // === ICON PICKER ===
+
+  private bindIconPicker(): void {
+    // Search with debounce
+    this.iconSearchInput?.addEventListener('input', () => {
+      const query = this.iconSearchInput?.value ?? '';
+      if (this.iconSearchClear) this.iconSearchClear.hidden = !query;
+
+      if (this.iconSearchTimer) clearTimeout(this.iconSearchTimer);
+      this.iconSearchTimer = setTimeout(() => {
+        if (query.trim()) {
+          void this.searchIconsAndRender(query.trim());
+        } else {
+          void this.renderQuickPicks();
+        }
+      }, 300);
+    });
+
+    // Clear search
+    this.iconSearchClear?.addEventListener('click', () => {
+      if (this.iconSearchInput) this.iconSearchInput.value = '';
+      if (this.iconSearchClear) this.iconSearchClear.hidden = true;
+      void this.renderQuickPicks();
+    });
+
+    // Clear selected icon
+    this.iconClearBtn?.addEventListener('click', () => {
+      if (this.editingPersona) {
+        this.editingPersona.icon = undefined;
+        this.isDirty = true;
+      }
+      this.updateIconSelection();
+      this.refreshIconGridSelection();
+    });
+  }
+
+  private async renderQuickPicks(): Promise<void> {
+    if (!this.iconGrid || !this.iconGridLabel) return;
+
+    if (this.iconEmpty) this.iconEmpty.hidden = true;
+
+    // Load quick picks (first time triggers CDN fetch)
+    if (!this.quickPickEntries) {
+      if (this.iconLoading) this.iconLoading.hidden = false;
+      if (this.iconGrid) this.iconGrid.innerHTML = '';
+      try {
+        const data = await loadEmojiData();
+        this.quickPickEntries = QUICK_PICK_ICONS
+          .map((hex) => data.find((e) => e.hexcode === hex))
+          .filter((e): e is OpenMojiEntry => e !== undefined);
+      } catch {
+        if (this.iconLoading) this.iconLoading.hidden = true;
+        return;
+      }
+      if (this.iconLoading) this.iconLoading.hidden = true;
+    }
+
+    this.iconGridLabel.textContent = 'Quick picks';
+    this.renderIconGrid(this.quickPickEntries);
+  }
+
+  private async searchIconsAndRender(query: string): Promise<void> {
+    if (!this.iconGrid || !this.iconGridLabel) return;
+
+    if (this.iconLoading) this.iconLoading.hidden = false;
+    if (this.iconEmpty) this.iconEmpty.hidden = true;
+    this.iconGrid.innerHTML = '';
+
+    try {
+      const results = await searchIcons(query, 50);
+      if (this.iconLoading) this.iconLoading.hidden = true;
+
+      if (results.length === 0) {
+        if (this.iconEmpty) this.iconEmpty.hidden = false;
+        this.iconGridLabel.textContent = '';
+        return;
+      }
+
+      this.iconGridLabel.textContent = `${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`;
+      this.renderIconGrid(results);
+    } catch {
+      if (this.iconLoading) this.iconLoading.hidden = true;
+    }
+  }
+
+  private renderIconGrid(entries: OpenMojiEntry[]): void {
+    if (!this.iconGrid) return;
+    this.iconGrid.innerHTML = '';
+
+    const selectedHex = this.editingPersona?.icon;
+
+    for (const entry of entries) {
+      const item = document.createElement('div');
+      item.className = 'icon-grid-item';
+      if (entry.hexcode === selectedHex) item.classList.add('selected');
+      item.title = entry.annotation;
+      item.dataset.hexcode = entry.hexcode;
+
+      const img = document.createElement('img');
+      img.src = getIconUrl(entry.hexcode);
+      img.alt = entry.annotation;
+      img.width = 28;
+      img.height = 28;
+      img.loading = 'lazy';
+      item.appendChild(img);
+
+      item.addEventListener('click', () => {
+        if (!this.editingPersona) return;
+        this.editingPersona.icon = entry.hexcode;
+        this.isDirty = true;
+        this.updateIconSelection();
+        this.refreshIconGridSelection();
+      });
+
+      this.iconGrid.appendChild(item);
+    }
+  }
+
+  private updateIconSelection(): void {
+    const hex = this.editingPersona?.icon;
+    if (hex && this.iconSelectedRow && this.iconSelectedImg) {
+      this.iconSelectedImg.src = getIconUrl(hex);
+      this.iconSelectedRow.hidden = false;
+    } else if (this.iconSelectedRow) {
+      this.iconSelectedRow.hidden = true;
+    }
+  }
+
+  private refreshIconGridSelection(): void {
+    if (!this.iconGrid) return;
+    const selectedHex = this.editingPersona?.icon;
+    for (const item of this.iconGrid.querySelectorAll('.icon-grid-item')) {
+      const el = item as HTMLElement;
+      el.classList.toggle('selected', el.dataset.hexcode === selectedHex);
     }
   }
 

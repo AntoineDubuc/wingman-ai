@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wingman AI — Privacy Policy</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 40px 20px; color: #202124; line-height: 1.7; }
+  h1 { font-size: 28px; margin-bottom: 4px; }
+  h2 { font-size: 20px; margin-top: 32px; border-bottom: 1px solid #e8eaed; padding-bottom: 8px; }
+  .date { color: #5f6368; font-size: 14px; margin-bottom: 32px; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; }
+  .highlight { background: #fef7ed; border-left: 3px solid #e67e22; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+  a { color: #1a73e8; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111827; color: #f3f4f6; }
+    h2 { border-bottom-color: #374151; }
+    .highlight { background: #1f2937; border-left-color: #f39c12; }
+    a { color: #60a5fa; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Wingman AI — Privacy Policy</h1>
+<p class="date">Effective date: March 31, 2026</p>
+
+<div class="highlight">
+<strong>The short version:</strong> Wingman AI runs entirely in your browser. We do not operate servers, collect your data, or have access to your conversations. Your API keys, transcripts, and audio never pass through any infrastructure we control.
+</div>
+
+<h2>1. What Wingman AI Does</h2>
+<p>Wingman AI is a Chrome extension that provides real-time AI suggestions, live transcription, and emotion detection during Google Meet video calls. It operates as a browser-side overlay — completely invisible to other call participants.</p>
+
+<h2>2. Data We Collect</h2>
+<p><strong>None.</strong> We do not collect, store, receive, or have access to any user data. There is no backend server, no analytics, no telemetry, and no tracking of any kind.</p>
+
+<h2>3. Data Processed Locally in Your Browser</h2>
+<p>The following data is processed entirely within your browser and stored in Chrome's local storage (chrome.storage.local and IndexedDB):</p>
+<ul>
+  <li><strong>API keys</strong> — Your keys for Deepgram, Google Gemini, OpenRouter, Groq, and Hume AI. Stored locally, never transmitted to us.</li>
+  <li><strong>Persona configurations</strong> — System prompts, knowledge base documents, and Conclave presets you create.</li>
+  <li><strong>UI preferences</strong> — Theme, panel layout, transcription settings.</li>
+  <li><strong>Knowledge Base documents</strong> — Files you upload are chunked, embedded, and stored in IndexedDB on your device.</li>
+</ul>
+
+<h2>4. Data Transmitted to Third-Party Services</h2>
+<p>When you start a session, the extension sends data directly from your browser to third-party API providers <strong>using your own API keys</strong>:</p>
+<ul>
+  <li><strong>Deepgram</strong> — Tab audio is streamed via WebSocket for speech-to-text transcription.</li>
+  <li><strong>Google Gemini / OpenRouter / Groq</strong> — Transcribed text is sent via REST API for AI suggestion generation.</li>
+  <li><strong>Hume AI</strong> (optional) — Audio is sent via WebSocket for emotion detection.</li>
+  <li><strong>Google Drive</strong> (optional) — Call summaries are saved to your Google Drive if you enable this feature and authenticate with your Google account.</li>
+</ul>
+<p>These transmissions go directly from your browser to each provider. We have no visibility into, access to, or control over this data. Each provider's own privacy policy governs how they handle your data.</p>
+
+<h2>5. Data We Do NOT Collect</h2>
+<ul>
+  <li>No personal information (name, email, address)</li>
+  <li>No audio recordings</li>
+  <li>No transcripts or conversation content</li>
+  <li>No API keys or credentials</li>
+  <li>No usage analytics or telemetry</li>
+  <li>No browsing history</li>
+  <li>No cookies or tracking identifiers</li>
+</ul>
+
+<h2>6. Google OAuth (Drive Integration)</h2>
+<p>If you choose to enable Google Drive integration, the extension uses Chrome's identity API to authenticate with Google. The OAuth token is scoped to <code>drive.file</code> (only files created by the extension) and <code>userinfo.email</code>. The token is cached locally in your browser. We never see or store your Google credentials or OAuth tokens.</p>
+
+<h2>7. Data Sharing and Sales</h2>
+<p><strong>We do not sell, transfer, or share user data with any third party</strong> for any purpose including advertising, analytics, or credit determination. The only data transfers that occur are the ones you initiate by starting a session, and they go directly to API providers you have configured with your own keys.</p>
+
+<h2>8. Data Retention</h2>
+<p>All data is stored locally in your browser. You can delete it at any time by:</p>
+<ul>
+  <li>Clearing your API keys in the extension settings</li>
+  <li>Deleting personas and knowledge base documents</li>
+  <li>Uninstalling the extension (removes all local data)</li>
+</ul>
+
+<h2>9. Children's Privacy</h2>
+<p>Wingman AI is not directed at children under 13 and does not knowingly collect data from children.</p>
+
+<h2>10. Changes to This Policy</h2>
+<p>If we make material changes to this privacy policy, we will update the effective date at the top of this page. Continued use of the extension after changes constitutes acceptance.</p>
+
+<h2>11. Contact</h2>
+<p>For questions about this privacy policy, contact: <a href="mailto:antoine@aientourage.com">antoine@aientourage.com</a></p>
+
+</body>
+</html>

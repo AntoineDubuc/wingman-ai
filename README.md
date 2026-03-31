@@ -2,113 +2,153 @@
   <img src="docs/images/hero-banner.png" alt="Wingman AI — Your AI Co-Pilot for Google Meet" width="100%">
 </p>
 
-<p align="center">
-  <strong>Real-time AI suggestions, live transcription, and emotion detection — right inside Google Meet.</strong>
-</p>
+<h3 align="center">Real-time AI suggestions, live transcription, and emotion detection — right inside Google Meet.</h3>
 
 <p align="center">
   <a href="https://antoinedubuc.github.io/wingman-ai/">Landing Page</a> &bull;
-  <a href="#features">Features</a> &bull;
-  <a href="#getting-started">Get Started</a> &bull;
-  <a href="#how-it-works">How It Works</a> &bull;
-  <a href="docs/GETTING-STARTED.md">Full Docs</a>
+  <a href="#-features">Features</a> &bull;
+  <a href="#-get-started-in-5-minutes">Get Started</a> &bull;
+  <a href="#-how-it-works">How It Works</a> &bull;
+  <a href="docs/GETTING-STARTED.md">Docs</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Chrome-Extension-orange?logo=googlechrome&logoColor=white" alt="Chrome Extension">
-  <img src="https://img.shields.io/badge/Manifest-V3-blue" alt="Manifest V3">
-  <img src="https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/BYOK-Bring%20Your%20Own%20Keys-green" alt="BYOK">
-  <img src="https://img.shields.io/badge/No%20Backend-100%25%20Client--Side-brightgreen" alt="No Backend">
+  <img src="https://img.shields.io/badge/Chrome-Extension-orange?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension">
+  <img src="https://img.shields.io/badge/BYOK-Bring%20Your%20Own%20Keys-green?style=for-the-badge" alt="BYOK">
+  <img src="https://img.shields.io/badge/No%20Backend-100%25%20Private-brightgreen?style=for-the-badge" alt="No Backend">
+  <img src="https://img.shields.io/badge/$0.65-Per%20Hour-blue?style=for-the-badge" alt="Cost">
 </p>
 
 ---
 
-## The Problem
+You're on a sales call. The prospect throws a curveball. You freeze.
 
-You're on a sales call. The prospect throws an objection you weren't ready for. You fumble. The deal slips.
+**What if you had an expert whispering exactly what to say?**
 
-**Wingman AI sits in your Google Meet calls and feeds you exactly what to say, when to say it** — powered by your own documents, your own personas, and real-time emotion detection.
-
-No server. No subscription. No data leaves your browser.
+Wingman AI sits invisibly in your Google Meet calls and delivers real-time suggestions, powered by your own documents, your own AI personas, and live emotion detection. No server. No subscription. No data ever leaves your browser.
 
 ---
 
-## Features
+## ✨ Features
 
-### Live AI Suggestions
-As the conversation flows, Wingman analyzes what's being said and delivers contextual response cards in real-time. It knows when to speak up and when to stay silent.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### Knowledge Base
-Upload your sales decks, pricing sheets, competitor battlecards — Wingman searches them semantically during calls and surfaces the exact talking point you need.
+### 🎯 Live AI Suggestions
 
-### Multi-Persona System
-Switch between personas mid-call: Discovery Coach, Sales Closer, Technical Expert, Objection Handler. Each has its own system prompt and knowledge base.
+As the conversation flows, Wingman analyzes what's being said and delivers contextual response cards in real-time. It knows when to speak up — and when to stay silent.
 
-<p align="center">
-  <img src="docs/images/persona-editor.png" alt="Persona Editor" width="400">
-</p>
+Upload your sales decks, pricing sheets, and battlecards. Wingman searches them semantically during calls and surfaces the exact talking point you need.
 
-### Conclave Mode
-Activate up to 5 personas simultaneously. Get suggestions from multiple expert perspectives at once — each attributed with a color-coded dot.
+</td>
+<td width="50%" valign="top">
 
-<p align="center">
-  <img src="docs/images/conclave.png" alt="Conclave Mode" width="400">
-</p>
+### 🎭 Multi-Persona System
 
-### Emotion Detection
-Hume AI analyzes vocal prosody in real-time to detect emotional states: engaged, frustrated, thinking, or neutral. The overlay badge updates live so you can adjust your approach.
+Switch between expert personas mid-call: Discovery Coach, Sales Closer, Technical Expert, Objection Handler. Each has its own prompt and knowledge base.
 
-<p align="center">
-  <img src="docs/images/overlay-emotions.png" alt="Emotion Detection in Overlay" width="500">
-</p>
+<img src="docs/images/persona-editor.png" alt="Persona Editor" width="100%">
 
-### Call Summaries
-When the call ends, Wingman generates a structured summary with key discussion points, action items, and follow-ups — then auto-saves it to Google Drive.
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-<p align="center">
-  <img src="docs/images/call-summary.png" alt="Call Summary" width="400">
-</p>
+### 🧠 Conclave Mode
 
-### Real-Time Cost Tracking
-See exactly what each call costs across all providers. No surprise bills.
+Activate up to **5 personas simultaneously**. Get suggestions from multiple expert perspectives at once — each attributed with a color-coded dot so you know who's talking.
+
+Save team presets for different call types: Sales Team, Enterprise Deal, Discovery Only.
+
+<img src="docs/images/conclave.png" alt="Conclave Mode" width="100%">
+
+</td>
+<td width="50%" valign="top">
+
+### 😤 Emotion Detection
+
+Powered by Hume AI, Wingman reads vocal prosody to detect emotional states in real-time: **engaged**, **frustrated**, **thinking**, or **neutral**.
+
+The overlay badge updates live so you can adjust your approach before it's too late.
+
+<img src="docs/images/overlay-emotions.png" alt="Emotion Detection" width="100%">
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 📋 Call Summaries → Google Drive
+
+When the call ends, Wingman auto-generates a structured summary: key discussion points, action items, and follow-ups. One click saves it as a native Google Doc.
+
+<img src="docs/images/call-summary.png" alt="Call Summary" width="100%">
+
+</td>
+<td width="50%" valign="top">
+
+### 💰 Real-Time Cost Tracking
+
+See exactly what each call costs across all providers — live, as the call happens. No surprise bills. No hidden fees.
+
+**~$0.65 per hour** with Deepgram + Gemini. Compare that to $100+/month for competing products with worse privacy.
+
+</td>
+</tr>
+</table>
 
 ---
 
-## How It Works
+## 🔒 Privacy First — BYOK Architecture
+
+> **Bring Your Own Keys.** No backend. No middleman. No data collection. Period.
+
+Your audio, transcripts, and API keys never touch a server we control. The extension talks directly to your AI providers from your browser. You own your data completely.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          YOUR BROWSER                               │
 │                                                                     │
-│   Google Meet ◄──── Chrome Extension (Overlay UI + Audio Capture)   │
+│   Google Meet  ◄────  Chrome Extension (Overlay + Audio Capture)    │
 └─────────────────────────────────────────────────────────────────────┘
                               │
            ┌──────────────────┼──────────────────┐
            ▼                  ▼                  ▼
-    ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-    │  Deepgram   │   │   Gemini    │   │   Hume AI   │
-    │  Nova-3     │   │  2.5 Flash  │   │  Emotions   │
-    │ (Your Key)  │   │ (Your Key)  │   │ (Your Key)  │
-    └─────────────┘   └─────────────┘   └─────────────┘
-     Speech → Text     Text → Suggestions   Audio → Emotions
+     ┌───────────┐     ┌───────────┐     ┌───────────┐
+     │ Deepgram  │     │  Gemini   │     │  Hume AI  │
+     │  Nova-3   │     │ 2.5 Flash │     │ Emotions  │
+     │(Your Key) │     │(Your Key) │     │(Your Key) │
+     └───────────┘     └───────────┘     └───────────┘
+      Speech→Text      Text→Suggestions  Audio→Emotions
 ```
 
-**100% client-side.** Your audio, transcripts, and API keys never touch a server. Everything runs in the Chrome extension.
+<details>
+<summary><strong>🔌 Multi-Provider Support</strong> — Not locked into one AI provider</summary>
+
+<br>
+
+Choose the AI provider that works for you and switch anytime:
+
+- **Google Gemini** — Gemini 2.5 Flash, 2.5 Pro (15s suggestion cooldown)
+- **OpenRouter** — Claude 3.5 Sonnet, GPT-4o, Llama 3.3 70B (10s cooldown)
+- **Groq** — Mixtral 8x7B, Llama 3.1 70B (5s cooldown, blazing fast)
+
+</details>
 
 ---
 
-## Getting Started
+## 🚀 Get Started in 5 Minutes
 
-### 1. Get API Keys
+**Step 1 →** Get free API keys
 
-| Service | Sign Up | Free Tier |
-|---------|---------|-----------|
-| **Deepgram** (speech-to-text) | [console.deepgram.com](https://console.deepgram.com/) | $200 credit (~100 hrs) |
-| **Google Gemini** (AI suggestions) | [aistudio.google.com](https://aistudio.google.com/apikey) | 1,500 req/day free |
-| **Hume AI** (emotions, optional) | [platform.hume.ai](https://platform.hume.ai/) | Free tier available |
+| Service | Free Tier |
+|---------|-----------|
+| [Deepgram](https://console.deepgram.com/) (speech-to-text) | $200 credit (~100 hours) |
+| [Google Gemini](https://aistudio.google.com/apikey) (AI suggestions) | 1,500 requests/day |
+| [Hume AI](https://platform.hume.ai/) (emotions, optional) | Free tier available |
 
-### 2. Install
+**Step 2 →** Clone, install, build
 
 ```bash
 git clone https://github.com/AntoineDubuc/wingman-ai.git
@@ -116,81 +156,57 @@ cd wingman-ai/wingman-ai/extension
 npm install && npm run build
 ```
 
-### 3. Load in Chrome
+**Step 3 →** Load in Chrome
 
-1. Open `chrome://extensions/`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked** → select the `extension/dist` folder
+Open `chrome://extensions/` → Enable **Developer mode** → **Load unpacked** → select `extension/dist`
 
-### 4. Configure & Go
-
-1. Click the Wingman icon → **Options**
-2. Paste your API keys
-3. Create or select a persona
-4. Join a Google Meet call → **Start Session**
+**Step 4 →** Configure and go
 
 <p align="center">
   <img src="docs/images/popup.png" alt="Wingman Popup" width="350">
 </p>
 
----
-
-## Cost Per Call
-
-| Service | Rate | 1-Hour Call |
-|---------|------|-------------|
-| Deepgram | ~$0.01/min | ~$0.60 |
-| Gemini | per request | ~$0.05 |
-| **Total** | | **~$0.65/hour** |
-
-Compare that to $100+/month for competing products — with worse privacy.
+Click the Wingman icon → **Options** → paste your API keys → pick a persona → join a Google Meet → **Start Session**. That's it.
 
 ---
 
-## Multi-Provider Support
-
-Not locked into one AI provider. Choose what works for you:
-
-| Provider | Models | Cooldown |
-|----------|--------|----------|
-| **Google Gemini** | Gemini 2.5 Flash, 2.5 Pro | 15s |
-| **OpenRouter** | Claude 3.5 Sonnet, GPT-4o, Llama 3.3 70B | 10s |
-| **Groq** | Mixtral 8x7B, Llama 3.1 70B | 5s |
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Extension | TypeScript (strict), Chrome Manifest V3, Vite |
-| Speech-to-Text | Deepgram Nova-3 (WebSocket) |
-| AI Suggestions | Gemini / OpenRouter / Groq (REST) |
-| Emotion Detection | Hume AI Expression Measurement (WebSocket) |
-| Knowledge Base | IndexedDB + Gemini Embeddings (768-dim) |
-| Cloud Storage | Google Drive API (optional) |
-
----
-
-## Development
+## 🛠 Development
 
 ```bash
 cd wingman-ai/extension
-npm run dev            # Watch mode
+
+npm run dev            # Watch mode — rebuilds on save
 npm run build          # Production build
 npm test               # Unit tests (Vitest)
-npm run typecheck      # TypeScript check
+npm run typecheck      # TypeScript strict check
 npm run lint           # ESLint
 ```
 
-See [`docs/`](docs/) for detailed engineering documentation:
+<details>
+<summary><strong>📖 Engineering Documentation</strong></summary>
+
+<br>
+
 - [Getting Started](docs/GETTING-STARTED.md) — Setup and onboarding
 - [File Structure](docs/FILE-STRUCTURE-MAP.md) — What each file does
 - [Code Patterns](docs/CODE-PATTERNS.md) — Copy-paste patterns
 - [Architecture](docs/diagrams/ARCHITECTURE.md) — System diagrams
+- [Flow Diagrams](docs/flows/) — End-to-end feature traces
+
+**Built with:** TypeScript (strict) · Chrome Manifest V3 · Vite · Deepgram Nova-3 · Google Gemini · Hume AI · IndexedDB · Google Drive API
+
+</details>
 
 ---
 
-## License
+<p align="center">
+  <strong>Stop winging it. Start winning.</strong>
+  <br><br>
+  <a href="https://antoinedubuc.github.io/wingman-ai/">
+    <img src="https://img.shields.io/badge/View%20Landing%20Page-E67E22?style=for-the-badge" alt="Landing Page">
+  </a>
+</p>
 
-Copyright (c) 2025-2026 Antoine Dubuc / AI Entourage, Inc. All rights reserved.
+<p align="center">
+  <sub>Copyright © 2025-2026 Antoine Dubuc / AI Entourage, Inc. All rights reserved.</sub>
+</p>

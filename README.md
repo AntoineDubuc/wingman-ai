@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Chrome-Extension-orange?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension">
   <img src="https://img.shields.io/badge/BYOK-Bring%20Your%20Own%20Keys-green?style=for-the-badge" alt="BYOK">
   <img src="https://img.shields.io/badge/No%20Backend-100%25%20Private-brightgreen?style=for-the-badge" alt="No Backend">
-  <img src="https://img.shields.io/badge/$0.65-Per%20Hour-blue?style=for-the-badge" alt="Cost">
+  <img src="https://img.shields.io/badge/$0.50-Per%20Hour-blue?style=for-the-badge" alt="Cost">
 </p>
 
 ---
@@ -57,7 +57,7 @@ Switch between expert personas mid-call: Discovery Coach, Sales Closer, Technica
 
 ### 🧠 Conclave Mode
 
-Activate up to **5 personas simultaneously**. Get suggestions from multiple expert perspectives at once — each attributed with a color-coded dot so you know who's talking.
+Activate up to **4 personas simultaneously**. Get suggestions from multiple expert perspectives at once — each attributed with a color-coded dot so you know who's talking.
 
 Save team presets for different call types: Sales Team, Enterprise Deal, Discovery Only.
 
@@ -92,7 +92,7 @@ When the call ends, Wingman auto-generates a structured summary: key discussion 
 
 See exactly what each call costs across all providers — live, as the call happens. No surprise bills. No hidden fees.
 
-**~$0.65 per hour** with Deepgram + Gemini. Compare that to $100+/month for competing products with worse privacy.
+**~$0.50 per hour** with Deepgram + Gemini. Compare that to $100+/month for competing products with worse privacy.
 
 </td>
 </tr>

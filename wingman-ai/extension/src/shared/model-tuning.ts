@@ -19,6 +19,10 @@ export const MODEL_FAMILY_MAP: Record<string, ModelFamily> = {
   'gemini-2.5-flash': 'gemini',
 
   // OpenRouter models
+  'anthropic/claude-sonnet-4.6': 'claude',
+  'anthropic/claude-opus-4.6': 'claude',
+  'openai/gpt-5.4': 'gpt',
+  'openai/gpt-5.4-mini': 'gpt',
   'google/gemini-2.5-flash': 'gemini',
   'google/gemini-2.5-pro': 'gemini',
   'anthropic/claude-sonnet-4': 'claude',
@@ -27,6 +31,8 @@ export const MODEL_FAMILY_MAP: Record<string, ModelFamily> = {
   'meta-llama/llama-3.3-70b-instruct': 'llama',
 
   // Groq models
+  'openai/gpt-oss-120b': 'gpt',
+  'openai/gpt-oss-20b': 'gpt',
   'meta-llama/llama-4-scout-17b-16e-instruct': 'llama',
   'qwen/qwen3-32b': 'qwen',
   'llama-3.3-70b-versatile': 'llama',

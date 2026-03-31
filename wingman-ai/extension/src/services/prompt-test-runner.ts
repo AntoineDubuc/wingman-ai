@@ -21,6 +21,8 @@ const GROQ_DIRECT_MODELS = new Set([
 // Groq models with slash prefix
 const GROQ_SLASH_MODELS = new Set([
   'meta-llama/llama-4-scout-17b-16e-instruct',
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
   'qwen/qwen3-32b',
 ]);
 

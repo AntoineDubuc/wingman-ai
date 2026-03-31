@@ -10,7 +10,7 @@ import type { LLMProvider } from './llm-config';
 
 // ── Staleness guard ──────────────────────────────────────────────
 
-export const PRICING_LAST_UPDATED = '2026-02-05';
+export const PRICING_LAST_UPDATED = '2026-03-31';
 const STALE_DAYS = 90;
 
 export function checkPricingStaleness(): void {
@@ -39,6 +39,10 @@ const MODEL_PRICING: Record<string, ModelPricing> = {
   'gemini-2.5-pro':              { inputPerToken: 1.25e-6,  outputPerToken: 5.00e-6 },
 
   // OpenRouter models (includes OR markup)
+  'anthropic/claude-sonnet-4.6': { inputPerToken: 3.00e-6,  outputPerToken: 15.00e-6 },
+  'anthropic/claude-opus-4.6':   { inputPerToken: 15.00e-6, outputPerToken: 75.00e-6 },
+  'openai/gpt-5.4':              { inputPerToken: 2.50e-6,  outputPerToken: 10.00e-6 },
+  'openai/gpt-5.4-mini':         { inputPerToken: 0.30e-6,  outputPerToken: 1.25e-6 },
   'google/gemini-2.5-flash':     { inputPerToken: 0.15e-6,  outputPerToken: 0.60e-6 },
   'google/gemini-2.5-pro':       { inputPerToken: 1.25e-6,  outputPerToken: 5.00e-6 },
   'anthropic/claude-sonnet-4':   { inputPerToken: 3.00e-6,  outputPerToken: 15.00e-6 },
@@ -47,6 +51,8 @@ const MODEL_PRICING: Record<string, ModelPricing> = {
   'meta-llama/llama-3.3-70b-instruct': { inputPerToken: 0.59e-6, outputPerToken: 0.79e-6 },
 
   // Groq models
+  'openai/gpt-oss-120b':         { inputPerToken: 0.30e-6,  outputPerToken: 0.90e-6 },
+  'openai/gpt-oss-20b':          { inputPerToken: 0.10e-6,  outputPerToken: 0.18e-6 },
   'meta-llama/llama-4-scout-17b-16e-instruct': { inputPerToken: 0.11e-6, outputPerToken: 0.18e-6 },
   'qwen/qwen3-32b':              { inputPerToken: 0.18e-6,  outputPerToken: 0.18e-6 },
   'llama-3.3-70b-versatile':     { inputPerToken: 0.59e-6,  outputPerToken: 0.79e-6 },

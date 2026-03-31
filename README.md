@@ -130,9 +130,9 @@ Your audio, transcripts, and API keys never touch a server we control. The exten
 
 Choose the AI provider that works for you and switch anytime:
 
-- **Google Gemini** — Gemini 2.5 Flash, 2.5 Pro (15s suggestion cooldown)
-- **OpenRouter** — Claude 3.5 Sonnet, GPT-4o, Llama 3.3 70B (10s cooldown)
-- **Groq** — Mixtral 8x7B, Llama 3.1 70B (5s cooldown, blazing fast)
+- **Google Gemini** — Gemini 2.5 Flash, 2.5 Pro
+- **OpenRouter** — Claude Sonnet 4.6, Claude Opus 4.6, GPT-5.4, GPT-5.4 Mini, Llama 3.3 70B
+- **Groq** — Llama 4 Scout, GPT-OSS 120B, GPT-OSS 20B, Qwen3 32B (blazing fast)
 
 </details>
 

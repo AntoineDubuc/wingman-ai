@@ -69,6 +69,10 @@ const MODEL_GROUPS: ModelGroup[] = [
     label: 'OpenRouter',
     provider: 'openrouter',
     models: [
+      { id: 'anthropic/claude-sonnet-4.6', name: 'Claude Sonnet 4.6' },
+      { id: 'anthropic/claude-opus-4.6', name: 'Claude Opus 4.6' },
+      { id: 'openai/gpt-5.4', name: 'GPT-5.4' },
+      { id: 'openai/gpt-5.4-mini', name: 'GPT-5.4 Mini' },
       { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
       { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
       { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4' },
@@ -82,6 +86,8 @@ const MODEL_GROUPS: ModelGroup[] = [
     provider: 'groq',
     models: [
       { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B' },
+      { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B' },
+      { id: 'openai/gpt-oss-20b', name: 'GPT-OSS 20B' },
       { id: 'qwen/qwen3-32b', name: 'Qwen3 32B' },
       { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile' },
       { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B Instant' },

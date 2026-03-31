@@ -22,6 +22,10 @@ export interface OpenRouterModel {
 }
 
 export const OPENROUTER_MODELS: OpenRouterModel[] = [
+  { id: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6 (New)' },
+  { id: 'anthropic/claude-opus-4.6', label: 'Claude Opus 4.6 (New)' },
+  { id: 'openai/gpt-5.4', label: 'GPT-5.4 (New)' },
+  { id: 'openai/gpt-5.4-mini', label: 'GPT-5.4 Mini (New)' },
   { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
   { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
   { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
@@ -38,6 +42,8 @@ export interface GroqModel {
 
 export const GROQ_MODELS: GroqModel[] = [
   { id: 'meta-llama/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout — Fast & Balanced (recommended)' },
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B — High Quality (New)' },
+  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B — Ultra Fast (New)' },
   { id: 'qwen/qwen3-32b', label: 'Qwen 3 32B — Strong Reasoning' },
   { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B — Highest Quality' },
   { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B — Ultra Fast, Basic' },
@@ -97,12 +103,20 @@ export const MODEL_STAGGER_MS: Record<string, number> = {
   'llama-3.1-8b-instant': 50,
 
   // OpenRouter (varies by upstream provider)
+  'anthropic/claude-sonnet-4.6': 290,
+  'anthropic/claude-opus-4.6': 500,
+  'openai/gpt-5.4': 200,
+  'openai/gpt-5.4-mini': 150,
   'google/gemini-2.5-flash': 225,
   'google/gemini-2.5-pro': 775,
   'anthropic/claude-sonnet-4': 290,
   'openai/gpt-4o': 135,
   'openai/gpt-4o-mini': 400,
   'meta-llama/llama-3.3-70b-instruct': 240,
+
+  // Groq — new models
+  'openai/gpt-oss-120b': 100,
+  'openai/gpt-oss-20b': 50,
 };
 
 /** Fallback stagger by provider if model not in MODEL_STAGGER_MS */

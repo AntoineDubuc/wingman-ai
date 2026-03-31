@@ -27,6 +27,8 @@ You're on a sales call. The prospect throws a curveball. You freeze.
 
 Wingman AI sits invisibly in your Google Meet calls and delivers real-time suggestions, powered by your own documents, your own AI personas, and live emotion detection. No server. No subscription. No data ever leaves your browser.
 
+> **Unlike meeting bots, Wingman is completely invisible to other participants.** No "AI assistant has joined" notification. No extra face in the grid. It's a browser extension overlay — your private advantage that nobody else on the call can see.
+
 ---
 
 ## ✨ Features

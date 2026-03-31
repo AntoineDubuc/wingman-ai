@@ -17,6 +17,20 @@ client_secret*.json
 generate-agent-flow-images.ts
 generate-icons.ts
 
+# Internal folders
+/go-to-market/
+/__images_generation__/
+/archive/
+/screenshots/
+/evidence/
+/phase-25/
+/Claude Code Features/
+/Research/
+.cg-aix-sdlc/
+
+# Build artifacts
+*.zip
+
 # OS files
 .DS_Store
 Thumbs.db

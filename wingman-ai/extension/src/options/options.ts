@@ -11,10 +11,13 @@ import { ConclaveSection } from './sections/conclave';
 import { LangBuilderSection } from './sections/langbuilder';
 import { PanelLayoutSection } from './sections/panel-layout';
 import { TabManager } from './sections/tabs';
+import { SetupImportSection } from './sections/setup-import';
 
 class OptionsController {
   private personas = new PersonaSection();
   private activePersonas = new ActivePersonasSection();
+  private apiKeys = new ApiKeysSection();
+  private setupImport = new SetupImportSection();
 
   async init(): Promise<void> {
     const toast = new ToastManager();
@@ -22,6 +25,7 @@ class OptionsController {
     const ctx = {
       showToast: toast.show,
       showConfirmModal: modal.show,
+      showConfirmModalNode: modal.showNode,
     };
 
     // Cmd/Ctrl+S → save persona editor
@@ -62,13 +66,17 @@ class OptionsController {
       new SpeakerFilterSection().init(ctx),
       new PanelLayoutSection().init(),
       new CallSummarySection().init(ctx),
-      new ApiKeysSection().init(ctx),
+      this.apiKeys.init(ctx),
       new DriveSection().init(ctx),
       new ConclaveSection().init(ctx),
       new LangBuilderSection().init(ctx),
       this.personas.init(ctx),
       this.activePersonas.init(ctx),
     ]);
+
+    // SetupImportSection depends on personas and apiKeys being initialized
+    // (it calls their public refresh() methods).
+    await this.setupImport.init(ctx, this.personas, this.apiKeys);
   }
 }
 

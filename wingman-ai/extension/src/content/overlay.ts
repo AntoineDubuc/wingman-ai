@@ -29,7 +29,7 @@ export interface Transcript {
 }
 
 interface TimelineEntry {
-  kind: 'transcript' | 'suggestion';
+  kind: 'transcript' | 'suggestion' | 'kb-answer';
   timestamp: number;
   speaker?: string;
   isSelf?: boolean;
@@ -42,6 +42,12 @@ interface TimelineEntry {
   element?: HTMLElement;
   // Hydra multi-persona attribution
   personas?: Array<{ id: string; name: string; color: string; icon?: string }>;
+  // KB answer fields
+  kbAnswer?: string;
+  kbAlt1?: string;
+  kbAlt2?: string;
+  kbChunks?: Array<{ text: string; score: number; documentName: string }>;
+  kbQuery?: string;
 }
 
 import { ICONS, UI, LIMITS, STORAGE_KEYS } from '../shared/constants';
@@ -56,6 +62,9 @@ export class AIOverlay {
   private shadow: ShadowRoot;
   private panel: HTMLDivElement;
   private isMinimized = false;
+  private suggestionsOnly = false;
+  private displayToggleBtn: HTMLButtonElement | null = null;
+  private suggestionsOnlyChip: HTMLElement | null = null;
   private draggable: Draggable | null = null;
   private resizable: Resizable | null = null;
   private dockable: Dockable | null = null;
@@ -100,6 +109,9 @@ export class AIOverlay {
   private layoutMode: 'single' | 'side-by-side' = 'single';
   private singlePanelWidth: string | null = null;
   private langBuilderConfigured = false;
+
+  // KB query state
+  private kbQueryInFlight = false;
 
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
@@ -324,6 +336,9 @@ export class AIOverlay {
             <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
             <button class="font-increase-btn" title="Increase font size">A+</button>
           </div>
+          <button class="display-toggle-btn" title="Suggestions only" aria-label="Suggestions only" aria-pressed="false">
+            ${ICONS.FILTER}
+          </button>
           <button class="dock-toggle-btn" title="Sidebar Right" aria-label="Sidebar Right">
             ${ICONS.DOCK}
           </button>
@@ -346,8 +361,13 @@ export class AIOverlay {
           </button>
         </div>
         <div class="overlay-content">
+          <div class="suggestions-only-chip" style="display:none;">Showing suggestions only</div>
           <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
             <div class="empty-state">Listening for conversation...</div>
+          </div>
+          <div class="kb-query-bar">
+            <input class="kb-query-input" type="text" placeholder="Ask your Knowledge Base..." maxlength="500">
+            <button class="kb-query-btn">${ICONS.KB_SEARCH}</button>
           </div>
         </div>
         <div class="langbuilder-panel" style="display:none;">
@@ -367,6 +387,30 @@ export class AIOverlay {
 
     // Store timeline reference
     this.timelineEl = panel.querySelector('.timeline') as HTMLElement;
+
+    // KB search bar event listeners
+    const kbInput = panel.querySelector('.kb-query-input') as HTMLInputElement | null;
+    const kbBtn = panel.querySelector('.kb-query-btn') as HTMLButtonElement | null;
+    if (kbInput && kbBtn) {
+      kbInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const val = kbInput.value.trim();
+          if (val && !this.kbQueryInFlight) {
+            kbInput.value = '';
+            this.handleKBQuery(val);
+          }
+        }
+      });
+      kbBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = kbInput.value.trim();
+        if (val && !this.kbQueryInFlight) {
+          kbInput.value = '';
+          this.handleKBQuery(val);
+        }
+      });
+    }
 
     // Add event listeners
     const minimizeBtn = panel.querySelector('.minimize-btn');
@@ -391,6 +435,19 @@ export class AIOverlay {
     });
     panel.addEventListener('click', () => {
       if (this.isMinimized) this.toggleMinimize();
+    });
+
+    // Display mode toggle
+    this.displayToggleBtn = panel.querySelector('.display-toggle-btn') as HTMLButtonElement;
+    this.suggestionsOnlyChip = panel.querySelector('.suggestions-only-chip') as HTMLElement;
+
+    this.displayToggleBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleDisplayMode();
+    });
+    this.suggestionsOnlyChip?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleDisplayMode();
     });
 
     // Store nav/body references
@@ -494,6 +551,49 @@ export class AIOverlay {
   }
 
   /**
+   * Toggle between full transcript+suggestions and suggestions-only display mode.
+   */
+  private toggleDisplayMode(): void {
+    this.suggestionsOnly = !this.suggestionsOnly;
+    this.applyDisplayMode();
+    try {
+      if (chrome.runtime?.id) {
+        chrome.storage.local.set({
+          [STORAGE_KEYS.OVERLAY_DISPLAY_MODE]: this.suggestionsOnly ? 'suggestions-only' : 'full',
+        });
+      }
+    } catch {
+      // Extension context invalidated, ignore
+    }
+  }
+
+  /**
+   * Apply display mode state to DOM: CSS class, button icon, chip visibility, empty state text.
+   */
+  private applyDisplayMode(): void {
+    this.timelineEl.classList.toggle('suggestions-only', this.suggestionsOnly);
+
+    if (this.displayToggleBtn) {
+      this.displayToggleBtn.innerHTML = this.suggestionsOnly ? ICONS.FILTER_ACTIVE : ICONS.FILTER;
+      this.displayToggleBtn.setAttribute('aria-pressed', String(this.suggestionsOnly));
+      this.displayToggleBtn.title = this.suggestionsOnly ? 'Show full transcript' : 'Suggestions only';
+      this.displayToggleBtn.setAttribute('aria-label', this.suggestionsOnly ? 'Show full transcript' : 'Suggestions only');
+    }
+
+    if (this.suggestionsOnlyChip) {
+      this.suggestionsOnlyChip.style.display = this.suggestionsOnly ? '' : 'none';
+    }
+
+    // Update empty state text if present
+    const emptyState = this.timelineEl.querySelector('.empty-state');
+    if (emptyState) {
+      emptyState.textContent = this.suggestionsOnly
+        ? 'Waiting for suggestions...'
+        : 'Listening for conversation...';
+    }
+  }
+
+  /**
    * Toggle minimized state
    */
   toggleMinimize(): void {
@@ -529,7 +629,8 @@ export class AIOverlay {
 
     // Clear timeline DOM
     if (this.timelineEl) {
-      this.timelineEl.innerHTML = '<div class="empty-state">Listening for conversation...</div>';
+      const emptyText = this.suggestionsOnly ? 'Waiting for suggestions...' : 'Listening for conversation...';
+      this.timelineEl.innerHTML = `<div class="empty-state">${emptyText}</div>`;
       this.timelineEl.style.display = 'flex';
     }
 
@@ -670,9 +771,11 @@ export class AIOverlay {
   updateTranscript(transcript: Transcript): void {
     if (!this.timelineEl) return;
 
-    // Remove empty state on first content
-    const emptyState = this.timelineEl.querySelector('.empty-state');
-    if (emptyState) emptyState.remove();
+    // Remove empty state on first content (skip in suggestions-only mode — let addSuggestion handle it)
+    if (!this.suggestionsOnly) {
+      const emptyState = this.timelineEl.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+    }
 
     const speakerKey = transcript.is_self ? 'self' : 'other';
 
@@ -821,6 +924,136 @@ export class AIOverlay {
     this.scrollToBottom();
   }
 
+  /**
+   * Add a KB answer card to the timeline.
+   */
+  addKBAnswer(data: {
+    answer: string;
+    alt1: string;
+    alt2: string;
+    chunks?: Array<{ text: string; score: number; documentName: string }>;
+    query: string;
+  }): void {
+    if (!this.timelineEl) return;
+
+    // Remove empty state
+    const emptyState = this.timelineEl.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+
+    const entry: TimelineEntry = {
+      kind: 'kb-answer',
+      timestamp: Date.now(),
+      kbAnswer: data.answer,
+      kbAlt1: data.alt1,
+      kbAlt2: data.alt2,
+      kbChunks: data.chunks,
+      kbQuery: data.query,
+    };
+
+    this.timeline.push(entry);
+
+    const bubble = this.renderBubble(entry, true);
+    entry.element = bubble;
+
+    this.trimTimeline();
+    this.scrollToBottom();
+  }
+
+  /**
+   * Send a KB_QUERY to the service worker and display the result.
+   * Concurrency-guarded: only one query in-flight at a time.
+   */
+  private async handleKBQuery(text: string): Promise<void> {
+    if (this.kbQueryInFlight || !text.trim()) return;
+
+    // Check extension context validity
+    if (!chrome.runtime?.id) {
+      this.addKBAnswer({
+        answer: 'Extension reloaded — please refresh the page.',
+        alt1: '',
+        alt2: '',
+        query: text,
+      });
+      return;
+    }
+
+    this.kbQueryInFlight = true;
+
+    // Dim all KB icons
+    const icons = this.timelineEl?.querySelectorAll('.kb-trigger-icon');
+    icons?.forEach(el => el.classList.add('disabled'));
+
+    // Disable search bar if present
+    const searchInput = this.panel.querySelector('.kb-query-input') as HTMLInputElement | null;
+    const searchBtn = this.panel.querySelector('.kb-query-btn') as HTMLButtonElement | null;
+    if (searchInput) searchInput.disabled = true;
+    if (searchBtn) searchBtn.disabled = true;
+
+    // Show loading bubble
+    const loadingEntry: TimelineEntry = {
+      kind: 'kb-answer',
+      timestamp: Date.now(),
+      kbAnswer: 'Searching Knowledge Base...',
+      kbQuery: text,
+    };
+    this.timeline.push(loadingEntry);
+    const loadingBubble = this.renderBubble(loadingEntry, true);
+    loadingEntry.element = loadingBubble;
+    loadingBubble.classList.add('loading');
+    this.scrollToBottom();
+
+    try {
+      const response = await chrome.runtime.sendMessage({ type: 'KB_QUERY', text });
+
+      // Remove loading bubble
+      loadingBubble.remove();
+      this.timeline = this.timeline.filter(e => e !== loadingEntry);
+
+      if (response?.error) {
+        this.addKBAnswer({
+          answer: response.error,
+          alt1: '',
+          alt2: '',
+          query: text,
+        });
+      } else if (response?.answer) {
+        this.addKBAnswer({
+          answer: response.answer,
+          alt1: response.alt1 || '',
+          alt2: response.alt2 || '',
+          chunks: response.chunks,
+          query: text,
+        });
+      } else {
+        this.addKBAnswer({
+          answer: 'Unexpected response from Knowledge Base search.',
+          alt1: '',
+          alt2: '',
+          query: text,
+        });
+      }
+    } catch {
+      // Remove loading bubble
+      loadingBubble.remove();
+      this.timeline = this.timeline.filter(e => e !== loadingEntry);
+
+      this.addKBAnswer({
+        answer: 'Extension reloaded — please refresh the page.',
+        alt1: '',
+        alt2: '',
+        query: text,
+      });
+    } finally {
+      this.kbQueryInFlight = false;
+      // Re-enable all KB icons
+      const allIcons = this.timelineEl?.querySelectorAll('.kb-trigger-icon');
+      allIcons?.forEach(el => el.classList.remove('disabled'));
+      // Re-enable search bar
+      if (searchInput) searchInput.disabled = false;
+      if (searchBtn) searchBtn.disabled = false;
+    }
+  }
+
   // ── Bubble Rendering ──
 
   /**
@@ -848,6 +1081,94 @@ export class AIOverlay {
         `<span class="bubble-text" style="font-size:${this.fontSize}px">${this.escapeHtml(entry.text || '')}</span>` +
         `</div>` +
         `<span class="bubble-time" style="font-size:${this.fontSize - 3}px">${this.formatTime(entry.timestamp)}</span>`;
+
+      // Add KB search icon (hover-revealed)
+      const kbIcon = document.createElement('button');
+      kbIcon.className = `kb-trigger-icon${this.kbQueryInFlight ? ' disabled' : ''}`;
+      kbIcon.innerHTML = ICONS.KB_SEARCH;
+      kbIcon.setAttribute('tabindex', '0');
+      kbIcon.setAttribute('role', 'button');
+      kbIcon.setAttribute('aria-label', 'Search Knowledge Base');
+      kbIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.kbQueryInFlight) return;
+        const queryText = (entry.text || '').slice(0, 500);
+        this.handleKBQuery(queryText);
+      });
+      kbIcon.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (this.kbQueryInFlight) return;
+          const queryText = (entry.text || '').slice(0, 500);
+          this.handleKBQuery(queryText);
+        }
+      });
+      bubble.style.position = 'relative';
+      bubble.appendChild(kbIcon);
+
+      this.timelineEl.appendChild(bubble);
+      return bubble;
+    }
+
+    // KB Answer bubble
+    if (entry.kind === 'kb-answer') {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble kb-answer';
+      bubble.setAttribute('role', 'article');
+      bubble.setAttribute('aria-label', `KB Answer: ${entry.kbAnswer || ''}`);
+      bubble.style.animation = 'wingmanIn 250ms ease-out forwards';
+
+      // Query text (italic)
+      let html = `<div class="kb-answer-query" style="font-size:${this.fontSize - 2}px">${this.escapeHtml(entry.kbQuery || '')}</div>`;
+
+      // Primary answer (bold)
+      html += `<div class="kb-answer-primary" style="font-size:${this.fontSize}px">${this.escapeHtml(entry.kbAnswer || '')}</div>`;
+
+      // Alternatives (hidden by default, toggled by click)
+      if (entry.kbAlt1 || entry.kbAlt2) {
+        html += `<div class="kb-answer-alts">`;
+        if (entry.kbAlt1) {
+          html += `<div style="margin-top:6px;"><strong>Alt 1:</strong> ${this.escapeHtml(entry.kbAlt1)}</div>`;
+        }
+        if (entry.kbAlt2) {
+          html += `<div style="margin-top:4px;"><strong>Alt 2:</strong> ${this.escapeHtml(entry.kbAlt2)}</div>`;
+        }
+        html += `</div>`;
+      }
+
+      // Raw KB chunks (collapsible details)
+      if (entry.kbChunks && entry.kbChunks.length > 0) {
+        html += `<details class="kb-answer-context"><summary style="cursor:pointer;font-size:${this.fontSize - 2}px;color:var(--overlay-text-muted);">Sources (${entry.kbChunks.length})</summary>`;
+        for (const chunk of entry.kbChunks) {
+          html += `<div style="margin-top:6px;padding:4px 6px;background:var(--overlay-bg-secondary);border-radius:4px;font-size:${this.fontSize - 2}px;">`;
+          html += `<div style="font-weight:500;color:var(--overlay-text-secondary);">${this.escapeHtml(chunk.documentName)} (${(chunk.score * 100).toFixed(0)}%)</div>`;
+          html += `<div style="color:var(--overlay-text);margin-top:2px;">${this.escapeHtml(chunk.text)}</div>`;
+          html += `</div>`;
+        }
+        html += `</details>`;
+      }
+
+      html += `<span class="bubble-time" style="font-size:${this.fontSize - 3}px">${this.formatTime(entry.timestamp)}</span>`;
+
+      bubble.innerHTML = html;
+
+      // Toggle alternatives on click
+      if (entry.kbAlt1 || entry.kbAlt2) {
+        const primaryEl = bubble.querySelector('.kb-answer-primary');
+        const altsEl = bubble.querySelector('.kb-answer-alts') as HTMLElement | null;
+        if (primaryEl && altsEl) {
+          primaryEl.addEventListener('click', () => {
+            const isVisible = altsEl.style.display === 'block';
+            altsEl.style.display = isVisible ? 'none' : 'block';
+            // Remove max-height constraint when expanded
+            (primaryEl as HTMLElement).style.maxHeight = isVisible ? '80px' : 'none';
+            (primaryEl as HTMLElement).style.overflow = isVisible ? 'hidden' : 'visible';
+          });
+          primaryEl.setAttribute('style', `${(primaryEl as HTMLElement).style.cssText}cursor:pointer;`);
+        }
+      }
+
       this.timelineEl.appendChild(bubble);
       return bubble;
     }
@@ -894,6 +1215,12 @@ export class AIOverlay {
     }
 
     const badgeLabel = (entry.suggestionType || 'info').toUpperCase();
+    const provenanceHtml = entry.question
+      ? `<div class="bubble-provenance" style="font-size:${this.fontSize - 2}px">` +
+        `<span class="provenance-label">In response to: </span>` +
+        `<span class="provenance-text">"${this.escapeHtml(entry.question)}"</span>` +
+        `</div>`
+      : '';
     const sourceHtml = entry.kbSource
       ? `<div class="bubble-source" style="font-size:${this.fontSize - 2}px">\u{1F4DA} Based on: ${this.escapeHtml(entry.kbSource)}</div>`
       : '';
@@ -903,6 +1230,7 @@ export class AIOverlay {
       personaHtml +
       `<span class="badge ${typeClass}" style="font-size:${this.fontSize - 4}px">${badgeLabel}</span>` +
       `</div>` +
+      provenanceHtml +
       `<div class="bubble-content">` +
       `<span class="bubble-text" style="font-size:${this.fontSize}px">${this.escapeHtml(entry.suggestionText || '')}</span>` +
       `</div>` +
@@ -1245,7 +1573,11 @@ export class AIOverlay {
     const lines: string[] = [];
     for (const entry of this.timeline) {
       const time = this.formatTime(entry.timestamp);
-      if (entry.kind === 'transcript') {
+      if (entry.kind === 'kb-answer') {
+        lines.push(`[${time}] KB Answer for "${entry.kbQuery || ''}": ${entry.kbAnswer || ''}`);
+        if (entry.kbAlt1) lines.push(`  Alt 1: ${entry.kbAlt1}`);
+        if (entry.kbAlt2) lines.push(`  Alt 2: ${entry.kbAlt2}`);
+      } else if (entry.kind === 'transcript') {
         lines.push(`[${time}] ${entry.speaker || 'Unknown'}: ${entry.text || ''}`);
       } else {
         const type = (entry.suggestionType || 'info').toUpperCase();
@@ -1349,6 +1681,13 @@ export class AIOverlay {
 
       // Live-update on storage changes
       chrome.storage.onChanged.addListener((changes) => {
+        // Display mode sync
+        if (changes[STORAGE_KEYS.OVERLAY_DISPLAY_MODE]) {
+          const newMode = changes[STORAGE_KEYS.OVERLAY_DISPLAY_MODE]?.newValue;
+          this.suggestionsOnly = newMode === 'suggestions-only';
+          this.applyDisplayMode();
+        }
+
         if (changes.langbuilderUrl || changes.langbuilderApiKey) {
           chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey'], (r) => {
             const configured = !!(r.langbuilderUrl && r.langbuilderApiKey);
@@ -1619,7 +1958,8 @@ export class AIOverlay {
       if (!chrome.runtime?.id) return;
       chrome.storage.local.get(
         ['overlayPosition', 'overlayMinimized', 'overlayFontSize',
-         STORAGE_KEYS.OVERLAY_DOCK_MODE, STORAGE_KEYS.OVERLAY_DOCKED_WIDTH],
+         STORAGE_KEYS.OVERLAY_DOCK_MODE, STORAGE_KEYS.OVERLAY_DOCKED_WIDTH,
+         STORAGE_KEYS.OVERLAY_DISPLAY_MODE],
         (result) => {
           // Apply dock mode first — if docked, skip floating position restore
           this.dockable?.applyInitialState(
@@ -1639,6 +1979,12 @@ export class AIOverlay {
           if (result.overlayFontSize) {
             this.fontSize = result.overlayFontSize;
             this.applyFontSize();
+          }
+
+          // Restore display mode
+          if (result[STORAGE_KEYS.OVERLAY_DISPLAY_MODE] === 'suggestions-only') {
+            this.suggestionsOnly = true;
+            this.applyDisplayMode();
           }
         },
       );

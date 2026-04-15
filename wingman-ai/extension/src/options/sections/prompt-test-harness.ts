@@ -48,7 +48,9 @@ export interface TestHarnessOptions {
 let activeTab: TestHarnessTab = 'sample';
 let options: TestHarnessOptions | null = null;
 let sampleQuestions: TestQuestion[] = [];
+let sampleChecked: boolean[] = [];
 let customQuestions: TestQuestion[] = [];
+let customChecked: boolean[] = [];
 let results: TestResult[] | null = null;
 let comparedVersionNumber: number | null = null;
 let comparisonPrompt: string | null = null;
@@ -94,7 +96,9 @@ export function openTestHarness(opts: TestHarnessOptions): void {
 
   // Use provided sample questions or empty
   sampleQuestions = opts.sampleQuestions ?? [];
+  sampleChecked = sampleQuestions.map(() => true);
   customQuestions = [];
+  customChecked = [];
 
   const overlay = getOverlay();
   if (!overlay) return;
@@ -137,6 +141,7 @@ export function closeTestHarness(): void {
  */
 export function setSampleQuestions(questions: TestQuestion[]): void {
   sampleQuestions = questions;
+  sampleChecked = questions.map(() => true);
   if (activeTab === 'sample') renderBody();
 }
 
@@ -261,9 +266,14 @@ function renderSampleTab(container: HTMLElement): void {
   const respondGroup = document.createElement('div');
   respondGroup.className = 'test-question-group';
   respondGroup.innerHTML = '<div class="test-question-group-label">SHOULD RESPOND</div>';
-  const respondQs = sampleQuestions.filter(q => q.expectedBehavior === 'respond');
-  for (const q of respondQs) {
-    respondGroup.appendChild(createQuestionCheckbox(q, true));
+  const respondQs: { q: TestQuestion; idx: number }[] = [];
+  const silentQs: { q: TestQuestion; idx: number }[] = [];
+  sampleQuestions.forEach((q, i) => {
+    if (q.expectedBehavior === 'respond') respondQs.push({ q, idx: i });
+    else silentQs.push({ q, idx: i });
+  });
+  for (const { q, idx } of respondQs) {
+    respondGroup.appendChild(createQuestionCheckbox(q, sampleChecked[idx] ?? true, sampleChecked, idx));
   }
   container.appendChild(respondGroup);
 
@@ -271,9 +281,8 @@ function renderSampleTab(container: HTMLElement): void {
   const silentGroup = document.createElement('div');
   silentGroup.className = 'test-question-group';
   silentGroup.innerHTML = '<div class="test-question-group-label">SHOULD STAY SILENT</div>';
-  const silentQs = sampleQuestions.filter(q => q.expectedBehavior === 'silent');
-  for (const q of silentQs) {
-    silentGroup.appendChild(createQuestionCheckbox(q, true));
+  for (const { q, idx } of silentQs) {
+    silentGroup.appendChild(createQuestionCheckbox(q, sampleChecked[idx] ?? true, sampleChecked, idx));
   }
   container.appendChild(silentGroup);
 
@@ -307,18 +316,20 @@ function renderCustomTab(container: HTMLElement): void {
   if (customQuestions.length > 0) {
     const list = document.createElement('div');
     list.className = 'test-question-group';
-    for (const q of customQuestions) {
-      const item = createQuestionCheckbox(q, true);
+    customQuestions.forEach((q, i) => {
+      const item = createQuestionCheckbox(q, customChecked[i] ?? true, customChecked, i);
       const removeBtn = document.createElement('button');
       removeBtn.className = 'test-question-remove';
       removeBtn.textContent = '\u00d7';
       removeBtn.addEventListener('click', () => {
+        const removeIdx = customQuestions.indexOf(q);
         customQuestions = customQuestions.filter(cq => cq !== q);
+        if (removeIdx >= 0) customChecked.splice(removeIdx, 1);
         renderBody();
       });
       item.appendChild(removeBtn);
       list.appendChild(item);
-    }
+    });
     container.appendChild(list);
   }
 
@@ -354,6 +365,7 @@ function renderCustomTab(container: HTMLElement): void {
         source: 'user',
         category: 'custom',
       });
+      customChecked.push(true);
       input.value = '';
       renderBody();
     }
@@ -1005,7 +1017,12 @@ function formatBadgeText(result: TestResult): string {
 
 // === HELPERS ===
 
-function createQuestionCheckbox(question: TestQuestion, checked: boolean): HTMLElement {
+function createQuestionCheckbox(
+  question: TestQuestion,
+  checked: boolean,
+  checkedArray?: boolean[],
+  checkedIndex?: number,
+): HTMLElement {
   const item = document.createElement('label');
   item.className = 'test-question-item';
 
@@ -1013,6 +1030,13 @@ function createQuestionCheckbox(question: TestQuestion, checked: boolean): HTMLE
   checkbox.type = 'checkbox';
   checkbox.checked = checked;
   checkbox.className = 'test-question-checkbox';
+
+  // Sync checkbox state back to the tracked array
+  if (checkedArray !== undefined && checkedIndex !== undefined) {
+    checkbox.addEventListener('change', () => {
+      checkedArray[checkedIndex] = checkbox.checked;
+    });
+  }
 
   const text = document.createElement('span');
   text.className = 'test-question-text';
@@ -1043,8 +1067,11 @@ async function handleRunTests(): Promise<void> {
     body.appendChild(loading);
   }
 
-  // Collect checked questions
-  const allQuestions = [...sampleQuestions, ...customQuestions];
+  // Collect only checked questions
+  const allQuestions: TestQuestion[] = [
+    ...sampleQuestions.filter((_, i) => sampleChecked[i] !== false),
+    ...customQuestions.filter((_, i) => customChecked[i] !== false),
+  ];
   if (allQuestions.length === 0) {
     isRunning = false;
     renderBody();
@@ -1108,6 +1135,7 @@ async function handleGenerateQuestions(): Promise<void> {
       expectedBehavior: q.expectedBehavior,
       source: 'auto' as const,
     }));
+    sampleChecked = sampleQuestions.map(() => true);
 
     // Persist to the latest PromptVersion so they survive close/reopen
     if (sampleQuestions.length > 0) {

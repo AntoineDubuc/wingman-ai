@@ -4,6 +4,18 @@ import { resolve } from 'path';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import manifest from './manifest.json';
 
+const inputs: Record<string, string> = {
+  background: resolve(__dirname, 'src/background/service-worker.ts'),
+  content: resolve(__dirname, 'src/content/content-script.ts'),
+  popup: resolve(__dirname, 'src/popup/popup.ts'),
+  offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
+  tutorials: resolve(__dirname, 'src/tutorials/index.html'),
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  inputs.validation = resolve(__dirname, 'src/validation/validation.html');
+}
+
 export default defineConfig({
   plugins: [
     crx({ manifest }),
@@ -42,14 +54,7 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: process.env.NODE_ENV === 'development',
     rollupOptions: {
-      input: {
-        background: resolve(__dirname, 'src/background/service-worker.ts'),
-        content: resolve(__dirname, 'src/content/content-script.ts'),
-        popup: resolve(__dirname, 'src/popup/popup.ts'),
-        offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
-        validation: resolve(__dirname, 'src/validation/validation.html'),
-        tutorials: resolve(__dirname, 'src/tutorials/index.html'),
-      },
+      input: inputs,
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name]-[hash].js',

@@ -1664,8 +1664,14 @@ body {
   background: var(--color-primary-ring);
 }
 
-.persona-card.active {
+/* `.persona-card.editing` highlights the persona currently open in the editor
+   panel at the bottom of the page. The legacy `.persona-card.active` class
+   was removed because it conflated "active for calls" (managed in the Active
+   Personas section in the Setup tab and in the popup) with "currently editing"
+   — see Research/bugs/persona-card-visual-states/research.md */
+.persona-card.editing {
   border-color: var(--color-primary);
+  background: var(--color-primary-ring);
 }
 
 .persona-card-dot {

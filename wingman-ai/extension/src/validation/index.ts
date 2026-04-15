@@ -11,6 +11,7 @@ import { testTextExtraction } from './test-text-extraction';
 import { testIndexedDbVectors } from './test-indexeddb-vectors';
 import { testCosineSearch } from './test-cosine-search';
 import { testE2ePipeline } from './test-e2e-pipeline';
+import { testSetupFolderImport } from './test-setup-folder-import';
 
 export interface ValidationResult {
   name: string;
@@ -29,6 +30,7 @@ const tests: Record<string, TestFunction> = {
   'indexeddb-vectors': testIndexedDbVectors,
   'cosine-search': testCosineSearch,
   'e2e-pipeline': testE2ePipeline,
+  'setup-folder-import': testSetupFolderImport,
 };
 
 /**

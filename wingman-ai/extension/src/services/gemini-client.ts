@@ -723,10 +723,11 @@ export class GeminiClient {
     maxTokens: number;
     temperature: number;
     jsonMode?: boolean;
-  }): { url: string; headers: Record<string, string>; body: string } {
-    const apiKey = this.getProviderApiKey();
+  }, provider?: LLMProvider): { url: string; headers: Record<string, string>; body: string } {
+    const effectiveProvider = provider ?? this.provider;
+    const apiKey = provider ? this.getApiKeyForProvider(provider) : this.getProviderApiKey();
 
-    if (this.provider !== 'gemini') {
+    if (effectiveProvider !== 'gemini') {
       // OpenAI-compatible format (OpenRouter and Groq)
       const openaiMessages: Array<{ role: string; content: string }> = [];
 
@@ -745,8 +746,8 @@ export class GeminiClient {
         openaiMessages.push({ role: 'user', content: options.prompt });
       }
 
-      const model = this.provider === 'groq' ? this.groqModel : this.openrouterModel;
-      const baseUrl = this.provider === 'groq' ? GROQ_API_BASE : OPENROUTER_API_BASE;
+      const model = effectiveProvider === 'groq' ? this.groqModel : this.openrouterModel;
+      const baseUrl = effectiveProvider === 'groq' ? GROQ_API_BASE : OPENROUTER_API_BASE;
 
       const body: Record<string, unknown> = {
         model,
@@ -765,7 +766,7 @@ export class GeminiClient {
       };
 
       // OpenRouter-specific headers (not needed for Groq)
-      if (this.provider === 'openrouter') {
+      if (effectiveProvider === 'openrouter') {
         headers['HTTP-Referer'] = 'https://wingman-ai.com';
         headers['X-Title'] = 'Wingman AI';
       }
@@ -806,8 +807,9 @@ export class GeminiClient {
   /**
    * Extract the response text from either Gemini or OpenRouter response format.
    */
-  private extractResponseText(data: Record<string, unknown>): string | null {
-    if (this.provider !== 'gemini') {
+  private extractResponseText(data: Record<string, unknown>, provider?: LLMProvider): string | null {
+    const effectiveProvider = provider ?? this.provider;
+    if (effectiveProvider !== 'gemini') {
       // OpenAI-compatible format (OpenRouter and Groq)
       const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
       return choices?.[0]?.message?.content?.trim() ?? null;
@@ -823,9 +825,10 @@ export class GeminiClient {
   /**
    * Extract token usage from an API response. Returns zeros if missing.
    */
-  private extractUsage(data: Record<string, unknown>): { inputTokens: number; outputTokens: number } {
+  private extractUsage(data: Record<string, unknown>, provider?: LLMProvider): { inputTokens: number; outputTokens: number } {
+    const effectiveProvider = provider ?? this.provider;
     try {
-      if (this.provider !== 'gemini') {
+      if (effectiveProvider !== 'gemini') {
         // OpenAI-compatible format (OpenRouter and Groq)
         const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
         return {
@@ -947,6 +950,18 @@ export class GeminiClient {
    */
   private getProviderApiKey(): string | null {
     switch (this.provider) {
+      case 'gemini':    return this.geminiApiKey;
+      case 'openrouter': return this.openrouterApiKey;
+      case 'groq':       return this.groqApiKey;
+    }
+  }
+
+  /**
+   * Get the cached API key for a specific provider. Used by buildRequest()
+   * when called with an explicit provider override (e.g., for KB queries).
+   */
+  private getApiKeyForProvider(provider: LLMProvider): string | null {
+    switch (provider) {
       case 'gemini':    return this.geminiApiKey;
       case 'openrouter': return this.openrouterApiKey;
       case 'groq':       return this.groqApiKey;
@@ -1181,6 +1196,103 @@ export class GeminiClient {
         : null,
       recentSpeakers,
     };
+  }
+
+  /**
+   * Generate a structured KB answer from search results.
+   * Groq-first for speed, falls back to active provider on failure.
+   * Independent of the suggestion pipeline — no cooldowns, no history, no isGenerating.
+   */
+  async generateKBAnswer(
+    query: string,
+    kbChunks: Array<{ text: string; score: number; documentName: string }>,
+    personaRole?: string,
+  ): Promise<{ answer: string; alt1: string; alt2: string } | null> {
+    if (kbChunks.length === 0) return null;
+
+    const role = personaRole || 'an assistant in a live call';
+    const chunksContext = kbChunks
+      .map((c, i) => `[Source ${i + 1}: ${c.documentName} (relevance: ${(c.score * 100).toFixed(0)}%)]\n${c.text}`)
+      .join('\n\n');
+
+    const prompt =
+      `You are ${role}. A user asked a question during a live call and wants an answer from their Knowledge Base.\n\n` +
+      `USER QUESTION: ${query}\n\n` +
+      `KNOWLEDGE BASE CONTEXT:\n${chunksContext}\n\n` +
+      `Provide a clear, concise answer based ONLY on the context above. ` +
+      `If the context does not contain enough information, say so.\n\n` +
+      `Format your response EXACTLY as:\nANSWER: <your primary answer>\nALT 1: <alternative phrasing>\nALT 2: <another alternative phrasing>\n\n` +
+      `If the context has no relevant information, respond with: NO_DATA`;
+
+    // Determine providers to try: Groq first if available, then active provider
+    const providers: LLMProvider[] = [];
+    if (this.groqApiKey) {
+      providers.push('groq');
+    }
+    if (this.provider !== 'groq' || !this.groqApiKey) {
+      providers.push(this.provider);
+    }
+
+    for (const tryProvider of providers) {
+      try {
+        const req = this.buildRequest(
+          {
+            prompt,
+            maxTokens: 512,
+            temperature: 0.3,
+          },
+          tryProvider,
+        );
+
+        const response = await this.fetchWithRetry(req.url, {
+          method: 'POST',
+          headers: req.headers,
+          body: req.body,
+        });
+
+        const data = await response.json();
+        const usage = this.extractUsage(data, tryProvider);
+        costTracker.addLLMUsage(usage.inputTokens, usage.outputTokens);
+
+        const text = this.extractResponseText(data, tryProvider);
+        if (!text) {
+          console.warn('[GeminiClient] KB answer: empty response text');
+          continue;
+        }
+
+        // Check for NO_DATA sentinel
+        if (text.trim() === 'NO_DATA' || text.trim().startsWith('NO_DATA')) {
+          console.debug('[GeminiClient] KB answer: LLM returned NO_DATA');
+          return null;
+        }
+
+        // Parse structured response
+        return this.parseKBAnswerResponse(text);
+      } catch (err) {
+        const status = err instanceof Error && err.message.match(/\b(\d{3})\b/)?.[1];
+        console.warn(`[GeminiClient] KB answer ${tryProvider} call failed: ${status || 'network error'}`);
+        // Continue to next provider
+      }
+    }
+
+    // All providers failed
+    return null;
+  }
+
+  /**
+   * Parse the LLM response into structured answer/alt1/alt2 fields.
+   * If markers are missing, uses full text as answer with empty alts.
+   */
+  private parseKBAnswerResponse(text: string): { answer: string; alt1: string; alt2: string } {
+    const answerMatch = text.match(/ANSWER:\s*([\s\S]*?)(?=\nALT 1:|$)/i);
+    const alt1Match = text.match(/ALT 1:\s*([\s\S]*?)(?=\nALT 2:|$)/i);
+    const alt2Match = text.match(/ALT 2:\s*([\s\S]*?)$/i);
+
+    const answer = answerMatch?.[1]?.trim() || text.trim();
+    const alt1 = alt1Match?.[1]?.trim() || '';
+    const alt2 = alt2Match?.[1]?.trim() || '';
+
+    return { answer, alt1, alt2 };
   }
 }
 

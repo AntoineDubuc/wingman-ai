@@ -7,6 +7,7 @@ import {
   GROQ_API_BASE,
 } from '../../shared/llm-config';
 import { HumeClient } from '../../services/hume-client';
+import { writeCredentials } from '../../shared/credentials';
 
 const OPENROUTER_ORIGIN = 'https://openrouter.ai/*';
 const GROQ_ORIGIN = 'https://api.groq.com/*';
@@ -251,16 +252,22 @@ export class ApiKeysSection {
     }
 
     try {
-      await chrome.storage.local.set({
+      // Credential keys go through the hardened writeCredentials path.
+      // Non-credential settings (llmProvider, openrouterModel, groqModel)
+      // still use direct chrome.storage.local.set — they're not in the
+      // CREDENTIAL_KEYS allowlist.
+      await writeCredentials({
         deepgramApiKey: deepgramKey,
         geminiApiKey: geminiKey,
         openrouterApiKey: openrouterKey,
-        openrouterModel: openrouterModel,
         groqApiKey: groqKey,
-        groqModel: groqModel,
-        llmProvider: this.provider,
         humeApiKey: humeApiKey,
         humeSecretKey: humeSecretKey,
+      });
+      await chrome.storage.local.set({
+        openrouterModel: openrouterModel,
+        groqModel: groqModel,
+        llmProvider: this.provider,
       });
       this.updateStatus();
       this.ctx.showToast('Settings saved', 'success');
@@ -268,6 +275,23 @@ export class ApiKeysSection {
       console.error('Failed to save settings:', error);
       this.ctx.showToast('Failed to save settings', 'error');
     }
+  }
+
+  /**
+   * @internal — only `SetupImportSection.handleFolderPicked()` is permitted
+   * to call this outside the save() flow. Re-reads credentials from storage
+   * and updates the DOM inputs. Used for in-place refresh after a setup-
+   * folder import so the user sees the new values without a page reload.
+   *
+   * Threat model: TypeScript lacks module-level access control, so any file
+   * in the options page bundle can call this. The `@internal` tag is a
+   * convention signal, not an enforced boundary. Accepted risk: a future
+   * refactor exposes the options page to content-script messaging and lets
+   * a hostile page trigger refresh remotely. Mitigation: refresh is
+   * idempotent — it only re-reads storage, worst case is a UI flicker.
+   */
+  async refresh(): Promise<void> {
+    await this.load();
   }
 
   private async test(): Promise<void> {

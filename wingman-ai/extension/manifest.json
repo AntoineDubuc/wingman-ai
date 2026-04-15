@@ -21,7 +21,9 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   "optional_host_permissions": [
-    "*://*/*"
+    "https://api.groq.com/*",
+    "https://openrouter.ai/*",
+    "https://api.hume.ai/*"
   ],
   "oauth2": {
     "client_id": "617701449574-b88mqgktdiqdgc3qdhe57mbqdm6oiq5a.apps.googleusercontent.com",

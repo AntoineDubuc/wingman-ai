@@ -189,6 +189,7 @@ export const STORAGE_KEYS = {
   OPENROUTER_MODEL: 'openrouterModel',
   GROQ_MODEL: 'groqModel',
   SUGGESTION_COOLDOWN_MS: 'suggestionCooldownMs',
+  AUTO_SUGGESTIONS_ENABLED: 'autoSuggestionsEnabled',
 
   // Personas
   PERSONAS: 'personas',
@@ -208,6 +209,7 @@ export const STORAGE_KEYS = {
   OVERLAY_POSITION: 'overlayPosition',
   OVERLAY_SIZE: 'overlaySize',
   OVERLAY_MINIMIZED: 'overlayMinimized',
+  OVERLAY_DISPLAY_MODE: 'overlayDisplayMode',
   FONT_SIZE: 'fontSize',
 
   // Drive
@@ -301,6 +303,12 @@ export const ICONS = {
   DOCK: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="1" width="5" height="12" rx="1" fill="currentColor" opacity="0.4"/></svg>',
 
   UNDOCK: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1" stroke-dasharray="2 1"/></svg>',
+
+  FILTER: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1.5 2.5h11L8 7.5V11l-2 1V7.5L1.5 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+
+  FILTER_ACTIVE: '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M1.5 2.5h11L8 7.5V11l-2 1V7.5L1.5 2.5z"/></svg>',
+
+  KB_SEARCH: '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="5.5" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 8.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -9,6 +9,8 @@ import {
   setActivePersonaId,
   createPersona,
   migrateToPersonas,
+  validatePersonaImportEnvelope,
+  computePersonaContentHash,
 } from '../../shared/persona';
 import { DEFAULT_SYSTEM_PROMPT } from '../../shared/default-prompt';
 import { kbDatabase, ingestDocument, isIngesting } from '../../services/kb/kb-database';
@@ -261,6 +263,12 @@ export class PersonaSection {
     this.editingPersona.updatedAt = Date.now();
     // icon is already updated in-place by the icon picker click handler
 
+    // Clear the setup-import signature. If this persona was imported from a
+    // setup folder, the user is now editing it manually — mark it as edited
+    // so the next setup-folder import will SKIP it ("their edits win" per
+    // Decision 1 of the setup-folder-import plan).
+    this.editingPersona.importSignature = undefined;
+
     // Create a new version if the prompt text changed
     if (promptChanged) {
       if (!this.editingPersona.promptVersions) {
@@ -314,6 +322,21 @@ export class PersonaSection {
     this.renderList();
   }
 
+  /**
+   * @internal — only `SetupImportSection.handleFolderPicked()` is permitted
+   * to call this. Re-reads personas from storage, updates the in-memory cache,
+   * re-renders the list, and dispatches `personas-changed` so other sections
+   * (active-personas, conclave) refresh. Used for in-place refresh after a
+   * setup-folder import so the user sees the new personas without a reload.
+   *
+   * See the threat model note on ApiKeysSection.refresh() for the @internal
+   * scoping rationale.
+   */
+  async refresh(): Promise<void> {
+    await this.load();
+    this.notifyPersonasChanged();
+  }
+
   private renderList(): void {
     if (!this.listEl || !this.emptyEl) return;
 
@@ -330,9 +353,17 @@ export class PersonaSection {
     const sorted = [...this.personas].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     for (const persona of sorted) {
-      const isActive = persona.id === this.activeId;
+      // Visual state on the persona list reflects "currently editing" only.
+      // "Active for calls" is managed in the Active Personas section in the
+      // Setup tab and the popup persona selector — duplicating it here was
+      // the source of the conflation bug. See:
+      //   Research/bugs/persona-card-visual-states/research.md
+      const isEditing = persona.id === this.editingPersona?.id;
       const card = document.createElement('div');
-      card.className = `persona-card${isActive ? ' active' : ''}`;
+      card.className = `persona-card${isEditing ? ' editing' : ''}`;
+      if (isEditing) {
+        card.setAttribute('aria-current', 'true');
+      }
       card.dataset.id = persona.id;
       card.draggable = true;
 
@@ -353,7 +384,6 @@ export class PersonaSection {
           <div class="persona-card-name">${this.escapeHtml(persona.name)}</div>
           <div class="persona-card-meta">${kbText} · Edited ${lastEdited}</div>
         </div>
-        ${isActive ? '<span class="persona-card-badge">Active</span>' : ''}
         <div class="persona-card-actions">
           <button class="persona-icon-btn" data-action="edit" title="Edit" aria-label="Edit ${this.escapeHtml(persona.name)}">${icon('edit', 16)}</button>
           <button class="persona-icon-btn" data-action="export" title="Export" aria-label="Export ${this.escapeHtml(persona.name)}">${icon('download', 16)}</button>
@@ -380,12 +410,10 @@ export class PersonaSection {
           return;
         }
 
-        // Click on card body = activate if not active, or open editor if active
-        if (!isActive) {
-          this.activatePersona(persona.id);
-        } else {
-          this.openEditor(persona);
-        }
+        // Click on the card body opens the editor for any persona.
+        // Activation is handled separately via the Setup tab "Active Personas"
+        // section and the popup persona selector.
+        this.openEditor(persona);
       });
 
       // Drag and drop handlers
@@ -428,14 +456,6 @@ export class PersonaSection {
     }
   }
 
-  private async activatePersona(id: string): Promise<void> {
-    this.activeId = id;
-    await setActivePersonaId(id);
-    const persona = this.personas.find((p) => p.id === id);
-    this.ctx.showToast(`Switched to ${persona?.name ?? 'persona'}`, 'success');
-    this.renderList();
-  }
-
   /** Reorder personas by moving source before target */
   private async reorderPersonas(sourceId: string, targetId: string): Promise<void> {
     const sourceIdx = this.personas.findIndex((p) => p.id === sourceId);
@@ -472,6 +492,8 @@ export class PersonaSection {
     }
 
     this.editingPersona = { ...persona };
+    // Re-render the list so the orange `.editing` highlight follows the editor.
+    this.renderList();
 
     if (!this.editorEl || !this.nameInput || !this.promptTextarea || !this.editorTitle) return;
 
@@ -515,6 +537,8 @@ export class PersonaSection {
     }
 
     this.editingPersona = null;
+    // Re-render so the `.editing` highlight clears.
+    this.renderList();
     if (this.editorEl) this.editorEl.hidden = true;
   }
 
@@ -525,8 +549,10 @@ export class PersonaSection {
       this.nextAvailableColor(),
       []
     );
-    this.personas.push(persona);
-    // Don't save yet — let the user edit first
+    // Do NOT push to `this.personas` yet — `save()` handles upsert via
+    // `findIndex` + `push`. Adding the persona here would cause it to appear
+    // as a ghost in the list if the user opens the editor and then cancels
+    // (closeEditor calls renderList, which would expose the un-saved persona).
     this.openEditor(persona);
   }
 
@@ -614,8 +640,9 @@ export class PersonaSection {
     await savePersonas(this.personas);
     this.isDirty = false;
     this.ctx.showToast('Persona duplicated', 'success');
-    this.renderList();
     this.notifyPersonasChanged();
+    // Skip the explicit renderList() call here — openEditor() now calls
+    // renderList() so we'd otherwise rebuild the DOM twice in a row.
     this.openEditor(copy);
   }
 
@@ -649,6 +676,12 @@ export class PersonaSection {
         });
       }
 
+      // Compute the content hash for edit detection on re-import.
+      // The importSignature lets the setup-folder-import feature distinguish
+      // unedited personas (safe to overwrite) from salesperson-edited personas
+      // (must be preserved). See Decision 1 of the setup-folder-import plan.
+      const importSignature = await computePersonaContentHash(this.editingPersona);
+
       const exportData = {
         wingmanPersona: true,
         version: 1,
@@ -659,6 +692,7 @@ export class PersonaSection {
           icon: this.editingPersona.icon,
           systemPrompt: this.editingPersona.systemPrompt,
           kbDocuments,
+          importSignature,
         },
       };
 
@@ -731,31 +765,27 @@ export class PersonaSection {
       const text = await file.text();
       let data: unknown;
       try {
-        data = JSON.parse(text);
+        // Reviver strips prototype-pollution keys. Does NOT strip `constructor`
+        // because that would break legitimate data with that key — `constructor`
+        // is not a prototype-pollution vector when assigned as a data property.
+        data = JSON.parse(text, (key, value) =>
+          key === '__proto__' || key === 'prototype' ? undefined : value
+        );
       } catch {
         this.ctx.showToast('Invalid JSON file', 'error');
         return;
       }
 
-      // Validate structure with detailed checks
-      const obj = data as Record<string, unknown>;
-      if (obj.wingmanPersona !== true || obj.version !== 1 || !obj.persona) {
-        console.error('[Persona] Import validation failed:', {
-          wingmanPersona: obj.wingmanPersona,
-          version: obj.version,
-          hasPersona: !!obj.persona,
-        });
-        this.ctx.showToast('Not a valid Wingman persona file', 'error');
+      // Validate via the shared envelope validator. Returns a fresh-copied
+      // PersonaImportPayload with only known fields — no prototype inheritance,
+      // no unknown keys, normalized name, validated color/icon/systemPrompt,
+      // and validated KB documents.
+      const validation = validatePersonaImportEnvelope(data);
+      if (!validation.valid) {
+        this.ctx.showToast(`Not a valid Wingman persona file (${validation.reason})`, 'error');
         return;
       }
-
-      const imported = obj.persona as {
-        name: string;
-        color: string;
-        icon?: string;
-        systemPrompt: string;
-        kbDocuments?: { filename: string; fileType: string; textContent: string }[];
-      };
+      const imported = validation.persona;
 
       // Check for Gemini key if there are KB docs
       if (imported.kbDocuments && imported.kbDocuments.length > 0) {
@@ -766,7 +796,9 @@ export class PersonaSection {
         }
       }
 
-      // Name conflict handling
+      // Name conflict handling — single-file import preserves the legacy
+      // "(imported)" suffix behavior. The new folder-import flow (Task 5)
+      // uses mergePersonasFromImport() which handles conflicts differently.
       let name = imported.name;
       if (this.personas.some((p) => p.name === name)) {
         name = `${name} (imported)`;
@@ -795,10 +827,13 @@ export class PersonaSection {
             if (result.success && result.documentId) {
               kbDocIds.push(result.documentId);
             } else {
-              console.warn(`[Persona] Failed to import KB doc: ${kbDoc.filename}`, result.error);
+              // Filename redacted from log: user-supplied filenames could leak
+              // to DevTools. The preview modal (setup-import) shows filenames
+              // via textContent-rendered DOM, which is the correct surface.
+              console.warn('[Persona] Failed to import KB doc (filename redacted for logs)', result.error);
             }
           } catch (err) {
-            console.warn(`[Persona] Failed to import KB doc: ${kbDoc.filename}`, err);
+            console.warn('[Persona] Failed to import KB doc (filename redacted for logs)', err);
           }
         }
 

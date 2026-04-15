@@ -15,12 +15,13 @@ import { geminiClient } from '../services/gemini-client';
 import { transcriptCollector } from '../services/transcript-collector';
 import { driveService, type TranscriptData, type SessionMetadata } from '../services/drive-service';
 import type { SummaryMetadata, PersonaStats } from '../services/call-summary';
-import { runAllTests, runTest, getAvailableTests } from '../validation/index';
+
 import { migrateToPersonas, getActivePersonas } from '../shared/persona';
 import { MODEL_STAGGER_MS, PROVIDER_STAGGER_FALLBACK } from '../shared/llm-config';
 import { langBuilderClient } from '../services/langbuilder-client';
 import { costTracker } from '../services/cost-tracker';
 import { humeClient, HumeClient } from '../services/hume-client';
+import { searchKB } from '../services/kb/kb-search';
 import type { EmotionUpdate } from '../shared/constants';
 
 // Session state
@@ -44,6 +45,7 @@ const suggestionCountByPersona = new Map<string, number>();
 
 // Speaker filter state
 let speakerFilterEnabled = false;
+let autoSuggestionsEnabled = true;
 
 // Extension lifecycle
 chrome.runtime.onInstalled.addListener((details) => {
@@ -117,19 +119,24 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
 
     case 'RUN_VALIDATION':
-      // Run KB technical validation tests
-      (async () => {
-        if (message.test === 'all') {
-          const results = await runAllTests();
-          sendResponse({ success: true, results });
-        } else if (message.test === 'list') {
-          sendResponse({ success: true, tests: getAvailableTests() });
-        } else {
-          const result = await runTest(message.test);
-          sendResponse({ success: true, result });
-        }
-      })();
-      return true; // Keep channel open for async
+      // Run KB technical validation tests (dev only — excluded from production builds)
+      if (process.env.NODE_ENV !== 'production') {
+        (async () => {
+          const { runAllTests, runTest, getAvailableTests } = await import('../validation/index');
+          if (message.test === 'all') {
+            const results = await runAllTests();
+            sendResponse({ success: true, results });
+          } else if (message.test === 'list') {
+            sendResponse({ success: true, tests: getAvailableTests() });
+          } else {
+            const result = await runTest(message.test);
+            sendResponse({ success: true, result });
+          }
+        })();
+        return true; // Keep channel open for async
+      }
+      sendResponse({ success: false, error: 'Validation tests not available in production' });
+      return false;
 
     case 'RUN_LANGBUILDER_FLOW':
       (async () => {
@@ -178,6 +185,71 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       langBuilderClient.abort();
       return false;
 
+    case 'KB_QUERY':
+      (async () => {
+        try {
+          const text = message.text as string | undefined;
+          if (!text) {
+            sendResponse({ error: 'No query text provided.' });
+            return;
+          }
+
+          // Load provider config if no active session
+          if (sessionPersonas.length === 0) {
+            await geminiClient.loadProviderConfig();
+          }
+
+          // Check Gemini API key (needed for embeddings)
+          const storage = await chrome.storage.local.get(['geminiApiKey']);
+          if (!storage.geminiApiKey) {
+            sendResponse({ error: 'Gemini API key required for Knowledge Base search. Configure in Settings.' });
+            return;
+          }
+
+          // Get persona KB document IDs
+          const personaDocIds = sessionPersonas.length > 0
+            ? sessionPersonas[0]!.kbDocumentIds
+            : [];
+
+          // Check if persona has KB documents (only when no session and no docs)
+          if (sessionPersonas.length === 0 && personaDocIds.length === 0) {
+            // Search all documents when no session is active
+          }
+
+          const kbResults = await searchKB(text, 5, 0.40, personaDocIds.length > 0 ? personaDocIds : undefined);
+
+          if (kbResults.length === 0) {
+            sendResponse({ error: 'No relevant information found in your Knowledge Base for this topic.' });
+            return;
+          }
+
+          const chunks = kbResults.map(r => ({
+            text: r.chunk.text,
+            score: r.score,
+            documentName: r.documentName,
+          }));
+
+          const personaRole = sessionPersonas.length > 0 ? sessionPersonas[0]!.name : undefined;
+          const result = await geminiClient.generateKBAnswer(text, chunks, personaRole);
+
+          if (!result) {
+            sendResponse({ error: 'Could not generate answer. Check your API keys.' });
+            return;
+          }
+
+          sendResponse({
+            answer: result.answer,
+            alt1: result.alt1,
+            alt2: result.alt2,
+            chunks,
+          });
+        } catch (err) {
+          console.error('[ServiceWorker] KB_QUERY error:', err);
+          sendResponse({ error: 'Network error. Check your connection.' });
+        }
+      })();
+      return true; // Keep channel open for async response
+
     case 'MIC_PERMISSION_RESULT':
       // Handled by requestMicPermission() temporary listener
       return false;
@@ -217,6 +289,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       'groqApiKey',
       'llmProvider',
       'speakerFilterEnabled',
+      'autoSuggestionsEnabled',
     ]);
 
     if (!storage.deepgramApiKey) {
@@ -268,9 +341,10 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       // Ignore errors closing offscreen document
     }
 
-    // Configure speaker filter
+    // Configure speaker filter and auto-suggestions
     speakerFilterEnabled = storage.speakerFilterEnabled ?? false;
-    console.debug(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}`);
+    autoSuggestionsEnabled = storage.autoSuggestionsEnabled ?? true;
+    console.debug(`[ServiceWorker] Speaker filter: ${speakerFilterEnabled}, Auto-suggestions: ${autoSuggestionsEnabled}`);
 
     // Step 2: Initialize Gemini client with provider config and active persona
     geminiClient.startSession();
@@ -469,8 +543,8 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
     return;
   }
 
-  // Process through Gemini for AI suggestions (only final transcripts)
-  if (transcript.is_final) {
+  // Process through Gemini for AI suggestions (only final transcripts, when enabled)
+  if (autoSuggestionsEnabled && transcript.is_final) {
     try {
       // Hydra: parallel pipeline for multiple personas, or single-call for one
       if (sessionPersonas.length > 1) {
@@ -497,7 +571,10 @@ async function handleTranscript(transcript: Transcript): Promise<void> {
             chrome.tabs
               .sendMessage(activeTabId, {
                 type: 'suggestion',
-                data: suggestion,
+                data: {
+                  ...suggestion,
+                  question: transcript.text,
+                },
               })
               .catch(() => {});
           }
@@ -636,6 +713,7 @@ async function processTranscriptHydra(transcript: Transcript): Promise<void> {
             source: geminiClient.getActiveProvider(),
             timestamp: new Date().toISOString(),
             kbSource: first.kbSource,
+            question: text,
             // Hydra: personas array (may have 1 or more elements)
             personas,
           },

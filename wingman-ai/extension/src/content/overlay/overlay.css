@@ -536,6 +536,7 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--overlay-text);
+  white-space: pre-wrap;
 }
 
 .bubble-time {
@@ -583,6 +584,24 @@
 :host(.dark) .badge.objection { background: rgba(234, 67, 53, 0.25); color: #f87171; }
 :host(.dark) .badge.info { background: rgba(251, 188, 5, 0.25); color: #fbbf24; }
 
+.bubble-provenance {
+  font-size: 11px;
+  color: var(--overlay-text-muted);
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--overlay-border);
+  line-height: 1.4;
+}
+
+.provenance-label {
+  font-weight: 600;
+  color: var(--overlay-text-secondary);
+}
+
+.provenance-text {
+  font-style: italic;
+}
+
 .bubble-source {
   font-size: 11px;
   color: var(--overlay-text-secondary);
@@ -596,6 +615,28 @@
 .bubble.interim {
   opacity: 0.6;
   animation: interimPulse 1.5s ease-in-out infinite !important;
+}
+
+/* ── Suggestions-only mode ── */
+.timeline.suggestions-only .bubble.self,
+.timeline.suggestions-only .bubble.participant,
+.timeline.suggestions-only .speaker-label {
+  display: none;
+}
+
+.suggestions-only-chip {
+  font-size: 11px;
+  color: var(--overlay-text-secondary);
+  text-align: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--overlay-border);
+  flex-shrink: 0;
+}
+
+.suggestions-only-chip:hover {
+  color: var(--overlay-text);
+  background: var(--overlay-bg-secondary);
 }
 
 /* ── Post-call toggle ── */
@@ -897,4 +938,147 @@
   @keyframes statusPulse { from, to { opacity: 1; } }
   @keyframes interimPulse { from, to { opacity: 0.5; } }
   @keyframes lbFade { from, to { opacity: 1; } }
+}
+
+/* ── KB Query Feature ── */
+
+.bubble.kb-answer {
+  border-left: 3px solid #3b82f6;
+  background: var(--overlay-bg-secondary);
+  padding: 10px 12px;
+  position: relative;
+}
+
+.bubble.kb-answer.loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.kb-trigger-icon {
+  opacity: 0;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-bg-secondary);
+  border: 1px solid var(--overlay-border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--overlay-text-secondary);
+  padding: 0;
+  transition: opacity 150ms ease;
+}
+
+.bubble:hover .kb-trigger-icon {
+  opacity: 1;
+}
+
+.kb-trigger-icon:hover {
+  color: var(--overlay-text);
+  background: var(--overlay-bg-tertiary);
+}
+
+.kb-trigger-icon.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.kb-answer-query {
+  font-style: italic;
+  color: var(--overlay-text-muted);
+  font-size: 11px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.kb-answer-primary {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--overlay-text);
+  line-height: 1.5;
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.kb-answer-alts {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--overlay-border);
+  font-size: 13px;
+  color: var(--overlay-text-secondary);
+  line-height: 1.4;
+}
+
+.kb-answer-context {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.kb-answer-context summary {
+  cursor: pointer;
+  color: var(--overlay-text-muted);
+  font-size: 11px;
+  user-select: none;
+}
+
+.kb-answer-context summary::marker {
+  color: var(--overlay-text-muted);
+}
+
+.kb-query-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--overlay-border);
+  flex-shrink: 0;
+}
+
+.kb-query-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--overlay-border);
+  border-radius: 6px;
+  background: var(--overlay-bg-secondary);
+  color: var(--overlay-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.kb-query-input:focus {
+  border-color: #3b82f6;
+}
+
+.kb-query-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kb-query-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--overlay-bg-secondary);
+  color: var(--overlay-text-secondary);
+  border: 1px solid var(--overlay-border);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kb-query-btn:hover {
+  background: var(--overlay-bg-tertiary);
+  color: var(--overlay-text);
+}
+
+.kb-query-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

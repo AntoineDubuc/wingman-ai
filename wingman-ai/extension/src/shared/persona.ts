@@ -22,6 +22,19 @@ export interface Persona {
   order: number;
   modelPrompts?: Record<string, string>;
   promptVersions?: PromptVersion[];
+  /**
+   * Content hash stamped when the persona is imported from a setup folder.
+   * Cleared by `PersonaSection.save()` on any manual edit.
+   *
+   * Used by `mergePersonasFromImport` for edit detection: if the current
+   * content hash matches `importSignature`, the persona is unedited and
+   * safe to overwrite on re-import. If they differ (or the field is
+   * undefined), the persona has been edited locally and must be skipped.
+   *
+   * 64-character lowercase hex SHA-256 of a normalized canonical input.
+   * See `computePersonaContentHash()` for the exact algorithm.
+   */
+  importSignature?: string;
 }
 
 // === PROMPT ASSISTANT TYPES (Phase 24) ===
@@ -469,4 +482,350 @@ export function createConclavePreset(name: string, personaIds: string[]): Concla
     createdAt: now,
     updatedAt: now,
   };
+}
+
+// =============================================================================
+// SETUP FOLDER IMPORT — Task 2: envelope validator + content hash
+// =============================================================================
+//
+// The following exports support the setup-folder-import feature:
+//   - `validatePersonaImportEnvelope` — parses a JSON envelope, validates every
+//     field including embedded KB docs, and returns a fresh-object-copied
+//     `PersonaImportPayload` with no prototype pollution and no unknown fields.
+//   - `computePersonaContentHash` — SHA-256 of a normalized canonical input
+//     used for edit detection during re-import.
+//   - `normalizePersonaName` (internal) — the trim/NFKC/strip/reject pipeline.
+//
+// Security-critical. See:
+//   Research/features/setup-folder-import/implementation_plan.md (Task 2)
+//   Research/features/setup-folder-import/review_security_round*.md
+
+/** Allowlist of KB document fileTypes. Closed enum — never extend at runtime. */
+const ALLOWED_KB_FILETYPES: ReadonlySet<string> = new Set([
+  'text/plain',
+  'text/markdown',
+  'application/pdf',
+]);
+
+/** Max persona name length (post-normalization). */
+const MAX_PERSONA_NAME_LENGTH = 200;
+/** Max system prompt length. */
+const MAX_SYSTEM_PROMPT_LENGTH = 50_000;
+/** Max number of KB documents per persona. */
+const MAX_KB_DOCUMENTS = 20;
+/** Max size of a single KB document's text content (bytes). */
+const MAX_KB_DOC_SIZE = 5_000_000;
+/** Max aggregate size of all KB documents in a single persona. */
+const MAX_KB_TOTAL_SIZE = 20_000_000;
+/** Max KB filename length. */
+const MAX_KB_FILENAME_LENGTH = 255;
+
+/**
+ * Strip set: zero-width characters commonly introduced by copy-paste from rich
+ * text editors. These have no semantic meaning in any script.
+ *   U+200B ZERO WIDTH SPACE
+ *   U+200C ZERO WIDTH NON-JOINER
+ *   U+200D ZERO WIDTH JOINER
+ *   U+FEFF BYTE ORDER MARK (as interior char)
+ */
+const ZERO_WIDTH_STRIP_REGEX = /[\u200B\u200C\u200D\uFEFF]/g;
+
+/**
+ * KB document filename format: 1-255 printable ASCII characters, no path
+ * separators, no control chars, no leading dot (blocks `.env`/`.htaccess`).
+ */
+const KB_FILENAME_REGEX = /^(?!\.)[A-Za-z0-9 ._-]+$/;
+
+/**
+ * Color format: 6-digit hex with leading `#`. Rejects named colors, 3-digit
+ * short form, and CSS functions like `url(...)` or `expression(...)`.
+ */
+const COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+
+/**
+ * Icon format: OpenMoji hexcode — one or more 4-5 digit uppercase hex groups
+ * separated by hyphens. Matches persona.ts:17 `icon?: string; // OpenMoji hexcode`.
+ */
+const ICON_REGEX = /^[0-9A-F]{4,5}(-[0-9A-F]{4,5})*$/;
+
+/**
+ * Closed enum of reason codes returned by `validatePersonaImportEnvelope`.
+ * Never extend with user-supplied strings. Every reason is safe to render
+ * in a preview modal (contains no raw user input).
+ */
+export type PersonaImportValidationReason =
+  | 'bad_envelope'
+  | 'unsupported_version'
+  | 'missing_name'
+  | 'name_too_long'
+  | 'invisible_character'
+  | 'bad_color_format'
+  | 'bad_icon_format'
+  | 'bad_systemPrompt_type'
+  | 'systemPrompt_too_long'
+  | 'bad_kbDocuments_type'
+  | 'too_many_kbDocuments'
+  | 'bad_kbDocument_shape'
+  | 'bad_kbDocument_filename'
+  | 'bad_kbDocument_fileType'
+  | 'kbDocument_too_large'
+  | 'kbDocuments_total_too_large';
+
+/** A fresh, validated persona payload. Never inherits from the input object. */
+export interface PersonaImportPayload {
+  name: string;
+  color: string;
+  icon?: string;
+  systemPrompt: string;
+  kbDocuments?: PersonaImportKbDoc[];
+  importSignature?: string;
+}
+
+export interface PersonaImportKbDoc {
+  filename: string;
+  fileType: string;
+  textContent: string;
+}
+
+export type ValidatePersonaImportEnvelopeResult =
+  | { valid: true; persona: PersonaImportPayload }
+  | { valid: false; reason: PersonaImportValidationReason };
+
+/**
+ * Validates a persona import envelope and returns a FRESH-COPIED payload
+ * containing only known fields. Never passes the input object through by
+ * reference (defense-in-depth against prototype pollution).
+ *
+ * Rejection reasons are closed-enum codes — never raw user input.
+ *
+ * @param obj The parsed JSON envelope (from `JSON.parse(fileText, protoReviver)`)
+ * @returns Either a valid payload or a rejection reason
+ */
+export function validatePersonaImportEnvelope(
+  obj: unknown
+): ValidatePersonaImportEnvelopeResult {
+  // Top-level envelope shape
+  if (obj === null || typeof obj !== 'object') {
+    return { valid: false, reason: 'bad_envelope' };
+  }
+  const envelope = obj as Record<string, unknown>;
+  if (envelope.wingmanPersona !== true) {
+    return { valid: false, reason: 'bad_envelope' };
+  }
+  if (envelope.version !== 1) {
+    return { valid: false, reason: 'unsupported_version' };
+  }
+  if (envelope.persona === null || typeof envelope.persona !== 'object') {
+    return { valid: false, reason: 'bad_envelope' };
+  }
+
+  const raw = envelope.persona as Record<string, unknown>;
+
+  // Name: must be string, not empty after trim, not too long after normalize,
+  // no invisible/format characters in the reject set.
+  if (typeof raw.name !== 'string') {
+    return { valid: false, reason: 'missing_name' };
+  }
+  const normalizedName = normalizePersonaName(raw.name);
+  if (normalizedName === null) {
+    // normalizePersonaName returns null for either empty-after-trim OR invisible-char reject.
+    // Distinguish: check the raw trimmed input.
+    const trimmed = raw.name.trim();
+    if (trimmed.length === 0) {
+      return { valid: false, reason: 'missing_name' };
+    }
+    return { valid: false, reason: 'invisible_character' };
+  }
+  if (normalizedName.length > MAX_PERSONA_NAME_LENGTH) {
+    return { valid: false, reason: 'name_too_long' };
+  }
+
+  // systemPrompt: must be string, length capped
+  if (typeof raw.systemPrompt !== 'string') {
+    return { valid: false, reason: 'bad_systemPrompt_type' };
+  }
+  if (raw.systemPrompt.length > MAX_SYSTEM_PROMPT_LENGTH) {
+    return { valid: false, reason: 'systemPrompt_too_long' };
+  }
+
+  // color: must match strict hex regex
+  if (typeof raw.color !== 'string' || !COLOR_REGEX.test(raw.color)) {
+    return { valid: false, reason: 'bad_color_format' };
+  }
+
+  // icon: optional; if present, must match OpenMoji hexcode format
+  if (raw.icon !== undefined) {
+    if (typeof raw.icon !== 'string' || !ICON_REGEX.test(raw.icon)) {
+      return { valid: false, reason: 'bad_icon_format' };
+    }
+  }
+
+  // kbDocuments: optional array, bounded size, each doc validated
+  let kbDocumentsOut: PersonaImportKbDoc[] | undefined;
+  if (raw.kbDocuments !== undefined) {
+    if (!Array.isArray(raw.kbDocuments)) {
+      return { valid: false, reason: 'bad_kbDocuments_type' };
+    }
+    if (raw.kbDocuments.length > MAX_KB_DOCUMENTS) {
+      return { valid: false, reason: 'too_many_kbDocuments' };
+    }
+
+    let totalSize = 0;
+    const docsOut: PersonaImportKbDoc[] = [];
+    for (const entry of raw.kbDocuments) {
+      if (entry === null || typeof entry !== 'object') {
+        return { valid: false, reason: 'bad_kbDocument_shape' };
+      }
+      const doc = entry as Record<string, unknown>;
+
+      if (
+        typeof doc.filename !== 'string' ||
+        doc.filename.length === 0 ||
+        doc.filename.length > MAX_KB_FILENAME_LENGTH ||
+        !KB_FILENAME_REGEX.test(doc.filename)
+      ) {
+        return { valid: false, reason: 'bad_kbDocument_filename' };
+      }
+
+      if (typeof doc.fileType !== 'string' || !ALLOWED_KB_FILETYPES.has(doc.fileType)) {
+        return { valid: false, reason: 'bad_kbDocument_fileType' };
+      }
+
+      if (typeof doc.textContent !== 'string') {
+        return { valid: false, reason: 'bad_kbDocument_shape' };
+      }
+      if (doc.textContent.length > MAX_KB_DOC_SIZE) {
+        return { valid: false, reason: 'kbDocument_too_large' };
+      }
+      totalSize += doc.textContent.length;
+      if (totalSize > MAX_KB_TOTAL_SIZE) {
+        return { valid: false, reason: 'kbDocuments_total_too_large' };
+      }
+
+      // Fresh object with only known fields — no __proto__ inheritance, no unknown keys
+      docsOut.push({
+        filename: doc.filename,
+        fileType: doc.fileType,
+        textContent: doc.textContent,
+      });
+    }
+    kbDocumentsOut = docsOut;
+  }
+
+  // Build a FRESH object literal — no Object.assign, no spread from raw.
+  // Only known fields are copied over. Unknown fields are silently dropped.
+  const safe: PersonaImportPayload = {
+    name: normalizedName,
+    color: raw.color,
+    systemPrompt: raw.systemPrompt,
+  };
+  if (typeof raw.icon === 'string') {
+    safe.icon = raw.icon;
+  }
+  if (kbDocumentsOut !== undefined) {
+    safe.kbDocuments = kbDocumentsOut;
+  }
+  if (typeof raw.importSignature === 'string') {
+    safe.importSignature = raw.importSignature;
+  }
+
+  return { valid: true, persona: safe };
+}
+
+/**
+ * Persona name normalization pipeline (order matters):
+ *
+ *   1. trim leading/trailing ASCII whitespace
+ *   2. normalize('NFKC') — canonical decomposition
+ *   3. strip the 4 zero-width joiners (U+200B/C/D, U+FEFF)
+ *   4. reject any remaining default-ignorable codepoint EXCEPT LRM/RLM
+ *      (U+200E/F are preserved because they are legitimate bidirectional
+ *      text controls used in Arabic/Hebrew/Persian scripts)
+ *   5. return the cleaned name, or null if invalid
+ *
+ * Returns null on:
+ *   - empty string (after trim + strip)
+ *   - any default-ignorable codepoint that is NOT LRM/RLM (spoofing defense)
+ *
+ * The caller distinguishes "empty" from "invisible char" by re-checking the
+ * trimmed raw input.
+ */
+function normalizePersonaName(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+
+  const normalized = trimmed.normalize('NFKC');
+  const stripped = normalized.replace(ZERO_WIDTH_STRIP_REGEX, '');
+  if (stripped.length === 0) return null;
+
+  // Reject any default-ignorable codepoint except LRM (U+200E) and RLM (U+200F).
+  // Using the Unicode property class is forward-compatible with future versions.
+  //
+  // Supplemental reject set: U+FFF9/A/B (INTERLINEAR ANNOTATION ANCHOR/
+  // SEPARATOR/TERMINATOR). These are General_Category=Cf but NOT in
+  // Default_Ignorable_Code_Point, so the property class doesn't catch them.
+  // They are rare format characters with no use in persona names and are a
+  // known spoofing / invisible-prompt-injection vector. See
+  // review_security_round7.md#Minor-interlinear-annotation.
+  for (const char of stripped) {
+    const cp = char.codePointAt(0);
+    if (cp === 0x200e || cp === 0x200f) continue;
+    if (cp === 0xfff9 || cp === 0xfffa || cp === 0xfffb) return null;
+    if (/\p{Default_Ignorable_Code_Point}/u.test(char)) {
+      return null;
+    }
+  }
+
+  return stripped;
+}
+
+/**
+ * Computes a stable SHA-256 content hash for a persona, used as an
+ * `importSignature` for edit detection.
+ *
+ * Hash input is `JSON.stringify({ name, color, systemPrompt })` with keys in
+ * that exact insertion order (ES2020 §9.1.12 guarantees stable iteration).
+ * The `name` is normalized via the same pipeline as the validator.
+ *
+ * Fields explicitly NOT in the hash and WHY:
+ *   - id:              instance identity, varies per install
+ *   - kbDocumentIds:   additive-only per Decision 4 (KB changes don't count as edits)
+ *   - modelPrompts:    per-model derived state
+ *   - promptVersions:  derived state
+ *   - createdAt:       instance-specific
+ *   - updatedAt:       changes on every save (would always invalidate)
+ *   - order:           UI-specific, not behavioral
+ *   - icon:            cosmetic, not behavioral
+ *
+ * A new behavior-affecting field added in a future schema version MUST be
+ * included in this hash with a test asserting that changing the field
+ * produces a different hash.
+ *
+ * @param persona The persona to hash
+ * @returns 64-character lowercase hex string (SHA-256)
+ */
+export async function computePersonaContentHash(persona: Persona): Promise<string> {
+  // Normalize name the same way the validator does. If the current name has
+  // invisible chars (e.g., user pasted one into the editor), normalizePersonaName
+  // returns null — fall back to the trimmed raw name so the hash still works.
+  // The mergePersonasFromImport layer is responsible for rejecting invisibles.
+  const normalizedName = normalizePersonaName(persona.name) ?? persona.name.trim();
+
+  const canonical = JSON.stringify({
+    name: normalizedName,
+    color: persona.color,
+    systemPrompt: persona.systemPrompt,
+  });
+
+  const bytes = new TextEncoder().encode(canonical);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+
+  // Convert ArrayBuffer to 64-char lowercase hex
+  const view = new Uint8Array(digest);
+  let hex = '';
+  for (let i = 0; i < view.length; i++) {
+    const b = view[i]!;
+    hex += b.toString(16).padStart(2, '0');
+  }
+  return hex;
 }

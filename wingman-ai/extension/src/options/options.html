@@ -57,6 +57,37 @@
 
       <!-- ==================== SETUP TAB ==================== -->
       <div class="tab-panel active" id="panel-setup" data-panel="setup" role="tabpanel" aria-labelledby="tab-setup">
+        <!-- Setup Folder Import Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Import Setup Folder</h2>
+          <p class="form-section-description">
+            Pick a folder containing a <code>.env</code> file and <code>*persona*.json</code> files to import credentials and personas in one click.
+            Your own personas and edits are preserved — only unedited shipped personas are overwritten.
+          </p>
+          <p class="form-section-description" style="color: #aa6600;">
+            <strong>Security reminder:</strong> API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.
+          </p>
+          <details style="margin-bottom: 12px;">
+            <summary style="cursor: pointer; font-weight: 500;">Folder format</summary>
+            <p style="margin-top: 8px;"><strong>.env</strong> at the top level with any of these keys:</p>
+            <pre style="background: rgba(0,0,0,0.04); padding: 10px; border-radius: 4px; font-size: 12px;">DEEPGRAM_API_KEY=...
+GEMINI_API_KEY=...
+OPENROUTER_API_KEY=...
+GROQ_API_KEY=...
+HUME_API_KEY=...
+HUME_SECRET_KEY=...
+LANGBUILDER_API_KEY=...
+LANGBUILDER_URL=...
+LANGBUILDER_FLOW_ID=...</pre>
+            <p><strong>Persona JSON files</strong> anywhere in the folder (any filename containing "persona" and ending in .json).</p>
+          </details>
+          <div class="button-row">
+            <button id="setup-import-btn" class="btn-primary" type="button">Choose Folder</button>
+            <span id="setup-import-last" style="margin-left: 12px; color: #666; font-size: 13px;"></span>
+          </div>
+          <input type="file" id="setup-import-input" webkitdirectory multiple hidden>
+        </div>
+
         <!-- API Keys Card -->
         <div class="options-card">
           <h2 class="form-section-title">API Keys</h2>
@@ -396,7 +427,20 @@
             Minimum time between AI suggestions. Higher values reduce API usage but may miss fast-paced conversation.
           </p>
 
-          <div class="slider-group">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-suggestions-toggle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <label for="auto-suggestions-toggle" class="toggle-label">Auto-suggestions</label>
+            </div>
+            <p class="toggle-description">
+              When off, Wingman won't suggest automatically. Use the KB search icon or search bar to get answers on demand. Takes effect next session.
+            </p>
+          </div>
+
+          <div class="slider-group" id="cooldown-slider-group">
             <div class="slider-header">
               <label for="cooldown-range" class="toggle-label">Cooldown</label>
               <span id="cooldown-value" class="slider-value">15s</span>
@@ -465,10 +509,18 @@
             Controls where the Wingman panel appears during calls. Sidebar modes attach the panel to the browser edge.
           </p>
           <div class="form-group">
-            <select id="panel-layout-select" class="api-key-input" style="width:auto;min-width:200px;">
+            <label for="panel-layout-select" class="input-label">Panel Position</label>
+            <select id="panel-layout-select" class="select-input">
               <option value="floating">Floating</option>
               <option value="dock-left">Sidebar Left</option>
               <option value="dock-right">Sidebar Right</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="display-mode-select" class="input-label">Display Mode</label>
+            <select id="display-mode-select" class="select-input">
+              <option value="full">Full transcript + suggestions</option>
+              <option value="suggestions-only">Suggestions only</option>
             </select>
           </div>
         </div>

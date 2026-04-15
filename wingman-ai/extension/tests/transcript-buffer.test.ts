@@ -151,6 +151,134 @@ describe('transcript-buffer module shape', () => {
   });
 });
 
+describe('isValidTranscriptMessage — content-script boundary validator', () => {
+  // These tests cover Task 2's negative-test requirement: the content-script
+  // handler validates the FULL TranscriptEntry shape before forwarding to
+  // transcriptBuffer.append. Validation lives at the system boundary
+  // (content-script), not in the buffer itself.
+
+  it('NEG-V1: rejects messages with missing or empty `text`', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    // Missing text
+    expect(isValidTranscriptMessage({
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+    // Empty string text
+    expect(isValidTranscriptMessage({
+      text: '',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+    // Wrong type
+    expect(isValidTranscriptMessage({
+      text: 123,
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+  });
+
+  it('NEG-V2: rejects messages with missing or wrong-typed `speaker`', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 42,
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+  });
+
+  it('NEG-V3: rejects messages with missing or non-boolean `is_final`', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: 'true',
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+  });
+
+  it('NEG-V4: rejects messages with missing or non-boolean `is_self`', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: 1,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(false);
+  });
+
+  it('NEG-V5: rejects messages with missing or empty `timestamp`', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+    })).toBe(false);
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: '',
+    })).toBe(false);
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: 12345,
+    })).toBe(false);
+  });
+
+  it('V-POS: accepts a fully-formed transcript message', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage({
+      text: 'hello',
+      speaker: 'Alice',
+      is_final: true,
+      is_self: false,
+      timestamp: '2026-04-15T12:00:00.000Z',
+    })).toBe(true);
+  });
+
+  it('V-NULL: rejects null and non-object inputs', async () => {
+    const { isValidTranscriptMessage } = await import('../src/content/overlay/transcript-validator');
+    expect(isValidTranscriptMessage(null)).toBe(false);
+    expect(isValidTranscriptMessage(undefined)).toBe(false);
+    expect(isValidTranscriptMessage('string')).toBe(false);
+    expect(isValidTranscriptMessage(42)).toBe(false);
+  });
+});
+
 describe('transcript-buffer negative tests', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -189,5 +317,60 @@ describe('transcript-buffer negative tests', () => {
     // The following statement is intentionally commented out — uncommenting
     // it would cause `npm run typecheck` to fail, proving the contract.
     // transcriptBuffer.append({ text: 'bad' });
+  });
+});
+
+describe('handleTranscriptMessage — wiring + ordering guarantee', () => {
+  // These tests cover Task 2 AC: "overlay.updateTranscript is called BEFORE
+  // transcriptBuffer.append, and a throw from append does NOT block the
+  // rendering path."
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('WIRE-1: calls overlay.updateTranscript before transcriptBuffer.append (order)', async () => {
+    const { handleTranscriptMessage } = await import('../src/content/overlay/transcript-handler');
+    const calls: string[] = [];
+    const updateTranscript = vi.fn((_e: unknown) => { calls.push('overlay'); });
+    const append = vi.fn((_e: unknown) => { calls.push('buffer'); });
+    const entry = makeEntry();
+
+    handleTranscriptMessage(entry, { updateTranscript }, { append });
+
+    expect(updateTranscript).toHaveBeenCalledTimes(1);
+    expect(append).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual(['overlay', 'buffer']);
+  });
+
+  it('WIRE-2: if transcriptBuffer.append throws, overlay.updateTranscript was still called', async () => {
+    const { handleTranscriptMessage } = await import('../src/content/overlay/transcript-handler');
+    const updateTranscript = vi.fn();
+    const append = vi.fn(() => {
+      throw new Error('buffer failure');
+    });
+    const entry = makeEntry();
+
+    // Should not throw out of the handler — buffer failures must not crash the
+    // content script.
+    expect(() => handleTranscriptMessage(entry, { updateTranscript }, { append })).not.toThrow();
+    expect(updateTranscript).toHaveBeenCalledTimes(1);
+    expect(updateTranscript).toHaveBeenCalledWith(entry);
+    expect(append).toHaveBeenCalledTimes(1);
+  });
+
+  it('WIRE-3: malformed transcript messages skip append and emit the canonical console.warn', async () => {
+    const { handleTranscriptMessage } = await import('../src/content/overlay/transcript-handler');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const updateTranscript = vi.fn();
+    const append = vi.fn();
+    const malformed = { text: '', speaker: 'Alice', is_final: true, is_self: false, timestamp: 'x' };
+
+    handleTranscriptMessage(malformed as unknown as Parameters<typeof handleTranscriptMessage>[0], { updateTranscript }, { append });
+
+    // Neither the overlay nor the buffer should be touched when validation fails.
+    expect(updateTranscript).not.toHaveBeenCalled();
+    expect(append).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith('[ContentScript] skipping malformed transcript', malformed);
+    warnSpy.mockRestore();
   });
 });

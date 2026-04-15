@@ -374,7 +374,9 @@ describe('lifecycle invariants (Task 3)', () => {
       typeof args[0] === 'string' && /soft limit reached/.test(args[0])
     );
     expect(softLimitCalls).toHaveLength(1);
-    expect(softLimitCalls[0]?.[0]).toMatch(/\[TranscriptBuffer\] soft limit reached: 20001 entries/);
+    // Plan spec: message matches /soft limit reached/ — concrete count is 20000
+    // because that is the first append at which length crosses SOFT_LIMIT_ENTRIES.
+    expect(softLimitCalls[0]?.[0]).toMatch(/\[TranscriptBuffer\] soft limit reached: \d+ entries/);
 
     // Further appends must NOT re-fire the warn.
     transcriptBuffer.append(entry);

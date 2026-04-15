@@ -56,6 +56,7 @@ import { Draggable } from './overlay/draggable';
 import { Resizable } from './overlay/resizable';
 import { Dockable } from './overlay/dockable';
 import { removeDockMargin } from './overlay/margin-injector';
+import { transcriptBuffer } from './overlay/transcript-buffer';
 
 export class AIOverlay {
   public container: HTMLDivElement;
@@ -124,6 +125,12 @@ export class AIOverlay {
       'pointer-events:none!important;display:block!important;';
 
     this.shadow = this.container.attachShadow({ mode: 'closed' });
+
+    // Devtools hook for manual inspection in the Meet tab console (Task 2).
+    // Invisible to page-world JS (isolated-worlds guarantee). Plan 2's
+    // MeetingView imports `transcriptBuffer` directly — do NOT rely on this
+    // hook in production code.
+    (this.container as unknown as { __wingmanTranscriptBuffer__?: typeof transcriptBuffer }).__wingmanTranscriptBuffer__ = transcriptBuffer;
 
     this.loadStyles();
     this.panel = this.createOverlayStructure();

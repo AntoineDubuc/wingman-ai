@@ -10,6 +10,8 @@
 
 import { AIOverlay } from './overlay';
 import { removeDockMargin } from './overlay/margin-injector';
+import { transcriptBuffer } from './overlay/transcript-buffer';
+import { handleTranscriptMessage } from './overlay/transcript-handler';
 
 let overlay: AIOverlay | null = null;
 let extensionValid = true;
@@ -104,7 +106,10 @@ try {
         console.log('[ContentScript] Transcript data:', message.data);
         if (overlay) {
           ensureOverlayAttached();
-          overlay.updateTranscript(message.data);
+          // Handler validates the 5-field shape at the boundary, then calls
+          // overlay.updateTranscript FIRST and transcriptBuffer.append SECOND
+          // so a buffer throw cannot block rendering.
+          handleTranscriptMessage(message.data, overlay, transcriptBuffer);
           sendResponse({ received: true, connected: overlay.container.isConnected });
         } else {
           console.warn('[ContentScript] Overlay not initialized!');

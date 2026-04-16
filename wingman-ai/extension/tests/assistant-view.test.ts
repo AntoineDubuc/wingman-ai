@@ -879,3 +879,185 @@ describe('Task 5: Source attribution tags', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 6: Chat input — single-line, send button, Enter-to-send
+// ---------------------------------------------------------------------------
+
+describe('Task 6: Chat input', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: .chat-input-area rendered with input and send button', () => {
+    it('creates .chat-input-area > .chat-input-wrapper > .chat-input + .chat-send-btn', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const area = container.querySelector('.chat-input-area');
+      expect(area).not.toBeNull();
+      const wrapper = area!.querySelector('.chat-input-wrapper');
+      expect(wrapper).not.toBeNull();
+      const input = wrapper!.querySelector('.chat-input') as HTMLInputElement;
+      expect(input).not.toBeNull();
+      expect(input.type).toBe('text');
+      const btn = wrapper!.querySelector('.chat-send-btn') as HTMLButtonElement;
+      expect(btn).not.toBeNull();
+    });
+  });
+
+  describe('AC2: placeholder text', () => {
+    it('placeholder is "Ask anything..."', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      expect(input.placeholder).toBe('Ask anything...');
+    });
+  });
+
+  describe('AC3: send button disabled when input empty', () => {
+    it('button is disabled initially', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const btn = container.querySelector('.chat-send-btn') as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
+
+    it('button enables when text is typed, disables when cleared', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      const btn = container.querySelector('.chat-send-btn') as HTMLButtonElement;
+
+      // Type a character
+      input.value = 'a';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(btn.disabled).toBe(false);
+
+      // Clear
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(btn.disabled).toBe(true);
+    });
+  });
+
+  describe('AC4: Enter sends the message', () => {
+    it('pressing Enter creates a user bubble and clears input', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+
+      input.value = 'hello';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      const bubble = container.querySelector('.chat-msg-user .msg-bubble') as HTMLElement;
+      expect(bubble).not.toBeNull();
+      expect(bubble.textContent).toBe('hello');
+      expect(input.value).toBe('');
+    });
+  });
+
+  describe('AC5: Shift+Enter does NOT send', () => {
+    it('Shift+Enter is a no-op', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+
+      input.value = 'test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true }));
+
+      expect(container.querySelector('.chat-msg-user')).toBeNull();
+      expect(input.value).toBe('test'); // not cleared
+    });
+  });
+
+  describe('AC6: after send, input clears and button disables', () => {
+    it('input value is empty and button is disabled after send', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      const btn = container.querySelector('.chat-send-btn') as HTMLButtonElement;
+
+      input.value = 'hello';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      btn.click();
+
+      expect(input.value).toBe('');
+      expect(btn.disabled).toBe(true);
+    });
+  });
+
+  describe('AC7: maxlength is 4000', () => {
+    it('input has maxlength="4000"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      expect(input.maxLength).toBe(4000);
+    });
+  });
+
+  describe('AC8: suggestion chip auto-submits via pendingSuggestionText', () => {
+    it('clicking a suggestion chip sends the message', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      // Click a suggestion chip (sets pendingSuggestionText)
+      const chip = container.querySelector('.suggestion-chip') as HTMLElement;
+      chip.click();
+      // The pending suggestion should have been consumed and sent
+      expect(container.querySelector('.chat-msg-user .msg-bubble')).not.toBeNull();
+      expect(view.getPendingSuggestionText()).toBeNull();
+    });
+  });
+
+  describe('Negative: clicking disabled send button does nothing', () => {
+    it('no bubble created when button is disabled', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const btn = container.querySelector('.chat-send-btn') as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+      btn.click();
+      expect(container.querySelector('.chat-msg-user')).toBeNull();
+    });
+  });
+
+  describe('Negative: whitespace-only input does not send', () => {
+    it('spaces-only input is treated as empty', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+
+      input.value = '   ';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(container.querySelector('.chat-msg-user')).toBeNull();
+    });
+  });
+
+  describe('Negative: Unicode input is preserved', () => {
+    it('emoji and RTL text survive the send cycle', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+
+      input.value = '\uD83D\uDC4B \u0645\u0631\u062D\u0628\u0627';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      const bubble = container.querySelector('.chat-msg-user .msg-bubble') as HTMLElement;
+      expect(bubble.textContent).toBe('\uD83D\uDC4B \u0645\u0631\u062D\u0628\u0627');
+    });
+  });
+});

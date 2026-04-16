@@ -437,6 +437,63 @@ describe('daily budget counter', () => {
   });
 });
 
+// ── formatResultsForPrompt() (Task 4) ───────────────────────────────────────
+
+describe('formatResultsForPrompt()', () => {
+  // AC: empty results → empty string
+  it('returns empty string for empty results', () => {
+    expect(formatResultsForPrompt([])).toBe('');
+  });
+
+  // AC: single result formatted with [1] numbering
+  it('formats a single result with [1] numbering', () => {
+    const results: SearchResult[] = [
+      { title: 'OAuth Guide', url: 'https://example.com/oauth', snippet: 'How to implement OAuth' },
+    ];
+    const output = formatResultsForPrompt(results);
+    expect(output).toBe(
+      '[1] Title: OAuth Guide\n    URL: https://example.com/oauth\n    Snippet: How to implement OAuth',
+    );
+  });
+
+  // AC: multi-result numbered sequentially
+  it('numbers multiple results sequentially', () => {
+    const results: SearchResult[] = [
+      { title: 'Title A', url: 'https://a.com', snippet: 'Snippet A' },
+      { title: 'Title B', url: 'https://b.com', snippet: 'Snippet B' },
+      { title: 'Title C', url: 'https://c.com', snippet: 'Snippet C' },
+    ];
+    const output = formatResultsForPrompt(results);
+    expect(output).toContain('[1] Title: Title A');
+    expect(output).toContain('[2] Title: Title B');
+    expect(output).toContain('[3] Title: Title C');
+    // Blocks separated by blank line
+    expect(output).toContain('\n\n[2]');
+    expect(output).toContain('\n\n[3]');
+  });
+
+  // AC: special characters preserved verbatim
+  it('preserves special characters in title/snippet verbatim', () => {
+    const results: SearchResult[] = [
+      { title: 'A < B & C > D', url: 'https://x.com', snippet: 'a & b < c' },
+    ];
+    const output = formatResultsForPrompt(results);
+    expect(output).toContain('Title: A < B & C > D');
+    expect(output).toContain('Snippet: a & b < c');
+  });
+
+  // Negative: empty snippet still renders
+  it('renders block even with empty snippet', () => {
+    const results: SearchResult[] = [
+      { title: 'No Snippet', url: 'https://x.com', snippet: '' },
+    ];
+    const output = formatResultsForPrompt(results);
+    expect(output).toContain('[1] Title: No Snippet');
+    expect(output).toContain('URL: https://x.com');
+    expect(output).toContain('Snippet: ');
+  });
+});
+
 // ── webSearchTestCall() — counter-exempt ────────────────────────────────────
 
 describe('webSearchTestCall()', () => {

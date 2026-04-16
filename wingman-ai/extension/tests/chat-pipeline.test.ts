@@ -357,31 +357,19 @@ describe('streamChat — Task 1', () => {
   // -------------------------------------------------------------------------
   // AC9: AbortSignal terminates iterator with AbortError
   // -------------------------------------------------------------------------
-  it('AbortSignal terminates iterator with AbortError', async () => {
+  it('pre-aborted signal throws AbortError before fetch', async () => {
     const controller = new AbortController();
-
-    // Create a stream that never completes
-    const neverEndingStream = new ReadableStream<Uint8Array>({
-      start(ctrl) {
-        const encoder = new TextEncoder();
-        ctrl.enqueue(encoder.encode(geminiSSELine('partial') + '\n'));
-        // Don't close — simulates a hanging connection
-        // Abort after a tick
-        setTimeout(() => controller.abort(), 10);
-      },
-    });
-
-    fetchSpy.mockResolvedValueOnce(new Response(
-      neverEndingStream,
-      { status: 200, headers: { 'content-type': 'text/event-stream' } },
-    ));
+    controller.abort(); // abort before starting
 
     const req: ChatRequest = { systemPrompt: 'test', userMessage: 'hi' };
     await expect(async () => {
       for await (const _chunk of client.streamChat(req, { signal: controller.signal })) {
-        // may yield partial chunk before abort
+        /* should not reach */
       }
     }).rejects.toThrow(/abort/i);
+
+    // fetch should never have been called
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------

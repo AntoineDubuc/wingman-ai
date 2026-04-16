@@ -41,6 +41,26 @@ const DEFAULT_MODEL = 'gemini-2.5-flash';
 const MAX_RETRIES = LIMITS.MAX_API_RETRIES;
 
 /**
+ * Chat request for the streaming chat method (Plan 4).
+ */
+export interface ChatRequest {
+  systemPrompt: string;
+  userMessage: string;
+  history?: Array<{ role: 'user' | 'assistant'; text: string }>;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+/**
+ * A single chunk from the streaming chat response.
+ */
+export interface StreamChunk {
+  delta: string;
+  done: boolean;
+  usage?: { inputTokens: number; outputTokens: number };
+}
+
+/**
  * Suggestion data structure
  */
 export interface Suggestion {
@@ -1293,6 +1313,310 @@ export class GeminiClient {
     const alt2 = alt2Match?.[1]?.trim() || '';
 
     return { answer, alt1, alt2 };
+  }
+
+  // ===========================================================================
+  // Streaming chat — Plan 4 Task 1
+  // ===========================================================================
+
+  /**
+   * Stream a chat completion as an async iterable of chunks.
+   * Supports all three providers (Gemini, OpenRouter, Groq) via SSE.
+   * Does NOT touch existing processTranscript / generateKBAnswer pipelines.
+   */
+  async *streamChat(
+    req: ChatRequest,
+    options?: { signal?: AbortSignal },
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    if (!req.userMessage || req.userMessage.trim().length === 0) {
+      throw new Error('userMessage required');
+    }
+
+    const signal = options?.signal;
+
+    // Check for pre-abort
+    if (signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+
+    const apiKey = this.getProviderApiKey();
+    if (!apiKey) {
+      throw new Error('No API key configured for provider: ' + this.provider);
+    }
+
+    // Build the fetch request based on provider
+    const { url, headers, body } = this.buildStreamRequest(req, apiKey);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`LLM API error ${response.status}`);
+    }
+
+    // Consume the SSE stream
+    let yielded = false;
+    for await (const chunk of this.consumeSSEStream(response, this.provider, signal)) {
+      yielded = true;
+      yield chunk;
+      if (chunk.done) return;
+    }
+
+    // If nothing was yielded (empty body), produce a single done chunk
+    if (!yielded) {
+      yield { delta: '', done: true, usage: { inputTokens: 0, outputTokens: 0 } };
+    }
+  }
+
+  /**
+   * Build a streaming request for the given provider.
+   */
+  private buildStreamRequest(
+    req: ChatRequest,
+    apiKey: string,
+  ): { url: string; headers: Record<string, string>; body: string } {
+    const maxTokens = req.maxTokens ?? 4096;
+    const temperature = req.temperature ?? 0.7;
+
+    if (this.provider !== 'gemini') {
+      // OpenAI-compatible format (OpenRouter, Groq)
+      const messages: Array<{ role: string; content: string }> = [];
+
+      if (req.systemPrompt) {
+        messages.push({ role: 'system', content: req.systemPrompt });
+      }
+
+      // History
+      if (req.history) {
+        for (const h of req.history) {
+          messages.push({ role: h.role, content: h.text });
+        }
+      }
+
+      // Current user message
+      messages.push({ role: 'user', content: req.userMessage });
+
+      const model = this.provider === 'groq' ? this.groqModel : this.openrouterModel;
+      const baseUrl = this.provider === 'groq' ? GROQ_API_BASE : OPENROUTER_API_BASE;
+
+      const bodyObj: Record<string, unknown> = {
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+        stream: true,
+        stream_options: { include_usage: true },
+      };
+
+      const hdrs: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      };
+
+      if (this.provider === 'openrouter') {
+        hdrs['HTTP-Referer'] = 'https://wingman-ai.com';
+        hdrs['X-Title'] = 'Wingman AI';
+      }
+
+      return {
+        url: `${baseUrl}/chat/completions`,
+        headers: hdrs,
+        body: JSON.stringify(bodyObj),
+      };
+    }
+
+    // Gemini format — streaming endpoint
+    const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
+
+    // History
+    if (req.history) {
+      for (const h of req.history) {
+        contents.push({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.text }],
+        });
+      }
+    }
+
+    // Current user message
+    contents.push({ role: 'user', parts: [{ text: req.userMessage }] });
+
+    const geminiBody: Record<string, unknown> = {
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature,
+      },
+      contents,
+    };
+
+    if (req.systemPrompt) {
+      geminiBody.systemInstruction = { parts: [{ text: req.systemPrompt }] };
+    }
+
+    return {
+      url: `${GEMINI_API_BASE}/${this.model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(geminiBody),
+    };
+  }
+
+  /**
+   * Consume an SSE response body line-by-line, yielding StreamChunks.
+   * Handles multi-line events, [DONE] sentinel, and chunks split across reads.
+   */
+  private async *consumeSSEStream(
+    response: Response,
+    provider: LLMProvider,
+    signal?: AbortSignal,
+  ): AsyncGenerator<StreamChunk, void, undefined> {
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let lastUsage: { inputTokens: number; outputTokens: number } | undefined;
+    let hasYielded = false;
+
+    try {
+      while (true) {
+        // Check abort before each read
+        if (signal?.aborted) {
+          throw new DOMException('The operation was aborted.', 'AbortError');
+        }
+
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines
+        const lines = buffer.split('\n');
+        // Keep the last element (may be an incomplete line)
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed === '' || trimmed.startsWith(':')) continue;
+
+          if (!trimmed.startsWith('data: ')) continue;
+
+          const data = trimmed.slice(6); // strip "data: "
+
+          // [DONE] sentinel (OpenAI-compat)
+          if (data === '[DONE]') {
+            // Emit final chunk if we haven't already
+            if (!hasYielded) {
+              yield { delta: '', done: true, usage: lastUsage ?? { inputTokens: 0, outputTokens: 0 } };
+            }
+            return;
+          }
+
+          // Parse JSON
+          let parsed: Record<string, unknown>;
+          try {
+            parsed = JSON.parse(data) as Record<string, unknown>;
+          } catch {
+            console.warn('[GeminiClient] Malformed SSE data, skipping:', data.slice(0, 80));
+            continue;
+          }
+
+          // Extract delta + done + usage based on provider
+          const chunk = this.parseSSEChunk(parsed, provider);
+          if (chunk) {
+            // Track usage for final emission
+            if (chunk.usage) {
+              lastUsage = chunk.usage;
+            }
+            hasYielded = true;
+            yield chunk;
+          }
+        }
+      }
+
+      // Process any remaining buffer
+      if (buffer.trim().length > 0) {
+        const trimmed = buffer.trim();
+        if (trimmed.startsWith('data: ')) {
+          const data = trimmed.slice(6);
+          if (data !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(data) as Record<string, unknown>;
+              const chunk = this.parseSSEChunk(parsed, provider);
+              if (chunk) {
+                hasYielded = true;
+                yield chunk;
+              }
+            } catch {
+              console.warn('[GeminiClient] Malformed SSE data in final buffer, skipping');
+            }
+          }
+        }
+      }
+
+      // For Gemini: if we streamed but never got a [DONE], emit final
+      if (hasYielded && provider === 'gemini') {
+        // The last Gemini SSE event typically has usageMetadata — check lastUsage
+        yield { delta: '', done: true, usage: lastUsage ?? { inputTokens: 0, outputTokens: 0 } };
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Parse a single SSE JSON object into a StreamChunk.
+   */
+  private parseSSEChunk(
+    data: Record<string, unknown>,
+    provider: LLMProvider,
+  ): StreamChunk | null {
+    if (provider === 'gemini') {
+      // Gemini streaming format
+      const candidates = data.candidates as Array<{
+        content?: { parts?: Array<{ text?: string }> };
+      }> | undefined;
+      const text = candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      const meta = data.usageMetadata as { promptTokenCount?: number; candidatesTokenCount?: number } | undefined;
+
+      if (meta) {
+        // This is the final chunk with usage info
+        return {
+          delta: text,
+          done: true,
+          usage: {
+            inputTokens: meta.promptTokenCount ?? 0,
+            outputTokens: meta.candidatesTokenCount ?? 0,
+          },
+        };
+      }
+
+      return { delta: text, done: false };
+    }
+
+    // OpenAI-compat (OpenRouter, Groq)
+    const choices = data.choices as Array<{
+      delta?: { content?: string };
+      finish_reason?: string | null;
+    }> | undefined;
+    const delta = choices?.[0]?.delta?.content ?? '';
+    const finishReason = choices?.[0]?.finish_reason;
+
+    // Usage in OpenAI-compat streaming (stream_options.include_usage)
+    const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
+
+    if (finishReason === 'stop' || finishReason === 'length') {
+      return {
+        delta,
+        done: true,
+        usage: usage
+          ? { inputTokens: usage.prompt_tokens ?? 0, outputTokens: usage.completion_tokens ?? 0 }
+          : undefined,
+      };
+    }
+
+    return { delta, done: false };
   }
 }
 

@@ -548,3 +548,174 @@ describe('Task 3: Empty state', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 4: Chat messages — user/assistant bubbles + fade-up + auto-scroll
+// ---------------------------------------------------------------------------
+
+describe('Task 4: Chat messages', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: appendUserMessage creates a user bubble', () => {
+    it('creates .chat-msg.chat-msg-user with correct text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.appendUserMessage('hello');
+      const bubble = container.querySelector('.chat-msg.chat-msg-user .msg-bubble') as HTMLElement;
+      expect(bubble).not.toBeNull();
+      expect(bubble.textContent).toBe('hello');
+    });
+  });
+
+  describe('AC2: appendUserMessage removes .chat-empty on first message', () => {
+    it('.chat-empty disappears after first user message', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      expect(container.querySelector('.chat-empty')).not.toBeNull();
+      view.appendUserMessage('first');
+      expect(container.querySelector('.chat-empty')).toBeNull();
+    });
+  });
+
+  describe('AC3: appendUserMessage creates .chat-conversation container', () => {
+    it('.chat-conversation exists after first message', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.appendUserMessage('first');
+      const conversation = container.querySelector('.chat-conversation');
+      expect(conversation).not.toBeNull();
+    });
+  });
+
+  describe('AC4: renderAssistantMessage creates an assistant bubble', () => {
+    it('creates .chat-msg.chat-msg-bot with correct text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi' });
+      const bubble = container.querySelector('.chat-msg.chat-msg-bot .msg-bubble') as HTMLElement;
+      expect(bubble).not.toBeNull();
+      expect(bubble.textContent).toBe('hi');
+    });
+  });
+
+  describe('AC5: markdown bold transform', () => {
+    it('**bold** renders as <strong>', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: '**bold**' });
+      const bubble = container.querySelector('.chat-msg-bot .msg-bubble') as HTMLElement;
+      expect(bubble.innerHTML).toContain('<strong>bold</strong>');
+    });
+  });
+
+  describe('AC6: markdown newline transform', () => {
+    it('\\n renders as <br>', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'line1\nline2' });
+      const bubble = container.querySelector('.chat-msg-bot .msg-bubble') as HTMLElement;
+      expect(bubble.innerHTML).toContain('line1<br>line2');
+    });
+  });
+
+  describe('AC7: XSS payload is escaped', () => {
+    it('<img src=x onerror=alert(1)> renders as literal text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: '<img src=x onerror=alert(1)>' });
+      const bubble = container.querySelector('.chat-msg-bot .msg-bubble') as HTMLElement;
+      expect(bubble.querySelector('img')).toBeNull();
+      expect(bubble.innerHTML).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    });
+  });
+
+  describe('AC8: escape-then-transform order', () => {
+    it('**<script>** renders as <strong>&lt;script&gt;</strong>', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: '**<script>**' });
+      const bubble = container.querySelector('.chat-msg-bot .msg-bubble') as HTMLElement;
+      expect(bubble.innerHTML).toContain('<strong>&lt;script&gt;</strong>');
+    });
+  });
+
+  describe('AC9: showTypingIndicator / hideTypingIndicator', () => {
+    it('showTypingIndicator creates .typing-indicator-bubble with 3 dots', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.showTypingIndicator();
+      const indicator = container.querySelector('.typing-indicator-bubble') as HTMLElement;
+      expect(indicator).not.toBeNull();
+      const dots = indicator.querySelectorAll('.typing-dots span');
+      expect(dots).toHaveLength(3);
+    });
+
+    it('hideTypingIndicator removes .typing-indicator-bubble', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.showTypingIndicator();
+      expect(container.querySelector('.typing-indicator-bubble')).not.toBeNull();
+      view.hideTypingIndicator();
+      expect(container.querySelector('.typing-indicator-bubble')).toBeNull();
+    });
+  });
+
+  describe('AC10: streaming via messageId', () => {
+    it('streaming=true creates typing indicator, then updates in-place', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      // First call: streaming start
+      view.renderAssistantMessage({ text: '...', streaming: true, messageId: 'msg-1' });
+      const streamBubble = container.querySelector('[data-message-id="msg-1"] .msg-bubble') as HTMLElement;
+      expect(streamBubble).not.toBeNull();
+
+      // Second call: update text in place
+      view.renderAssistantMessage({ text: 'hello world', streaming: true, messageId: 'msg-1' });
+      const updated = container.querySelector('[data-message-id="msg-1"] .msg-bubble') as HTMLElement;
+      expect(updated.textContent).toBe('hello world');
+
+      // Should only be one msg-1 bubble (not two)
+      const allMsg1 = container.querySelectorAll('[data-message-id="msg-1"]');
+      expect(allMsg1).toHaveLength(1);
+    });
+
+    it('streaming=false finalizes the bubble', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: '...', streaming: true, messageId: 'msg-2' });
+      view.renderAssistantMessage({ text: 'done', streaming: false, messageId: 'msg-2', sources: ['transcript'] });
+      const bubble = container.querySelector('[data-message-id="msg-2"] .msg-bubble') as HTMLElement;
+      expect(bubble.textContent).toBe('done');
+    });
+  });
+
+  describe('Negative: appendUserMessage with empty string', () => {
+    it('does not add a bubble for empty string', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.appendUserMessage('');
+      expect(container.querySelector('.chat-msg-user')).toBeNull();
+    });
+  });
+
+  describe('Negative: renderAssistantMessage with null text throws', () => {
+    it('throws on null text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      expect(() => view.renderAssistantMessage({ text: null as any })).toThrow();
+    });
+  });
+});

@@ -1362,6 +1362,21 @@ export class AIOverlay {
   showLoading(): void {
     if (this.isMinimized) this.toggleMinimize();
 
+    // Hide session-active UI: status bar + pill toggle
+    const statusBar = this.shadow.querySelector('.status-bar');
+    if (statusBar) statusBar.classList.remove('active');
+    const pillToggle = this.shadow.querySelector('.pill-toggle');
+    if (pillToggle) pillToggle.classList.remove('active');
+
+    // Stop the elapsed timer
+    if (this.meetingTimerInterval !== null) {
+      clearInterval(this.meetingTimerInterval);
+      this.meetingTimerInterval = null;
+    }
+
+    // Switch back to meeting view (hides assistant)
+    this.setMode('meeting');
+
     // Ensure summary container exists
     let summaryEl = this.panel.querySelector('.summary') as HTMLElement;
     if (!summaryEl) {
@@ -1965,6 +1980,19 @@ export class AIOverlay {
     }
     this.clearTimeline();
     this.panel.style.display = 'flex';
+
+    // Show session-active UI: status bar (recording + timer) + pill toggle
+    const statusBar = this.shadow.querySelector('.status-bar');
+    if (statusBar) statusBar.classList.add('active');
+    const pillToggle = this.shadow.querySelector('.pill-toggle');
+    if (pillToggle) pillToggle.classList.add('active');
+
+    // Reset to Meeting view on new session
+    this.setMode('meeting');
+
+    // Start the elapsed timer
+    this.startMeetingTimer();
+
     // Re-apply dock CSS after display:flex (must come after)
     this.dockable?.reapply();
   }

@@ -1200,3 +1200,198 @@ describe('Task 5: Speaker-avatar-list design + speakerColor', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 6: Live "{Speaker} is speaking..." indicator
+// ---------------------------------------------------------------------------
+
+describe('Task 6: Live speaking indicator', () => {
+  function createFakeBuffer() {
+    const entries: Array<{ text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }> = [];
+    const subscribers: Array<(entry: any) => void> = [];
+
+    return {
+      append(entry: { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }) {
+        entries.push(entry);
+        for (const cb of subscribers.slice()) {
+          cb(entry);
+        }
+      },
+      getSnapshot() {
+        return entries.slice();
+      },
+      onAppend(cb: (entry: any) => void) {
+        if (subscribers.length >= 8) {
+          throw new Error('TranscriptBuffer: exceeded MAX_SUBSCRIBERS (8)');
+        }
+        subscribers.push(cb);
+        return () => {
+          const idx = subscribers.indexOf(cb);
+          if (idx !== -1) subscribers.splice(idx, 1);
+        };
+      },
+    };
+  }
+
+  function makeEntry(text: string, speaker = 'Alice', isFinal = true): { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string } {
+    return {
+      text,
+      speaker,
+      is_final: isFinal,
+      is_self: false,
+      timestamp: '2026-04-15T10:30:00.000Z',
+    };
+  }
+
+  // AC1: indicator is always the last child of the timeline container
+  describe('AC1: indicator is always last child', () => {
+    it('.transcript-live-indicator is last child after mount', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      const last = container.lastElementChild;
+      expect(last).not.toBeNull();
+      expect(last!.classList.contains('transcript-live-indicator')).toBe(true);
+    });
+
+    it('indicator stays last after appending 3 entries', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('Entry 1', 'Alice'));
+      buffer.append(makeEntry('Entry 2', 'Bob'));
+      buffer.append(makeEntry('Entry 3', 'Charlie'));
+
+      const last = container.lastElementChild;
+      expect(last!.classList.contains('transcript-live-indicator')).toBe(true);
+      // And there should be 3 transcript entries + 1 indicator = 4 children
+      expect(container.children).toHaveLength(4);
+    });
+  });
+
+  // AC2: hidden when inactive, visible when showLiveIndicator called
+  describe('AC2: hidden by default, shows on showLiveIndicator', () => {
+    it('indicator does NOT have .active class initially', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      const indicator = container.querySelector('.transcript-live-indicator') as HTMLElement;
+      expect(indicator.classList.contains('active')).toBe(false);
+    });
+
+    it('showLiveIndicator adds .active and sets speaker text', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('Sarah');
+
+      const indicator = container.querySelector('.transcript-live-indicator') as HTMLElement;
+      expect(indicator.classList.contains('active')).toBe(true);
+
+      const speakerText = indicator.querySelector('.speaker-text');
+      expect(speakerText).not.toBeNull();
+      expect(speakerText!.textContent).toBe('Sarah is speaking\u2026');
+    });
+  });
+
+  // AC3: typing dots structure
+  describe('AC3: typing dots structure', () => {
+    it('indicator contains .typing-dots with 3 spans', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      const indicator = container.querySelector('.transcript-live-indicator');
+      expect(indicator).not.toBeNull();
+
+      const dots = indicator!.querySelector('.typing-dots');
+      expect(dots).not.toBeNull();
+      expect(dots!.querySelectorAll('span')).toHaveLength(3);
+    });
+  });
+
+  // AC4: hideLiveIndicator removes .active class
+  describe('AC4: hideLiveIndicator removes active', () => {
+    it('hideLiveIndicator removes .active class', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('Sarah');
+      expect(container.querySelector('.transcript-live-indicator')!.classList.contains('active')).toBe(true);
+
+      view.hideLiveIndicator();
+      expect(container.querySelector('.transcript-live-indicator')!.classList.contains('active')).toBe(false);
+    });
+  });
+
+  // AC5: entries insert BEFORE indicator (indicator stays last)
+  describe('AC5: entries insert before indicator', () => {
+    it('after showing indicator and appending entry, entry is before indicator', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('Sarah');
+      buffer.append(makeEntry('Final text', 'Sarah'));
+
+      // Entry should be before indicator
+      const children = Array.from(container.children);
+      const entryIdx = children.findIndex(el => el.classList.contains('transcript-entry'));
+      const indicatorIdx = children.findIndex(el => el.classList.contains('transcript-live-indicator'));
+      expect(entryIdx).toBeLessThan(indicatorIdx);
+      expect(indicatorIdx).toBe(children.length - 1);
+    });
+  });
+
+  // Negative: rapid speaker switch shows most recent only
+  describe('Negative: rapid speaker switch', () => {
+    it('shows most recent speaker only', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('Alice');
+      view.showLiveIndicator('Bob');
+
+      const speakerText = container.querySelector('.transcript-live-indicator .speaker-text');
+      expect(speakerText!.textContent).toBe('Bob is speaking\u2026');
+    });
+  });
+
+  // Negative: empty speaker fallback
+  describe('Negative: empty speaker fallback', () => {
+    it('empty speaker shows "Someone is speaking..."', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('');
+
+      const speakerText = container.querySelector('.transcript-live-indicator .speaker-text');
+      expect(speakerText!.textContent).toBe('Someone is speaking\u2026');
+    });
+  });
+});

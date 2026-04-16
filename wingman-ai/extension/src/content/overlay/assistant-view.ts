@@ -16,12 +16,15 @@
 import { getActivePersonas } from '../../shared/persona';
 import type { Persona } from '../../shared/persona';
 
-/** Shape returned by getContextState(). */
+/** Shape returned by getContextState() and passed to onSend subscribers. */
 export interface ContextState {
   transcript: boolean;
   personaIds: string[];
   web: boolean;
 }
+
+/** Context passed to onSend callbacks. Alias for ContextState. */
+export type SendContext = ContextState;
 
 /** A single chat message in history. */
 export interface ChatMessage {
@@ -70,6 +73,16 @@ export class AssistantView {
 
   /** Near-bottom scroll tolerance (matches MeetingView). */
   private static readonly SCROLL_THRESHOLD = 50;
+
+  /** Maximum number of onSend subscribers. */
+  private static readonly MAX_ONSEND_SUBSCRIBERS = 4;
+
+  /** Soft limit for chat history telemetry. */
+  private static readonly SOFT_LIMIT_MESSAGES = 200;
+  private softLimitWarned = false;
+
+  /** Registered onSend subscriber callbacks. */
+  private onSendSubscribers: Array<(text: string, ctx: SendContext) => void> = [];
 
   /**
    * Mount the AssistantView into the given container element.
@@ -140,6 +153,13 @@ export class AssistantView {
     this.personaBtnEl = null;
     this.dropdownEl = null;
     this.chevronEl = null;
+    this.chatMessagesEl = null;
+    this.conversationEl = null;
+    this.typingIndicatorEl = null;
+    this.chatInputEl = null;
+    this.chatSendBtnEl = null;
+    this.streamingBubbles.clear();
+    // NOTE: chatHistory and onSendSubscribers are intentionally NOT cleared
   }
 
   /**
@@ -318,6 +338,33 @@ export class AssistantView {
    */
   getChatHistory(): ChatMessage[] {
     return this.chatHistory;
+  }
+
+  /**
+   * Register a subscriber for send events.
+   * Returns an unsubscribe function.
+   *
+   * Can be called before mount() — callbacks are stored immediately
+   * and will fire on the first post-mount handleSend call.
+   *
+   * @param cb Callback receiving the user's text and current context state.
+   * @returns Unsubscribe function that removes this callback.
+   * @throws If cb is not a function, or if MAX_ONSEND_SUBSCRIBERS exceeded.
+   */
+  onSend(cb: (text: string, ctx: SendContext) => void): () => void {
+    if (typeof cb !== 'function') {
+      throw new Error('onSend: callback must be a function');
+    }
+    if (this.onSendSubscribers.length >= AssistantView.MAX_ONSEND_SUBSCRIBERS) {
+      throw new Error('AssistantView: exceeded MAX_ONSEND_SUBSCRIBERS (4)');
+    }
+    this.onSendSubscribers.push(cb);
+    return () => {
+      const idx = this.onSendSubscribers.indexOf(cb);
+      if (idx >= 0) {
+        this.onSendSubscribers.splice(idx, 1);
+      }
+    };
   }
 
   // ── Private: Markdown + HTML escape ──
@@ -622,6 +669,34 @@ export class AssistantView {
     if (this.chatHistory.length === 0) {
       const empty = this.buildChatEmpty();
       area.appendChild(empty);
+    } else {
+      // Rebuild existing messages (e.g., after mode-toggle unmount/mount)
+      const conversation = document.createElement('div');
+      conversation.className = 'chat-conversation';
+      this.conversationEl = conversation;
+
+      for (const msg of this.chatHistory) {
+        if (msg.role === 'user') {
+          const el = document.createElement('div');
+          el.className = 'chat-msg chat-msg-user';
+          const bubble = document.createElement('div');
+          bubble.className = 'msg-bubble';
+          bubble.textContent = msg.text;
+          el.appendChild(bubble);
+          conversation.appendChild(el);
+        } else {
+          const el = document.createElement('div');
+          el.className = 'chat-msg chat-msg-bot';
+          const bubble = document.createElement('div');
+          bubble.className = 'msg-bubble';
+          bubble.innerHTML = this.transformMarkdown(msg.text);
+          el.appendChild(bubble);
+          this.buildSourceTags(el, msg.sources);
+          conversation.appendChild(el);
+        }
+      }
+
+      area.appendChild(conversation);
     }
 
     return area;
@@ -764,9 +839,21 @@ export class AssistantView {
 
   /**
    * Emit send event to all registered subscribers.
-   * Placeholder for Task 7 — currently a no-op.
+   * Errors in individual subscribers are caught and logged.
    */
-  private emitSend(_text: string, _ctx: ContextState): void {
-    // Task 7 will implement subscriber dispatch
+  private emitSend(text: string, ctx: ContextState): void {
+    // Soft limit telemetry
+    if (!this.softLimitWarned && this.chatHistory.length > AssistantView.SOFT_LIMIT_MESSAGES) {
+      console.warn('[AssistantView] chat history large: ' + this.chatHistory.length + ' messages');
+      this.softLimitWarned = true;
+    }
+
+    for (const cb of this.onSendSubscribers) {
+      try {
+        cb(text, ctx);
+      } catch (err) {
+        console.debug('[AssistantView] onSend subscriber threw', err);
+      }
+    }
   }
 }

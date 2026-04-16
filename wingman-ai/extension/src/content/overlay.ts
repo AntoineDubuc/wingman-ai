@@ -58,6 +58,7 @@ import { Dockable } from './overlay/dockable';
 import { removeDockMargin } from './overlay/margin-injector';
 import { transcriptBuffer } from './overlay/transcript-buffer';
 import { MeetingView } from './overlay/meeting-view';
+import { AssistantView } from './overlay/assistant-view';
 
 export class AIOverlay {
   public container: HTMLDivElement;
@@ -126,6 +127,7 @@ export class AIOverlay {
 
   // MeetingView — subscription-based transcript rendering (Task 4)
   private meetingView: MeetingView | null = null;
+  private assistantView: AssistantView | null = null;
 
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
@@ -145,6 +147,10 @@ export class AIOverlay {
     // hook in production code.
     (this.container as unknown as { __wingmanTranscriptBuffer__?: typeof transcriptBuffer }).__wingmanTranscriptBuffer__ = transcriptBuffer;
 
+    // AssistantView devtools hook (Plan 3 Task 7). Same pattern as above.
+    this.assistantView = new AssistantView();
+    (this.container as unknown as { __wingmanAssistantView__?: AssistantView }).__wingmanAssistantView__ = this.assistantView;
+
     this.loadStyles();
     this.panel = this.createOverlayStructure();
     this.panel.style.pointerEvents = 'auto';
@@ -158,6 +164,7 @@ export class AIOverlay {
     this.loadTheme();
     this.loadPersonaLabel();
     this.initMeetingView();
+    this.initAssistantView();
     this.loadLangBuilderVisibility();
   }
 
@@ -1330,6 +1337,20 @@ export class AIOverlay {
     } catch (err) {
       console.error('[AIOverlay] MeetingView failed to mount', err);
       this.meetingView = null;
+    }
+  }
+
+  /**
+   * Initialize the AssistantView into the .assistant-view-mount element.
+   * The instance was created in the constructor; this mounts it.
+   */
+  private initAssistantView(): void {
+    if (!this.assistantView) return;
+    const mount = this.shadow.querySelector('.assistant-view-mount') as HTMLElement | null;
+    if (mount) {
+      this.assistantView.mount(mount).catch((err) => {
+        console.error('[AIOverlay] AssistantView failed to mount', err);
+      });
     }
   }
 

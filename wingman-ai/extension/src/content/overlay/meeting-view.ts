@@ -10,6 +10,7 @@
 
 import type { TranscriptEntry } from './transcript-buffer';
 import type { transcriptBuffer as TranscriptBufferInstance } from './transcript-buffer';
+import { speakerColor } from './speaker-color';
 
 /** The shape we need from the buffer (typeof the singleton). */
 type Buffer = typeof TranscriptBufferInstance;
@@ -84,6 +85,14 @@ export class MeetingView {
   /**
    * Append a single transcript entry to the container.
    * Handles correction window (same speaker within 500ms replaces last entry).
+   *
+   * DOM structure (Task 5 avatar-list design):
+   *   .transcript-entry
+   *     .transcript-speaker
+   *       .speaker-avatar  (colored circle with initials)
+   *       .speaker-name    (speaker name)
+   *       .speaker-time    (HH:MM:SS)
+   *     .transcript-text   (spoken text, 32px padding-left)
    */
   appendEntry(entry: TranscriptEntry): void {
     if (!this.container) return;
@@ -99,7 +108,7 @@ export class MeetingView {
       now - this.lastRenderedTime < CORRECTION_WINDOW_MS
     ) {
       // Update the existing element's text in place
-      const textEl = this.lastRenderedElement.querySelector('.bubble-text');
+      const textEl = this.lastRenderedElement.querySelector('.transcript-text');
       if (textEl) {
         textEl.textContent = entry.text;
       }
@@ -112,10 +121,34 @@ export class MeetingView {
     const el = document.createElement('div');
     el.className = 'transcript-entry';
 
-    const textSpan = document.createElement('span');
-    textSpan.className = 'bubble-text';
-    textSpan.textContent = entry.text;
-    el.appendChild(textSpan);
+    // Speaker row: avatar + name + time
+    const speakerRow = document.createElement('div');
+    speakerRow.className = 'transcript-speaker';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'speaker-avatar';
+    avatar.style.background = speakerColor(entry.speaker);
+    avatar.textContent = extractInitials(entry.speaker);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'speaker-name';
+    nameEl.textContent = entry.speaker;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'speaker-time';
+    timeEl.textContent = formatTimestamp(entry.timestamp);
+
+    speakerRow.appendChild(avatar);
+    speakerRow.appendChild(nameEl);
+    speakerRow.appendChild(timeEl);
+
+    // Transcript text
+    const textDiv = document.createElement('div');
+    textDiv.className = 'transcript-text';
+    textDiv.textContent = entry.text;
+
+    el.appendChild(speakerRow);
+    el.appendChild(textDiv);
 
     this.container.appendChild(el);
 
@@ -143,5 +176,50 @@ export class MeetingView {
         }
       });
     }
+  }
+}
+
+// ── Helpers (module-private) ──
+
+/**
+ * Extract 2-letter initials from a speaker name.
+ * - "Sarah K." → "SK" (first char of first + last word)
+ * - "John Doe" → "JD"
+ * - "Alice Bob Charlie" → "AC" (first + last word)
+ * - "Madonna" → "MA" (mononym: first 2 chars)
+ * - "" → "??"
+ */
+function extractInitials(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '??';
+
+  const words = trimmed.split(/\s+/);
+  if (words.length === 1) {
+    // Mononym: first 2 chars (codepoint-safe via spread)
+    const chars = [...words[0]!];
+    if (chars.length < 2) {
+      return (chars[0] ?? '?').toUpperCase() + '?';
+    }
+    return (chars[0]! + chars[1]!).toUpperCase();
+  }
+
+  // Multi-word: first char of first word + first char of last word
+  const first = [...words[0]!][0] ?? '?';
+  const last = [...words[words.length - 1]!][0] ?? '?';
+  return (first + last).toUpperCase();
+}
+
+/**
+ * Format an ISO timestamp to HH:MM:SS.
+ */
+function formatTimestamp(isoTimestamp: string): string {
+  try {
+    const date = new Date(isoTimestamp);
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  } catch {
+    return '00:00:00';
   }
 }

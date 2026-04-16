@@ -741,8 +741,8 @@ describe('Task 4: MeetingView — subscription model', () => {
       expect(rendered).toHaveLength(5);
 
       // Verify order
-      expect(rendered[0]!.querySelector('.bubble-text')?.textContent).toContain('Entry 0');
-      expect(rendered[4]!.querySelector('.bubble-text')?.textContent).toContain('Entry 4');
+      expect(rendered[0]!.querySelector('.transcript-text')?.textContent).toContain('Entry 0');
+      expect(rendered[4]!.querySelector('.transcript-text')?.textContent).toContain('Entry 4');
     });
   });
 
@@ -762,7 +762,7 @@ describe('Task 4: MeetingView — subscription model', () => {
       buffer.append(makeEntry('Live entry', 'Bob'));
 
       expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
-      expect(container.querySelector('.bubble-text')?.textContent).toContain('Live entry');
+      expect(container.querySelector('.transcript-text')?.textContent).toContain('Live entry');
     });
   });
 
@@ -866,13 +866,13 @@ describe('Task 4: MeetingView — subscription model', () => {
       // First entry
       buffer.append(makeEntry('hello', 'Alice'));
       expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
-      expect(container.querySelector('.bubble-text')?.textContent).toContain('hello');
+      expect(container.querySelector('.transcript-text')?.textContent).toContain('hello');
 
       // Second entry from same speaker within 500ms — should replace
       vi.advanceTimersByTime(200);
       buffer.append(makeEntry('hello world', 'Alice'));
       expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
-      expect(container.querySelector('.bubble-text')?.textContent).toContain('hello world');
+      expect(container.querySelector('.transcript-text')?.textContent).toContain('hello world');
 
       vi.useRealTimers();
     });

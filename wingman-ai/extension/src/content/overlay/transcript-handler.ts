@@ -36,6 +36,8 @@ export function handleTranscriptMessage(
   // Order matters: overlay render FIRST so a buffer throw cannot block it.
   overlay.updateTranscript(data);
 
+  if (!data.is_final) return;
+
   try {
     buffer.append(data);
   } catch (err) {

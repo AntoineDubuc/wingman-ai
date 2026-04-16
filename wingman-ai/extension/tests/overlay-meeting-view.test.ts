@@ -470,7 +470,10 @@ describe('Task 3: View-swap container + AssistantView mount-point', () => {
       const container = shadow.querySelector('.view-container');
       expect(container).not.toBeNull();
 
-      const views = container!.querySelectorAll(':scope > .view');
+      // Filter direct children with .view class (jsdom lacks :scope support)
+      const views = Array.from(container!.children).filter(
+        el => el.classList.contains('view')
+      );
       expect(views).toHaveLength(2);
       expect(views[0]!.classList.contains('meeting-view')).toBe(true);
       expect(views[1]!.classList.contains('assistant-view-mount')).toBe(true);
@@ -643,7 +646,9 @@ describe('Task 3: View-swap container + AssistantView mount-point', () => {
       // After 10 toggles (even count), should be back to meeting mode
       const container = shadow.querySelector('.view-container');
       expect(container).not.toBeNull();
-      const views = container!.querySelectorAll(':scope > .view');
+      const views = Array.from(container!.children).filter(
+        el => el.classList.contains('view')
+      );
       expect(views).toHaveLength(2);
 
       // Verify no duplicated elements

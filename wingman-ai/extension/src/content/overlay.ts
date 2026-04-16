@@ -379,36 +379,41 @@ export class AIOverlay {
         </div>
       </div>
       <div class="overlay-body">
-        <div class="overlay-nav" style="display:none;">
-          <button class="nav-chat-btn active" title="Chat">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 3V3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>Chat</span>
-          </button>
-          <button class="nav-lb-btn" title="Flows">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5.5v1a2.5 2.5 0 002.5 2.5h3A2.5 2.5 0 0012 6.5v-1" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="9" x2="8" y2="10.5" stroke="currentColor" stroke-width="1.2"/></svg>
-            <span>Flows</span>
-          </button>
-        </div>
-        <div class="overlay-content">
-          <div class="suggestions-only-chip" style="display:none;">Showing suggestions only</div>
-          <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
-            <div class="empty-state">Listening for conversation...</div>
+        <div class="view-container">
+          <div class="view meeting-view">
+            <div class="overlay-nav" style="display:none;">
+              <button class="nav-chat-btn active" title="Chat">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 3V3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Chat</span>
+              </button>
+              <button class="nav-lb-btn" title="Flows">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5.5v1a2.5 2.5 0 002.5 2.5h3A2.5 2.5 0 0012 6.5v-1" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="9" x2="8" y2="10.5" stroke="currentColor" stroke-width="1.2"/></svg>
+                <span>Flows</span>
+              </button>
+            </div>
+            <div class="overlay-content">
+              <div class="suggestions-only-chip" style="display:none;">Showing suggestions only</div>
+              <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
+                <div class="empty-state">Listening for conversation...</div>
+              </div>
+              <div class="kb-query-bar">
+                <input class="kb-query-input" type="text" placeholder="Ask your Knowledge Base..." maxlength="500">
+                <button class="kb-query-btn">${ICONS.KB_SEARCH}</button>
+              </div>
+            </div>
+            <div class="langbuilder-panel" style="display:none;">
+              <select class="lb-flow-select">
+                <option disabled selected>Select a flow...</option>
+              </select>
+              <textarea class="lb-textarea" placeholder="Paste or type input for the flow..."></textarea>
+              <div class="lb-actions">
+                <button class="lb-cancel-btn" disabled>Cancel</button>
+                <button class="lb-go-btn" disabled>Go</button>
+              </div>
+              <div class="lb-result" style="color:var(--overlay-text-muted);">Run a flow to see results here.</div>
+            </div>
           </div>
-          <div class="kb-query-bar">
-            <input class="kb-query-input" type="text" placeholder="Ask your Knowledge Base..." maxlength="500">
-            <button class="kb-query-btn">${ICONS.KB_SEARCH}</button>
-          </div>
-        </div>
-        <div class="langbuilder-panel" style="display:none;">
-          <select class="lb-flow-select">
-            <option disabled selected>Select a flow...</option>
-          </select>
-          <textarea class="lb-textarea" placeholder="Paste or type input for the flow..."></textarea>
-          <div class="lb-actions">
-            <button class="lb-cancel-btn" disabled>Cancel</button>
-            <button class="lb-go-btn" disabled>Go</button>
-          </div>
-          <div class="lb-result" style="color:var(--overlay-text-muted);">Run a flow to see results here.</div>
+          <div class="view assistant-view-mount hidden" role="tabpanel" aria-label="Assistant"></div>
         </div>
       </div>
       <div class="resize-handle" title="Resize"></div>
@@ -2171,6 +2176,13 @@ export class AIOverlay {
   }
 
   /**
+   * Returns the empty mount-point element for the AssistantView (Plan 3).
+   */
+  getAssistantMountPoint(): HTMLElement {
+    return this.shadow.querySelector('.assistant-view-mount') as HTMLElement;
+  }
+
+  /**
    * Set the active mode. No-op if already in the requested mode.
    * Updates DOM (active class, aria-selected) and notifies subscribers.
    * Subscriber errors are isolated (try/catch per subscriber).
@@ -2195,6 +2207,19 @@ export class AIOverlay {
         btn.setAttribute('aria-selected', 'false');
       }
     });
+
+    // Toggle view visibility
+    const meetingView = this.shadow.querySelector('.meeting-view');
+    const assistantMount = this.shadow.querySelector('.assistant-view-mount');
+    if (meetingView && assistantMount) {
+      if (mode === 'assistant') {
+        meetingView.classList.add('hidden');
+        assistantMount.classList.remove('hidden');
+      } else {
+        meetingView.classList.remove('hidden');
+        assistantMount.classList.add('hidden');
+      }
+    }
 
     // Notify subscribers with error isolation
     for (const sub of this.modeSubscribers) {

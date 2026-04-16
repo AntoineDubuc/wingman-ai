@@ -353,10 +353,38 @@
 /* ── Body wrapper (nav + content) ── */
 .overlay-body {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* ── View-swap container ── */
+.view-container {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.view.hidden {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+}
+
+/* Meeting view preserves the original row layout (nav + content) */
+.meeting-view {
+  flex-direction: row;
 }
 
 /* ── Vertical nav ── */

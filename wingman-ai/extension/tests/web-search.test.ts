@@ -9,6 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Will be imported once the module exists with real implementation
 import {
   webSearch,
+  webSearchTestCall,
   formatResultsForPrompt,
   STORAGE_KEY_WEB_SEARCH_API_KEY,
   STORAGE_KEY_WEB_SEARCH_PROVIDER,
@@ -19,6 +20,7 @@ import {
   MAX_RESULTS,
   QUERY_MAX_CHARS,
   type SearchResult,
+  type DailyCounter,
 } from '../src/services/web-search';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -284,5 +286,63 @@ describe('webSearch()', () => {
 
     await expect(webSearch('test')).rejects.toThrow(/Brave 5xx/);
     expect(fetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+// ── webSearchTestCall() — counter-exempt ────────────────────────────────────
+
+describe('webSearchTestCall()', () => {
+  beforeEach(async () => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  it('does NOT increment the daily counter', async () => {
+    // Seed counter at count=5
+    const counter: DailyCounter = {
+      date: new Date().toISOString().slice(0, 10),
+      count: 5,
+    };
+    await chrome.storage.local.set({ [STORAGE_KEY_WEB_SEARCH_COUNTER]: counter });
+
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'T', description: 'D', url: 'https://x.com' },
+    ]) as Response);
+
+    await webSearchTestCall('test-key', 'wingman test');
+
+    // Counter should still be 5
+    const result = await chrome.storage.local.get([STORAGE_KEY_WEB_SEARCH_COUNTER]);
+    const stored = result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter;
+    expect(stored.count).toBe(5);
+  });
+
+  it('rejects with "web search API key not configured" when key is empty', async () => {
+    await expect(webSearchTestCall('', 'test')).rejects.toThrow('web search API key not configured');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns results from Brave', async () => {
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'Result', description: 'Desc', url: 'https://example.com' },
+    ]) as Response);
+
+    const results = await webSearchTestCall('test-key', 'wingman test');
+    expect(results).toHaveLength(1);
+    expect(results[0]!.title).toBe('Result');
+  });
+
+  it('passes API key in X-Subscription-Token header', async () => {
+    vi.mocked(fetch).mockResolvedValue(braveResponse([]) as Response);
+
+    await webSearchTestCall('my-test-key', 'test');
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Subscription-Token': 'my-test-key',
+        }),
+      }),
+    );
   });
 });

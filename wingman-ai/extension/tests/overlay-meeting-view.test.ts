@@ -665,3 +665,284 @@ describe('Task 3: View-swap container + AssistantView mount-point', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 4: MeetingView refactor — subscribe to transcriptBuffer, replace push path
+// ---------------------------------------------------------------------------
+
+describe('Task 4: MeetingView — subscription model', () => {
+  // We test MeetingView in isolation with a fake buffer.
+
+  function createFakeBuffer() {
+    const entries: Array<{ text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }> = [];
+    const subscribers: Array<(entry: any) => void> = [];
+
+    return {
+      append(entry: { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }) {
+        entries.push(entry);
+        for (const cb of subscribers.slice()) {
+          cb(entry);
+        }
+      },
+      getSnapshot() {
+        return entries.slice();
+      },
+      onAppend(cb: (entry: any) => void) {
+        if (subscribers.length >= 8) {
+          throw new Error('TranscriptBuffer: exceeded MAX_SUBSCRIBERS (8)');
+        }
+        subscribers.push(cb);
+        return () => {
+          const idx = subscribers.indexOf(cb);
+          if (idx !== -1) subscribers.splice(idx, 1);
+        };
+      },
+    };
+  }
+
+  function makeEntry(text: string, speaker = 'Alice', isFinal = true): { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string } {
+    return {
+      text,
+      speaker,
+      is_final: isFinal,
+      is_self: false,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // AC1: MeetingView class exists with the required interface
+  describe('AC1: MeetingView exports and interface', () => {
+    it('exports a class MeetingView that can be constructed with a buffer', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const view = new MeetingView(buffer as any);
+      expect(view).toBeDefined();
+      expect(typeof view.mount).toBe('function');
+      expect(typeof view.unmount).toBe('function');
+    });
+  });
+
+  // AC2: mount reads getSnapshot() and renders all entries
+  describe('AC2: mount renders snapshot entries', () => {
+    it('renders all 5 pre-existing entries from buffer snapshot on mount', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      // Pre-populate buffer with 5 entries
+      for (let i = 0; i < 5; i++) {
+        buffer.append(makeEntry(`Entry ${i}`, `Speaker ${i}`));
+      }
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      const rendered = container.querySelectorAll('.transcript-entry');
+      expect(rendered).toHaveLength(5);
+
+      // Verify order
+      expect(rendered[0]!.querySelector('.bubble-text')?.textContent).toContain('Entry 0');
+      expect(rendered[4]!.querySelector('.bubble-text')?.textContent).toContain('Entry 4');
+    });
+  });
+
+  // AC3: mount subscribes via onAppend, new entries render
+  describe('AC3: subscription renders new entries after mount', () => {
+    it('renders a new entry appended to buffer after mount', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(0);
+
+      // Append after mount
+      buffer.append(makeEntry('Live entry', 'Bob'));
+
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+      expect(container.querySelector('.bubble-text')?.textContent).toContain('Live entry');
+    });
+  });
+
+  // AC4: unmount calls unsubscribe — subsequent appends do NOT render
+  describe('AC4: unmount stops rendering', () => {
+    it('does not render entries appended after unmount', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('Before unmount'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+
+      view.unmount();
+
+      buffer.append(makeEntry('After unmount'));
+      // Still 1, not 2
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+    });
+  });
+
+  // AC5: updateTranscript(is_final=true) is a no-op for rendering
+  describe('AC5: updateTranscript with is_final=true is a rendering no-op', () => {
+    it('does not add DOM elements when called with is_final=true', async () => {
+      vi.resetModules();
+      const mod = await import('../src/content/overlay');
+      const overlay = new mod.AIOverlay();
+      document.body.appendChild(overlay.container);
+
+      const shadow = getShadow();
+      const timeline = shadow.querySelector('.timeline') as HTMLElement;
+
+      // Remove the empty-state element so we can count entries cleanly
+      const emptyState = timeline.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+
+      const childCountBefore = timeline.children.length;
+
+      // Call updateTranscript with a final transcript
+      // The buffer subscription (not this call) should handle rendering
+      overlay.updateTranscript({
+        text: 'Final text',
+        speaker: 'Alice',
+        is_final: true,
+        is_self: false,
+        timestamp: new Date().toISOString(),
+      });
+
+      // updateTranscript should NOT have added any DOM elements for finals
+      const childCountAfter = timeline.children.length;
+      expect(childCountAfter).toBe(childCountBefore);
+    });
+  });
+
+  // AC6: updateTranscript(is_final=false) still renders interim bubbles
+  describe('AC6: updateTranscript with is_final=false renders interim', () => {
+    it('renders an interim bubble via rAF path', async () => {
+      vi.resetModules();
+      // Use fake timers so we can control rAF
+      vi.useFakeTimers();
+
+      const mod = await import('../src/content/overlay');
+      const overlay = new mod.AIOverlay();
+      document.body.appendChild(overlay.container);
+
+      const shadow = getShadow();
+
+      overlay.updateTranscript({
+        text: 'Interim text...',
+        speaker: 'Alice',
+        is_final: false,
+        is_self: false,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Flush rAF
+      vi.advanceTimersByTime(20);
+
+      const interimBubbles = shadow.querySelectorAll('.bubble.interim');
+      expect(interimBubbles.length).toBeGreaterThanOrEqual(1);
+      expect(interimBubbles[0]!.querySelector('.bubble-text')?.textContent).toContain('Interim text...');
+
+      vi.useRealTimers();
+    });
+  });
+
+  // AC8: Correction window — same speaker within 500ms replaces last entry
+  describe('AC8: Correction window in MeetingView', () => {
+    it('replaces the last entry when same speaker appends within 500ms', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      // First entry
+      buffer.append(makeEntry('hello', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+      expect(container.querySelector('.bubble-text')?.textContent).toContain('hello');
+
+      // Second entry from same speaker within 500ms — should replace
+      vi.advanceTimersByTime(200);
+      buffer.append(makeEntry('hello world', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+      expect(container.querySelector('.bubble-text')?.textContent).toContain('hello world');
+
+      vi.useRealTimers();
+    });
+
+    it('does NOT replace when more than 500ms has passed', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('hello', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+
+      // Wait more than 500ms
+      vi.advanceTimersByTime(600);
+      buffer.append(makeEntry('hello world', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(2);
+
+      vi.useRealTimers();
+    });
+
+    it('does NOT replace when different speaker', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('hello', 'Alice'));
+      vi.advanceTimersByTime(200);
+      buffer.append(makeEntry('goodbye', 'Bob'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(2);
+
+      vi.useRealTimers();
+    });
+  });
+
+  // Negative test 1: onAppend throws on MAX_SUBSCRIBERS — mount throws clear error
+  describe('Negative: MAX_SUBSCRIBERS exceeded on mount', () => {
+    it('throws a clear error when buffer onAppend throws', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      // Fill up subscribers to trigger the throw
+      for (let i = 0; i < 8; i++) {
+        buffer.onAppend(() => {});
+      }
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      expect(() => view.mount(container)).toThrow();
+    });
+  });
+
+  // Negative test 2: double mount throws "MeetingView already mounted"
+  describe('Negative: double mount throws', () => {
+    it('throws "MeetingView already mounted" on second mount without unmount', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      expect(() => view.mount(container)).toThrow('MeetingView already mounted');
+    });
+  });
+});

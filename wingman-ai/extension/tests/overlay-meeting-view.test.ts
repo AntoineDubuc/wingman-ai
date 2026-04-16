@@ -946,3 +946,257 @@ describe('Task 4: MeetingView — subscription model', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 5: Transcript-entry CSS — speaker-avatar-list design + fade-up
+// ---------------------------------------------------------------------------
+
+describe('Task 5: Speaker-avatar-list design + speakerColor', () => {
+  // Reuse the fake buffer from Task 4
+  function createFakeBuffer() {
+    const entries: Array<{ text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }> = [];
+    const subscribers: Array<(entry: any) => void> = [];
+
+    return {
+      append(entry: { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string }) {
+        entries.push(entry);
+        for (const cb of subscribers.slice()) {
+          cb(entry);
+        }
+      },
+      getSnapshot() {
+        return entries.slice();
+      },
+      onAppend(cb: (entry: any) => void) {
+        if (subscribers.length >= 8) {
+          throw new Error('TranscriptBuffer: exceeded MAX_SUBSCRIBERS (8)');
+        }
+        subscribers.push(cb);
+        return () => {
+          const idx = subscribers.indexOf(cb);
+          if (idx !== -1) subscribers.splice(idx, 1);
+        };
+      },
+    };
+  }
+
+  function makeEntry(text: string, speaker = 'Alice', isFinal = true): { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string } {
+    return {
+      text,
+      speaker,
+      is_final: isFinal,
+      is_self: false,
+      timestamp: '2026-04-15T10:30:00.000Z',
+    };
+  }
+
+  // AC1: DOM structure — .transcript-entry > .transcript-speaker > (.speaker-avatar, .speaker-name, .speaker-time) + .transcript-text
+  describe('AC1: appendEntry creates correct DOM structure', () => {
+    it('renders .transcript-entry with .transcript-speaker and .transcript-text children', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('Hello world', 'Sarah K.'));
+
+      const entry = container.querySelector('.transcript-entry');
+      expect(entry).not.toBeNull();
+
+      const speakerRow = entry!.querySelector('.transcript-speaker');
+      expect(speakerRow).not.toBeNull();
+
+      const avatar = speakerRow!.querySelector('.speaker-avatar');
+      const name = speakerRow!.querySelector('.speaker-name');
+      const time = speakerRow!.querySelector('.speaker-time');
+      expect(avatar).not.toBeNull();
+      expect(name).not.toBeNull();
+      expect(time).not.toBeNull();
+
+      const textEl = entry!.querySelector('.transcript-text');
+      expect(textEl).not.toBeNull();
+      expect(textEl!.textContent).toBe('Hello world');
+    });
+  });
+
+  // AC2: Initials extraction — 5 name-format tests
+  describe('AC2: speaker-avatar initials extraction', () => {
+    async function getInitials(speaker: string): Promise<string> {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('test', speaker));
+
+      const avatar = container.querySelector('.speaker-avatar');
+      return avatar?.textContent ?? '';
+    }
+
+    it('"Sarah K." -> "SK"', async () => {
+      expect(await getInitials('Sarah K.')).toBe('SK');
+    });
+
+    it('"John Doe" -> "JD" (first + last)', async () => {
+      expect(await getInitials('John Doe')).toBe('JD');
+    });
+
+    it('"Alice Bob Charlie" -> "AC" (first + last word)', async () => {
+      expect(await getInitials('Alice Bob Charlie')).toBe('AC');
+    });
+
+    it('"Madonna" -> "MA" (mononym: first 2 chars)', async () => {
+      expect(await getInitials('Madonna')).toBe('MA');
+    });
+
+    it('unicode name "Li" -> "LI" (short mononym: first 2 chars uppercase)', async () => {
+      expect(await getInitials('Li')).toBe('LI');
+    });
+  });
+
+  // AC3: speakerColor is deterministic
+  describe('AC3: speakerColor determinism', () => {
+    it('returns the same HSL value for the same name across multiple calls', async () => {
+      const { speakerColor } = await import('../src/content/overlay/speaker-color');
+      const color1 = speakerColor('Sarah K.');
+      const color2 = speakerColor('Sarah K.');
+      const color3 = speakerColor('Sarah K.');
+      expect(color1).toBe(color2);
+      expect(color2).toBe(color3);
+    });
+
+    it('returns an HSL string', async () => {
+      const { speakerColor } = await import('../src/content/overlay/speaker-color');
+      const color = speakerColor('Alice');
+      expect(color).toMatch(/^hsl\(\d+,\s*65%,\s*50%\)$/);
+    });
+
+    it('returns different colors for different names', async () => {
+      const { speakerColor } = await import('../src/content/overlay/speaker-color');
+      const c1 = speakerColor('Alice');
+      const c2 = speakerColor('Bob');
+      expect(c1).not.toBe(c2);
+    });
+  });
+
+  // AC4: speaker-name and speaker-time content
+  describe('AC4: speaker-name and speaker-time content', () => {
+    it('.speaker-name shows the speaker name', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('test', 'Sarah K.'));
+
+      const name = container.querySelector('.speaker-name');
+      expect(name!.textContent).toBe('Sarah K.');
+    });
+
+    it('.speaker-time matches HH:MM:SS format', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('test', 'Sarah K.'));
+
+      const time = container.querySelector('.speaker-time');
+      expect(time!.textContent).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+    });
+  });
+
+  // AC5: transcript-text has textContent = text, padding-left 32px alignment
+  describe('AC5: transcript-text content and alignment', () => {
+    it('.transcript-text.textContent equals the entry text', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('The quick brown fox', 'Alice'));
+
+      const textEl = container.querySelector('.transcript-text');
+      expect(textEl!.textContent).toBe('The quick brown fox');
+    });
+  });
+
+  // AC6: fade-up animation class on transcript-entry
+  describe('AC6: fade-up animation', () => {
+    it('.transcript-entry has className transcript-entry (for CSS animation)', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('Animated entry', 'Bob'));
+
+      const entry = container.querySelector('.transcript-entry');
+      expect(entry).not.toBeNull();
+      expect(entry!.className).toBe('transcript-entry');
+    });
+  });
+
+  // Negative: empty speaker produces "??" initials
+  describe('Negative: empty speaker initials', () => {
+    it('empty string produces "??" initials', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('test', ''));
+
+      const avatar = container.querySelector('.speaker-avatar');
+      expect(avatar!.textContent).toBe('??');
+    });
+  });
+
+  // Negative: unicode speaker produces valid 2-char initials
+  describe('Negative: unicode speaker initials', () => {
+    it('unicode name produces codepoint-based initials, not byte-based', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('test', '\u0623\u062D\u0645\u062F'));
+
+      const avatar = container.querySelector('.speaker-avatar');
+      const initials = avatar!.textContent ?? '';
+      // Should be 2 characters, not crash or produce garbled output
+      expect([...initials]).toHaveLength(2);
+    });
+  });
+
+  // Correction window should still work with new DOM structure
+  describe('Correction window with new DOM', () => {
+    it('replaces last entry text within 500ms from same speaker', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeEntry('hello', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+      expect(container.querySelector('.transcript-text')?.textContent).toBe('hello');
+
+      vi.advanceTimersByTime(200);
+      buffer.append(makeEntry('hello world', 'Alice'));
+      expect(container.querySelectorAll('.transcript-entry')).toHaveLength(1);
+      expect(container.querySelector('.transcript-text')?.textContent).toBe('hello world');
+
+      vi.useRealTimers();
+    });
+  });
+});

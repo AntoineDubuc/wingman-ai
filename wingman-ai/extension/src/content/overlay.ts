@@ -119,6 +119,10 @@ export class AIOverlay {
   private meetingTimerStartTime: number | null = null;
   private meetingTimerEl: HTMLElement | null = null;
 
+  // Pill toggle / mode state
+  private currentMode: 'meeting' | 'assistant' = 'meeting';
+  private modeSubscribers: Array<(mode: 'meeting' | 'assistant') => void> = [];
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
@@ -369,6 +373,10 @@ export class AIOverlay {
             <button class="close-btn" title="Hide">${ICONS.CLOSE}</button>
           </div>
         </div>
+        <div class="pill-toggle" role="tablist">
+          <button class="pill-btn active" data-mode="meeting" role="tab" aria-selected="true">Meeting</button>
+          <button class="pill-btn" data-mode="assistant" role="tab" aria-selected="false">Assistant</button>
+        </div>
       </div>
       <div class="overlay-body">
         <div class="overlay-nav" style="display:none;">
@@ -411,6 +419,16 @@ export class AIOverlay {
 
     // Store meeting timer reference
     this.meetingTimerEl = panel.querySelector('.meeting-timer') as HTMLElement;
+
+    // Pill toggle click handlers
+    const pillButtons = panel.querySelectorAll('.pill-btn');
+    pillButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mode = (btn as HTMLButtonElement).dataset.mode as 'meeting' | 'assistant';
+        if (mode) this.setMode(mode);
+      });
+    });
 
     // KB search bar event listeners
     const kbInput = panel.querySelector('.kb-query-input') as HTMLInputElement | null;
@@ -2126,6 +2144,66 @@ export class AIOverlay {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  // ── Pill Toggle / Mode ──
+
+  /**
+   * Get the current active mode ('meeting' or 'assistant').
+   */
+  getCurrentMode(): 'meeting' | 'assistant' {
+    return this.currentMode;
+  }
+
+  /**
+   * Subscribe to mode changes. Returns an unsubscribe function.
+   * Throws if callback is not a function.
+   */
+  onModeChange(cb: (mode: 'meeting' | 'assistant') => void): () => void {
+    if (typeof cb !== 'function') {
+      throw new Error('callback must be a function');
+    }
+    this.modeSubscribers.push(cb);
+    return () => {
+      const idx = this.modeSubscribers.indexOf(cb);
+      if (idx !== -1) this.modeSubscribers.splice(idx, 1);
+    };
+  }
+
+  /**
+   * Set the active mode. No-op if already in the requested mode.
+   * Updates DOM (active class, aria-selected) and notifies subscribers.
+   * Subscriber errors are isolated (try/catch per subscriber).
+   */
+  private setMode(mode: 'meeting' | 'assistant'): void {
+    if (mode !== 'meeting' && mode !== 'assistant') {
+      throw new Error(`Invalid mode: ${String(mode)}`);
+    }
+    if (mode === this.currentMode) return; // no-op
+
+    this.currentMode = mode;
+
+    // Update pill button DOM
+    const buttons = this.shadow.querySelectorAll('.pill-btn');
+    buttons.forEach((btn) => {
+      const btnMode = (btn as HTMLButtonElement).dataset.mode;
+      if (btnMode === mode) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    // Notify subscribers with error isolation
+    for (const sub of this.modeSubscribers) {
+      try {
+        sub(mode);
+      } catch {
+        // Isolate subscriber errors -- do not block other subscribers
+      }
+    }
   }
 
   // ── Meeting Timer ──

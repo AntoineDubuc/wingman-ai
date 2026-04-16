@@ -57,6 +57,7 @@ import { Resizable } from './overlay/resizable';
 import { Dockable } from './overlay/dockable';
 import { removeDockMargin } from './overlay/margin-injector';
 import { transcriptBuffer } from './overlay/transcript-buffer';
+import { MeetingView } from './overlay/meeting-view';
 
 export class AIOverlay {
   public container: HTMLDivElement;
@@ -123,6 +124,9 @@ export class AIOverlay {
   private currentMode: 'meeting' | 'assistant' = 'meeting';
   private modeSubscribers: Array<(mode: 'meeting' | 'assistant') => void> = [];
 
+  // MeetingView — subscription-based transcript rendering (Task 4)
+  private meetingView: MeetingView | null = null;
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
@@ -153,6 +157,7 @@ export class AIOverlay {
     this.restorePosition();
     this.loadTheme();
     this.loadPersonaLabel();
+    this.initMeetingView();
     this.loadLangBuilderVisibility();
   }
 
@@ -813,7 +818,15 @@ export class AIOverlay {
   // ── Transcript Handling ──
 
   /**
-   * Update transcript display — handles both interim and final transcripts.
+   * Update transcript display — handles interim transcripts only.
+   *
+   * For `is_final === true`: no-op for rendering. Final transcripts are
+   * rendered via the MeetingView subscription to transcriptBuffer.onAppend
+   * (Task 4, Plan 2). The content-script handler still calls this method
+   * for all transcripts; only the interim path produces DOM output here.
+   *
+   * For `is_final === false`: interim rAF-coalescing path unchanged.
+   * The buffer does not store interims, so they must render through here.
    */
   updateTranscript(transcript: Transcript): void {
     if (!this.timelineEl) return;
@@ -835,7 +848,9 @@ export class AIOverlay {
       return;
     }
 
-    // ── Final transcript ──
+    // ── Final transcript — rendering delegated to MeetingView subscription ──
+    // Only clean up interim bubbles here; the actual entry rendering is
+    // handled by MeetingView.appendEntry via the buffer subscription.
 
     // Remove interim bubble for this speaker
     if (speakerKey === 'self' && this.interimBubbleSelf) {
@@ -847,28 +862,13 @@ export class AIOverlay {
     }
     this.pendingInterimText.delete(speakerKey);
 
+    // No DOM rendering for finals — subscription path handles it.
+    // Keep timeline array updated for other consumers (formatTimelineAsText, etc.)
     const now = Date.now();
     const entryTimestamp = transcript.timestamp
       ? new Date(transcript.timestamp).getTime()
       : now;
 
-    // Check for correction (same speaker within 500ms) → replace, not append
-    const lastFinal = this.lastFinalTimestamp.get(speakerKey);
-    if (lastFinal && now - lastFinal.time < 500) {
-      lastFinal.entry.text = transcript.text;
-      lastFinal.entry.timestamp = entryTimestamp;
-      lastFinal.time = now;
-      if (lastFinal.entry.element) {
-        const textEl = lastFinal.entry.element.querySelector('.bubble-text');
-        if (textEl) textEl.textContent = transcript.text;
-        const timeEl = lastFinal.entry.element.querySelector('.bubble-time');
-        if (timeEl) timeEl.textContent = this.formatTime(entryTimestamp);
-      }
-      this.scrollToBottom();
-      return;
-    }
-
-    // New timeline entry
     const entry: TimelineEntry = {
       kind: 'transcript',
       timestamp: entryTimestamp,
@@ -878,22 +878,6 @@ export class AIOverlay {
     };
 
     this.timeline.push(entry);
-
-    // Speaker label: show when speaker changes from previous entry
-    const prevEntry = this.timeline.length >= 2
-      ? this.timeline[this.timeline.length - 2]
-      : null;
-    const showLabel = !prevEntry
-      || prevEntry.kind !== 'transcript'
-      || prevEntry.isSelf !== entry.isSelf;
-
-    const bubble = this.renderBubble(entry, showLabel);
-    entry.element = bubble;
-
-    // Re-append interim bubbles to keep them at bottom
-    if (this.interimBubbleSelf) this.timelineEl.appendChild(this.interimBubbleSelf);
-    if (this.interimBubbleOther) this.timelineEl.appendChild(this.interimBubbleOther);
-
     this.lastFinalTimestamp.set(speakerKey, { time: now, entry });
     this.trimTimeline();
     this.scrollToBottom();
@@ -1327,6 +1311,25 @@ export class AIOverlay {
           this.timelineEl.scrollTop = this.timelineEl.scrollHeight;
         }
       });
+    }
+  }
+
+  // ── MeetingView (Task 4) ──
+
+  /**
+   * Initialize the MeetingView subscription-based rendering.
+   * Mounts MeetingView on the .timeline element so finals render
+   * via buffer subscription. Errors are caught and logged.
+   */
+  private initMeetingView(): void {
+    try {
+      this.meetingView = new MeetingView(transcriptBuffer);
+      if (this.timelineEl) {
+        this.meetingView.mount(this.timelineEl);
+      }
+    } catch (err) {
+      console.error('[AIOverlay] MeetingView failed to mount', err);
+      this.meetingView = null;
     }
   }
 
@@ -2277,6 +2280,8 @@ export class AIOverlay {
    */
   destroy(): void {
     this.stopMeetingTimer();
+    this.meetingView?.unmount();
+    this.meetingView = null;
     this.draggable?.destroy();
     this.resizable?.destroy();
     this.dockable?.destroy();

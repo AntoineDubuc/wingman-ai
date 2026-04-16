@@ -229,3 +229,192 @@ describe('Task 1: Context bar', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 2: Persona dropdown — collapsible, chips, default-checked
+// ---------------------------------------------------------------------------
+
+describe('Task 2: Persona dropdown', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: persona dropdown exists but collapsed on mount', () => {
+    it('.persona-dropdown exists without .open class', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const dropdown = container.querySelector('.persona-dropdown') as HTMLElement;
+      expect(dropdown).not.toBeNull();
+      expect(dropdown.classList.contains('open')).toBe(false);
+    });
+  });
+
+  describe('AC2: clicking Personas chip opens dropdown + rotates chevron', () => {
+    it('toggles .open on dropdown and .open on chevron', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const btn = container.querySelector('.persona-expand-btn') as HTMLElement;
+      const dropdown = container.querySelector('.persona-dropdown') as HTMLElement;
+      const chevron = btn.querySelector('.chevron') as HTMLElement;
+
+      btn.click();
+      expect(dropdown.classList.contains('open')).toBe(true);
+      expect(chevron.classList.contains('open')).toBe(true);
+
+      btn.click();
+      expect(dropdown.classList.contains('open')).toBe(false);
+      expect(chevron.classList.contains('open')).toBe(false);
+    });
+  });
+
+  describe('AC3: dropdown label', () => {
+    it('contains label "Attach persona knowledge"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const label = container.querySelector('.persona-dropdown-label') as HTMLElement;
+      expect(label).not.toBeNull();
+      expect(label.textContent).toBe('Attach persona knowledge');
+    });
+  });
+
+  describe('AC4: persona chips render from getActivePersonas with .textContent', () => {
+    it('renders one .persona-chip per persona with correct name', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chips = container.querySelectorAll('.persona-chip');
+      expect(chips).toHaveLength(3);
+      expect((chips[0] as HTMLElement).dataset.personaId).toBe('p1');
+      expect(chips[0]!.textContent).toContain('Sales');
+    });
+
+    it('XSS persona name renders as literal text, not HTML', async () => {
+      vi.resetModules();
+      mockGetActivePersonas.mockResolvedValue([
+        { id: 'xss', name: '<img src=x onerror=alert(1)>', color: '#f00', systemPrompt: '', kbDocumentIds: [], createdAt: 0, updatedAt: 0, order: 0 },
+      ]);
+      const mod = await import('../src/content/overlay/assistant-view');
+      const view = new mod.AssistantView();
+      await view.mount(container);
+      const chip = container.querySelector('.persona-chip') as HTMLElement;
+      expect(chip.querySelector('img')).toBeNull();
+      expect(chip.textContent).toContain('<img src=x onerror=alert(1)>');
+    });
+  });
+
+  describe('AC5: all chips pre-checked on mount', () => {
+    it('all persona chips have .checked class', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const checked = container.querySelectorAll('.persona-chip.checked');
+      expect(checked).toHaveLength(3);
+    });
+  });
+
+  describe('AC6: clicking chip toggles checked + updates count', () => {
+    it('unchecking a chip updates count from (3) to (2)', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chips = container.querySelectorAll('.persona-chip') as NodeListOf<HTMLElement>;
+      const btn = container.querySelector('.persona-expand-btn') as HTMLElement;
+
+      chips[0]!.click();
+      expect(chips[0]!.classList.contains('checked')).toBe(false);
+      expect(btn.textContent).toContain('(2)');
+    });
+  });
+
+  describe('AC7: collapse + reopen preserves checked state', () => {
+    it('unchecking, collapsing, reopening keeps chip unchecked', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const btn = container.querySelector('.persona-expand-btn') as HTMLElement;
+      const chips = container.querySelectorAll('.persona-chip') as NodeListOf<HTMLElement>;
+
+      // Open, uncheck first, close, reopen
+      btn.click(); // open
+      chips[0]!.click(); // uncheck
+      btn.click(); // close
+      btn.click(); // reopen
+      expect(chips[0]!.classList.contains('checked')).toBe(false);
+      expect(container.querySelectorAll('.persona-chip.checked')).toHaveLength(2);
+    });
+  });
+
+  describe('AC8: getContextState().personaIds reflects checked chips', () => {
+    it('returns only checked persona IDs', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      expect(view.getContextState().personaIds).toEqual(['p1', 'p2', 'p3']);
+      const chips = container.querySelectorAll('.persona-chip') as NodeListOf<HTMLElement>;
+      chips[1]!.click(); // uncheck p2
+      expect(view.getContextState().personaIds).toEqual(['p1', 'p3']);
+    });
+  });
+
+  describe('AC9: zero personas shows empty message', () => {
+    it('shows "No personas configured." when none returned', async () => {
+      vi.resetModules();
+      mockGetActivePersonas.mockResolvedValue([]);
+      const mod = await import('../src/content/overlay/assistant-view');
+      const view = new mod.AssistantView();
+      await view.mount(container);
+      const list = container.querySelector('.persona-list') as HTMLElement;
+      expect(list.textContent).toContain('No personas configured.');
+    });
+  });
+
+  describe('AC10: getActivePersonas rejection shows fallback UI', () => {
+    it('shows error message and count (?)', async () => {
+      vi.resetModules();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetActivePersonas.mockRejectedValue(new Error('storage corrupt'));
+      const mod = await import('../src/content/overlay/assistant-view');
+      const view = new mod.AssistantView();
+      await view.mount(container);
+
+      const list = container.querySelector('.persona-list') as HTMLElement;
+      expect(list.textContent).toContain('Could not load personas');
+      const btn = container.querySelector('.persona-expand-btn') as HTMLElement;
+      expect(btn.textContent).toContain('(?)');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('Negative: unchecking all removes .has-active from persona btn', () => {
+    it('Personas (0) and no .has-active class', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chips = container.querySelectorAll('.persona-chip') as NodeListOf<HTMLElement>;
+      const btn = container.querySelector('.persona-expand-btn') as HTMLElement;
+
+      chips[0]!.click();
+      chips[1]!.click();
+      chips[2]!.click();
+      expect(btn.textContent).toContain('(0)');
+      expect(btn.classList.contains('has-active')).toBe(false);
+    });
+  });
+
+  describe('Negative: rapid-click 10 times is deterministic', () => {
+    it('10 clicks returns to original state', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chip = container.querySelector('.persona-chip') as HTMLElement;
+      const initial = chip.classList.contains('checked');
+      for (let i = 0; i < 10; i++) chip.click();
+      expect(chip.classList.contains('checked')).toBe(initial);
+    });
+  });
+});

@@ -289,6 +289,154 @@ describe('webSearch()', () => {
   });
 });
 
+// ── Daily Budget Counter (Task 3) ───────────────────────────────────────────
+
+describe('daily budget counter', () => {
+  beforeEach(async () => {
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_API_KEY]: 'test-brave-key-123',
+    });
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  // AC: counter shape in storage
+  it('stores counter as { date: YYYY-MM-DD, count: number }', async () => {
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'T', description: 'D', url: 'https://x.com' },
+    ]) as Response);
+
+    await webSearch('test');
+
+    const result = await chrome.storage.local.get([STORAGE_KEY_WEB_SEARCH_COUNTER]);
+    const counter = result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter;
+    expect(counter).toBeDefined();
+    expect(counter.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(typeof counter.count).toBe('number');
+    expect(counter.count).toBe(1);
+  });
+
+  // AC: counter increments on each successful call
+  it('increments counter on successful call', async () => {
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'T', description: 'D', url: 'https://x.com' },
+    ]) as Response);
+
+    await webSearch('test1');
+    await webSearch('test2');
+
+    const result = await chrome.storage.local.get([STORAGE_KEY_WEB_SEARCH_COUNTER]);
+    const counter = result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter;
+    expect(counter.count).toBe(2);
+  });
+
+  // AC: hard stop at cap
+  it('rejects when daily cap is reached', async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: today, count: 100 },
+      [STORAGE_KEY_WEB_SEARCH_DAILY_CAP]: 100,
+    });
+
+    await expect(webSearch('test')).rejects.toThrow('daily web search cap reached (100/100)');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  // AC: count exceeding cap (stale write) → still hard-stops
+  it('hard-stops when count exceeds cap due to stale write', async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: today, count: 150 },
+      [STORAGE_KEY_WEB_SEARCH_DAILY_CAP]: 100,
+    });
+
+    await expect(webSearch('test')).rejects.toThrow(/daily web search cap reached/);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  // AC: no increment on failure
+  it('does NOT increment counter on failed call', async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: today, count: 5 },
+    });
+
+    vi.mocked(fetch).mockResolvedValue(braveErrorResponse(401) as unknown as Response);
+
+    await expect(webSearch('test')).rejects.toThrow(/Brave 401/);
+
+    const result = await chrome.storage.local.get([STORAGE_KEY_WEB_SEARCH_COUNTER]);
+    const counter = result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter;
+    expect(counter.count).toBe(5);
+  });
+
+  // AC: date rollover resets counter
+  it('resets counter when date changes', async () => {
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: '2026-04-14', count: 99 },
+    });
+
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'T', description: 'D', url: 'https://x.com' },
+    ]) as Response);
+
+    // The date in storage is yesterday, so it should reset
+    await webSearch('test');
+
+    const result = await chrome.storage.local.get([STORAGE_KEY_WEB_SEARCH_COUNTER]);
+    const counter = result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter;
+    // Count should be 1 (reset to 0, then incremented)
+    expect(counter.count).toBe(1);
+    // Date should be today
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    expect(counter.date).toBe(today);
+  });
+
+  // AC: soft warn at 80% (once per day)
+  it('logs warning at 80% cap threshold', async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: today, count: 79 },
+      [STORAGE_KEY_WEB_SEARCH_DAILY_CAP]: 100,
+    });
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(fetch).mockResolvedValue(braveResponse([
+      { title: 'T', description: 'D', url: 'https://x.com' },
+    ]) as Response);
+
+    await webSearch('test');
+
+    // After increment, count = 80, which is 80% of 100
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('daily cap approaching: 80/100'),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  // AC: custom cap from storage
+  it('uses custom cap from storage', async () => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    await chrome.storage.local.set({
+      [STORAGE_KEY_WEB_SEARCH_COUNTER]: { date: today, count: 50 },
+      [STORAGE_KEY_WEB_SEARCH_DAILY_CAP]: 50,
+    });
+
+    await expect(webSearch('test')).rejects.toThrow('daily web search cap reached (50/50)');
+  });
+});
+
 // ── webSearchTestCall() — counter-exempt ────────────────────────────────────
 
 describe('webSearchTestCall()', () => {

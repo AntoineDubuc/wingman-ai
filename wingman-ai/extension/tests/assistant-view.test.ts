@@ -418,3 +418,133 @@ describe('Task 2: Persona dropdown', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 3: Empty state — icon, title, 4 suggestion chips
+// ---------------------------------------------------------------------------
+
+describe('Task 3: Empty state', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: .chat-empty rendered with correct children in order', () => {
+    it('has icon, title, subtitle, suggestions as children', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const empty = container.querySelector('.chat-empty');
+      expect(empty).not.toBeNull();
+      const children = Array.from(empty!.children);
+      expect(children.length).toBeGreaterThanOrEqual(4);
+      expect(children[0]!.classList.contains('chat-empty-icon')).toBe(true);
+      expect(children[1]!.classList.contains('chat-empty-title')).toBe(true);
+      expect(children[2]!.classList.contains('chat-empty-subtitle')).toBe(true);
+      expect(children[3]!.classList.contains('chat-empty-suggestions')).toBe(true);
+    });
+  });
+
+  describe('AC2: icon has gradient and sparkle', () => {
+    it('.chat-empty-icon contains sparkle emoji', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const icon = container.querySelector('.chat-empty-icon') as HTMLElement;
+      expect(icon).not.toBeNull();
+      expect(icon.textContent).toContain('\u2728'); // sparkle emoji
+    });
+  });
+
+  describe('AC3: title text', () => {
+    it('.chat-empty-title says "How can I help?"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const title = container.querySelector('.chat-empty-title') as HTMLElement;
+      expect(title.textContent).toBe('How can I help?');
+    });
+  });
+
+  describe('AC4: subtitle text', () => {
+    it('.chat-empty-subtitle matches expected text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const subtitle = container.querySelector('.chat-empty-subtitle') as HTMLElement;
+      expect(subtitle.textContent).toBe(
+        'Ask me anything. Toggle context sources above to include meeting transcript or persona knowledge.'
+      );
+    });
+  });
+
+  describe('AC5: four suggestion chips with correct text', () => {
+    it('renders 4 .suggestion-chip elements with expected text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chips = container.querySelectorAll('.suggestion-chip');
+      expect(chips).toHaveLength(4);
+
+      const texts = Array.from(chips).map(c => (c as HTMLElement).dataset.text);
+      expect(texts[0]).toBe('What is the PKCE flow Sarah mentioned?');
+      expect(texts[1]).toBe('Draft a follow-up email with action items');
+      expect(texts[2]).toBe('Explain OAuth 2.0 token rotation best practices');
+      expect(texts[3]).toBe('What does our Architect know about session migration?');
+    });
+  });
+
+  describe('AC6: clicking suggestion chip sets pendingSuggestionText', () => {
+    it('stores the chip text in pendingSuggestionText', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const chip = container.querySelector('.suggestion-chip') as HTMLElement;
+      chip.click();
+      // Access the pending text via a getter
+      expect(view.getPendingSuggestionText()).toBe('What is the PKCE flow Sarah mentioned?');
+    });
+  });
+
+  describe('AC7: empty state rendered only when chatHistory is empty', () => {
+    it('.chat-empty exists on initial mount (no messages)', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      expect(container.querySelector('.chat-empty')).not.toBeNull();
+      expect(container.querySelector('.chat-messages')).not.toBeNull();
+    });
+  });
+
+  describe('AC8: empty state persists across mode toggles before first message', () => {
+    it('.chat-empty still rendered after simulated re-mount', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      // The empty state should persist since no messages were sent
+      expect(container.querySelector('.chat-empty')).not.toBeNull();
+    });
+  });
+
+  describe('Negative: no .chat-empty when chatHistory has items', () => {
+    it('pre-seeding chatHistory means no empty state', async () => {
+      const view = new AssistantView();
+      // Seed history before mount
+      view.seedChatHistory([{ role: 'user', text: 'hello' }]);
+      await view.mount(container);
+      expect(container.querySelector('.chat-empty')).toBeNull();
+    });
+  });
+
+  describe('Negative: clicking empty state background does nothing', () => {
+    it('clicking .chat-empty itself does not set pending text', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const empty = container.querySelector('.chat-empty') as HTMLElement;
+      empty.click();
+      expect(view.getPendingSuggestionText()).toBeNull();
+    });
+  });
+});

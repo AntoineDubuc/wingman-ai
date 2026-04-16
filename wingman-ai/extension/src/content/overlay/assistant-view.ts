@@ -59,6 +59,15 @@ export class AssistantView {
   private personaBtnEl: HTMLElement | null = null;
   private dropdownEl: HTMLElement | null = null;
   private chevronEl: HTMLElement | null = null;
+  private chatMessagesEl: HTMLElement | null = null;
+  private conversationEl: HTMLElement | null = null;
+  private typingIndicatorEl: HTMLElement | null = null;
+
+  /** Map of active streaming messageIds to their DOM elements. */
+  private streamingBubbles = new Map<string, HTMLElement>();
+
+  /** Near-bottom scroll tolerance (matches MeetingView). */
+  private static readonly SCROLL_THRESHOLD = 50;
 
   /**
    * Mount the AssistantView into the given container element.
@@ -98,6 +107,7 @@ export class AssistantView {
 
     // Chat messages area
     const chatMessages = this.buildChatMessages();
+    this.chatMessagesEl = chatMessages;
     this.root.appendChild(chatMessages);
 
     container.appendChild(this.root);
@@ -146,6 +156,220 @@ export class AssistantView {
    */
   seedChatHistory(messages: ChatMessage[]): void {
     this.chatHistory = [...messages];
+  }
+
+  // ── Public: Chat message API ──
+
+  /**
+   * Append a user message bubble to the chat.
+   * Removes the empty state on the first message.
+   */
+  appendUserMessage(text: string): void {
+    if (!text) return; // guard: empty input rejected
+
+    this.chatHistory.push({ role: 'user', text });
+    this.ensureConversation();
+
+    const msg = document.createElement('div');
+    msg.className = 'chat-msg chat-msg-user';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+
+    msg.appendChild(bubble);
+    this.conversationEl!.appendChild(msg);
+    this.autoScroll();
+  }
+
+  /**
+   * Render an assistant message bubble.
+   *
+   * @param msg.text The message text (required). Supports **bold** and \n line breaks.
+   * @param msg.sources Source attribution strings (optional). Classification:
+   *   - "transcript" -> green tag
+   *   - ends with " KB" -> purple persona tag
+   *   - "web" -> amber tag
+   *   - empty/undefined -> gray "general knowledge" tag
+   * @param msg.streaming If true, creates or updates a streaming bubble.
+   * @param msg.messageId If provided with streaming, updates the same bubble in place.
+   *   Without messageId, each call creates a new bubble.
+   */
+  renderAssistantMessage(msg: { text: string; sources?: string[]; streaming?: boolean; messageId?: string }): void {
+    if (msg.text === null || msg.text === undefined) {
+      throw new Error('renderAssistantMessage: text is required');
+    }
+
+    // Handle streaming updates via messageId
+    if (msg.messageId) {
+      const existing = this.streamingBubbles.get(msg.messageId);
+      if (existing) {
+        // Update existing bubble in-place
+        const bubble = existing.querySelector('.msg-bubble') as HTMLElement;
+        if (msg.streaming === false) {
+          // Finalize: set final text + add sources
+          bubble.innerHTML = this.transformMarkdown(msg.text);
+          this.buildSourceTags(existing, msg.sources);
+          this.streamingBubbles.delete(msg.messageId);
+          this.chatHistory.push({ role: 'assistant', text: msg.text, sources: msg.sources });
+        } else {
+          // Still streaming: update text
+          bubble.innerHTML = this.transformMarkdown(msg.text);
+        }
+        this.autoScroll();
+        return;
+      }
+
+      // No existing bubble for this messageId
+      if (msg.streaming === false) {
+        // Orphan messageId: warn and no-op
+        console.warn('[AssistantView] unknown messageId: ' + msg.messageId + ' — ignoring');
+        return;
+      }
+
+      // New streaming bubble: create it
+      this.ensureConversation();
+      this.hideTypingIndicator();
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'chat-msg chat-msg-bot';
+      msgEl.dataset.messageId = msg.messageId;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = this.transformMarkdown(msg.text);
+
+      msgEl.appendChild(bubble);
+      this.conversationEl!.appendChild(msgEl);
+      this.streamingBubbles.set(msg.messageId, msgEl);
+      this.autoScroll();
+      return;
+    }
+
+    // Non-streaming: create new bubble
+    this.ensureConversation();
+    this.chatHistory.push({ role: 'assistant', text: msg.text, sources: msg.sources });
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'chat-msg chat-msg-bot';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML = this.transformMarkdown(msg.text);
+
+    msgEl.appendChild(bubble);
+    this.buildSourceTags(msgEl, msg.sources);
+    this.conversationEl!.appendChild(msgEl);
+    this.autoScroll();
+  }
+
+  /**
+   * Show a typing indicator bubble (three animated dots).
+   */
+  showTypingIndicator(): void {
+    if (this.typingIndicatorEl) return; // already showing
+
+    this.ensureConversation();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-msg chat-msg-bot';
+
+    const indicator = document.createElement('div');
+    indicator.className = 'typing-indicator-bubble';
+
+    const dots = document.createElement('div');
+    dots.className = 'typing-dots';
+    for (let i = 0; i < 3; i++) {
+      dots.appendChild(document.createElement('span'));
+    }
+
+    indicator.appendChild(dots);
+    wrapper.appendChild(indicator);
+    this.conversationEl!.appendChild(wrapper);
+    this.typingIndicatorEl = wrapper;
+    this.autoScroll();
+  }
+
+  /**
+   * Hide the typing indicator bubble.
+   */
+  hideTypingIndicator(): void {
+    if (this.typingIndicatorEl) {
+      this.typingIndicatorEl.remove();
+      this.typingIndicatorEl = null;
+    }
+  }
+
+  /**
+   * Returns the chat history array.
+   */
+  getChatHistory(): ChatMessage[] {
+    return this.chatHistory;
+  }
+
+  // ── Private: Markdown + HTML escape ──
+
+  /**
+   * Escape HTML entities, then apply minimal markdown transforms.
+   * SECURITY: escape FIRST, then transform. Order is critical.
+   */
+  private transformMarkdown(text: string): string {
+    // Step 1: escape HTML entities
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    // Step 2: apply bold transform
+    escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Step 3: apply newline transforms (double newline = paragraph break)
+    escaped = escaped.replace(/\n\n/g, '<br><br>');
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    return escaped;
+  }
+
+  /**
+   * Build source-attribution tags below an assistant bubble.
+   * Placeholder for Task 5 — currently a no-op.
+   */
+  private buildSourceTags(_msgEl: HTMLElement, _sources?: string[]): void {
+    // Task 5 will implement source tag rendering
+  }
+
+  // ── Private: Chat helpers ──
+
+  /**
+   * Ensure the .chat-conversation container exists (removing .chat-empty if needed).
+   */
+  private ensureConversation(): void {
+    if (this.conversationEl) return;
+
+    // Remove empty state if present
+    if (this.chatMessagesEl) {
+      const empty = this.chatMessagesEl.querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const conversation = document.createElement('div');
+      conversation.className = 'chat-conversation';
+      this.chatMessagesEl.appendChild(conversation);
+      this.conversationEl = conversation;
+    }
+  }
+
+  /**
+   * Auto-scroll to bottom if user is near the bottom.
+   */
+  private autoScroll(): void {
+    if (!this.chatMessagesEl) return;
+    const el = this.chatMessagesEl;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= AssistantView.SCROLL_THRESHOLD;
+    if (isNearBottom) {
+      el.scrollTop = el.scrollHeight;
+    }
   }
 
   // ── Private: Context Bar ──

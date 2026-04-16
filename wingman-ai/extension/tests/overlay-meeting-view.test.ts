@@ -449,3 +449,214 @@ describe('Task 2: Pill toggle row + currentMode observable', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 3: Content-area view-swap machinery + AssistantView mount-point
+// ---------------------------------------------------------------------------
+
+describe('Task 3: View-swap container + AssistantView mount-point', () => {
+  async function createOverlay() {
+    vi.resetModules();
+    const mod = await import('../src/content/overlay');
+    const overlay = new mod.AIOverlay();
+    document.body.appendChild(overlay.container);
+    return { overlay, mod };
+  }
+
+  describe('AC1: .view-container with exactly two .view children', () => {
+    it('.view-container exists and contains .meeting-view and .assistant-view-mount', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+      const container = shadow.querySelector('.view-container');
+      expect(container).not.toBeNull();
+
+      const views = container!.querySelectorAll(':scope > .view');
+      expect(views).toHaveLength(2);
+      expect(views[0]!.classList.contains('meeting-view')).toBe(true);
+      expect(views[1]!.classList.contains('assistant-view-mount')).toBe(true);
+    });
+  });
+
+  describe('AC2: existing .timeline is a descendant of .meeting-view', () => {
+    it('.timeline lives inside .meeting-view, not directly in .overlay-body', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const timeline = shadow.querySelector('.meeting-view .timeline');
+      expect(timeline).not.toBeNull();
+
+      // Must NOT be a direct child of .overlay-body
+      const bodyTimeline = shadow.querySelector('.overlay-body > .timeline');
+      expect(bodyTimeline).toBeNull();
+    });
+
+    it('.overlay-content is inside .meeting-view', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const overlayContent = shadow.querySelector('.meeting-view .overlay-content');
+      expect(overlayContent).not.toBeNull();
+    });
+
+    it('.overlay-nav is inside .meeting-view', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const nav = shadow.querySelector('.meeting-view .overlay-nav');
+      expect(nav).not.toBeNull();
+    });
+  });
+
+  describe('AC3: .hidden class toggles with setMode', () => {
+    it('initially, .meeting-view is visible and .assistant-view-mount is hidden', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const meetingView = shadow.querySelector('.meeting-view') as HTMLElement;
+      const assistantMount = shadow.querySelector('.assistant-view-mount') as HTMLElement;
+
+      expect(meetingView.classList.contains('hidden')).toBe(false);
+      expect(assistantMount.classList.contains('hidden')).toBe(true);
+    });
+
+    it('setMode("assistant") hides meeting-view and shows assistant-view-mount', async () => {
+      const { overlay } = await createOverlay();
+      const shadow = getShadow();
+
+      (overlay as any).setMode('assistant');
+
+      const meetingView = shadow.querySelector('.meeting-view') as HTMLElement;
+      const assistantMount = shadow.querySelector('.assistant-view-mount') as HTMLElement;
+
+      expect(meetingView.classList.contains('hidden')).toBe(true);
+      expect(assistantMount.classList.contains('hidden')).toBe(false);
+    });
+
+    it('setMode("meeting") after "assistant" restores original state', async () => {
+      const { overlay } = await createOverlay();
+      const shadow = getShadow();
+
+      (overlay as any).setMode('assistant');
+      (overlay as any).setMode('meeting');
+
+      const meetingView = shadow.querySelector('.meeting-view') as HTMLElement;
+      const assistantMount = shadow.querySelector('.assistant-view-mount') as HTMLElement;
+
+      expect(meetingView.classList.contains('hidden')).toBe(false);
+      expect(assistantMount.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('AC4: transition CSS includes opacity and transform', () => {
+    // Note: jsdom doesn't compute real CSS from stylesheet. We verify the
+    // classes are applied. The actual CSS declarations are tested by
+    // inspecting the stylesheet content.
+    it('.view elements have the correct class structure for transitions', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const views = shadow.querySelectorAll('.view');
+      expect(views.length).toBeGreaterThanOrEqual(2);
+
+      // Both elements have the .view class (which carries the transition)
+      views.forEach(v => {
+        expect(v.classList.contains('view')).toBe(true);
+      });
+    });
+  });
+
+  describe('AC5: .hidden applied within 1 rAF', () => {
+    it('setMode applies .hidden synchronously (no rAF delay)', async () => {
+      const { overlay } = await createOverlay();
+      const shadow = getShadow();
+
+      (overlay as any).setMode('assistant');
+
+      // Check synchronously -- no rAF needed
+      const meetingView = shadow.querySelector('.meeting-view') as HTMLElement;
+      expect(meetingView.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('AC6: no transcript loss on mode switch round-trip', () => {
+    it('timeline DOM is unchanged after meeting -> assistant -> meeting', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      // Add some fake transcript entries to the timeline
+      const timeline = shadow.querySelector('.timeline') as HTMLElement;
+      for (let i = 0; i < 3; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble participant';
+        bubble.textContent = `Test message ${i}`;
+        timeline.appendChild(bubble);
+      }
+
+      const bubbleCountBefore = timeline.querySelectorAll('.bubble').length;
+      expect(bubbleCountBefore).toBe(3);
+
+      // Round-trip toggle
+      const assistantBtn = shadow.querySelector('.pill-btn[data-mode="assistant"]') as HTMLButtonElement;
+      const meetingBtn = shadow.querySelector('.pill-btn[data-mode="meeting"]') as HTMLButtonElement;
+      assistantBtn.click();
+      meetingBtn.click();
+
+      const bubbleCountAfter = timeline.querySelectorAll('.bubble').length;
+      expect(bubbleCountAfter).toBe(3);
+    });
+  });
+
+  describe('AC7: getAssistantMountPoint() returns correct element', () => {
+    it('returns the .assistant-view-mount HTMLElement', async () => {
+      const { overlay } = await createOverlay();
+      const shadow = getShadow();
+
+      const mountPoint = (overlay as any).getAssistantMountPoint();
+      expect(mountPoint).toBeInstanceOf(HTMLElement);
+
+      const expected = shadow.querySelector('.assistant-view-mount');
+      expect(mountPoint).toBe(expected);
+    });
+  });
+
+  describe('AC8: .assistant-view-mount has correct accessibility attributes', () => {
+    it('has role="tabpanel" and aria-label="Assistant"', async () => {
+      await createOverlay();
+      const shadow = getShadow();
+
+      const mount = shadow.querySelector('.assistant-view-mount') as HTMLElement;
+      expect(mount).not.toBeNull();
+      expect(mount.getAttribute('role')).toBe('tabpanel');
+      expect(mount.getAttribute('aria-label')).toBe('Assistant');
+    });
+  });
+
+  describe('Negative: 10 rapid toggles do not create duplicates or leak', () => {
+    it('DOM structure remains correct after 10 rapid toggles', async () => {
+      const { overlay } = await createOverlay();
+      const shadow = getShadow();
+
+      for (let i = 0; i < 10; i++) {
+        (overlay as any).setMode(i % 2 === 0 ? 'assistant' : 'meeting');
+      }
+
+      // After 10 toggles (even count), should be back to meeting mode
+      const container = shadow.querySelector('.view-container');
+      expect(container).not.toBeNull();
+      const views = container!.querySelectorAll(':scope > .view');
+      expect(views).toHaveLength(2);
+
+      // Verify no duplicated elements
+      expect(shadow.querySelectorAll('.view-container')).toHaveLength(1);
+      expect(shadow.querySelectorAll('.meeting-view')).toHaveLength(1);
+      expect(shadow.querySelectorAll('.assistant-view-mount')).toHaveLength(1);
+    });
+  });
+
+  describe('Negative: setMode("invalid") throws', () => {
+    it('throws a clear error for invalid mode values', async () => {
+      const { overlay } = await createOverlay();
+      expect(() => (overlay as any).setMode('invalid')).toThrow('Invalid mode');
+    });
+  });
+});

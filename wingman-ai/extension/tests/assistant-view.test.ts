@@ -719,3 +719,163 @@ describe('Task 4: Chat messages', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 5: Source attribution tags
+// ---------------------------------------------------------------------------
+
+describe('Task 5: Source attribution tags', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: transcript source renders green tag', () => {
+    it('creates .msg-source-tag.transcript with text "transcript"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['transcript'] });
+      const tag = container.querySelector('.msg-source-tag.transcript') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toBe('transcript');
+    });
+  });
+
+  describe('AC2: persona KB sources render purple tags', () => {
+    it('creates .msg-source-tag.persona for strings ending with " KB"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['Architect KB', 'Product Lead KB'] });
+      const tags = container.querySelectorAll('.msg-source-tag.persona');
+      expect(tags).toHaveLength(2);
+      expect(tags[0]!.textContent).toBe('Architect KB');
+      expect(tags[1]!.textContent).toBe('Product Lead KB');
+    });
+  });
+
+  describe('AC3: web source renders amber tag', () => {
+    it('creates .msg-source-tag.web with text "web"', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['web'] });
+      const tag = container.querySelector('.msg-source-tag.web') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toBe('web');
+    });
+  });
+
+  describe('AC4: empty/undefined sources render "general knowledge"', () => {
+    it('undefined sources creates .msg-source-tag.general', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi' });
+      const tag = container.querySelector('.msg-source-tag.general') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toBe('general knowledge');
+    });
+
+    it('empty array creates .msg-source-tag.general', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: [] });
+      const tag = container.querySelector('.msg-source-tag.general') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toBe('general knowledge');
+    });
+  });
+
+  describe('AC5: mixed sources render in input order with correct classes', () => {
+    it('transcript + persona + web renders 3 tags in order', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['transcript', 'Architect KB', 'web'] });
+      const tags = container.querySelectorAll('.msg-source-tag');
+      expect(tags).toHaveLength(3);
+      expect(tags[0]!.classList.contains('transcript')).toBe(true);
+      expect(tags[1]!.classList.contains('persona')).toBe(true);
+      expect(tags[2]!.classList.contains('web')).toBe(true);
+    });
+  });
+
+  describe('AC6: data-sources attribute stores original sources JSON', () => {
+    it('stores sources as JSON on the .chat-msg-bot element', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['transcript', 'web'] });
+      const msgEl = container.querySelector('.chat-msg-bot') as HTMLElement;
+      expect(msgEl.dataset.sources).toBe(JSON.stringify(['transcript', 'web']));
+    });
+  });
+
+  describe('AC7: source tags use .textContent (XSS safe)', () => {
+    it('XSS payload in source renders as text, not HTML', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'x', sources: ['<script>alert(1)</script>'] });
+      const tag = container.querySelector('.msg-source-tag') as HTMLElement;
+      expect(tag.querySelector('script')).toBeNull();
+      expect(tag.textContent).toContain('<script>alert(1)</script>');
+    });
+  });
+
+  describe('AC8: max 10 tags with +N more', () => {
+    it('truncates to 10 tags plus a "+N more" gray tag', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const sources = Array.from({ length: 15 }, (_, i) => `source-${i}`);
+      view.renderAssistantMessage({ text: 'hi', sources });
+      const tags = container.querySelectorAll('.msg-source-tag');
+      // 10 source tags + 1 "+5 more" tag = 11
+      expect(tags).toHaveLength(11);
+      expect(tags[10]!.textContent).toBe('+5 more');
+    });
+  });
+
+  describe('AC9: long source strings truncated to 60 chars', () => {
+    it('truncates source text to 60 chars with ellipsis', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const longSource = 'A'.repeat(80);
+      view.renderAssistantMessage({ text: 'hi', sources: [longSource] });
+      const tag = container.querySelector('.msg-source-tag') as HTMLElement;
+      expect(tag.textContent!.length).toBeLessThanOrEqual(63); // 60 + "..."
+      expect(tag.textContent!.endsWith('...')).toBe(true);
+    });
+  });
+
+  describe('Negative: unknown source type renders default gray', () => {
+    it('unknown-type gets no classification class', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: ['unknown-type'] });
+      const tag = container.querySelector('.msg-source-tag') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.classList.contains('transcript')).toBe(false);
+      expect(tag.classList.contains('persona')).toBe(false);
+      expect(tag.classList.contains('web')).toBe(false);
+      expect(tag.classList.contains('general')).toBe(false);
+      expect(tag.textContent).toBe('unknown-type');
+    });
+  });
+
+  describe('Negative: null sources treated as undefined', () => {
+    it('null sources renders general knowledge tag', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.renderAssistantMessage({ text: 'hi', sources: null as any });
+      const tag = container.querySelector('.msg-source-tag.general') as HTMLElement;
+      expect(tag).not.toBeNull();
+      expect(tag.textContent).toBe('general knowledge');
+    });
+  });
+});

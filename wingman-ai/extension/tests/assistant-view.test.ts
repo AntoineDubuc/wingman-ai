@@ -499,14 +499,17 @@ describe('Task 3: Empty state', () => {
     });
   });
 
-  describe('AC6: clicking suggestion chip sets pendingSuggestionText', () => {
-    it('stores the chip text in pendingSuggestionText', async () => {
+  describe('AC6: clicking suggestion chip triggers send (input present after mount)', () => {
+    it('sends the chip text as a user message immediately', async () => {
       const view = new AssistantView();
       await view.mount(container);
       const chip = container.querySelector('.suggestion-chip') as HTMLElement;
       chip.click();
-      // Access the pending text via a getter
-      expect(view.getPendingSuggestionText()).toBe('What is the PKCE flow Sarah mentioned?');
+      // With input present, clicking chip sends immediately and clears pending text
+      const bubble = container.querySelector('.chat-msg-user .msg-bubble') as HTMLElement;
+      expect(bubble).not.toBeNull();
+      expect(bubble.textContent).toBe('What is the PKCE flow Sarah mentioned?');
+      expect(view.getPendingSuggestionText()).toBeNull();
     });
   });
 

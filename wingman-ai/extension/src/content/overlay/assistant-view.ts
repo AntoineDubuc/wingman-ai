@@ -62,6 +62,8 @@ export class AssistantView {
   private chatMessagesEl: HTMLElement | null = null;
   private conversationEl: HTMLElement | null = null;
   private typingIndicatorEl: HTMLElement | null = null;
+  private chatInputEl: HTMLInputElement | null = null;
+  private chatSendBtnEl: HTMLButtonElement | null = null;
 
   /** Map of active streaming messageIds to their DOM elements. */
   private streamingBubbles = new Map<string, HTMLElement>();
@@ -110,7 +112,18 @@ export class AssistantView {
     this.chatMessagesEl = chatMessages;
     this.root.appendChild(chatMessages);
 
+    // Chat input area
+    const inputArea = this.buildChatInputArea();
+    this.root.appendChild(inputArea);
+
     container.appendChild(this.root);
+
+    // Consume pending suggestion text (from chip click before input existed)
+    if (this.pendingSuggestionText) {
+      const text = this.pendingSuggestionText;
+      this.pendingSuggestionText = null;
+      this.handleSend(text);
+    }
   }
 
   /**
@@ -668,6 +681,92 @@ export class AssistantView {
   }
 
   private handleSuggestionClick(text: string): void {
-    this.pendingSuggestionText = text;
+    if (this.chatInputEl) {
+      // Input exists — send immediately
+      this.pendingSuggestionText = null;
+      this.handleSend(text);
+    } else {
+      // Input not yet mounted — store for consumption on mount
+      this.pendingSuggestionText = text;
+    }
+  }
+
+  // ── Private: Chat Input Area ──
+
+  private buildChatInputArea(): HTMLElement {
+    const area = document.createElement('div');
+    area.className = 'chat-input-area';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-input-wrapper';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'chat-input';
+    input.placeholder = 'Ask anything...';
+    input.maxLength = 4000;
+    this.chatInputEl = input;
+
+    const sendBtn = document.createElement('button');
+    sendBtn.className = 'chat-send-btn';
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+    this.chatSendBtnEl = sendBtn;
+
+    // Enable/disable send button based on input content
+    input.addEventListener('input', () => {
+      sendBtn.disabled = input.value.trim().length === 0;
+    });
+
+    // Enter to send
+    input.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const trimmed = input.value.trim();
+        if (trimmed) {
+          this.handleSend(trimmed);
+        }
+      }
+    });
+
+    // Click send button
+    sendBtn.addEventListener('click', () => {
+      if (sendBtn.disabled) return;
+      const trimmed = input.value.trim();
+      if (trimmed) {
+        this.handleSend(trimmed);
+      }
+    });
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(sendBtn);
+    area.appendChild(wrapper);
+    return area;
+  }
+
+  /**
+   * Handle sending a message. Creates user bubble, clears input, invokes onSend subscribers.
+   */
+  private handleSend(text: string): void {
+    this.appendUserMessage(text);
+
+    // Clear input
+    if (this.chatInputEl) {
+      this.chatInputEl.value = '';
+    }
+    if (this.chatSendBtnEl) {
+      this.chatSendBtnEl.disabled = true;
+    }
+
+    // Emit to subscribers (Task 7 wires this)
+    this.emitSend(text, this.getContextState());
+  }
+
+  /**
+   * Emit send event to all registered subscribers.
+   * Placeholder for Task 7 — currently a no-op.
+   */
+  private emitSend(_text: string, _ctx: ContextState): void {
+    // Task 7 will implement subscriber dispatch
   }
 }

@@ -1277,3 +1277,17 @@
   0%, 100% { opacity: 0.3; transform: translateY(0); }
   50% { opacity: 1; transform: translateY(-3px); }
 }
+
+/* ── Assistant View ── */
+.assistant-view { display: flex; flex-direction: column; height: 100%; }
+.context-bar { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.context-toggle { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); font-size: 11px; font-weight: 500; color: #6b6b7b; cursor: pointer; transition: all 0.15s ease; user-select: none; white-space: nowrap; }
+.context-toggle.active { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.1); color: #93bbfc; }
+.context-toggle.active .ctx-dot { background: #3b82f6; }
+.context-toggle:hover { border-color: rgba(255,255,255,0.2); }
+.ctx-dot { width: 6px; height: 6px; border-radius: 50%; background: #505060; flex-shrink: 0; transition: background 0.15s ease; }
+.context-separator { width: 1px; height: 16px; background: rgba(255,255,255,0.08); margin: 0 2px; }
+.persona-expand-btn { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); font-size: 11px; font-weight: 500; color: #6b6b7b; cursor: pointer; transition: all 0.15s ease; }
+.persona-expand-btn.has-active { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.08); color: #b09cf6; }
+.persona-expand-btn .chevron { font-size: 8px; transition: transform 0.2s ease; }
+.persona-expand-btn .chevron.open { transform: rotate(180deg); }

@@ -31,6 +31,10 @@ export class MeetingView {
   private lastRenderedSpeaker: string | null = null;
   private lastRenderedTime: number | null = null;
 
+  // Live speaking indicator (Task 6)
+  private liveIndicator: HTMLElement | null = null;
+  private liveIndicatorSpeakerText: HTMLElement | null = null;
+
   // Auto-scroll state
   private isNearBottom = true;
 
@@ -55,6 +59,11 @@ export class MeetingView {
     // Listen for scroll to detect if user scrolled up
     this.container.addEventListener('scroll', this.handleScroll);
 
+    // Create live speaking indicator (Task 6) — always last child
+    this.liveIndicator = createLiveIndicator();
+    this.liveIndicatorSpeakerText = this.liveIndicator.querySelector('.speaker-text');
+    this.container.appendChild(this.liveIndicator);
+
     // Render existing entries from buffer snapshot
     const snapshot = this.buffer.getSnapshot();
     for (const entry of snapshot) {
@@ -77,6 +86,8 @@ export class MeetingView {
       this.container.removeEventListener('scroll', this.handleScroll);
     }
     this.container = null;
+    this.liveIndicator = null;
+    this.liveIndicatorSpeakerText = null;
     this.lastRenderedElement = null;
     this.lastRenderedSpeaker = null;
     this.lastRenderedTime = null;
@@ -150,7 +161,12 @@ export class MeetingView {
     el.appendChild(speakerRow);
     el.appendChild(textDiv);
 
-    this.container.appendChild(el);
+    // Insert before the live indicator so it stays last child
+    if (this.liveIndicator) {
+      this.container.insertBefore(el, this.liveIndicator);
+    } else {
+      this.container.appendChild(el);
+    }
 
     // Track for correction window (DOM element reference only, no data copy)
     this.lastRenderedElement = el;
@@ -158,6 +174,28 @@ export class MeetingView {
     this.lastRenderedTime = now;
 
     this.scrollToBottom();
+  }
+
+  // ── Live Indicator (Task 6) ──
+
+  /**
+   * Show the live speaking indicator with the given speaker name.
+   * If speaker is empty, shows "Someone is speaking...".
+   */
+  showLiveIndicator(speaker: string): void {
+    if (!this.liveIndicator || !this.liveIndicatorSpeakerText) return;
+    const displayName = speaker.trim() || 'Someone';
+    this.liveIndicatorSpeakerText.textContent = `${displayName} is speaking\u2026`;
+    this.liveIndicator.classList.add('active');
+    this.scrollToBottom();
+  }
+
+  /**
+   * Hide the live speaking indicator.
+   */
+  hideLiveIndicator(): void {
+    if (!this.liveIndicator) return;
+    this.liveIndicator.classList.remove('active');
   }
 
   // ── Auto-Scroll ──
@@ -222,4 +260,31 @@ function formatTimestamp(isoTimestamp: string): string {
   } catch {
     return '00:00:00';
   }
+}
+
+/**
+ * Create the live speaking indicator element (Task 6).
+ *
+ * DOM structure:
+ *   .transcript-live-indicator
+ *     .typing-dots > span span span
+ *     span.speaker-text
+ */
+function createLiveIndicator(): HTMLElement {
+  const indicator = document.createElement('div');
+  indicator.className = 'transcript-live-indicator';
+
+  const dots = document.createElement('div');
+  dots.className = 'typing-dots';
+  for (let i = 0; i < 3; i++) {
+    dots.appendChild(document.createElement('span'));
+  }
+
+  const speakerText = document.createElement('span');
+  speakerText.className = 'speaker-text';
+
+  indicator.appendChild(dots);
+  indicator.appendChild(speakerText);
+
+  return indicator;
 }

@@ -3837,3 +3837,54 @@ body {
     align-self: flex-end;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Web Search Section
+   -------------------------------------------------------------------------- */
+
+.web-search-test-status {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-left: var(--spacing-sm);
+}
+
+.web-search-test-status.success {
+  color: var(--color-success);
+}
+
+.web-search-test-status.error {
+  color: var(--color-danger);
+}
+
+.web-search-usage {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.web-search-usage.usage-normal {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-page);
+}
+
+.web-search-usage.usage-warn {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.web-search-usage.usage-critical {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+[data-theme="dark"] .web-search-usage.usage-warn {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+}
+
+[data-theme="dark"] .web-search-usage.usage-critical {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+}

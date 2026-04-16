@@ -12,6 +12,7 @@ import { LangBuilderSection } from './sections/langbuilder';
 import { PanelLayoutSection } from './sections/panel-layout';
 import { TabManager } from './sections/tabs';
 import { SetupImportSection } from './sections/setup-import';
+import { WebSearchSection } from './sections/web-search';
 
 class OptionsController {
   private personas = new PersonaSection();
@@ -72,6 +73,7 @@ class OptionsController {
       new LangBuilderSection().init(ctx),
       this.personas.init(ctx),
       this.activePersonas.init(ctx),
+      new WebSearchSection().init(ctx),
     ]);
 
     // SetupImportSection depends on personas and apiKeys being initialized

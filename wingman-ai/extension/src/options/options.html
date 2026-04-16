@@ -45,6 +45,10 @@
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M5 8v2a4 4 0 0 0 4 4h2"/><path d="M19 8v2a4 4 0 0 1-4 4h-2"/><line x1="12" y1="14" x2="12" y2="16"/></svg>
         <span class="tab-label">LangBuilder</span>
       </button>
+      <button class="tab" id="tab-websearch" data-tab="websearch" role="tab" aria-selected="false" aria-controls="panel-websearch">
+        <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span class="tab-label">Web Search</span>
+      </button>
       <button class="tab" id="tab-support" data-tab="support" role="tab" aria-selected="false" aria-controls="panel-support">
         <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         <span class="tab-label">Support & Feature Requests</span>
@@ -814,6 +818,64 @@ LANGBUILDER_FLOW_ID=...</pre>
           <select id="langbuilder-flow-preview" class="select-input">
             <option disabled selected>No flows loaded</option>
           </select>
+        </div>
+      </div>
+
+      <!-- ==================== WEB SEARCH TAB ==================== -->
+      <div class="tab-panel" id="panel-websearch" data-panel="websearch" role="tabpanel" aria-labelledby="tab-websearch">
+        <!-- API Key Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Web Search Provider</h2>
+          <p class="form-section-description">
+            Enable live web search during meetings. Results are injected into the assistant's context for up-to-date answers.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="web-search-provider">Provider</label>
+            <select id="web-search-provider" class="select-input">
+              <option value="brave" selected>Brave Search</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="web-search-api-key">API Key</label>
+            <div class="input-with-toggle">
+              <input type="password" id="web-search-api-key" class="text-input" placeholder="Enter your Brave Search API key" autocomplete="off">
+              <button type="button" class="toggle-visibility-btn" data-target="web-search-api-key" title="Toggle visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <p class="form-hint">Get your API key from <a href="https://api.search.brave.com/app/keys" target="_blank" rel="noopener noreferrer">Brave Search API</a>. Free tier: 2,000 queries/month.</p>
+          </div>
+
+          <div class="form-group">
+            <button id="web-search-test-btn" class="btn-secondary" type="button">Test Connection</button>
+            <span id="web-search-test-status" class="web-search-test-status"></span>
+            <p class="form-hint">Uses 1 query from your Brave quota but does not count against your daily cap here.</p>
+          </div>
+        </div>
+
+        <!-- Daily Cap Card -->
+        <div class="options-card">
+          <h2 class="form-section-title">Daily Query Budget</h2>
+          <p class="form-section-description">
+            Limit the number of web searches per day to control costs. You'll be warned at 80% and blocked at 100%.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="web-search-daily-cap">
+              Daily Cap: <strong id="web-search-cap-value">100</strong> queries
+            </label>
+            <input type="range" id="web-search-daily-cap" class="range-input" min="10" max="500" step="10" value="100">
+            <div class="range-labels">
+              <span>10</span>
+              <span>500</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <span id="web-search-usage" class="web-search-usage usage-normal">Used today: 0/100</span>
+          </div>
         </div>
       </div>
 

@@ -3,7 +3,7 @@
  *
  * Mounts into `.assistant-view-mount` created by Plan 2. Renders:
  * - Context bar (Transcript / Personas / Web Search toggles)
- * - Persona dropdown (Task 2)
+ * - Persona dropdown (collapsible, pre-checked chips)
  * - Chat empty state / messages (Task 3+)
  * - Chat input (Task 6)
  *
@@ -31,7 +31,14 @@ export class AssistantView {
   private transcriptActive = true;
   private webActive = false;
   private personas: Persona[] = [];
+  private checkedPersonaIds: Set<string> = new Set();
   private personaLoadFailed = false;
+
+  // DOM references for updates
+  private personaBtnTextEl: HTMLElement | null = null;
+  private personaBtnEl: HTMLElement | null = null;
+  private dropdownEl: HTMLElement | null = null;
+  private chevronEl: HTMLElement | null = null;
 
   /**
    * Mount the AssistantView into the given container element.
@@ -54,6 +61,9 @@ export class AssistantView {
       this.personaLoadFailed = true;
     }
 
+    // All personas pre-checked by default
+    this.checkedPersonaIds = new Set(this.personas.map(p => p.id));
+
     // Build the root
     this.root = document.createElement('div');
     this.root.className = 'assistant-view';
@@ -61,6 +71,10 @@ export class AssistantView {
     // Context bar
     const contextBar = this.buildContextBar();
     this.root.appendChild(contextBar);
+
+    // Persona dropdown (collapsed by default)
+    const dropdown = this.buildPersonaDropdown();
+    this.root.appendChild(dropdown);
 
     container.appendChild(this.root);
   }
@@ -75,6 +89,10 @@ export class AssistantView {
     this.root = null;
     this.container = null;
     this.mounted = false;
+    this.personaBtnTextEl = null;
+    this.personaBtnEl = null;
+    this.dropdownEl = null;
+    this.chevronEl = null;
   }
 
   /**
@@ -83,7 +101,9 @@ export class AssistantView {
   getContextState(): ContextState {
     return {
       transcript: this.transcriptActive,
-      personaIds: this.personas.map(p => p.id),
+      personaIds: this.personas
+        .filter(p => this.checkedPersonaIds.has(p.id))
+        .map(p => p.id),
       web: this.webActive,
     };
   }
@@ -108,23 +128,25 @@ export class AssistantView {
     // 3. Personas expand button
     const personaBtn = document.createElement('div');
     personaBtn.className = 'persona-expand-btn';
-    if (this.personas.length > 0) {
+    this.personaBtnEl = personaBtn;
+    if (this.checkedPersonaIds.size > 0) {
       personaBtn.classList.add('has-active');
     }
 
-    const countText = this.personaLoadFailed ? '(?)' : `(${this.personas.length})`;
     const chevron = document.createElement('span');
     chevron.className = 'chevron';
     chevron.textContent = '\u25BE'; // down-pointing small triangle
+    this.chevronEl = chevron;
 
     const btnText = document.createElement('span');
-    btnText.textContent = `Personas ${countText}`;
+    btnText.textContent = this.getPersonaBtnText();
+    this.personaBtnTextEl = btnText;
 
     personaBtn.appendChild(btnText);
     personaBtn.appendChild(chevron);
 
     personaBtn.addEventListener('click', () => {
-      console.debug('[AssistantView] persona chip click — Task 2 pending');
+      this.togglePersonaDropdown();
     });
 
     // 4. Separator
@@ -163,5 +185,97 @@ export class AssistantView {
     toggle.appendChild(text);
 
     return toggle;
+  }
+
+  // ── Private: Persona Dropdown ──
+
+  private buildPersonaDropdown(): HTMLElement {
+    const dropdown = document.createElement('div');
+    dropdown.className = 'persona-dropdown';
+    this.dropdownEl = dropdown;
+
+    const label = document.createElement('div');
+    label.className = 'persona-dropdown-label';
+    label.textContent = 'Attach persona knowledge';
+    dropdown.appendChild(label);
+
+    const list = document.createElement('div');
+    list.className = 'persona-list';
+
+    if (this.personaLoadFailed) {
+      const errMsg = document.createElement('span');
+      errMsg.textContent = 'Could not load personas \u2014 reload the extension.';
+      list.appendChild(errMsg);
+    } else if (this.personas.length === 0) {
+      const emptyMsg = document.createElement('span');
+      emptyMsg.textContent = 'No personas configured.';
+      list.appendChild(emptyMsg);
+    } else {
+      for (const persona of this.personas) {
+        const chip = this.createPersonaChip(persona);
+        list.appendChild(chip);
+      }
+    }
+
+    dropdown.appendChild(list);
+    return dropdown;
+  }
+
+  private createPersonaChip(persona: Persona): HTMLElement {
+    const chip = document.createElement('div');
+    chip.className = 'persona-chip checked'; // pre-checked by default
+    chip.dataset.personaId = persona.id;
+
+    const check = document.createElement('span');
+    check.className = 'persona-check';
+    check.textContent = '\u2713'; // checkmark
+
+    const name = document.createElement('span');
+    name.textContent = persona.name; // .textContent for XSS safety
+
+    chip.appendChild(check);
+    chip.appendChild(name);
+
+    chip.addEventListener('click', () => {
+      this.togglePersonaChip(chip, persona.id);
+    });
+
+    return chip;
+  }
+
+  private togglePersonaChip(chip: HTMLElement, personaId: string): void {
+    if (this.checkedPersonaIds.has(personaId)) {
+      this.checkedPersonaIds.delete(personaId);
+      chip.classList.remove('checked');
+    } else {
+      this.checkedPersonaIds.add(personaId);
+      chip.classList.add('checked');
+    }
+    this.updatePersonaBtnCount();
+  }
+
+  private togglePersonaDropdown(): void {
+    if (this.dropdownEl) {
+      this.dropdownEl.classList.toggle('open');
+    }
+    if (this.chevronEl) {
+      this.chevronEl.classList.toggle('open');
+    }
+  }
+
+  private updatePersonaBtnCount(): void {
+    if (this.personaBtnTextEl) {
+      this.personaBtnTextEl.textContent = this.getPersonaBtnText();
+    }
+    if (this.personaBtnEl) {
+      this.personaBtnEl.classList.toggle('has-active', this.checkedPersonaIds.size > 0);
+    }
+  }
+
+  private getPersonaBtnText(): string {
+    if (this.personaLoadFailed) {
+      return 'Personas (?)';
+    }
+    return `Personas (${this.checkedPersonaIds.size})`;
   }
 }

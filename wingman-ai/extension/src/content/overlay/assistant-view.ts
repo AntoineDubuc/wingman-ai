@@ -332,12 +332,69 @@ export class AssistantView {
     return escaped;
   }
 
+  /** Maximum number of source tags rendered per message. */
+  private static readonly MAX_SOURCE_TAGS = 10;
+
+  /** Maximum display length for a single source tag. */
+  private static readonly MAX_SOURCE_TAG_LENGTH = 60;
+
   /**
    * Build source-attribution tags below an assistant bubble.
-   * Placeholder for Task 5 — currently a no-op.
+   *
+   * Classification rules:
+   * - "transcript" -> .transcript (green)
+   * - ends with " KB" -> .persona (purple)
+   * - "web" -> .web (amber)
+   * - empty/undefined -> single .general "general knowledge" tag
    */
-  private buildSourceTags(_msgEl: HTMLElement, _sources?: string[]): void {
-    // Task 5 will implement source tag rendering
+  private buildSourceTags(msgEl: HTMLElement, sources?: string[] | null): void {
+    const effectiveSources = sources && sources.length > 0 ? sources : ['general knowledge'];
+
+    // Store original sources as JSON attribute
+    if (sources && sources.length > 0) {
+      msgEl.dataset.sources = JSON.stringify(sources);
+    }
+
+    const container = document.createElement('div');
+    container.className = 'msg-sources';
+
+    const displayCount = Math.min(effectiveSources.length, AssistantView.MAX_SOURCE_TAGS);
+    for (let i = 0; i < displayCount; i++) {
+      const source = effectiveSources[i]!;
+      const tag = document.createElement('span');
+      tag.className = 'msg-source-tag';
+
+      // Classify
+      if (source === 'transcript') {
+        tag.classList.add('transcript');
+      } else if (source.endsWith(' KB')) {
+        tag.classList.add('persona');
+      } else if (source === 'web') {
+        tag.classList.add('web');
+      } else if (source === 'general knowledge') {
+        tag.classList.add('general');
+      }
+      // else: no classification class (default gray)
+
+      // Truncate display text
+      const displayText = source.length > AssistantView.MAX_SOURCE_TAG_LENGTH
+        ? source.slice(0, AssistantView.MAX_SOURCE_TAG_LENGTH) + '...'
+        : source;
+
+      // SECURITY: use .textContent, never .innerHTML
+      tag.textContent = displayText;
+      container.appendChild(tag);
+    }
+
+    // +N more tag if truncated
+    if (effectiveSources.length > AssistantView.MAX_SOURCE_TAGS) {
+      const moreTag = document.createElement('span');
+      moreTag.className = 'msg-source-tag';
+      moreTag.textContent = `+${effectiveSources.length - AssistantView.MAX_SOURCE_TAGS} more`;
+      container.appendChild(moreTag);
+    }
+
+    msgEl.appendChild(container);
   }
 
   // ── Private: Chat helpers ──

@@ -114,6 +114,11 @@ export class AIOverlay {
   // KB query state
   private kbQueryInFlight = false;
 
+  // Meeting timer state
+  private meetingTimerInterval: ReturnType<typeof setInterval> | null = null;
+  private meetingTimerStartTime: number | null = null;
+  private meetingTimerEl: HTMLElement | null = null;
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
@@ -322,38 +327,47 @@ export class AIOverlay {
     panel.className = 'overlay-panel';
     panel.innerHTML = `
       <div class="overlay-header">
-        <div class="drag-handle">
-          <span class="status-indicator"></span>
-          <span class="title">Wingman</span>
-          <span class="persona-dots" style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;position:relative;"></span>
-          <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;"></span>
-          <span class="emotion-badge" style="display:none;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;"></span>
+        <div class="status-bar">
+          <div class="recording-indicator">
+            <span class="recording-dot"></span>
+            <span class="recording-label">Recording</span>
+          </div>
+          <div class="meeting-timer" aria-live="off">00:00:00</div>
         </div>
-        <span class="cost-ticker" style="display:none;">
-          <span class="cost-value"></span>
-          <div class="cost-tooltip">
-            <div class="cost-row"><span class="cost-stt-label">Deepgram (STT)</span><span class="cost-stt-value"></span></div>
-            <div class="cost-row"><span class="cost-llm-label">LLM</span><span class="cost-llm-value"></span></div>
-            <div class="cost-row total"><span>Total</span><span class="cost-total-value"></span></div>
-            <div class="cost-hint"></div>
+        <div class="header-main">
+          <div class="drag-handle">
+            <span class="status-indicator"></span>
+            <span class="title">Wingman</span>
+            <span class="persona-dots" style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;position:relative;"></span>
+            <span class="persona-label" style="font-size:11px;opacity:0.85;margin-left:4px;font-weight:600;"></span>
+            <span class="emotion-badge" style="display:none;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;"></span>
           </div>
-        </span>
-        <div class="controls">
-          <div class="font-controls">
-            <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
-            <button class="font-increase-btn" title="Increase font size">A+</button>
+          <span class="cost-ticker" style="display:none;">
+            <span class="cost-value"></span>
+            <div class="cost-tooltip">
+              <div class="cost-row"><span class="cost-stt-label">Deepgram (STT)</span><span class="cost-stt-value"></span></div>
+              <div class="cost-row"><span class="cost-llm-label">LLM</span><span class="cost-llm-value"></span></div>
+              <div class="cost-row total"><span>Total</span><span class="cost-total-value"></span></div>
+              <div class="cost-hint"></div>
+            </div>
+          </span>
+          <div class="controls">
+            <div class="font-controls">
+              <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
+              <button class="font-increase-btn" title="Increase font size">A+</button>
+            </div>
+            <button class="display-toggle-btn" title="Suggestions only" aria-label="Suggestions only" aria-pressed="false">
+              ${ICONS.FILTER}
+            </button>
+            <button class="dock-toggle-btn" title="Sidebar Right" aria-label="Sidebar Right">
+              ${ICONS.DOCK}
+            </button>
+            <button class="layout-toggle-btn" title="Toggle side-by-side" style="display:none;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+            </button>
+            <button class="minimize-btn" title="Minimize">${ICONS.MINIMIZE}</button>
+            <button class="close-btn" title="Hide">${ICONS.CLOSE}</button>
           </div>
-          <button class="display-toggle-btn" title="Suggestions only" aria-label="Suggestions only" aria-pressed="false">
-            ${ICONS.FILTER}
-          </button>
-          <button class="dock-toggle-btn" title="Sidebar Right" aria-label="Sidebar Right">
-            ${ICONS.DOCK}
-          </button>
-          <button class="layout-toggle-btn" title="Toggle side-by-side" style="display:none;">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
-          </button>
-          <button class="minimize-btn" title="Minimize">${ICONS.MINIMIZE}</button>
-          <button class="close-btn" title="Hide">${ICONS.CLOSE}</button>
         </div>
       </div>
       <div class="overlay-body">
@@ -394,6 +408,9 @@ export class AIOverlay {
 
     // Store timeline reference
     this.timelineEl = panel.querySelector('.timeline') as HTMLElement;
+
+    // Store meeting timer reference
+    this.meetingTimerEl = panel.querySelector('.meeting-timer') as HTMLElement;
 
     // KB search bar event listeners
     const kbInput = panel.querySelector('.kb-query-input') as HTMLInputElement | null;
@@ -2111,10 +2128,52 @@ export class AIOverlay {
     });
   }
 
+  // ── Meeting Timer ──
+
+  /**
+   * Start the meeting timer. Clears any existing interval first
+   * to prevent leaks on double-call.
+   */
+  startMeetingTimer(): void {
+    // Clear any existing interval to prevent leaks
+    if (this.meetingTimerInterval !== null) {
+      clearInterval(this.meetingTimerInterval);
+    }
+    this.meetingTimerStartTime = Date.now();
+    if (this.meetingTimerEl) {
+      this.meetingTimerEl.textContent = '00:00:00';
+    }
+    this.meetingTimerInterval = setInterval(() => this.updateMeetingTimer(), 1000);
+  }
+
+  /**
+   * Update the meeting timer display with elapsed time.
+   */
+  private updateMeetingTimer(): void {
+    if (this.meetingTimerStartTime === null || !this.meetingTimerEl) return;
+    const elapsed = Math.floor((Date.now() - this.meetingTimerStartTime) / 1000);
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    this.meetingTimerEl.textContent =
+      `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  /**
+   * Stop the meeting timer (keeps last value visible).
+   */
+  stopMeetingTimer(): void {
+    if (this.meetingTimerInterval !== null) {
+      clearInterval(this.meetingTimerInterval);
+      this.meetingTimerInterval = null;
+    }
+  }
+
   /**
    * Clean up event listeners and resources
    */
   destroy(): void {
+    this.stopMeetingTimer();
     this.draggable?.destroy();
     this.resizable?.destroy();
     this.dockable?.destroy();

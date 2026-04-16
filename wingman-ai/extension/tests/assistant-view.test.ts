@@ -1064,3 +1064,243 @@ describe('Task 6: Chat input', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 7: Contracts + history persistence
+// ---------------------------------------------------------------------------
+
+describe('Task 7: Contracts + history persistence', () => {
+  let AssistantView: typeof import('../src/content/overlay/assistant-view').AssistantView;
+  let container: HTMLElement;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    mockGetActivePersonas.mockResolvedValue(MOCK_PERSONAS);
+    container = makeContainer();
+    const mod = await import('../src/content/overlay/assistant-view');
+    AssistantView = mod.AssistantView;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  describe('AC1: onSend subscriber receives text and context', () => {
+    it('registered callback fires with text and SendContext on handleSend', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const calls: Array<{ text: string; ctx: any }> = [];
+      view.onSend((text, ctx) => calls.push({ text, ctx }));
+
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      input.value = 'hi';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(calls).toHaveLength(1);
+      expect(calls[0]!.text).toBe('hi');
+      expect(calls[0]!.ctx).toHaveProperty('transcript');
+      expect(calls[0]!.ctx).toHaveProperty('personaIds');
+      expect(calls[0]!.ctx).toHaveProperty('web');
+    });
+  });
+
+  describe('AC2: SendContext matches getContextState()', () => {
+    it('ctx has transcript=true, all personaIds, web=false by default', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      let capturedCtx: any;
+      view.onSend((_text, ctx) => { capturedCtx = ctx; });
+
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      input.value = 'test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(capturedCtx.transcript).toBe(true);
+      expect(capturedCtx.personaIds).toEqual(['p1', 'p2', 'p3']);
+      expect(capturedCtx.web).toBe(false);
+    });
+  });
+
+  describe('AC3: onSend returns unsubscribe function', () => {
+    it('unsubscribing prevents future calls', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const calls: string[] = [];
+      const unsub = view.onSend((text) => calls.push(text));
+
+      // Send first message
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      input.value = 'msg1';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(calls).toHaveLength(1);
+
+      // Unsubscribe
+      unsub();
+
+      // Send second message
+      input.value = 'msg2';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(calls).toHaveLength(1); // still 1 — not called again
+    });
+  });
+
+  describe('AC4: pre-mount onSend registration', () => {
+    it('callbacks registered before mount fire on first post-mount send', async () => {
+      const view = new AssistantView();
+      const calls: string[] = [];
+      view.onSend((text) => calls.push(text));
+
+      await view.mount(container);
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      input.value = 'pre-mount test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(calls).toEqual(['pre-mount test']);
+    });
+  });
+
+  describe('AC5: orphan messageId is a no-op with console.warn', () => {
+    it('warns and ignores a finalize call with unknown messageId', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      view.renderAssistantMessage({ text: 'orphan', streaming: false, messageId: 'no-such-id' });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('unknown messageId: no-such-id')
+      );
+      // No bubble created
+      expect(container.querySelector('[data-message-id="no-such-id"]')).toBeNull();
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('AC6: MAX_ONSEND_SUBSCRIBERS = 4', () => {
+    it('5th subscriber throws', async () => {
+      const view = new AssistantView();
+      view.onSend(() => {});
+      view.onSend(() => {});
+      view.onSend(() => {});
+      view.onSend(() => {});
+      expect(() => view.onSend(() => {})).toThrow(
+        'AssistantView: exceeded MAX_ONSEND_SUBSCRIBERS (4)'
+      );
+    });
+  });
+
+  describe('AC7: subscriber error isolation', () => {
+    it('throwing subscriber does not prevent other subscribers from being called', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      const calls: number[] = [];
+
+      view.onSend(() => calls.push(1));
+      view.onSend(() => { throw new Error('boom'); });
+      view.onSend(() => calls.push(3));
+
+      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      const input = container.querySelector('.chat-input') as HTMLInputElement;
+      input.value = 'test';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(calls).toEqual([1, 3]);
+      expect(debugSpy).toHaveBeenCalled();
+      debugSpy.mockRestore();
+    });
+  });
+
+  describe('AC8: chat history persists across mode-toggle (unmount/mount)', () => {
+    it('3 messages survive 3 unmount/mount cycles', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+
+      view.appendUserMessage('msg-1');
+      view.renderAssistantMessage({ text: 'reply-1', sources: ['transcript'] });
+      view.appendUserMessage('msg-2');
+
+      // Toggle mode 3 times: unmount + mount
+      for (let i = 0; i < 3; i++) {
+        view.unmount();
+        container = makeContainer(); // fresh container
+        await view.mount(container);
+      }
+
+      const bubbles = container.querySelectorAll('.chat-msg');
+      expect(bubbles.length).toBeGreaterThanOrEqual(3);
+      expect(view.getChatHistory()).toHaveLength(3);
+    });
+  });
+
+  describe('AC9: context-toggle changes do not affect past messages', () => {
+    it('old messages retain their original data-sources', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+
+      // Send with transcript ON
+      view.renderAssistantMessage({ text: 'first', sources: ['transcript'] });
+
+      // Toggle transcript OFF
+      const transcript = container.querySelector('.context-toggle[data-ctx="transcript"]') as HTMLElement;
+      transcript.click();
+
+      // Send second message
+      view.renderAssistantMessage({ text: 'second', sources: ['web'] });
+
+      // First message should still have transcript source
+      const bots = container.querySelectorAll('.chat-msg-bot');
+      expect(bots).toHaveLength(2);
+      const firstSources = (bots[0] as HTMLElement).dataset.sources;
+      expect(firstSources).toBe(JSON.stringify(['transcript']));
+      const secondSources = (bots[1] as HTMLElement).dataset.sources;
+      expect(secondSources).toBe(JSON.stringify(['web']));
+    });
+  });
+
+  describe('AC10: unmount does NOT clear chatHistory', () => {
+    it('chatHistory survives unmount', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.appendUserMessage('persist');
+      view.unmount();
+      expect(view.getChatHistory()).toHaveLength(1);
+      expect(view.getChatHistory()[0]!.text).toBe('persist');
+    });
+  });
+
+  describe('AC11: getChatHistory returns the history array', () => {
+    it('returns messages in order', async () => {
+      const view = new AssistantView();
+      await view.mount(container);
+      view.appendUserMessage('one');
+      view.renderAssistantMessage({ text: 'two', sources: ['web'] });
+      const history = view.getChatHistory();
+      expect(history).toHaveLength(2);
+      expect(history[0]).toEqual({ role: 'user', text: 'one' });
+      expect(history[1]).toEqual({ role: 'assistant', text: 'two', sources: ['web'] });
+    });
+  });
+
+  describe('Negative: onSend(null) throws', () => {
+    it('throws on null callback', async () => {
+      const view = new AssistantView();
+      expect(() => view.onSend(null as any)).toThrow();
+    });
+  });
+
+  describe('Negative: 5th subscriber throws exact message', () => {
+    it('error message includes the limit', async () => {
+      const view = new AssistantView();
+      for (let i = 0; i < 4; i++) view.onSend(() => {});
+      expect(() => view.onSend(() => {})).toThrow(
+        'AssistantView: exceeded MAX_ONSEND_SUBSCRIBERS (4)'
+      );
+    });
+  });
+});

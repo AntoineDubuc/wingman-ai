@@ -4,7 +4,8 @@
  * Mounts into `.assistant-view-mount` created by Plan 2. Renders:
  * - Context bar (Transcript / Personas / Web Search toggles)
  * - Persona dropdown (collapsible, pre-checked chips)
- * - Chat empty state / messages (Task 3+)
+ * - Chat empty state with suggestion chips
+ * - Chat messages area (Task 4+)
  * - Chat input (Task 6)
  *
  * All state lives here — nothing bleeds into overlay.ts.
@@ -22,6 +23,21 @@ export interface ContextState {
   web: boolean;
 }
 
+/** A single chat message in history. */
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  sources?: string[];
+}
+
+/** Suggestion chip definitions for the empty state. */
+const SUGGESTION_CHIPS = [
+  { icon: '\uD83D\uDCC4', text: 'What is the PKCE flow Sarah mentioned?' },
+  { icon: '\u2709', text: 'Draft a follow-up email with action items' },
+  { icon: '\uD83D\uDCDA', text: 'Explain OAuth 2.0 token rotation best practices' },
+  { icon: '\uD83E\uDDE0', text: 'What does our Architect know about session migration?' },
+] as const;
+
 export class AssistantView {
   private mounted = false;
   private container: HTMLElement | null = null;
@@ -33,6 +49,10 @@ export class AssistantView {
   private personas: Persona[] = [];
   private checkedPersonaIds: Set<string> = new Set();
   private personaLoadFailed = false;
+
+  // Chat state
+  private chatHistory: ChatMessage[] = [];
+  private pendingSuggestionText: string | null = null;
 
   // DOM references for updates
   private personaBtnTextEl: HTMLElement | null = null;
@@ -76,6 +96,10 @@ export class AssistantView {
     const dropdown = this.buildPersonaDropdown();
     this.root.appendChild(dropdown);
 
+    // Chat messages area
+    const chatMessages = this.buildChatMessages();
+    this.root.appendChild(chatMessages);
+
     container.appendChild(this.root);
   }
 
@@ -106,6 +130,22 @@ export class AssistantView {
         .map(p => p.id),
       web: this.webActive,
     };
+  }
+
+  /**
+   * Returns the pending suggestion text (set by clicking a suggestion chip).
+   * Task 6's chat input will consume this.
+   */
+  getPendingSuggestionText(): string | null {
+    return this.pendingSuggestionText;
+  }
+
+  /**
+   * Pre-seed chat history before mounting (for testing / restore).
+   * Must be called before mount().
+   */
+  seedChatHistory(messages: ChatMessage[]): void {
+    this.chatHistory = [...messages];
   }
 
   // ── Private: Context Bar ──
@@ -277,5 +317,76 @@ export class AssistantView {
       return 'Personas (?)';
     }
     return `Personas (${this.checkedPersonaIds.size})`;
+  }
+
+  // ── Private: Chat Messages Area ──
+
+  private buildChatMessages(): HTMLElement {
+    const area = document.createElement('div');
+    area.className = 'chat-messages';
+
+    if (this.chatHistory.length === 0) {
+      const empty = this.buildChatEmpty();
+      area.appendChild(empty);
+    }
+
+    return area;
+  }
+
+  private buildChatEmpty(): HTMLElement {
+    const empty = document.createElement('div');
+    empty.className = 'chat-empty';
+
+    // Icon
+    const icon = document.createElement('div');
+    icon.className = 'chat-empty-icon';
+    icon.textContent = '\u2728'; // sparkle emoji
+
+    // Title
+    const title = document.createElement('div');
+    title.className = 'chat-empty-title';
+    title.textContent = 'How can I help?';
+
+    // Subtitle
+    const subtitle = document.createElement('div');
+    subtitle.className = 'chat-empty-subtitle';
+    subtitle.textContent = 'Ask me anything. Toggle context sources above to include meeting transcript or persona knowledge.';
+
+    // Suggestion chips
+    const suggestions = document.createElement('div');
+    suggestions.className = 'chat-empty-suggestions';
+
+    for (const chipDef of SUGGESTION_CHIPS) {
+      const chip = document.createElement('div');
+      chip.className = 'suggestion-chip';
+      chip.dataset.text = chipDef.text;
+
+      const chipIcon = document.createElement('span');
+      chipIcon.className = 'suggestion-icon';
+      chipIcon.textContent = chipDef.icon;
+
+      const chipText = document.createElement('span');
+      chipText.textContent = chipDef.text;
+
+      chip.appendChild(chipIcon);
+      chip.appendChild(chipText);
+
+      chip.addEventListener('click', () => {
+        this.handleSuggestionClick(chipDef.text);
+      });
+
+      suggestions.appendChild(chip);
+    }
+
+    empty.appendChild(icon);
+    empty.appendChild(title);
+    empty.appendChild(subtitle);
+    empty.appendChild(suggestions);
+
+    return empty;
+  }
+
+  private handleSuggestionClick(text: string): void {
+    this.pendingSuggestionText = text;
   }
 }

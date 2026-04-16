@@ -847,12 +847,16 @@ export class AIOverlay {
     const speakerKey = transcript.is_self ? 'self' : 'other';
 
     if (!transcript.is_final) {
-      // Interim: store pending text and coalesce via rAF
-      this.pendingInterimText.set(speakerKey, transcript.text);
-      if (this.interimRafId === null) {
-        this.interimRafId = requestAnimationFrame(() => this.flushInterimUpdates());
+      // Interim: route to MeetingView's live indicator instead of old bubble path
+      if (this.meetingView) {
+        this.meetingView.showLiveIndicator(transcript.speaker);
       }
       return;
+    }
+
+    // Hide the live indicator now that a final arrived
+    if (this.meetingView) {
+      this.meetingView.hideLiveIndicator();
     }
 
     // ── Final transcript — rendering delegated to MeetingView subscription ──
@@ -891,39 +895,6 @@ export class AIOverlay {
   }
 
   /**
-   * Flush pending interim text updates (called via requestAnimationFrame).
-   */
-  private flushInterimUpdates(): void {
-    this.interimRafId = null;
-
-    for (const [key, text] of this.pendingInterimText) {
-      const isSelf = key === 'self';
-      const interimRef = isSelf ? this.interimBubbleSelf : this.interimBubbleOther;
-
-      if (interimRef) {
-        // Update existing interim bubble
-        const textEl = interimRef.querySelector('.bubble-text');
-        if (textEl) textEl.textContent = text;
-      } else {
-        // Create new interim bubble
-        const bubble = document.createElement('div');
-        const alignClass = isSelf ? 'self' : 'participant';
-        bubble.className = `bubble ${alignClass} interim`;
-        bubble.innerHTML =
-          `<div class="bubble-content">` +
-          `<span class="bubble-text" style="font-size:${this.fontSize}px">${this.escapeHtml(text)}</span>` +
-          `</div>`;
-        this.timelineEl.appendChild(bubble);
-
-        if (isSelf) {
-          this.interimBubbleSelf = bubble;
-        } else {
-          this.interimBubbleOther = bubble;
-        }
-      }
-    }
-
-    this.scrollToBottom();
   }
 
   // ── Suggestion Handling ──

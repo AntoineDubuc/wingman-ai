@@ -822,14 +822,13 @@ describe('Task 4: MeetingView — subscription model', () => {
 
   // AC6: updateTranscript(is_final=false) still renders interim bubbles
   describe('AC6: updateTranscript with is_final=false renders interim', () => {
-    it('renders an interim bubble via rAF path', async () => {
+    it('routes interim to MeetingView live indicator (not old bubble path)', async () => {
       vi.resetModules();
-      // Use fake timers so we can control rAF
-      vi.useFakeTimers();
 
       const mod = await import('../src/content/overlay');
       const overlay = new mod.AIOverlay();
       document.body.appendChild(overlay.container);
+      overlay.forceShow();
 
       const shadow = getShadow();
 
@@ -841,14 +840,14 @@ describe('Task 4: MeetingView — subscription model', () => {
         timestamp: new Date().toISOString(),
       });
 
-      // Flush rAF
-      vi.advanceTimersByTime(20);
-
+      // Should NOT create old-style interim bubbles
       const interimBubbles = shadow.querySelectorAll('.bubble.interim');
-      expect(interimBubbles.length).toBeGreaterThanOrEqual(1);
-      expect(interimBubbles[0]!.querySelector('.bubble-text')?.textContent).toContain('Interim text...');
+      expect(interimBubbles.length).toBe(0);
 
-      vi.useRealTimers();
+      // Should activate the live indicator instead
+      const indicator = shadow.querySelector('.transcript-live-indicator');
+      expect(indicator?.classList.contains('active')).toBe(true);
+      expect(indicator?.querySelector('.speaker-text')?.textContent).toContain('Alice');
     });
   });
 

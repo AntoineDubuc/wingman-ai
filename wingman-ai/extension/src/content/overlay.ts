@@ -1978,8 +1978,18 @@ export class AIOverlay {
       this.isMinimized = false;
       this.panel.classList.remove('minimized');
     }
+
+    // Unmount MeetingView BEFORE clearTimeline nukes the DOM
+    if (this.meetingView) {
+      this.meetingView.unmount();
+    }
+
     this.clearTimeline();
     this.panel.style.display = 'flex';
+
+    // Re-mount MeetingView with fresh DOM references
+    // (clearTimeline wiped innerHTML; MeetingView needs to re-create its live indicator + re-subscribe)
+    this.initMeetingView();
 
     // Show session-active UI: status bar (recording + timer) + pill toggle
     const statusBar = this.shadow.querySelector('.status-bar');

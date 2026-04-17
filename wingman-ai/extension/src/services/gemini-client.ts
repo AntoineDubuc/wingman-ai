@@ -1339,7 +1339,14 @@ export class GeminiClient {
       throw new DOMException('The operation was aborted.', 'AbortError');
     }
 
-    const apiKey = this.getProviderApiKey();
+    let apiKey = this.getProviderApiKey();
+    if (!apiKey) {
+      // Cache may be cold (e.g., content-script context where loadProviderConfig
+      // was never called). Lazy-load from chrome.storage so streamChat works
+      // regardless of which extension context invoked it.
+      await this.loadProviderConfig();
+      apiKey = this.getProviderApiKey();
+    }
     if (!apiKey) {
       throw new Error('No API key configured for provider: ' + this.provider);
     }

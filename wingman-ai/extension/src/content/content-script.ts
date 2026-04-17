@@ -70,9 +70,8 @@ function ensureOverlayAttached(): void {
  */
 function initOverlay(): void {
   if (overlay) {
-    // Already initialized — ensure it's attached and visible
+    // Already initialized — ensure it's attached
     ensureOverlayAttached();
-    overlay.forceShow();
     return;
   }
 
@@ -80,8 +79,6 @@ function initOverlay(): void {
   overlay = new AIOverlay(handleOverlayClose);
   // Append to <html> instead of <body> — less likely to be removed by Google Meet's framework
   document.documentElement.appendChild(overlay.container);
-  // Show session-active UI (status bar, pill toggle, timer) on first creation too
-  overlay.forceShow();
 }
 
 /**
@@ -101,6 +98,8 @@ try {
       case 'INIT_OVERLAY':
         overlayDismissedByUser = false;
         initOverlay();
+        // Activate session-state UI (status bar + pill toggle + timer) on session start
+        overlay?.forceShow();
         sendResponse({ success: true });
         break;
 

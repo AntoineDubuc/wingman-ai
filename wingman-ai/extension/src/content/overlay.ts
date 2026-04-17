@@ -8,6 +8,7 @@
 
 import type { CallSummary } from '../services/call-summary';
 import { formatSummaryAsMarkdown } from '../services/call-summary';
+import { registerChatPipeline } from '../services/chat-pipeline';
 
 export interface Suggestion {
   type: 'answer' | 'objection' | 'info';
@@ -1319,9 +1320,14 @@ export class AIOverlay {
     if (!this.assistantView) return;
     const mount = this.shadow.querySelector('.assistant-view-mount') as HTMLElement | null;
     if (mount) {
-      this.assistantView.mount(mount).catch((err) => {
-        console.error('[AIOverlay] AssistantView failed to mount', err);
-      });
+      this.assistantView.mount(mount)
+        .then(() => {
+          // Wire AssistantView.onSend into the chat pipeline orchestrator
+          if (this.assistantView) registerChatPipeline(this.assistantView);
+        })
+        .catch((err) => {
+          console.error('[AIOverlay] AssistantView failed to mount', err);
+        });
     }
   }
 

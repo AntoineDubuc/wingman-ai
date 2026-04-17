@@ -55,12 +55,58 @@ deepgramClient.setTranscriptCallback(handleTranscript);
 | Export | File | Purpose |
 |--------|------|---------|
 | `deepgramClient` | `services/deepgram-client.ts` | WebSocket STT client |
-| `geminiClient` | `services/gemini-client.ts` | Gemini REST API client |
-| `transcriptCollector` | `services/transcript-collector.ts` | Session data collector |
+| `geminiClient` | `services/gemini-client.ts` | LLM REST/SSE client (Gemini, OpenRouter, Groq) |
+| `humeClient` | `services/hume-client.ts` | Emotion detection WebSocket client |
+| `transcriptCollector` | `services/transcript-collector.ts` | Session data collector (service-worker scope) |
+| `transcriptBuffer` | `content/overlay/transcript-buffer.ts` | **Append-only transcript stream for content-script consumers (MeetingView, chat-pipeline)** |
 | `driveService` | `services/drive-service.ts` | Google Drive API |
 | `kbDatabase` | `services/kb/kb-database.ts` | IndexedDB wrapper |
 | `langBuilderClient` | `services/langbuilder-client.ts` | LangBuilder flow executor |
 | `costTracker` | `services/cost-tracker.ts` | Session cost accumulator |
+
+---
+
+## Cross-Context Singleton API Key Pattern (Plan A bug-fix lesson)
+
+**Critical**: Chrome extensions run JavaScript in **isolated contexts** — service worker, content script, popup, offscreen. Each context gets its OWN module instance. The exported `geminiClient` singleton is NOT the same object across contexts.
+
+### The bug pattern this prevents
+
+The service worker calls `geminiClient.loadProviderConfig()` at session start, which populates its in-memory cache from `chrome.storage.local`. The content script's `geminiClient` singleton (imported by `chat-pipeline.ts`) **never has loadProviderConfig() called** — its cache is empty.
+
+If a method that runs in the content script (like `streamChat`) reads from the cache only, it throws "No API key configured" even though the key IS in storage.
+
+### The pattern: lazy-load from storage on cache miss
+
+Any method that reads API keys from a singleton's in-memory cache MUST fall back to `chrome.storage.local` if the cache is empty:
+
+```typescript
+async myMethodThatReadsKey(): Promise<void> {
+  let apiKey = this.getProviderApiKey();
+  if (!apiKey) {
+    // Cache may be cold (e.g., content-script context where loadProviderConfig
+    // was never called). Lazy-load from chrome.storage so this method works
+    // regardless of which extension context invoked it.
+    await this.loadProviderConfig();
+    apiKey = this.getProviderApiKey();
+  }
+  if (!apiKey) {
+    throw new Error('No API key configured for provider: ' + this.provider);
+  }
+  // ... use apiKey
+}
+```
+
+### Symptoms of getting this wrong
+
+- Feature works in service-worker code paths (suggestions, summary, KB embeddings)
+- Same feature throws `"No API key configured"` in content-script code paths (in-meeting AssistantView chat, anything else imported by overlay/content-script modules)
+- Key IS in `chrome.storage.local` — verified via `chrome.storage.local.get(['geminiApiKey'])`
+
+### Where this matters today
+
+- `gemini-client.ts:streamChat()` — used by `chat-pipeline.ts` (content script)
+- Any future method that runs in content-script and reads provider keys
 
 ---
 

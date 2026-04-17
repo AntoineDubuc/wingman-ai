@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>In-Meeting Assistant - Wingman AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    header h1 { color: #fff; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; letter-spacing: -0.02em; }
+    header p { color: rgba(255, 255, 255, 0.85); font-size: clamp(0.85rem, 2vw, 1rem); margin-top: 8px; }
+    .progress-bar { display: flex; justify-content: center; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+    .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); transition: background 0.3s; }
+    .progress-dot.active { background: #fff; }
+    main { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+    .step { margin-bottom: 64px; opacity: 0; transform: translateY(20px); animation: fadeInUp 0.5s ease forwards; }
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .step-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .step-number {
+      flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff; font-size: 1rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-title { font-size: clamp(1rem, 3vw, 1.25rem); font-weight: 600; color: #fff; }
+    .step-description { color: #a6adc8; font-size: 0.95rem; margin-bottom: 16px; padding-left: 56px; }
+    .screenshot-wrapper {
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid #313244; background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      max-width: 480px; margin: 0 auto;
+    }
+    .screenshot-wrapper:hover { border-color: #e8750a; box-shadow: 0 0 24px rgba(232, 117, 10, 0.15); }
+    .screenshot-wrapper a { display: block; }
+    .screenshot-wrapper img { width: 100%; height: auto; display: block; }
+    .step-annotation {
+      margin-top: 12px; padding: 12px 16px;
+      background: #313244; border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem; color: #bac2de;
+    }
+    .step-annotation strong { color: #e8750a; }
+    .step-annotation code {
+      background: #181825; padding: 2px 6px; border-radius: 4px;
+      font-family: 'SF Mono', Monaco, Menlo, monospace; font-size: 0.85rem;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: rgba(255, 255, 255, 0.85); text-decoration: none;
+      font-size: 0.9rem; margin-bottom: 12px; transition: color 0.2s;
+    }
+    .back-link:hover { color: #fff; }
+    .privacy-note {
+      margin: 32px 0; padding: 16px 20px;
+      background: rgba(232, 117, 10, 0.08);
+      border: 1px solid rgba(232, 117, 10, 0.25);
+      border-radius: 12px; color: #cdd6f4; font-size: 0.9rem;
+    }
+    .privacy-note strong { color: #e8750a; }
+    footer {
+      text-align: center; padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70; font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="back-link">&larr; All Tutorials</a>
+    <h1>In-Meeting Assistant</h1>
+    <p>Ask questions during a call &mdash; grounded in your transcript, persona Knowledge Bases, and (optionally) live web search</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Switch between Meeting and Assistant</div>
+      </div>
+      <p class="step-description">
+        After you start a session, the overlay shows two pills at the top: <strong>Meeting</strong> (live transcript) and <strong>Assistant</strong> (chat). Click Assistant to ask the AI a question. Click Meeting to go back to the live transcript. The chat history persists across switches &mdash; toggling never resets your conversation.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/01-meeting-mode.png" target="_blank">
+          <img src="screenshots-new/01-meeting-mode.png" alt="Overlay in Meeting mode showing live transcript and pill toggle" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Independence:</strong> The transcript keeps recording in the background even when you're in Assistant mode. Anything said while you were chatting is included in the next question's context.
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">The Assistant empty state</div>
+      </div>
+      <p class="step-description">
+        Open the Assistant pill and you'll see the empty state with four suggested prompts. Click any chip to drop it into the input and send. You can also type any question of your own. The context bar at the top shows three toggles: <strong>Transcript</strong>, <strong>Personas (n)</strong>, and <strong>Web Search</strong>.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/02-assistant-empty-state.png" target="_blank">
+          <img src="screenshots-new/02-assistant-empty-state.png" alt="Assistant view in empty state with suggested prompts" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Defaults:</strong> Transcript is on. Personas have all your active personas pre-checked. Web Search is off (it costs money per query &mdash; you opt in).
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Ask a general knowledge question</div>
+      </div>
+      <p class="step-description">
+        Ask anything you'd ask a chatbot. Turn off all the context toggles and you get plain LLM knowledge &mdash; no transcript, no KB. The reply streams in token-by-token. The bottom of each reply shows a small tag indicating which sources were used (here: <code>general knowledge</code>).
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/03-assistant-general-query.png" target="_blank">
+          <img src="screenshots-new/03-assistant-general-query.png" alt="Assistant answering a general knowledge question with general-knowledge tag" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Ask about the transcript</div>
+      </div>
+      <p class="step-description">
+        Leave the Transcript toggle on (default) and ask &quot;what was just said about pricing?&quot; or &quot;summarize the last 5 minutes&quot;. The full meeting transcript up to the moment of sending is included in the prompt. The reply tag is <code>transcript</code>, and the answer references things people actually said.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/04-assistant-transcript-query.png" target="_blank">
+          <img src="screenshots-new/04-assistant-transcript-query.png" alt="Assistant answering a transcript-grounded question with transcript tag" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Rolling context:</strong> Each question grabs the transcript at send time, not at session start. Follow-up questions auto-incorporate anything new said since your last question.
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Ask using a Persona Knowledge Base</div>
+      </div>
+      <p class="step-description">
+        If you've attached documents to a persona (pricing guides, product specs, objection handling, etc.), check that persona in the Personas dropdown. Asking a question now retrieves matching chunks from those documents and includes them in the prompt. The reply tag shows <code>{Persona} KB</code> &mdash; e.g., <code>Architect KB</code>.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/05-assistant-kb-query.png" target="_blank">
+          <img src="screenshots-new/05-assistant-kb-query.png" alt="Assistant answering a KB-grounded question with persona KB tag" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>You subtract, you don't build:</strong> all your active personas are pre-checked. Uncheck the ones you don't want to include in this query. The next query starts with all checked again.
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Pick which Persona KBs to include</div>
+      </div>
+      <p class="step-description">
+        Click the Personas chip to expand the picker. You'll see one checkbox per active persona, each with a colored dot. Check the ones whose KB documents you want included as context for the next question. The count in the chip updates live as you toggle. Collapse the picker by clicking the chip again &mdash; your selection is preserved.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/06-persona-kb-picker.png" target="_blank">
+          <img src="screenshots-new/06-persona-kb-picker.png" alt="Persona KB picker showing checkboxes for each persona" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Web Search (optional):</strong> Toggle <code>Web Search</code> on to include live Brave Search results in the context. You'll need a Brave Search API key in Settings. Each query counts against your daily budget cap (set in Settings &rarr; Web Search).
+      </div>
+    </div>
+
+    <div class="privacy-note">
+      <strong>What gets sent where:</strong> when you click Send, your question + checked context (transcript / KB chunks / web results) is sent directly from your browser to your configured LLM provider (Gemini, OpenRouter, or Groq) using your own API key. We do not see, store, or proxy any of this. See the <a href="https://github.com/AntoineDubuc/wingman-ai" style="color: #e8750a;">privacy policy</a> for full detail.
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI &mdash; In-Meeting Assistant Tutorial
+  </footer>
+
+</body>
+</html>

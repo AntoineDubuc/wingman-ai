@@ -24,14 +24,14 @@
 <body>
 
 <h1>Wingman AI — Privacy Policy</h1>
-<p class="date">Effective date: March 31, 2026</p>
+<p class="date">Effective date: April 16, 2026</p>
 
 <div class="highlight">
 <strong>The short version:</strong> Wingman AI runs entirely in your browser. We do not operate servers, collect your data, or have access to your conversations. Your API keys, transcripts, and audio never pass through any infrastructure we control.
 </div>
 
 <h2>1. What Wingman AI Does</h2>
-<p>Wingman AI is a Chrome extension that provides real-time AI suggestions, live transcription, and emotion detection during Google Meet video calls. It operates as a browser-side overlay — completely invisible to other call participants.</p>
+<p>Wingman AI is a Chrome extension that provides real-time AI suggestions, live transcription, emotion detection, and an in-meeting AI assistant during Google Meet video calls. It operates as a browser-side overlay — completely invisible to other call participants. The in-meeting assistant lets you ask questions during a call and receive streamed answers grounded in your meeting transcript, your selected persona knowledge bases, and (optionally) live web search results.</p>
 
 <h2>2. Data We Collect</h2>
 <p><strong>None.</strong> We do not collect, store, receive, or have access to any user data. There is no backend server, no analytics, no telemetry, and no tracking of any kind.</p>
@@ -49,11 +49,16 @@
 <p>When you start a session, the extension sends data directly from your browser to third-party API providers <strong>using your own API keys</strong>:</p>
 <ul>
   <li><strong>Deepgram</strong> — Tab audio is streamed via WebSocket for speech-to-text transcription.</li>
-  <li><strong>Google Gemini / OpenRouter / Groq</strong> — Transcribed text is sent via REST API for AI suggestion generation.</li>
+  <li><strong>Google Gemini / OpenRouter / Groq</strong> — Transcribed text is sent via REST API for AI suggestion generation. <strong>Additionally, when you use the in-meeting Assistant chat</strong>, the question you type is sent along with: (a) your meeting transcript up to the moment of sending (when the Transcript context toggle is on, which is the default), (b) matching chunks from your selected persona Knowledge Bases (when any are checked, which is the default), and (c) Brave Search results (only when the Web Search toggle is on, which is off by default). The full context is concatenated into a single LLM request.</li>
+  <li><strong>Brave Search API</strong> (optional) — When you enable the Web Search toggle in the Assistant view, your typed question is sent to Brave Search to retrieve relevant web results. The query and the resulting URLs/snippets are then included in the prompt sent to your selected LLM provider. The Brave Search API key is supplied by you and stored locally; queries go directly from your browser to Brave.</li>
   <li><strong>Hume AI</strong> (optional) — Audio is sent via WebSocket for emotion detection.</li>
   <li><strong>Google Drive</strong> (optional) — Call summaries are saved to your Google Drive if you enable this feature and authenticate with your Google account.</li>
 </ul>
 <p>These transmissions go directly from your browser to each provider. We have no visibility into, access to, or control over this data. Each provider's own privacy policy governs how they handle your data.</p>
+
+<div class="highlight">
+<strong>What the in-meeting Assistant transmits, in plain language:</strong> when you click Send in the Assistant tab during a call, the LLM provider you have configured (Gemini, OpenRouter, or Groq) receives your question PLUS your meeting transcript PLUS your selected KB chunks PLUS web results if enabled. Toggle the Transcript / Personas / Web Search chips at the top of the Assistant view to control what is included with each query. Sources used in any given response are shown as labeled tags under the assistant's reply.
+</div>
 
 <h2>5. Data We Do NOT Collect</h2>
 <ul>

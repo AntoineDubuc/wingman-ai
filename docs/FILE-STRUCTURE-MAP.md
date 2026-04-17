@@ -16,12 +16,15 @@
 |------|--------|---------|
 | `src/services/deepgram-client.ts` | `deepgramClient` | WebSocket STT (Nova-3) |
 | `src/services/hume-client.ts` | `humeClient` | WebSocket emotion detection (Expression Measurement API) |
-| `src/services/gemini-client.ts` | `geminiClient` | Multi-provider LLM client (Gemini, OpenRouter, Groq) for suggestions + embeddings + summaries |
+| `src/services/gemini-client.ts` | `geminiClient` | Multi-provider LLM client (Gemini, OpenRouter, Groq) for suggestions + embeddings + summaries + chat streaming |
 | `src/services/cost-tracker.ts` | `costTracker` | Session-scoped cost accumulator (Deepgram minutes + LLM tokens) |
 | `src/services/langbuilder-client.ts` | `langbuilderClient` | LangBuilder flow execution |
 | `src/services/drive-service.ts` | `driveService` | Google Drive API with cross-browser OAuth |
-| `src/services/transcript-collector.ts` | `transcriptCollector` | Session transcript accumulator |
+| `src/services/transcript-collector.ts` | `transcriptCollector` | Session transcript accumulator (service-worker scope) |
 | `src/services/call-summary.ts` | `buildSummaryPrompt`, `formatSummaryAsMarkdown` | Post-call summary generation |
+| `src/services/chat-pipeline.ts` | `registerChatPipeline` | **In-meeting Assistant orchestrator. Wires AssistantView.onSend → context assembly → streamChat → renderAssistantMessage. Single-subscriber, isStreaming guard, 30s idle timeout.** |
+| `src/services/chat-context-assembler.ts` | `assembleChatContext` | **Builds the system prompt for chat queries. Reads transcript snapshot + persona-scoped KB chunks + web search results + chat history at query time. Includes prompt-injection defense (fenced context).** |
+| `src/services/web-search.ts` | `webSearch`, `webSearchTestCall` | **Brave Search client with retry, daily budget cap, HTML stripping. Test calls exempt from daily counter.** |
 | `src/services/kb/kb-database.ts` | `kbDatabase` | IndexedDB wrapper for KB docs + embeddings |
 | `src/services/kb/kb-search.ts` | `searchKnowledgeBase` | Cosine similarity semantic search |
 | `src/services/kb/extractors.ts` | Text extraction helpers | PDF, Markdown, plain text |
@@ -30,7 +33,17 @@
 
 | File | Purpose |
 |------|---------|
-| `src/content/overlay.ts` | Shadow DOM floating panel (transcripts, suggestions, summary, cost ticker, emotion badge) |
+| `src/content/overlay.ts` | Shadow DOM floating panel: pill toggle (Meeting/Assistant), MeetingView/AssistantView mounts, transcripts, suggestions, summary, cost ticker, emotion badge, status bar (recording + timer), KB query bar |
+| `src/content/overlay/transcript-buffer.ts` | **Append-only singleton TranscriptBuffer — `getSnapshot()`, `onAppend(callback)`, MAX_SUBSCRIBERS cap. Shared by MeetingView (rendering) and chat-pipeline (context).** |
+| `src/content/overlay/transcript-handler.ts` | **Content-script boundary handler — validates 5-field shape via `transcript-validator.ts`, then routes to overlay.updateTranscript (render) FIRST and transcriptBuffer.append (subscriber fan-out) SECOND so a buffer throw cannot block rendering.** |
+| `src/content/overlay/transcript-validator.ts` | **5-field validation for incoming transcript messages.** |
+| `src/content/overlay/meeting-view.ts` | **Meeting-mode timeline. Subscribes to TranscriptBuffer, renders speaker-avatar entries, manages live "X is speaking…" indicator. Re-mounted on every session start.** |
+| `src/content/overlay/assistant-view.ts` | **Assistant-mode chat UI. Context bar (Transcript/Personas/Web), persona dropdown, empty state, streaming messages, source attribution tags, chat input. Public `onSend(callback)` API for chat-pipeline registration. unmount() retains chatHistory + onSendSubscribers across cycles by design.** |
+| `src/content/overlay/speaker-color.ts` | **Deterministic speaker color assignment for avatars.** |
+| `src/content/overlay/draggable.ts` | Drag-to-move (disabled when docked) |
+| `src/content/overlay/resizable.ts` | Resize handles (width-only when docked) |
+| `src/content/overlay/dockable.ts` | Dock-mode state machine (Floating / Sidebar Left / Sidebar Right) |
+| `src/content/overlay/margin-injector.ts` | Pushes Meet content aside when panel is docked |
 | `src/content/audio-processor.worklet.js` | AudioWorklet: resample to 16kHz PCM16 |
 | `src/offscreen/audio-processor.js` | Tab audio capture AudioWorklet |
 
@@ -45,6 +58,7 @@
 | `src/options/sections/call-summary.ts` | Call summary toggle + settings |
 | `src/options/sections/theme.ts` | Dark/light mode |
 | `src/options/sections/speaker-filter.ts` | Filter self from transcripts |
+| `src/options/sections/web-search.ts` | **Brave Search API key + daily budget cap slider + test button (test calls exempt from counter)** |
 | `src/options/sections/langbuilder.ts` | LangBuilder flow upload |
 | `src/options/sections/tabs.ts` | Tab navigation controller |
 | `src/options/sections/icons.ts` | Icon definitions |

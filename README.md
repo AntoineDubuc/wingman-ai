@@ -46,6 +46,17 @@ Upload your sales decks, pricing sheets, and battlecards. Wingman searches them 
 </td>
 <td width="50%" valign="top">
 
+### 💬 In-Meeting Assistant <sub>NEW</sub>
+
+Switch to the Assistant pill mid-call to ask the AI a question. Answers stream back grounded in the **live transcript**, your **persona Knowledge Bases**, and (optionally) **live web search**. Each reply tags which sources it used. Chat history persists across pill toggles.
+
+<img src="docs/images/in-meeting-assistant/04-assistant-transcript-query.png" alt="In-Meeting Assistant" width="100%">
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
 ### 🎭 Multi-Persona System
 
 Switch between expert personas mid-call: Discovery Coach, Sales Closer, Technical Expert, Objection Handler. Each has its own prompt and knowledge base.
@@ -53,8 +64,6 @@ Switch between expert personas mid-call: Discovery Coach, Sales Closer, Technica
 <img src="docs/images/persona-editor.png" alt="Persona Editor" width="100%">
 
 </td>
-</tr>
-<tr>
 <td width="50%" valign="top">
 
 ### 🧠 Conclave Mode
@@ -66,6 +75,8 @@ Save team presets for different call types: Sales Team, Enterprise Deal, Discove
 <img src="docs/images/conclave.png" alt="Conclave Mode" width="100%">
 
 </td>
+</tr>
+<tr>
 <td width="50%" valign="top">
 
 ### 😤 Emotion Detection

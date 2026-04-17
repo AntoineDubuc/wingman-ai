@@ -56,6 +56,7 @@ Real-time AI assistant for sales calls on Google Meet. Listens to conversation, 
 **Key Features:**
 - Real-time speech-to-text (Deepgram)
 - AI suggestions (Google Gemini, OpenRouter, or Groq)
+- **In-meeting AI assistant** — switch the overlay to chat mode and ask questions grounded in the live transcript + persona KBs + (optional) Brave web search
 - Knowledge base semantic search
 - Multi-persona system (different prompts + KB docs)
 - Call summaries auto-saved to Google Drive

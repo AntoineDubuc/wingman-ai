@@ -9,9 +9,13 @@ Real-time AI assistant for sales professionals during Google Meet calls. Wingman
 - **Real-time Audio Capture**: Chrome extension captures Google Meet audio via TabCapture API
 - **Live Transcription**: Deepgram Nova-3 provides accurate speech-to-text with speaker diarization
 - **AI-Powered Suggestions**: Gemini generates contextual response suggestions based on customer questions
+- **In-Meeting Assistant** *(NEW)*: Switch the overlay to Assistant mode to ask the AI a question mid-call. Answers stream back grounded in the live transcript, persona Knowledge Bases, and (optionally) Brave Search results
+- **Multi-Persona System**: Switch between expert personas mid-call; activate up to 4 simultaneously in Conclave Mode
+- **Knowledge Base**: Upload PDF, Markdown, or text docs per persona; semantic search during calls
 - **Speaker Identification**: Automatically identifies customer vs. consultant roles
-- **Auto-save Transcripts**: Optionally save meeting transcripts to Google Drive
-- **Unobtrusive UI**: Floating overlay displays suggestions without disrupting the meeting
+- **Emotion Detection** *(optional)*: Hume AI vocal-prosody analysis surfaces engaged / frustrated / thinking / neutral states
+- **Auto-save Transcripts & Summaries**: Optionally save meeting transcripts and AI-generated call summaries to Google Drive as native Google Docs
+- **Unobtrusive UI**: Floating, draggable, dockable overlay displays everything without disrupting the meeting
 - **Zero Infrastructure**: No server to run - everything happens in your browser
 
 ## Architecture
@@ -88,6 +92,7 @@ npm run build
 3. Click "Start Session"
 4. The floating overlay will appear showing transcripts and AI suggestions
 5. Speak or let customers speak - Wingman will provide relevant suggestions
+6. Click the **Assistant** pill at the top of the overlay to ask the AI a question mid-call (transcript and persona KBs are included by default; web search is opt-in)
 
 ## Estimated Costs
 

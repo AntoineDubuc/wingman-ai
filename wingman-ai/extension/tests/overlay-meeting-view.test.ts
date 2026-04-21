@@ -1200,7 +1200,11 @@ describe('Task 5: Speaker-avatar-list design + speakerColor', () => {
       expect(entries).toHaveLength(1); // correction window replaced, not appended
       expect(entries[0]!.classList.contains('self')).toBe(true);
       const textEl = entries[0]!.querySelector('.transcript-text');
-      expect(textEl!.textContent).toBe('hello world');
+      // Self entries include a visually-hidden "You said:" prefix (AC8), so the
+      // last text node holds the spoken text; the full textContent is
+      // "You said: hello world".
+      expect(textEl!.textContent).toBe('You said: hello world');
+      expect(textEl!.querySelector('.sr-only')).not.toBeNull();
 
       vi.useRealTimers();
     });
@@ -1245,6 +1249,73 @@ describe('Task 5: Speaker-avatar-list design + speakerColor', () => {
       const el = container.querySelector('.transcript-entry');
       expect(el).not.toBeNull();
       expect(el!.classList.contains('self')).toBe(false);
+    });
+  });
+
+  // AC8: visually-hidden "You said:" prefix on self entries (WCAG 1.4.1 non-color differentiator)
+  describe('AC8: screen-reader prefix on self entries', () => {
+    function makeSelfEntry(text: string, isSelf: boolean): { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string } {
+      return {
+        text,
+        speaker: isSelf ? 'You' : 'Alice',
+        is_final: true,
+        is_self: isSelf,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    it('inserts <span class="sr-only">You said: </span> as first child of .transcript-text on self entries', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('Hello from me', true));
+
+      const textEl = container.querySelector('.transcript-entry.self .transcript-text');
+      expect(textEl, 'self transcript-text missing').not.toBeNull();
+      const firstChild = textEl!.firstElementChild;
+      expect(firstChild, 'self transcript-text has no child element').not.toBeNull();
+      expect(firstChild!.tagName).toBe('SPAN');
+      expect(firstChild!.classList.contains('sr-only')).toBe(true);
+      expect(firstChild!.textContent).toBe('You said: ');
+    });
+
+    it('does not insert sr-only prefix for participant entries', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('Hello from participant', false));
+
+      const textEl = container.querySelector('.transcript-entry .transcript-text');
+      expect(textEl).not.toBeNull();
+      // No sr-only span anywhere inside
+      expect(textEl!.querySelector('.sr-only')).toBeNull();
+    });
+
+    it('self entry with empty text still produces well-formed DOM (no orphan sr-only child)', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('', true));
+
+      const textEl = container.querySelector('.transcript-entry.self .transcript-text');
+      expect(textEl).not.toBeNull();
+      // Element exists with the sr-only prefix even for empty text — acceptable.
+      // The key is no throw + no nested empty child spans.
+      const nestedEmptySpans = textEl!.querySelectorAll('span:empty');
+      // sr-only span itself has 'You said: ' text so isn't :empty. We just
+      // assert there are no ORPHAN empty spans beyond the sr-only prefix.
+      for (const span of Array.from(nestedEmptySpans)) {
+        expect(span.classList.contains('sr-only')).toBe(false);
+      }
     });
   });
 

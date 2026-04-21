@@ -118,10 +118,21 @@ export class MeetingView {
       this.lastRenderedTime !== null &&
       now - this.lastRenderedTime < CORRECTION_WINDOW_MS
     ) {
-      // Update the existing element's text in place
+      // Update the existing element's text in place.
+      // For self entries, preserve the .sr-only "You said:" prefix span — only
+      // swap the trailing text node. For others, replace textContent wholesale.
       const textEl = this.lastRenderedElement.querySelector('.transcript-text');
       if (textEl) {
-        textEl.textContent = entry.text;
+        if (entry.is_self === true) {
+          const srPrefix = textEl.querySelector('.sr-only');
+          // Clear everything except the sr-only prefix, then append new text node.
+          while (textEl.lastChild && textEl.lastChild !== srPrefix) {
+            textEl.removeChild(textEl.lastChild);
+          }
+          textEl.appendChild(document.createTextNode(entry.text));
+        } else {
+          textEl.textContent = entry.text;
+        }
       }
       this.lastRenderedTime = now;
       this.scrollToBottom();
@@ -156,10 +167,21 @@ export class MeetingView {
     speakerRow.appendChild(nameEl);
     speakerRow.appendChild(timeEl);
 
-    // Transcript text
+    // Transcript text.
+    // For self entries, prepend a visually-hidden "You said:" prefix so screen-
+    // reader users get a non-color differentiator (WCAG 1.4.1). The prefix is
+    // invisible to sighted users via the .sr-only utility class in overlay.css.
     const textDiv = document.createElement('div');
     textDiv.className = 'transcript-text';
-    textDiv.textContent = entry.text;
+    if (entry.is_self === true) {
+      const srPrefix = document.createElement('span');
+      srPrefix.className = 'sr-only';
+      srPrefix.textContent = 'You said: ';
+      textDiv.appendChild(srPrefix);
+      textDiv.appendChild(document.createTextNode(entry.text));
+    } else {
+      textDiv.textContent = entry.text;
+    }
 
     el.appendChild(speakerRow);
     el.appendChild(textDiv);

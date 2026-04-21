@@ -62,8 +62,14 @@ function sseStreamChunked(chunks: string[]): ReadableStream<Uint8Array> {
  * Gemini streaming returns JSON with candidates array.
  */
 function geminiSSELine(text: string, done = false, usage?: { promptTokenCount: number; candidatesTokenCount: number }): string {
+  // Real Gemini streaming: `usageMetadata` appears on EVERY chunk (cumulative).
+  // The termination signal is `candidates[0].finishReason` being set — not
+  // the presence of usageMetadata. See docs/flows/ASSISTANT-CHAT-FLOW.md.
   const obj: Record<string, unknown> = {
-    candidates: [{ content: { parts: [{ text }] } }],
+    candidates: [{
+      content: { parts: [{ text }] },
+      ...(done ? { finishReason: 'STOP' } : {}),
+    }],
   };
   if (usage) {
     obj.usageMetadata = usage;

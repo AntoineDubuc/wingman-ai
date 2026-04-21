@@ -1531,12 +1531,12 @@ export class GeminiClient {
 
           const data = trimmed.slice(6); // strip "data: "
 
-          // [DONE] sentinel (OpenAI-compat)
+          // [DONE] sentinel (OpenAI-compat). Always emit a final done chunk
+          // with the last-seen usage so cost is recorded. The usage-only tail
+          // event (`{ choices: [], usage: {...} }`) arrives before [DONE] and
+          // is captured into lastUsage via parseSSEChunk's usage extraction.
           if (data === '[DONE]') {
-            // Emit final chunk if we haven't already
-            if (!hasYielded) {
-              yield { delta: '', done: true, usage: lastUsage ?? { inputTokens: 0, outputTokens: 0 } };
-            }
+            yield { delta: '', done: true, usage: lastUsage ?? { inputTokens: 0, outputTokens: 0 } };
             return;
           }
 
@@ -1552,12 +1552,17 @@ export class GeminiClient {
           // Extract delta + done + usage based on provider
           const chunk = this.parseSSEChunk(parsed, provider);
           if (chunk) {
-            // Track usage for final emission
+            // Track usage across all chunks — Gemini attaches usageMetadata
+            // to every event (cumulative); OpenAI-compat sends a usage tail.
             if (chunk.usage) {
               lastUsage = chunk.usage;
             }
             hasYielded = true;
             yield chunk;
+            // Gemini's finishReason — and only finishReason — terminates the
+            // stream from the parser side. Return so the body-end fallback
+            // below doesn't double-emit.
+            if (chunk.done) return;
           }
         }
       }
@@ -1572,8 +1577,10 @@ export class GeminiClient {
               const parsed = JSON.parse(data) as Record<string, unknown>;
               const chunk = this.parseSSEChunk(parsed, provider);
               if (chunk) {
+                if (chunk.usage) lastUsage = chunk.usage;
                 hasYielded = true;
                 yield chunk;
+                if (chunk.done) return;
               }
             } catch {
               console.warn('[GeminiClient] Malformed SSE data in final buffer, skipping');
@@ -1582,9 +1589,11 @@ export class GeminiClient {
         }
       }
 
-      // For Gemini: if we streamed but never got a [DONE], emit final
-      if (hasYielded && provider === 'gemini') {
-        // The last Gemini SSE event typically has usageMetadata — check lastUsage
+      // Body ended without an explicit terminator (no [DONE], no finishReason).
+      // Emit a synthetic final done chunk so consumers can finalize + record
+      // cost. Covers: truncated bodies, providers that don't send [DONE],
+      // Gemini responses without finishReason.
+      if (hasYielded) {
         yield { delta: '', done: true, usage: lastUsage ?? { inputTokens: 0, outputTokens: 0 } };
       }
     } finally {
@@ -1600,50 +1609,50 @@ export class GeminiClient {
     provider: LLMProvider,
   ): StreamChunk | null {
     if (provider === 'gemini') {
-      // Gemini streaming format
+      // Gemini streaming format.
+      // CRITICAL: Gemini attaches `usageMetadata` to EVERY SSE event (cumulative
+      // token counts), not just the final one. The only reliable termination
+      // signal is `candidates[0].finishReason` being set to a non-null value
+      // (e.g., "STOP", "MAX_TOKENS", "SAFETY"). Treating usageMetadata as the
+      // done signal truncates responses to the first chunk — the bug fixed here.
       const candidates = data.candidates as Array<{
         content?: { parts?: Array<{ text?: string }> };
+        finishReason?: string;
       }> | undefined;
       const text = candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      const finishReason = candidates?.[0]?.finishReason;
       const meta = data.usageMetadata as { promptTokenCount?: number; candidatesTokenCount?: number } | undefined;
 
-      if (meta) {
-        // This is the final chunk with usage info
-        return {
-          delta: text,
-          done: true,
-          usage: {
-            inputTokens: meta.promptTokenCount ?? 0,
-            outputTokens: meta.candidatesTokenCount ?? 0,
-          },
-        };
+      const usage = meta
+        ? { inputTokens: meta.promptTokenCount ?? 0, outputTokens: meta.candidatesTokenCount ?? 0 }
+        : undefined;
+
+      if (finishReason) {
+        return { delta: text, done: true, ...(usage ? { usage } : {}) };
       }
 
-      return { delta: text, done: false };
+      // Pass through usage on intermediate chunks so consumeSSEStream can
+      // track the latest snapshot even when the final chunk omits it.
+      return { delta: text, done: false, ...(usage ? { usage } : {}) };
     }
 
-    // OpenAI-compat (OpenRouter, Groq)
+    // OpenAI-compat (OpenRouter, Groq).
+    // Note: finish_reason is NOT treated as a termination signal here. When
+    // `stream_options.include_usage=true`, a usage-only event (`{ choices: [],
+    // usage: {...} }`) arrives AFTER the finish_reason event, followed by
+    // `data: [DONE]`. consumeSSEStream emits the final done chunk on [DONE]
+    // (or body-end) with the accumulated usage, so cost is recorded correctly.
     const choices = data.choices as Array<{
       delta?: { content?: string };
       finish_reason?: string | null;
     }> | undefined;
     const delta = choices?.[0]?.delta?.content ?? '';
-    const finishReason = choices?.[0]?.finish_reason;
-
-    // Usage in OpenAI-compat streaming (stream_options.include_usage)
     const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
+    const usageObj = usage
+      ? { inputTokens: usage.prompt_tokens ?? 0, outputTokens: usage.completion_tokens ?? 0 }
+      : undefined;
 
-    if (finishReason === 'stop' || finishReason === 'length') {
-      return {
-        delta,
-        done: true,
-        usage: usage
-          ? { inputTokens: usage.prompt_tokens ?? 0, outputTokens: usage.completion_tokens ?? 0 }
-          : undefined,
-      };
-    }
-
-    return { delta, done: false };
+    return { delta, done: false, ...(usageObj ? { usage: usageObj } : {}) };
   }
 }
 

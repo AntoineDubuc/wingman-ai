@@ -665,6 +665,11 @@ export class AIOverlay {
     const kbBtn = panel.querySelector('.kb-query-btn') as HTMLButtonElement | null;
     if (kbInput && kbBtn) {
       kbInput.addEventListener('keydown', (e) => {
+        // Block Meet's bare-letter shortcuts (c=captions, a=chat, i=participants)
+        // from eating characters while typing. Modifier-based shortcuts pass through.
+        if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1) {
+          e.stopPropagation();
+        }
         if (e.key === 'Enter') {
           e.preventDefault();
           const val = kbInput.value.trim();
@@ -738,6 +743,12 @@ export class AIOverlay {
     // Enable/disable Go button on input changes
     this.langBuilderFlowSelect?.addEventListener('change', () => this.updateGoButtonState());
     this.langBuilderInput?.addEventListener('input', () => this.updateGoButtonState());
+    // Block Meet's bare-letter shortcuts from eating characters while typing.
+    this.langBuilderInput?.addEventListener('keydown', (e) => {
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1) {
+        e.stopPropagation();
+      }
+    });
 
     // Go button — run flow via service worker
     this.langBuilderGoBtn?.addEventListener('click', () => this.runLangBuilderFlow());
@@ -1404,9 +1415,6 @@ export class AIOverlay {
           primaryEl.addEventListener('click', () => {
             const isVisible = altsEl.style.display === 'block';
             altsEl.style.display = isVisible ? 'none' : 'block';
-            // Remove max-height constraint when expanded
-            (primaryEl as HTMLElement).style.maxHeight = isVisible ? '80px' : 'none';
-            (primaryEl as HTMLElement).style.overflow = isVisible ? 'hidden' : 'visible';
           });
           primaryEl.setAttribute('style', `${(primaryEl as HTMLElement).style.cssText}cursor:pointer;`);
         }

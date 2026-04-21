@@ -13,10 +13,17 @@
  * Plan 3 of 5 — In-Meeting Assistant.
  */
 
+import { marked } from 'marked';
 import { getActivePersonas } from '../../shared/persona';
 import type { Persona } from '../../shared/persona';
 import type { i18n as I18n } from 'i18next';
 import { createI18nInstance } from '../../shared/i18n-init';
+
+// Configure marked once at module load. `breaks: true` converts single \n
+// into <br> (GitHub-style chat rendering). `gfm: true` enables tables and
+// task-list checkboxes. HTML passthrough is blocked at our boundary — we
+// escape the LLM's output before parsing, so marked never sees raw HTML.
+marked.setOptions({ breaks: true, gfm: true });
 
 /** Shape returned by getContextState() and passed to onSend subscribers. */
 export interface ContextState {
@@ -381,26 +388,26 @@ export class AssistantView {
   // ── Private: Markdown + HTML escape ──
 
   /**
-   * Escape HTML entities, then apply minimal markdown transforms.
-   * SECURITY: escape FIRST, then transform. Order is critical.
+   * Render LLM output as HTML for the bubble.
+   *
+   * SECURITY: the LLM's raw output may contain HTML (including <script>).
+   * We escape all HTML entities FIRST, then hand the escaped string to
+   * marked. Markdown syntax characters (* # - ` [ ] etc.) are NOT HTML-
+   * special and survive escaping intact, so marked still parses them.
+   * `<` and `>` become `&lt;`/`&gt;`, which means HTML passthrough is
+   * impossible and blockquotes are not supported (acceptable trade-off).
    */
   private transformMarkdown(text: string): string {
-    // Step 1: escape HTML entities
-    let escaped = text
+    const escaped = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
-    // Step 2: apply bold transform
-    escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-    // Step 3: apply newline transforms (double newline = paragraph break)
-    escaped = escaped.replace(/\n\n/g, '<br><br>');
-    escaped = escaped.replace(/\n/g, '<br>');
-
-    return escaped;
+    // marked appends a trailing "\n" after block elements; trim it so
+    // `textContent` of a single-line message doesn't pick up the extra newline.
+    return (marked.parse(escaped, { async: false }) as string).trimEnd();
   }
 
   /** Maximum number of source tags rendered per message. */
@@ -807,8 +814,15 @@ export class AssistantView {
       sendBtn.disabled = input.value.trim().length === 0;
     });
 
-    // Enter to send
+    // Enter to send.
+    // stopPropagation on bare character keys prevents Google Meet from
+    // consuming them as shortcuts (c=captions, a=chat, i=participants, etc.)
+    // while the user is typing in our input. Modifier-based shortcuts
+    // (Cmd+D mute, Cmd+E camera, Ctrl+Alt+H hand raise) still reach Meet.
     input.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1) {
+        e.stopPropagation();
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const trimmed = input.value.trim();

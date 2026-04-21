@@ -184,11 +184,13 @@ export class MeetingView {
   /**
    * Show the live speaking indicator with the given speaker name.
    * If speaker is empty, shows "Someone is speaking...".
+   * For self ("You"), renders "You are speaking…" instead of "You is speaking…".
    */
   showLiveIndicator(speaker: string): void {
     if (!this.liveIndicator || !this.liveIndicatorSpeakerText) return;
     const displayName = speaker.trim() || 'Someone';
-    this.liveIndicatorSpeakerText.textContent = `${displayName} is speaking\u2026`;
+    const verbPhrase = displayName === 'You' ? 'are speaking' : 'is speaking';
+    this.liveIndicatorSpeakerText.textContent = `${displayName} ${verbPhrase}\u2026`;
     this.liveIndicator.classList.add('active');
     this.scrollToBottom();
   }

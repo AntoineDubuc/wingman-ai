@@ -1499,4 +1499,46 @@ describe('Task 6: Live speaking indicator', () => {
       expect(speakerText!.textContent).toBe('Someone is speaking\u2026');
     });
   });
+
+  // AC9: grammatical self indicator — "You are speaking…", not "You is speaking…"
+  describe('AC9: live indicator grammar for self', () => {
+    it('renders "You are speaking…" when speaker is "You"', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('You');
+
+      const speakerText = container.querySelector('.transcript-live-indicator .speaker-text');
+      expect(speakerText!.textContent).toBe('You are speaking\u2026');
+    });
+
+    it('renders "{name} is speaking…" for participant speakers', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('Alice');
+
+      const speakerText = container.querySelector('.transcript-live-indicator .speaker-text');
+      expect(speakerText!.textContent).toBe('Alice is speaking\u2026');
+    });
+
+    it('trims whitespace and still detects self', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      view.showLiveIndicator('  You  ');
+
+      const speakerText = container.querySelector('.transcript-live-indicator .speaker-text');
+      expect(speakerText!.textContent).toBe('You are speaking\u2026');
+    });
+  });
 });

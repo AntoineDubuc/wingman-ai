@@ -151,11 +151,18 @@ async function startDualCapture(streamId: string): Promise<void> {
   try {
     console.log('[Offscreen] Starting dual capture (mic + tab)');
 
-    // 1. Get microphone stream
+    // 1. Get microphone stream.
+    // Enable Chrome's full WebRTC audio processing trio — echoCancellation +
+    // noiseSuppression + autoGainControl. Partial configurations (e.g. AEC on,
+    // NS off) leave Chrome's AEC3 in an unsupported state; when a user is on
+    // speakers rather than headphones, remote audio bleeds into the mic stream
+    // and gets tagged isSelf=true downstream, producing misattributed self
+    // transcripts. See Research/features/transcript-alignment-fix/research.md
+    // Finding 5 + Senior Engineer review Findings 1/8.
     micStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
+        echoCancellation: true,
+        noiseSuppression: true,
         autoGainControl: true,
         channelCount: 1,
       },

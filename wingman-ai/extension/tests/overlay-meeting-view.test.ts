@@ -1138,7 +1138,113 @@ describe('Task 5: Speaker-avatar-list design + speakerColor', () => {
 
       const entry = container.querySelector('.transcript-entry');
       expect(entry).not.toBeNull();
-      expect(entry!.className).toBe('transcript-entry');
+      expect(entry!.classList.contains('transcript-entry')).toBe(true);
+    });
+  });
+
+  // AC7: self class applied when entry.is_self === true
+  describe('AC7: self class on self entries', () => {
+    function makeSelfEntry(text: string, isSelf: boolean): { text: string; speaker: string; is_final: boolean; is_self: boolean; timestamp: string } {
+      return {
+        text,
+        speaker: isSelf ? 'You' : 'Alice',
+        is_final: true,
+        is_self: isSelf,
+        timestamp: new Date().toISOString(),
+      };
+    }
+
+    it('adds .self class when is_self is true', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('Hello from me', true));
+
+      const entry = container.querySelector('.transcript-entry');
+      expect(entry).not.toBeNull();
+      expect(entry!.classList.contains('transcript-entry')).toBe(true);
+      expect(entry!.classList.contains('self')).toBe(true);
+    });
+
+    it('does not add .self class when is_self is false', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('Hello from participant', false));
+
+      const entry = container.querySelector('.transcript-entry');
+      expect(entry).not.toBeNull();
+      expect(entry!.classList.contains('transcript-entry')).toBe(true);
+      expect(entry!.classList.contains('self')).toBe(false);
+    });
+
+    it('correction window updates text in place without losing .self class', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('hello', true));
+      vi.advanceTimersByTime(100);
+      buffer.append(makeSelfEntry('hello world', true));
+
+      const entries = container.querySelectorAll('.transcript-entry');
+      expect(entries).toHaveLength(1); // correction window replaced, not appended
+      expect(entries[0]!.classList.contains('self')).toBe(true);
+      const textEl = entries[0]!.querySelector('.transcript-text');
+      expect(textEl!.textContent).toBe('hello world');
+
+      vi.useRealTimers();
+    });
+
+    it('correction window still works for participant entries (no .self class)', async () => {
+      vi.useFakeTimers();
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      buffer.append(makeSelfEntry('hello', false));
+      vi.advanceTimersByTime(100);
+      buffer.append(makeSelfEntry('hello world', false));
+
+      const entries = container.querySelectorAll('.transcript-entry');
+      expect(entries).toHaveLength(1);
+      expect(entries[0]!.classList.contains('self')).toBe(false);
+      const textEl = entries[0]!.querySelector('.transcript-text');
+      expect(textEl!.textContent).toBe('hello world');
+
+      vi.useRealTimers();
+    });
+
+    it('handles is_self undefined defensively — no .self class added', async () => {
+      const { MeetingView } = await import('../src/content/overlay/meeting-view');
+      const buffer = createFakeBuffer();
+      const container = document.createElement('div');
+      const view = new MeetingView(buffer as any);
+      view.mount(container);
+
+      const entry: any = {
+        text: 'edge case',
+        speaker: 'Unknown',
+        is_final: true,
+        is_self: undefined,
+        timestamp: new Date().toISOString(),
+      };
+      buffer.append(entry);
+
+      const el = container.querySelector('.transcript-entry');
+      expect(el).not.toBeNull();
+      expect(el!.classList.contains('self')).toBe(false);
     });
   });
 

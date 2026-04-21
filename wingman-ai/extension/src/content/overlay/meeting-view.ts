@@ -129,8 +129,11 @@ export class MeetingView {
     }
 
     // Create new transcript entry element
+    // Add .self class when this is the user's own line so CSS can chat-align it.
+    // entry.is_self is a required boolean on TranscriptEntry, but `=== true` guards
+    // against any upstream code path passing undefined (defensive — validator catches it).
     const el = document.createElement('div');
-    el.className = 'transcript-entry';
+    el.className = entry.is_self === true ? 'transcript-entry self' : 'transcript-entry';
 
     // Speaker row: avatar + name + time
     const speakerRow = document.createElement('div');

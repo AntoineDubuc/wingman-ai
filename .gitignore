@@ -42,6 +42,7 @@ Thumbs.db
 # Markdown files (internal docs, plans, templates)
 *.md
 !README.md
+!.claude/skills/**/*.md
 !wingman-ai/LICENSE
 !docs/README.md
 !docs/GETTING-STARTED.md

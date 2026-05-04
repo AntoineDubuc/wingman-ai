@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
+    "generated_date": "2026-05-02",
+    "revision": "1.0.0",
+    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+  },
+  "popup": {
+    "start_session": "Pornire sesiune",
+    "stop_session": "Oprire sesiune",
+    "status": {
+      "active": "Sesiune activă",
+      "idle": "Gata",
+      "connecting": "Se conectează…"
+    }
+  },
+  "options": {
+    "setup": {
+      "title": "Setări",
+      "language_picker_label": "Limbă",
+      "language_locked_tooltip": "Limba este blocată în timpul unei sesiuni active",
+      "api_keys_title": "Chei API",
+      "save_button": "Salvare",
+      "cancel_button": "Anulare"
+    },
+    "personas": {
+      "section_title": "Persoane",
+      "default_interviewer": "Intervievator implicit",
+      "executive_communicator": "Comunicator executiv",
+      "add_persona_button": "Adăugare persoană"
+    },
+    "upgrade_banner": {
+      "title": "Wingman vorbește acum în limba dvs.",
+      "body": "Limba dvs. a fost setată automat pe baza setărilor browserului. O puteți schimba oricând în Setări → Limbă.",
+      "dismiss_button": "Am înțeles"
+    }
+  },
+  "overlay": {
+    "suggestion": {
+      "try_again": "Reîncercați",
+      "thinking": "Se gândește…",
+      "no_suggestion": "Ascultă…"
+    },
+    "speaker": {
+      "you": "Dvs.",
+      "speaker_n": "Vorbitor {{n}}"
+    },
+    "transcript": {
+      "live": "Live",
+      "paused": "În pauză"
+    },
+    "controls": {
+      "minimize": "Minimizare",
+      "close": "Închidere",
+      "dock": "Andocare",
+      "undock": "Dezandocare"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Rezumat",
+      "action_items": "Acțiuni de realizat",
+      "key_moments": "Momente cheie"
+    },
+    "action_item_owner": {
+      "you": "Dvs.",
+      "them": "Ei"
+    },
+    "moment_types": {
+      "signal": "Semnal",
+      "objection": "Obiecție",
+      "decision": "Decizie",
+      "quote": "Citat"
+    },
+    "cost": {
+      "label": "Cost estimat",
+      "format": "{{amount}} USD"
+    },
+    "save_to_drive": "Salvare în Drive",
+    "saving": "Se salvează…",
+    "saved": "Salvat"
+  },
+  "mic_permission": {
+    "title": "Acces la microfon necesar",
+    "body": "Wingman are nevoie de acces la microfonul dvs. pentru a transcrie întâlnirea.",
+    "grant_button": "Permitere acces",
+    "cancel_button": "Anulare"
+  },
+  "errors": {
+    "deepgram_failed": "Recunoașterea vocală este indisponibilă. {{rawError}}",
+    "mic_revoked": "Accesul la microfon a fost pierdut. Restabiliți accesul și reîncercați.",
+    "api_key_missing": "Cheia API {{provider}} nu este configurată. Adăugați-o în Setări.",
+    "generic": "A apărut o eroare. Vă rugăm să încercați din nou.",
+    "session_interrupted": "Sesiunea a fost întreruptă neașteptat."
+  },
+  "tutorials": {
+    "english_only_banner": "Conținutul tutorialelor este disponibil momentan numai în engleză. Lucrăm la traduceri pentru o versiune viitoare."
+  },
+  "common": {
+    "loading": "Se încarcă…",
+    "retry": "Reîncercați",
+    "dismiss": "Ignorați",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  }
+}

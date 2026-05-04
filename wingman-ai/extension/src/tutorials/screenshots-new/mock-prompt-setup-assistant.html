@@ -1,0 +1,3860 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 24 — Prompt Setup Assistant · All User Flows</title>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design Tokens (dark mode from options.css) ── */
+    :root {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-ring: rgba(243, 156, 18, 0.25);
+      --color-danger: #f87171;
+      --color-success: #4ade80;
+      --color-warning: #fbbf24;
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-text-inverse: #111827;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-bg-surface-glass: rgba(31, 41, 55, 0.75);
+      --color-border: #374151;
+      --color-border-light: #4b5563;
+      --gradient-primary: linear-gradient(135deg, #b45309, #d97706);
+      --gradient-primary-hover: linear-gradient(135deg, #92400e, #b45309);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 0 20px rgba(243, 156, 18, 0.1);
+      --font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --sidebar-width: 300px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--color-bg-page);
+      color: var(--color-text-primary);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════
+       LEFT SIDEBAR
+       ═══════════════════════════════════════════ */
+    .sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background: var(--color-bg-surface);
+      border-right: 1px solid var(--color-border);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    .flow-group {
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .flow-group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .flow-group-header:hover {
+      color: var(--color-text-secondary);
+    }
+
+    .flow-group-header .chevron {
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+
+    .flow-group.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .flow-group.collapsed .flow-items {
+      display: none;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 16px 8px 28px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      line-height: 1.4;
+      transition: all 0.15s;
+    }
+
+    .flow-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--color-text-primary);
+    }
+
+    .flow-item.active {
+      background: rgba(243, 156, 18, 0.08);
+      color: var(--color-primary);
+      border-left-color: var(--color-primary);
+    }
+
+    .flow-item .step-num {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      min-width: 20px;
+    }
+
+    .flow-item.active .step-num {
+      color: var(--color-primary);
+    }
+
+    /* ═══════════════════════════════════════════
+       RIGHT CONTENT
+       ═══════════════════════════════════════════ */
+    .content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      background: var(--color-bg-page) url('../../assets/header-banner.png') center top/cover no-repeat fixed;
+      min-height: 100vh;
+    }
+
+    .flow-panel {
+      display: none;
+      padding: 32px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .flow-panel.active {
+      display: block;
+    }
+
+    .flow-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--color-primary);
+      margin-bottom: 6px;
+    }
+
+    .flow-heading {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    .flow-desc {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+      max-width: 600px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    .flow-context {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(243, 156, 18, 0.1);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: 20px;
+      font-size: 11px;
+      color: var(--color-primary);
+      margin-bottom: 20px;
+    }
+
+    .flow-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .flow-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .flow-nav-btn:hover {
+      color: var(--color-text-primary);
+      border-color: var(--color-border-light);
+    }
+
+    .flow-nav-btn.primary {
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       REUSABLE COMPONENTS
+       ═══════════════════════════════════════════ */
+    .options-card {
+      background: var(--color-bg-surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: var(--spacing-lg);
+      width: 100%;
+    }
+
+    .form-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .form-section-description {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-lg);
+      line-height: 1.6;
+    }
+
+    .form-group { margin-bottom: var(--spacing-lg); }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .text-input {
+      width: 100%;
+      max-width: 400px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-family: var(--font-family);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      outline: none;
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: var(--spacing-md);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      resize: vertical;
+      outline: none;
+    }
+
+    .prompt-textarea:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-ring);
+    }
+
+    .char-count {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--spacing-sm);
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      min-width: 140px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      background: var(--gradient-primary);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      min-width: 140px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .btn-small {
+      padding: var(--spacing-xs) var(--spacing-md);
+      min-width: auto;
+      font-size: 13px;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .button-group {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    /* KB doc items */
+    .kb-doc-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .kb-doc-icon { font-size: 20px; }
+    .kb-doc-info { flex: 1; }
+    .kb-doc-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+    .kb-doc-meta { font-size: 12px; color: var(--color-text-muted); }
+
+    .kb-doc-remove {
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+    }
+
+    /* Color picker */
+    .persona-color-picker { display: flex; gap: 8px; }
+
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .color-swatch.active {
+      border-color: var(--color-text-primary);
+      box-shadow: 0 0 0 2px var(--color-bg-surface), 0 0 0 4px currentColor;
+    }
+
+    /* Modal */
+    .modal-frame {
+      background: var(--color-bg-surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 640px;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cost-hint {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      font-weight: 400;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    .modal-body-area {
+      padding: var(--spacing-lg);
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* Chat bubbles */
+    .chat-messages { display: flex; flex-direction: column; gap: 16px; }
+
+    .chat-msg { display: flex; gap: 10px; align-items: flex-start; }
+
+    .chat-msg.bot .chat-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .chat-msg.user { flex-direction: row-reverse; }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chat-msg.bot .chat-bubble {
+      background: var(--color-bg-page);
+      border: 1px solid var(--color-border);
+      border-radius: 12px 12px 12px 4px;
+    }
+
+    .chat-msg.user .chat-bubble {
+      background: rgba(243, 156, 18, 0.15);
+      border-radius: 12px 12px 4px 12px;
+    }
+
+    .chat-bubble strong { color: var(--color-text-primary); }
+    .chat-bubble ul { margin: 6px 0 0 16px; padding: 0; }
+    .chat-bubble li { margin-bottom: 4px; color: var(--color-text-secondary); }
+
+    .chat-summary {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(243, 156, 18, 0.08);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .chat-summary strong {
+      color: var(--color-primary);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .chat-quick-replies { display: flex; gap: 8px; margin-top: 8px; }
+
+    .chat-quick-reply {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 16px;
+      cursor: pointer;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+    }
+
+    .chat-quick-reply.primary {
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+    }
+
+    /* Tabs */
+    .prompt-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+
+    .prompt-tab {
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-radius: var(--radius-md);
+    }
+
+    .prompt-tab.active {
+      background: var(--gradient-primary);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* Model Selector Dropdown */
+    .model-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .model-selector label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .model-selector select {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23999' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    .model-selector select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+    .model-selector .model-badge {
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .model-selector .badge-direct { background: rgba(66, 133, 244, 0.15); color: #4285f4; }
+    .model-selector .badge-openrouter { background: rgba(156, 39, 176, 0.15); color: #9c27b0; }
+    .model-selector .badge-groq { background: rgba(244, 143, 66, 0.15); color: #f48f42; }
+
+    /* Version badge */
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-bottom: 12px;
+    }
+
+    .version-badge strong { color: var(--color-primary); }
+
+    /* Diff view */
+    .diff-block {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 12px;
+      background: var(--color-bg-page);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+    }
+
+    .diff-add { color: var(--color-success); background: rgba(74, 222, 128, 0.08); display: block; }
+    .diff-remove { color: var(--color-danger); background: rgba(248, 113, 113, 0.08); display: block; }
+    .diff-same { color: var(--color-text-muted); display: block; }
+
+    /* Test harness */
+    .test-mode-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+
+    .test-mode-tab {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--color-border);
+      background: var(--color-bg-surface);
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-radius: 16px;
+    }
+
+    .test-mode-tab.active {
+      background: rgba(243, 156, 18, 0.15);
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+
+    .test-question-group { margin-bottom: 16px; }
+
+    .test-question-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .test-question {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .test-question input[type="checkbox"] { accent-color: var(--color-primary); }
+
+    .test-cost-estimate {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(243, 156, 18, 0.08);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin: 16px 0;
+    }
+
+    .test-result-card {
+      margin-bottom: 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .test-result-question {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background: var(--color-bg-page);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .test-result-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--color-bg-page);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .test-result-header span {
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--color-text-muted);
+    }
+
+    .test-result-header span:first-child { border-right: 1px solid var(--color-border); }
+
+    .test-result-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .test-result-row:last-child { border-bottom: none; }
+
+    .test-result-cell {
+      padding: 10px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .test-result-cell:first-child { border-right: 1px solid var(--color-border); }
+
+    .test-result-cell .provider {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .test-result-cell .response { color: var(--color-text-secondary); }
+
+    .silent-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .silent-badge.pass { background: rgba(74, 222, 128, 0.15); color: var(--color-success); }
+    .silent-badge.fail { background: rgba(248, 113, 113, 0.15); color: var(--color-danger); }
+
+    .test-actual-cost {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      text-align: right;
+    }
+
+    /* History list */
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--color-bg-page);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .history-meta { flex: 1; }
+
+    .history-version { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+
+    .history-version .current {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-primary);
+      background: var(--color-primary-ring);
+      padding: 1px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+
+    .history-version .label {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 1px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+
+    .history-version .label.imported {
+      color: var(--color-warning);
+      background: rgba(251, 191, 36, 0.15);
+    }
+
+    .history-version .label.manual {
+      color: #60a5fa;
+      background: rgba(96, 165, 250, 0.15);
+    }
+
+    .history-summary { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+    .history-stats { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
+    .history-actions { display: flex; gap: 8px; }
+
+    /* Annotation callout */
+    .callout {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      background: rgba(243, 156, 18, 0.08);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: var(--radius-md);
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    .callout-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .callout strong { color: var(--color-primary); }
+
+    /* Highlight pulse on new elements */
+    .highlight-new {
+      position: relative;
+    }
+
+    .highlight-new::after {
+      content: 'NEW';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      background: var(--color-primary);
+      padding: 1px 6px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Persona editor 3-button row */
+    .prompt-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    /* Editable state indicator */
+    .editing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--color-warning);
+      margin-bottom: 8px;
+    }
+
+    .editing-indicator .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-warning);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SIDEBAR
+       ═══════════════════════════════════════════════════════════════════ -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1>Phase 24 — Prompt Assistant</h1>
+      <p>All user flows · Click to preview</p>
+    </div>
+
+    <!-- FLOW A -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> A · First-Time Creation
+      </div>
+      <div class="flow-items">
+        <div class="flow-item active" onclick="showFlow('a1')"><span class="step-num">A1</span> Persona editor (empty prompt)</div>
+        <div class="flow-item" onclick="showFlow('a2')"><span class="step-num">A2</span> Discovery chat</div>
+        <div class="flow-item" onclick="showFlow('a2b')"><span class="step-num">A2b</span> Template preview (pick built-in)</div>
+        <div class="flow-item" onclick="showFlow('a3')"><span class="step-num">A3</span> Review generated prompts</div>
+        <div class="flow-item" onclick="showFlow('a3b')"><span class="step-num">A3b</span> Template adopted (Use as-is)</div>
+        <div class="flow-item" onclick="showFlow('a3c')"><span class="step-num">A3c</span> Model switch → prompt changes</div>
+        <div class="flow-item" onclick="showFlow('a4')"><span class="step-num">A4</span> Edit inline → not satisfied</div>
+        <div class="flow-item" onclick="showFlow('a4b')"><span class="step-num">A4b</span> Inline diff from editor</div>
+        <div class="flow-item" onclick="showFlow('a5')"><span class="step-num">A5</span> Test edited prompt</div>
+        <div class="flow-item" onclick="showFlow('a5b')"><span class="step-num">A5b</span> Custom Q tab</div>
+        <div class="flow-item" onclick="showFlow('a5c')"><span class="step-num">A5c</span> KB + Query tab</div>
+        <div class="flow-item" onclick="showFlow('a6')"><span class="step-num">A6</span> Review test results → edit again</div>
+        <div class="flow-item" onclick="showFlow('a7')"><span class="step-num">A7</span> Diff vs generated → save as v1</div>
+        <div class="flow-item" onclick="showFlow('a7b')"><span class="step-num">A7b</span> Post-save confirmation</div>
+      </div>
+    </div>
+
+    <!-- FLOW B -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> B · Re-run Assistant
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('b1')"><span class="step-num">B1</span> Not happy → re-enter chat</div>
+        <div class="flow-item" onclick="showFlow('b2')"><span class="step-num">B2</span> Refine with new inputs</div>
+        <div class="flow-item" onclick="showFlow('b3')"><span class="step-num">B3</span> Compare new vs previous generation</div>
+      </div>
+    </div>
+
+    <!-- FLOW C -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> C · Return to Improve
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('c1')"><span class="step-num">C1</span> Persona editor (existing prompt)</div>
+        <div class="flow-item" onclick="showFlow('c2')"><span class="step-num">C2</span> Re-enter assistant with context</div>
+        <div class="flow-item" onclick="showFlow('c2b')"><span class="step-num">C2b</span> Auto-generated test questions</div>
+        <div class="flow-item" onclick="showFlow('c3')"><span class="step-num">C3</span> Generate → diff → test → save</div>
+      </div>
+    </div>
+
+    <!-- FLOW D -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> D · Test Only
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('d1')"><span class="step-num">D1</span> Click "Test Current Prompts"</div>
+        <div class="flow-item" onclick="showFlow('d2')"><span class="step-num">D2</span> See failures → edit → re-test</div>
+        <div class="flow-item" onclick="showFlow('d2b')"><span class="step-num">D2b</span> A/B comparison results</div>
+      </div>
+    </div>
+
+    <!-- FLOW E -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> E · Version History
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('e1')"><span class="step-num">E1</span> Open history from editor</div>
+        <div class="flow-item" onclick="showFlow('e2')"><span class="step-num">E2</span> Diff any two versions</div>
+        <div class="flow-item" onclick="showFlow('e3')"><span class="step-num">E3</span> Restore → creates new version</div>
+        <div class="flow-item" onclick="showFlow('e4')"><span class="step-num">E4</span> Test old version from history</div>
+        <div class="flow-item" onclick="showFlow('e5')"><span class="step-num">E5</span> Delete version confirmation</div>
+      </div>
+    </div>
+
+    <!-- FLOW F -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> F · Manual Edit
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('f1')"><span class="step-num">F1</span> Edit textarea directly</div>
+        <div class="flow-item" onclick="showFlow('f2')"><span class="step-num">F2</span> Test → iterate → save</div>
+      </div>
+    </div>
+
+    <!-- FLOW G -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> G · Model Switch
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('g1')"><span class="step-num">G1</span> Prompt exists for Flash, not Qwen 3</div>
+        <div class="flow-item" onclick="showFlow('g2')"><span class="step-num">G2</span> Adapt prompt for new model</div>
+        <div class="flow-item" onclick="showFlow('g3')"><span class="step-num">G3</span> Model version saved</div>
+      </div>
+    </div>
+
+    <!-- FLOW H -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> H · Legacy Prompts
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('h1')"><span class="step-num">H1</span> Pre-feature prompt → auto v1</div>
+      </div>
+    </div>
+
+    <!-- FLOW I -->
+    <div class="flow-group">
+      <div class="flow-group-header" onclick="toggleGroup(this)">
+        <span class="chevron">▼</span> I · Shared UI States
+      </div>
+      <div class="flow-items">
+        <div class="flow-item" onclick="showFlow('i1')"><span class="step-num">I1</span> Discard/close warning</div>
+        <div class="flow-item" onclick="showFlow('i2')"><span class="step-num">I2</span> All-pass success state</div>
+        <div class="flow-item" onclick="showFlow('i3')"><span class="step-num">I3</span> No API Key for Model</div>
+        <div class="flow-item" onclick="showFlow('i4')"><span class="step-num">I4</span> Assistant Error</div>
+        <div class="flow-item" onclick="showFlow('i5')"><span class="step-num">I5</span> All Tests Fail</div>
+        <div class="flow-item" onclick="showFlow('i6')"><span class="step-num">I6</span> Test Run Error</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       CONTENT PANELS
+       ═══════════════════════════════════════════════════════════════════ -->
+  <main class="content">
+
+    <!-- ── A1: Persona Editor (empty prompt) ── -->
+    <div class="flow-panel active" id="flow-a1">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A1 — Persona Editor (Empty Prompt)</div>
+      <div class="flow-desc">User creates a new persona. The prompt textarea is empty. Three action buttons appear below it.</div>
+
+      <div class="options-card">
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">Name</label>
+          <input type="text" class="text-input" value="Cloud Sales Pro" readonly style="max-width: 300px;">
+        </div>
+        <div class="form-group">
+          <label class="input-label">Color tag</label>
+          <div class="persona-color-picker">
+            <div class="color-swatch active" style="background: #ef4444;"></div>
+            <div class="color-swatch" style="background: #3b82f6;"></div>
+            <div class="color-swatch" style="background: #8b5cf6;"></div>
+            <div class="color-swatch" style="background: #22c55e;"></div>
+            <div class="color-swatch" style="background: #eab308;"></div>
+            <div class="color-swatch" style="background: #14b8a6;"></div>
+            <div class="color-swatch" style="background: #ec4899;"></div>
+            <div class="color-swatch" style="background: #94a3b8;"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <textarea class="prompt-textarea" readonly style="min-height: 80px; opacity: 0.5;" placeholder="No prompt configured yet. Use the Setup Assistant below to generate one."></textarea>
+          <div class="char-count">0 / 10,000 chars</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="opacity: 0.4;" disabled><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="opacity: 0.4;" disabled><span>📋</span> Version History</button>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Knowledge Base</label>
+          <div class="kb-doc-item">
+            <span class="kb-doc-icon">📄</span>
+            <div class="kb-doc-info">
+              <div class="kb-doc-name">pricing-guide-2024.pdf</div>
+              <div class="kb-doc-meta">24 sections · 156 KB</div>
+            </div>
+            <button class="kb-doc-remove">×</button>
+          </div>
+          <div class="kb-doc-item">
+            <span class="kb-doc-icon">📄</span>
+            <div class="kb-doc-info">
+              <div class="kb-doc-name">competitor-battlecards.pdf</div>
+              <div class="kb-doc-meta">31 sections · 203 KB</div>
+            </div>
+            <button class="kb-doc-remove">×</button>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="btn-secondary" style="min-width: auto;">Cancel</button>
+          <div class="button-group">
+            <button class="btn-secondary" style="min-width: auto;">Export</button>
+            <button class="btn-secondary" style="min-width: auto;">Duplicate</button>
+            <button class="btn-secondary" style="min-width: auto; color: var(--color-danger); border-color: var(--color-danger);">Delete</button>
+            <button class="btn-primary" style="min-width: auto;">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div><strong>"Test" and "History" are disabled</strong> because there's no prompt yet. Only "Prompt Setup Assistant" is active. User clicks it to begin.<br><br>
+        <strong>Export / Duplicate / Delete</strong> are existing persona editor features (not Phase 24). Export downloads the persona as a JSON file with prompt + KB references.</div>
+      </div>
+
+      <div class="flow-nav">
+        <span></span>
+        <button class="flow-nav-btn primary" onclick="showFlow('a2')">Next: Discovery Chat →</button>
+      </div>
+    </div>
+
+    <!-- ── A2: Discovery Chat ── -->
+    <div class="flow-panel" id="flow-a2">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A2 — Discovery Chat</div>
+      <div class="flow-desc">Gemini-powered chat discovers intent, suggests templates, asks about tone/style/language, detects KB docs.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Prompt Setup Assistant <span class="cost-hint">Powered by Gemini · ~$0.001</span></h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="chat-messages">
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                <strong>What will this persona help you with?</strong><br>
+                For example: "closing enterprise SaaS deals" or "conducting technical interviews"
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">Handling pricing objections for our cloud platform</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  That sounds similar to our <strong>Sales Closer</strong> template. Want to start from there and customize, or build from scratch?
+                </div>
+                <div class="chat-quick-replies">
+                  <button class="chat-quick-reply">Use Sales Closer</button>
+                  <button class="chat-quick-reply primary">Start fresh</button>
+                </div>
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">Start fresh</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                Got it. A few quick questions:
+                <ul>
+                  <li>Deal size? (SMB / mid-market / enterprise)</li>
+                  <li>Key competitors to position against?</li>
+                  <li>Tone — direct &amp; concise, or warm &amp; consultative?</li>
+                  <li>Response style — short bullets or full sentences?</li>
+                  <li>Language? (default: English)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">Enterprise. AWS and Azure. Direct. Bullets. English.</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  I see you have <strong>2 KB docs</strong> attached (pricing-guide, competitor-battlecards). I'll include KB reference instructions in the generated prompts.
+                </div>
+                <div class="chat-summary">
+                  <strong>Ready to generate prompts for:</strong>
+                  ▸ Enterprise cloud pricing objections<br>
+                  ▸ Position against AWS &amp; Azure<br>
+                  ▸ Direct tone, bullet-point responses<br>
+                  ▸ KB-aware (pricing + battlecards)<br>
+                  ▸ Tailored for: Gemini 2.5 Flash (your active model)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Refine...</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">
+            <span>✨</span> Generate Prompts
+          </button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a1')">← A1: Editor</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a3')">Next: Review Prompts →</button>
+      </div>
+    </div>
+
+    <!-- ── A3: Review Generated Prompts ── -->
+    <div class="flow-panel" id="flow-a3">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A3 — Review Generated Prompts</div>
+      <div class="flow-desc">Per-LLM tabs. This is the first generation, so it's labeled v1 with no diff available yet.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <div class="version-badge">
+            Version: <strong>v1</strong> <span style="color: var(--color-text-muted);">· first generation</span>
+          </div>
+          <textarea class="prompt-textarea" readonly style="min-height: 240px;">You are an expert enterprise cloud sales specialist. Your focus:
+• Reframe pricing objections around TCO and ROI
+• Position against AWS (lock-in, complexity) and Azure (cost unpredictability)
+• Create urgency without pressure
+
+WHEN TO RESPOND:
+• Price/budget concerns
+• Competitive comparisons
+• Buying signals
+
+WHEN TO STAY SILENT (respond "---"):
+• Technical architecture questions
+• Compliance/legal topics</textarea>
+          <div class="char-count">412 / 10,000 chars</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Refine...</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Edit</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test...</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save All (v1)</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔀</span>
+        <div><strong>User can go four directions from here:</strong><br>
+          • <strong>Refine</strong> → re-enter chat to give more context (goes to B1)<br>
+          • <strong>Edit</strong> → modify inline before testing (goes to A4)<br>
+          • <strong>Test</strong> → validate before saving (goes to A5)<br>
+          • <strong>Save</strong> → accepts as v1 (goes to A7)
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a2')">← A2: Chat</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a4')">Next: Edit Inline →</button>
+      </div>
+    </div>
+
+    <!-- ── A3b: Template Adopted (Use as-is) ── -->
+    <div class="flow-panel" id="flow-a3b">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A3b — Template Adopted (Use as-is)</div>
+      <div class="flow-desc">User clicked "Use as-is" on the Sales Closer template. The template prompt is loaded into the review modal without AI modification.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>📋 Review Template Prompt</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <!-- Template source badge -->
+          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 20px; font-size: 11px; color: #a78bfa; margin-bottom: 12px;">
+            📋 From template: <strong>Sales Closer</strong>
+          </div>
+          <div style="font-size: 11px; color: var(--color-text-muted); margin-bottom: 12px;">
+            This is the raw template — not yet optimized for your target model. Save as-is, or click Edit to customize.
+          </div>
+          <textarea class="prompt-textarea" readonly style="min-height: 220px;">You are an expert sales closer. Your job is to help the user close deals by providing real-time suggestions during sales calls.
+
+APPROACH:
+• Identify buying signals and reinforce them
+• Handle objections with empathy and data
+• Create urgency without being pushy
+• Suggest next steps and trial closes
+
+WHEN TO RESPOND:
+• Pricing discussions
+• Competitor mentions
+• Objection handling
+• Buying signals
+
+WHEN TO STAY SILENT (respond "---"):
+• Technical deep-dives
+• Internal team discussions
+• Off-topic conversation</textarea>
+          <div class="char-count">398 / 10,000 chars</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to Chat</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Edit</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test...</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save as v1</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">📋</span>
+        <div><strong>Template, not a generation.</strong> This is the built-in Sales Closer prompt loaded verbatim. It hasn't been optimized for the target model. The user can:<br>
+          • <strong>Save as-is</strong> → quick start, optimize later<br>
+          • <strong>Edit</strong> → customize before saving (A4)<br>
+          • <strong>Test</strong> → check if the template works well with their model (A5)
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a2b')">← A2b: Template</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a4')">Next: Edit Inline →</button>
+      </div>
+    </div>
+
+    <!-- ── A3c: Model Switch → Prompt Changes ── -->
+    <div class="flow-panel" id="flow-a3c">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A3c — Model Switch → Prompt Changes</div>
+      <div class="flow-desc">User switched the model dropdown from Gemini 2.5 Flash to Claude Sonnet 4. The generated prompt text changes to use model-optimized formatting.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option selected>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-openrouter">OpenRouter</span>
+          </div>
+          <div class="version-badge">
+            Version: <strong>v1</strong> <span style="color: var(--color-text-muted);">· optimized for Claude Sonnet 4</span>
+          </div>
+          <!-- Notice about model-specific formatting -->
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: var(--radius-md); margin-bottom: 12px; font-size: 12px; color: #a78bfa;">
+            ✨ Prompt adapted for Claude — uses XML tags, bookend rules, and Claude-optimized silence format
+          </div>
+          <textarea class="prompt-textarea" readonly style="min-height: 300px;">&lt;role&gt;
+You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+&lt;/role&gt;
+
+&lt;focus&gt;
+- Reframe pricing objections around TCO and ROI
+- Position against AWS (lock-in, complexity) and Azure (cost unpredictability)
+- Create urgency without pressure
+&lt;/focus&gt;
+
+&lt;kb-instructions&gt;
+When the user's knowledge base contains relevant data (pricing, competitor info), reference it with specific numbers. Cite the source filename.
+&lt;/kb-instructions&gt;
+
+&lt;response-rules&gt;
+RESPOND when you detect:
+- Price/budget concerns
+- Competitive comparisons
+- Buying signals
+
+You MUST output exactly "---" (three hyphens, nothing else) when:
+- Technical architecture questions arise
+- Compliance/legal topics come up
+- General small talk or pleasantries
+
+Remember: "---" means silence. No preamble, no explanation — just "---".
+&lt;/response-rules&gt;</textarea>
+          <div class="char-count">724 / 10,000 chars</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Refine...</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Edit</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test...</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save All (v1)</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔀</span>
+        <div><strong>Same content, different formatting.</strong> The Claude version uses XML tags (<code>&lt;role&gt;</code>, <code>&lt;focus&gt;</code>, <code>&lt;response-rules&gt;</code>) instead of Gemini's markdown headers. The silence instructions use Claude's recommended bookend pattern. Each model gets optimized formatting based on research in <code>llm-prompting-research.md</code>.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a3')">← A3: Gemini version</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a4')">Next: Edit Inline →</button>
+      </div>
+    </div>
+
+    <!-- ── A4: Edit Inline ── -->
+    <div class="flow-panel" id="flow-a4">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A4 — Edit Inline</div>
+      <div class="flow-desc">User clicks "Edit" and modifies the generated prompt directly. The textarea becomes editable with a visual indicator.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <div class="editing-indicator">
+            <span class="dot"></span> Editing — unsaved changes
+          </div>
+          <textarea class="prompt-textarea" style="min-height: 280px; border-color: var(--color-warning); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+• Position against AWS (lock-in, complexity) and Azure (cost unpredictability)
+• Create urgency without pressure
+
+KB USAGE:
+When the user's knowledge base contains relevant data (pricing, competitor info), reference it with specific numbers. Cite the source filename.
+
+WHEN TO RESPOND:
+• Price/budget concerns
+• Competitive comparisons
+• Buying signals
+
+WHEN TO STAY SILENT (respond "---"):
+• Technical architecture questions
+• Compliance/legal topics
+• General small talk</textarea>
+          <div class="char-count" style="color: var(--color-warning);">612 / 10,000 chars · modified</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger);">Discard edits</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test this version</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Show diff</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✏️</span>
+        <div><strong>The edit loop:</strong> User added KB usage instructions, bullet-point style, and "small talk" to the silent list. Now they want to test it before saving. Footer shows "Discard edits", "Test this version", and "Show diff".</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a3')">← A3: Review</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a5')">Next: Test →</button>
+      </div>
+    </div>
+
+    <!-- ── A5: Test Edited Prompt ── -->
+    <div class="flow-panel" id="flow-a5">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A5 — Test Edited Prompt</div>
+      <div class="flow-desc">User runs tests on the edited prompt. No previous version to compare against yet (this is pre-save).</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Prompt Tester</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="test-mode-tabs">
+            <button class="test-mode-tab active">Sample Qs</button>
+            <button class="test-mode-tab">Custom Q</button>
+            <button class="test-mode-tab">KB + Query</button>
+          </div>
+          <div class="test-question-group">
+            <div class="test-question-group-label">Should Respond</div>
+            <div class="test-question"><input type="checkbox" checked> "Your platform costs 3x more than AWS"</div>
+            <div class="test-question"><input type="checkbox" checked> "We need to think about the budget"</div>
+            <div class="test-question"><input type="checkbox" checked> "How do you compare to Azure's pricing?"</div>
+          </div>
+          <div class="test-question-group">
+            <div class="test-question-group-label">Should Stay Silent</div>
+            <div class="test-question"><input type="checkbox" checked> "How does your API handle failover?"</div>
+            <div class="test-question"><input type="checkbox" checked> "Tell me about SOC2 compliance"</div>
+            <div class="test-question"><input type="checkbox" checked> "So how's the weather over there?"</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label class="input-label" style="font-size: 12px;">Compare against:</label>
+            <div style="display: flex; gap: 12px; margin-top: 4px;">
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-a5" checked style="accent-color: var(--color-primary);"> None (no saved version yet)
+              </label>
+            </div>
+          </div>
+          <div class="test-cost-estimate">
+            <span>💰</span> 6 questions × 1 model = ~$0.01
+          </div>
+          <div style="text-align: center; margin-bottom: 16px;">
+            <button class="btn-primary" style="min-width: 200px; gap: 6px;">▶ Run Tests</button>
+          </div>
+
+          <!-- Partial results showing -->
+          <div class="test-result-card">
+            <div class="test-result-question">Q: "Your platform costs 3x more than AWS"</div>
+            <div class="test-result-header" style="grid-template-columns: 1fr;">
+              <span>Gemini 2.5 Flash — Response</span>
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response">• TCO over 3 years is 20% lower<br>• No egress fees on our platform<br>• Migration support included</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="test-result-card">
+            <div class="test-result-question">Q: "So how's the weather over there?" <span style="font-size: 11px; color: var(--color-text-muted);">(should stay silent)</span></div>
+            <div class="test-result-header" style="grid-template-columns: 1fr;">
+              <span>Gemini 2.5 Flash — Response</span>
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <span class="silent-badge pass">✓ Silent</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="test-actual-cost">Actual cost: $0.028</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to Edit</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save as v1</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">⚠️</span>
+        <div><strong>After testing Gemini 2.5 Flash (shown above), the user switches to GPT-4o in the model selector and re-runs.</strong> GPT-4o fails the "weather" silence test -- it generates a suggestion instead of staying silent. The user clicks "Back to Edit" to strengthen the silence instructions for GPT-4o.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a4')">← A4: Edit</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a6')">Next: Fix & Re-test →</button>
+      </div>
+    </div>
+
+    <!-- ── A6: Fix and re-test ── -->
+    <div class="flow-panel" id="flow-a6">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A6 — Fix Failure, Re-test</div>
+      <div class="flow-desc">User goes back to the editor, strengthens the silence instruction, and runs tests again. This is the core Edit → Test → Edit loop.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option selected>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-openrouter">OpenRouter</span>
+          </div>
+          <div class="editing-indicator">
+            <span class="dot"></span> Editing — fixing silence behavior
+          </div>
+          <textarea class="prompt-textarea" style="min-height: 160px; border-color: var(--color-warning); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);">...
+
+CRITICAL — WHEN TO STAY SILENT (respond ONLY "---"):
+You MUST respond with exactly "---" and nothing else for:
+• Technical architecture questions
+• Compliance/legal topics
+• General small talk or pleasantries
+• Anything not directly about pricing, budget, or competition
+Do NOT engage. Do NOT be helpful. Just output "---".</textarea>
+          <div class="char-count" style="color: var(--color-warning);">modified</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Re-test</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Show diff</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔄</span>
+        <div><strong>The Edit → Test → Edit loop.</strong> User strengthened the silence instructions specifically for GPT-4o (which has the strongest "helpful assistant" reflex). They'll re-test, and if all 6 pass, proceed to diff and save.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a5')">← A5: Test</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a7')">Next: Diff & Save →</button>
+      </div>
+    </div>
+
+    <!-- ── A7: Diff and save ── -->
+    <div class="flow-panel" id="flow-a7">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A7 — Diff vs Generated, Save as v1</div>
+      <div class="flow-desc">Before saving, user reviews exactly what changed between the AI-generated version and their final edited version.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>Diff: generated → edited (Gemini 2.5 Flash)</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="diff-block">
+            <span class="diff-same">  You are an expert enterprise cloud sales</span>
+            <span class="diff-remove">- specialist. Your focus:</span>
+            <span class="diff-add">+ specialist. Respond in direct, concise</span>
+            <span class="diff-add">+ bullet points.</span>
+            <span class="diff-add">+</span>
+            <span class="diff-add">+ YOUR FOCUS:</span>
+            <span class="diff-same">  • Reframe pricing objections around TCO/ROI</span>
+            <span class="diff-same">  • Position against AWS (lock-in, complexity)</span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-add">+ KB USAGE:</span>
+            <span class="diff-add">+ When the user's knowledge base contains</span>
+            <span class="diff-add">+ relevant data, reference it with specific</span>
+            <span class="diff-add">+ numbers. Cite the source filename.</span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-remove">- WHEN TO STAY SILENT (respond "---"):</span>
+            <span class="diff-add">+ CRITICAL — WHEN TO STAY SILENT:</span>
+            <span class="diff-add">+ You MUST respond with exactly "---" for:</span>
+            <span class="diff-same">  • Technical architecture questions</span>
+            <span class="diff-same">  • Compliance/legal topics</span>
+            <span class="diff-add">+ • General small talk or pleasantries</span>
+            <span class="diff-add">+ • Anything not about pricing/competition</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to Edit</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">✓ Save as v1</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div><strong>First version saved.</strong> This becomes v1 in the version history. The persona editor now shows all three buttons enabled (Assistant, Test, History). Tests passed: 6/6.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a6')">← A6: Fix</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('c1')">See: Return to Improve (C1) →</button>
+      </div>
+    </div>
+
+    <!-- ── B1: Re-enter chat ── -->
+    <div class="flow-panel" id="flow-b1">
+      <div class="flow-title">Flow B · Re-run Assistant</div>
+      <div class="flow-heading">B1 — Not Happy, Re-enter Chat</div>
+      <div class="flow-desc">After reviewing generated prompts, user clicks "Refine..." instead of saving. The chat reopens with the previous context.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Prompt Setup Assistant <span class="cost-hint">Powered by Gemini · ~$0.001</span></h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="chat-messages">
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  Welcome back. Here's what I generated last time:
+                </div>
+                <div class="chat-summary">
+                  <strong>Previous generation:</strong>
+                  Enterprise cloud pricing · Direct tone · Bullet-point style
+                </div>
+              </div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                What would you like to change?
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">Actually, make it more consultative. Our enterprise buyers prefer a warmer approach. And add handling for "we're happy with our current vendor" objections.</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  Got it. I'll adjust:
+                  <ul>
+                    <li>Tone → warm &amp; consultative (from direct)</li>
+                    <li>Style → full sentences with empathy leads</li>
+                    <li>New: "happy with current vendor" objection handling</li>
+                  </ul>
+                  Everything else stays the same (enterprise, AWS/Azure, KB-aware).
+                </div>
+                <div class="chat-summary">
+                  <strong>Ready to regenerate with changes</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Refine more...</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">
+            <span>✨</span> Regenerate Prompts
+          </button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a3')">← A3: First Review</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('b2')">Next: Refine →</button>
+      </div>
+    </div>
+
+    <!-- ── B2: Refine with new inputs ── -->
+    <div class="flow-panel" id="flow-b2">
+      <div class="flow-title">Flow B · Re-run Assistant</div>
+      <div class="flow-heading">B2 — New Prompts Generated</div>
+      <div class="flow-desc">After refining inputs, the assistant regenerates. Now there's a previous generation to compare against.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <div class="version-badge">
+            Generation: <strong>#2</strong>
+            <button class="btn-secondary btn-small" style="min-width: auto; padding: 2px 10px; font-size: 11px;">Compare vs generation #1</button>
+          </div>
+          <textarea class="prompt-textarea" readonly style="min-height: 200px;">You are a trusted advisor for enterprise cloud infrastructure decisions. Your approach is warm, consultative, and empathetic.
+
+APPROACH:
+• Lead with understanding — acknowledge the prospect's situation before presenting alternatives
+• Use full sentences with a professional but approachable tone
+• When handling "happy with current vendor" objections, validate their satisfaction first, then introduce TCO comparison data
+
+...</textarea>
+          <div class="char-count">580 / 10,000 chars</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Edit</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test...</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save All</button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('b1')">← B1: Chat</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('b3')">Next: Compare →</button>
+      </div>
+    </div>
+
+    <!-- ── B3: Compare generations ── -->
+    <div class="flow-panel" id="flow-b3">
+      <div class="flow-title">Flow B · Re-run Assistant</div>
+      <div class="flow-heading">B3 — Compare Generation #1 vs #2</div>
+      <div class="flow-desc">Diff between the two AI-generated versions before any manual edits.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>Diff: Generation #1 → #2 (Gemini 2.5 Flash)</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="diff-block">
+            <span class="diff-remove">- You are an expert enterprise cloud sales</span>
+            <span class="diff-remove">- specialist. Your focus:</span>
+            <span class="diff-add">+ You are a trusted advisor for enterprise</span>
+            <span class="diff-add">+ cloud infrastructure decisions. Your</span>
+            <span class="diff-add">+ approach is warm, consultative, and</span>
+            <span class="diff-add">+ empathetic.</span>
+            <span class="diff-same">  </span>
+            <span class="diff-remove">- • Reframe pricing objections around TCO/ROI</span>
+            <span class="diff-add">+ APPROACH:</span>
+            <span class="diff-add">+ • Lead with understanding — acknowledge</span>
+            <span class="diff-add">+   the prospect's situation first</span>
+            <span class="diff-add">+ • Use full sentences with a professional</span>
+            <span class="diff-add">+   but approachable tone</span>
+            <span class="diff-add">+ • When handling "happy with current vendor"</span>
+            <span class="diff-add">+   objections, validate their satisfaction</span>
+            <span class="diff-same">  ...</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Use #1</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Use #2</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div><strong>From here</strong> the user picks one, then enters the same Edit → Test → Diff → Save loop from Flow A (steps A4–A7).</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('b2')">← B2: New Prompts</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a4')">Continue: Edit → Test loop (A4) →</button>
+      </div>
+    </div>
+
+    <!-- ── C1: Persona Editor (existing prompt) ── -->
+    <div class="flow-panel" id="flow-c1">
+      <div class="flow-title">Flow C · Return to Improve</div>
+      <div class="flow-heading">C1 — Persona Editor (Existing Prompt)</div>
+      <div class="flow-desc">User returns days later. Prompt exists. All three buttons are now enabled.</div>
+
+      <div class="options-card">
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">Name</label>
+          <input type="text" class="text-input" value="Cloud Sales Pro" readonly style="max-width: 300px;">
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <textarea class="prompt-textarea" readonly style="min-height: 120px;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+• Position against AWS (lock-in, complexity) and Azure (cost unpredictability)
+...</textarea>
+          <div class="char-count">612 / 10,000 chars</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History <span style="font-size: 10px; background: var(--color-primary-ring); color: var(--color-primary); padding: 1px 6px; border-radius: 8px;">v3</span></button>
+        </div>
+        <div class="form-group">
+          <label class="input-label">Knowledge Base</label>
+          <div class="kb-doc-item">
+            <span class="kb-doc-icon">📄</span>
+            <div class="kb-doc-info">
+              <div class="kb-doc-name">pricing-guide-2024.pdf</div>
+              <div class="kb-doc-meta">24 sections · 156 KB</div>
+            </div>
+            <button class="kb-doc-remove">×</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔀</span>
+        <div><strong>Three entry points:</strong><br>
+          • <strong>Prompt Setup Assistant</strong> → re-enter chat with context of current prompt (C2)<br>
+          • <strong>Test Current Prompts</strong> → jump straight to test harness (D1)<br>
+          • <strong>Version History</strong> → browse all versions (E1)
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <span></span>
+        <button class="flow-nav-btn primary" onclick="showFlow('c2')">Next: Re-enter Assistant →</button>
+      </div>
+    </div>
+
+    <!-- ── C2: Re-enter assistant with context ── -->
+    <div class="flow-panel" id="flow-c2">
+      <div class="flow-title">Flow C · Return to Improve</div>
+      <div class="flow-heading">C2 — Re-enter Assistant with Context</div>
+      <div class="flow-desc">The assistant knows the current prompt and its history. It picks up where the user left off.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Prompt Setup Assistant <span class="cost-hint">Powered by Gemini · ~$0.001</span></h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="chat-messages">
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  Welcome back to <strong>Cloud Sales Pro</strong>. Your current prompt is on <strong>v3</strong> (last tested 6/6 pass).
+                </div>
+                <div class="chat-summary">
+                  <strong>Current prompt focuses on:</strong>
+                  Enterprise cloud pricing · Direct tone · AWS/Azure positioning · KB-aware
+                </div>
+              </div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                What would you like to improve?
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">I want to add handling for when they ask for a discount. The persona should never offer a discount directly — only redirect to value.</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div>
+                <div class="chat-bubble">
+                  Got it. I'll add a "discount request" section that redirects to value positioning. Want me to also generate a test question for this scenario?
+                </div>
+                <div class="chat-quick-replies">
+                  <button class="chat-quick-reply primary">Yes, add test Q too</button>
+                  <button class="chat-quick-reply">Just the prompt</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Cancel</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">
+            <span>✨</span> Generate v4
+          </button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('c1')">← C1: Editor</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('c3')">Next: Generate & Test →</button>
+      </div>
+    </div>
+
+    <!-- ── C3: Generate, diff, test, save ── -->
+    <div class="flow-panel" id="flow-c3">
+      <div class="flow-title">Flow C · Return to Improve</div>
+      <div class="flow-heading">C3 — Generate v4, Diff vs v3, Test, Save</div>
+      <div class="flow-desc">New version generated with the discount handling. User sees diff vs current, tests, and saves.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <div class="version-badge">
+            Version: <strong>v4</strong> <span style="color: var(--color-text-muted);">· generated from assistant</span>
+          </div>
+
+          <!-- Diff v3 → v4 -->
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted); margin-bottom: 8px;">Diff: v3 → v4</div>
+          <div class="diff-block" style="margin-bottom: 16px;">
+            <span class="diff-same">  WHEN TO RESPOND:</span>
+            <span class="diff-same">  • Price/budget concerns</span>
+            <span class="diff-same">  • Competitive comparisons</span>
+            <span class="diff-same">  • Buying signals</span>
+            <span class="diff-add">+ • Discount requests (redirect to value)</span>
+            <span class="diff-same">  </span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-same">  </span>
+            <span class="diff-add">+ DISCOUNT HANDLING:</span>
+            <span class="diff-add">+ When the prospect asks for a discount, NEVER</span>
+            <span class="diff-add">+ offer a price reduction. Instead:</span>
+            <span class="diff-add">+ • Redirect to value propositions and ROI data</span>
+            <span class="diff-add">+ • Reference TCO savings from the pricing guide</span>
+            <span class="diff-add">+ • Suggest a custom package vs. a flat discount</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Edit</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test...</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save as v4</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔄</span>
+        <div><strong>Same Edit → Test → Save loop as first-time creation (A3-A7), but with version context.</strong> The diff shows exactly what changed from v3. The user can edit inline, test the new discount handling, and save. A/B test compares v4 vs v3.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('c2')">← C2: Chat</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('d1')">See: Test Only (D1) →</button>
+      </div>
+    </div>
+
+    <!-- ── D1: Test Current Prompts ── -->
+    <div class="flow-panel" id="flow-d1">
+      <div class="flow-title">Flow D · Test Only</div>
+      <div class="flow-heading">D1 — Test Current Prompts</div>
+      <div class="flow-desc">User clicks "Test Current Prompts" from the persona editor. No generation — just tests the saved prompt as-is.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Prompt Tester — Cloud Sales Pro (v3)</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="test-mode-tabs">
+            <button class="test-mode-tab active">Sample Qs</button>
+            <button class="test-mode-tab">Custom Q</button>
+            <button class="test-mode-tab">KB + Query</button>
+          </div>
+          <div class="test-question-group">
+            <div class="test-question-group-label">Should Respond</div>
+            <div class="test-question"><input type="checkbox" checked> "Your platform costs 3x more than AWS"</div>
+            <div class="test-question"><input type="checkbox" checked> "Can you give us a 20% discount?"</div>
+            <div class="test-question"><input type="checkbox" checked> "We're evaluating Azure as well"</div>
+          </div>
+          <div class="test-question-group">
+            <div class="test-question-group-label">Should Stay Silent</div>
+            <div class="test-question"><input type="checkbox" checked> "Walk me through your failover architecture"</div>
+            <div class="test-question"><input type="checkbox" checked> "Nice weather today, huh?"</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <label class="input-label" style="font-size: 12px;">Compare against:</label>
+            <div style="display: flex; gap: 12px; margin-top: 4px;">
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-d1" style="accent-color: var(--color-primary);"> None
+              </label>
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-d1" checked style="accent-color: var(--color-primary);"> Previous version (v2)
+              </label>
+            </div>
+          </div>
+          <div class="test-cost-estimate">
+            <span>💰</span> 5 questions × 1 model × 2 versions = ~$0.02
+          </div>
+          <div style="text-align: center;">
+            <button class="btn-primary" style="min-width: 200px; gap: 6px;">▶ Run Tests</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('c1')">← C1: Editor</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="flow-nav-btn" onclick="showFlow('d2b')">With comparison → D2b</button>
+          <button class="flow-nav-btn primary" onclick="showFlow('d2')">Single version → D2</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── D2: Failures → edit → re-test ── -->
+    <div class="flow-panel" id="flow-d2">
+      <div class="flow-title">Flow D · Test Only</div>
+      <div class="flow-heading">D2 — See Failures → Edit → Re-test</div>
+      <div class="flow-desc">Tests reveal a failure. User can jump directly to editing the prompt from the test results screen.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Test Results — 4/5 pass</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="test-result-card">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08); color: var(--color-danger);">
+              ✗ Q: "Can you give us a 20% discount?" — Qwen 3 32B offered a discount instead of redirecting to value
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="provider">Qwen 3 32B</div>
+                <div class="response" style="color: var(--color-danger);">"I can discuss some flexible pricing options. Let me check what discount tiers we have available for enterprise contracts..."</div>
+              </div>
+            </div>
+          </div>
+          <div class="test-actual-cost">4/5 passed · 1 failure · Actual cost: $0.048</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Edit Prompt to Fix →</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔄</span>
+        <div><strong>"Edit Prompt to Fix"</strong> takes the user directly to the prompt editor (like A4) with the failing question highlighted. After fixing, they re-test (A5), and if passing, save as a new version.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('d1')">← D1: Test</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e1')">See: Version History (E1) →</button>
+      </div>
+    </div>
+
+    <!-- ── D2b: A/B Comparison Results ── -->
+    <div class="flow-panel" id="flow-d2b">
+      <div class="flow-title">Flow D · Test Only</div>
+      <div class="flow-heading">D2b — A/B Comparison Results</div>
+      <div class="flow-desc">User ran tests with "Compare against: Previous version (v2)" selected. Results show v3 and v2 side by side for each question.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Comparison: v3 (current) vs v2</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <!-- Comparison summary -->
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1; padding: 10px; background: rgba(74, 222, 128, 0.06); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: 18px; font-weight: 700; color: var(--color-success);">5/5</div>
+              <div style="font-size: 11px; color: var(--color-text-muted);">v3 (current)</div>
+            </div>
+            <div style="flex: 1; padding: 10px; background: rgba(251, 191, 36, 0.06); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: 18px; font-weight: 700; color: var(--color-warning);">3/5</div>
+              <div style="font-size: 11px; color: var(--color-text-muted);">v2 (previous)</div>
+            </div>
+          </div>
+
+          <!-- Q1: both pass -->
+          <div class="test-result-card">
+            <div class="test-result-question">
+              <span style="color: var(--color-success);">✓</span> Q1: "Your platform costs 3x more than AWS" — <span style="font-size: 11px; color: var(--color-text-muted);">Should respond</span>
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell">
+                <div class="provider">v3 (current)</div>
+                <div class="response">• TCO over 3 years is 20% lower than AWS<br>• No egress fees on our platform <span class="silent-badge pass">✓</span></div>
+              </div>
+              <div class="test-result-cell">
+                <div class="provider">v2</div>
+                <div class="response">• Our pricing includes all data transfer<br>• Compare 3-year TCO, not sticker price <span class="silent-badge pass">✓</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q2: v3 pass, v2 fail (discount question) -->
+          <div class="test-result-card" style="border-color: rgba(248, 113, 113, 0.3);">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08);">
+              <span style="color: var(--color-warning);">△</span> Q2: "Can you give us a 20% discount?" — <span style="font-size: 11px; color: var(--color-text-muted);">Should respond (reframe to value)</span>
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell">
+                <div class="provider">v3 (current)</div>
+                <div class="response">• Rather than discounting, let me show the ROI calculator<br>• Customers who deploy our full suite see 40% cost reduction <span class="silent-badge pass">✓</span></div>
+              </div>
+              <div class="test-result-cell">
+                <div class="provider">v2</div>
+                <div class="response" style="color: var(--color-danger);">"I can discuss some flexible pricing options. Let me check what discount tiers we have available..." <span class="silent-badge fail">✗ Offered discount</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q3: both pass -->
+          <div class="test-result-card">
+            <div class="test-result-question">
+              <span style="color: var(--color-success);">✓</span> Q3: "We're evaluating Azure as well" — <span style="font-size: 11px; color: var(--color-text-muted);">Should respond</span>
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell">
+                <div class="provider">v3 (current)</div>
+                <div class="response">• Azure cost unpredictability is a common concern<br>• Our flat-rate model eliminates surprise bills <span class="silent-badge pass">✓</span></div>
+              </div>
+              <div class="test-result-cell">
+                <div class="provider">v2</div>
+                <div class="response">• Azure pricing is complex and unpredictable<br>• We offer transparent per-seat pricing <span class="silent-badge pass">✓</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q4: silence test — v3 pass, v2 fail -->
+          <div class="test-result-card" style="border-color: rgba(248, 113, 113, 0.3);">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08);">
+              <span style="color: var(--color-warning);">△</span> Q4: "Walk me through your failover architecture" — <span style="font-size: 11px; color: var(--color-text-muted);">Should stay silent</span>
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell">
+                <div class="provider">v3 (current)</div>
+                <div class="response" style="font-family: var(--font-mono); font-size: 13px;">--- <span class="silent-badge pass">✓ Silent</span></div>
+              </div>
+              <div class="test-result-cell">
+                <div class="provider">v2</div>
+                <div class="response" style="color: var(--color-danger);">"Our platform uses multi-region active-active replication with automatic failover..." <span class="silent-badge fail">✗ Should be silent</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q5: both pass silence -->
+          <div class="test-result-card">
+            <div class="test-result-question">
+              <span style="color: var(--color-success);">✓</span> Q5: "Nice weather today, huh?" — <span style="font-size: 11px; color: var(--color-text-muted);">Should stay silent</span>
+            </div>
+            <div class="test-result-row">
+              <div class="test-result-cell">
+                <div class="provider">v3 (current)</div>
+                <div class="response" style="font-family: var(--font-mono); font-size: 13px;">--- <span class="silent-badge pass">✓ Silent</span></div>
+              </div>
+              <div class="test-result-cell">
+                <div class="provider">v2</div>
+                <div class="response" style="font-family: var(--font-mono); font-size: 13px;">--- <span class="silent-badge pass">✓ Silent</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="test-actual-cost">v3: 5/5 pass · v2: 3/5 pass · Actual cost: $0.048</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Edit Prompt to Fix →</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">📊</span>
+        <div><strong>Side-by-side comparison proves v3 is better.</strong> v3's strengthened silence instructions fixed the failover architecture leak, and the discount reframing now redirects to value instead of offering a discount. The user can see exactly why v3 scores higher.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('d1')">← D1: Test Setup</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e1')">See: Version History (E1) →</button>
+      </div>
+    </div>
+
+    <!-- ── E1: Version History ── -->
+    <div class="flow-panel" id="flow-e1">
+      <div class="flow-title">Flow E · Version History</div>
+      <div class="flow-heading">E1 — Open History from Editor</div>
+      <div class="flow-desc">User clicks "Version History" button in the persona editor. Every save, test, and restore is tracked.</div>
+
+      <div class="options-card" style="max-width: 600px;">
+        <h2 class="form-section-title">Prompt History — Cloud Sales Pro</h2>
+        <p class="form-section-description" style="margin-bottom: 16px;">Every prompt version with test results and costs.</p>
+
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v3 <span class="current">current</span></div>
+            <div class="history-summary">Strengthened silence instructions, added KB citation rules</div>
+            <div class="history-stats">Test: 6/6 pass · Cost: $0.052 · Feb 8, 2025</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span style="font-size: 11px;">🧪</span> Test</button>
+          </div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v2</div>
+            <div class="history-summary">Bullet-point style, KB section added</div>
+            <div class="history-stats">Test: 5/6 pass · Cost: $0.048 · Feb 7, 2025</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span style="font-size: 11px;">🧪</span> Test</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: rgba(248, 113, 113, 0.3);">Delete</button>
+          </div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v1</div>
+            <div class="history-summary">Initial generation from Setup Assistant</div>
+            <div class="history-stats">Test: 4/6 pass · Cost: $0.042 · Feb 7, 2025</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span style="font-size: 11px;">🧪</span> Test</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: rgba(248, 113, 113, 0.3);">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div><strong>Each non-current version has 4 actions:</strong><br>
+          • <strong>Diff</strong> → compare this version against any other (E2)<br>
+          • <strong>Restore</strong> → make this the current version (creates new version) (E3)<br>
+          • <strong>Test</strong> → re-run tests on this specific version (E4)<br>
+          • <strong>Delete</strong> → permanently remove this version (E5, with confirmation)
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('c1')">← C1: Editor</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e2')">Next: Diff Two Versions →</button>
+      </div>
+    </div>
+
+    <!-- ── E2: Diff any two versions ── -->
+    <div class="flow-panel" id="flow-e2">
+      <div class="flow-title">Flow E · Version History</div>
+      <div class="flow-heading">E2 — Diff Any Two Versions</div>
+      <div class="flow-desc">User picks two versions to compare. Dropdown selectors let them choose any combination.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>Compare Versions</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+            <div>
+              <label class="input-label" style="font-size: 11px; margin-bottom: 4px;">From</label>
+              <select style="padding: 6px 12px; font-family: var(--font-family); font-size: 13px; color: var(--color-text-primary); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none;">
+                <option>v1 — Initial generation</option>
+                <option selected>v2 — Bullet-point style</option>
+                <option>v3 — Silence fix (current)</option>
+              </select>
+            </div>
+            <span style="color: var(--color-text-muted); margin-top: 18px;">→</span>
+            <div>
+              <label class="input-label" style="font-size: 11px; margin-bottom: 4px;">To</label>
+              <select style="padding: 6px 12px; font-family: var(--font-family); font-size: 13px; color: var(--color-text-primary); background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); outline: none;">
+                <option>v1 — Initial generation</option>
+                <option>v2 — Bullet-point style</option>
+                <option selected>v3 — Silence fix (current)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="model-selector" style="margin-bottom: 12px;">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+
+          <div class="diff-block">
+            <span class="diff-same">  You are an expert enterprise cloud sales</span>
+            <span class="diff-remove">- specialist. Your focus:</span>
+            <span class="diff-add">+ specialist. Respond in direct, concise</span>
+            <span class="diff-add">+ bullet points.</span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-add">+ KB USAGE:</span>
+            <span class="diff-add">+ When the user's knowledge base contains</span>
+            <span class="diff-add">+ relevant data, reference with specific numbers.</span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-remove">- WHEN TO STAY SILENT (respond "---"):</span>
+            <span class="diff-add">+ CRITICAL — WHEN TO STAY SILENT:</span>
+            <span class="diff-add">+ You MUST respond with exactly "---" for:</span>
+            <span class="diff-same">  • Technical architecture questions</span>
+            <span class="diff-add">+ • General small talk or pleasantries</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('e1')">← E1: History</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e3')">Next: Restore →</button>
+      </div>
+    </div>
+
+    <!-- ── E3: Restore old version ── -->
+    <div class="flow-panel" id="flow-e3">
+      <div class="flow-title">Flow E · Version History</div>
+      <div class="flow-heading">E3 — Restore Creates New Version</div>
+      <div class="flow-desc">Restoring v1 doesn't overwrite history — it creates v4 with the content of v1. Non-destructive.</div>
+
+      <div class="options-card" style="max-width: 600px;">
+        <h2 class="form-section-title">Prompt History — Cloud Sales Pro</h2>
+
+        <div class="history-item" style="border-color: var(--color-primary); background: rgba(243, 156, 18, 0.05);">
+          <div class="history-meta">
+            <div class="history-version">v4 <span class="current">current</span></div>
+            <div class="history-summary">Restored from v1</div>
+            <div class="history-stats">No tests yet · Feb 10, 2025</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span style="font-size: 11px;">🧪</span> Test</button>
+          </div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v3</div>
+            <div class="history-summary">Strengthened silence instructions</div>
+            <div class="history-stats">Test: 6/6 pass · $0.052 · Feb 8</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: rgba(248, 113, 113, 0.3);">Delete</button>
+          </div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v2</div>
+            <div class="history-summary">Bullet-point style</div>
+            <div class="history-stats">Test: 5/6 pass · $0.048 · Feb 7</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: rgba(248, 113, 113, 0.3);">Delete</button>
+          </div>
+        </div>
+
+        <div class="history-item" style="border-color: rgba(251, 191, 36, 0.3);">
+          <div class="history-meta">
+            <div class="history-version">v1 <span style="font-size: 10px; color: var(--color-warning);">← source</span></div>
+            <div class="history-summary">Initial generation</div>
+            <div class="history-stats">Test: 4/6 pass · $0.042 · Feb 7</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: rgba(248, 113, 113, 0.3);">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🛡️</span>
+        <div><strong>Non-destructive restore.</strong> v1, v2, v3 all preserved. v4 is a copy of v1's content. User can now test v4 or edit it further.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('e2')">← E2: Diff</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('f1')">See: Manual Edit (F1) →</button>
+      </div>
+    </div>
+
+    <!-- ── F1: Manual Edit ── -->
+    <div class="flow-panel" id="flow-f1">
+      <div class="flow-title">Flow F · Manual Edit</div>
+      <div class="flow-heading">F1 — Edit Textarea Directly</div>
+      <div class="flow-desc">User doesn't use the assistant — just types directly in the persona editor's prompt textarea.</div>
+
+      <div class="options-card">
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <div class="editing-indicator">
+            <span class="dot"></span> Unsaved changes
+          </div>
+          <textarea class="prompt-textarea" style="min-height: 160px; border-color: var(--color-warning); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+• Position against AWS (lock-in, complexity)
+• NEW: Handle multi-year contract negotiations
+• NEW: Upsell from standard to premium tier
+
+...</textarea>
+          <div class="char-count" style="color: var(--color-warning);">modified</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test Before Saving</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✏️</span>
+        <div><strong>Manual edits work too.</strong> User typed directly. They can test before saving, or just save (which creates a new version labeled "manual edit").</div>
+      </div>
+
+      <div class="flow-nav">
+        <span></span>
+        <button class="flow-nav-btn primary" onclick="showFlow('f2')">Next: Test & Save →</button>
+      </div>
+    </div>
+
+    <!-- ── F2: Test, iterate, save ── -->
+    <div class="flow-panel" id="flow-f2">
+      <div class="flow-title">Flow F · Manual Edit</div>
+      <div class="flow-heading">F2 — Test → Iterate → Save</div>
+      <div class="flow-desc">Same test harness, but the "compare against" option defaults to the last saved version.</div>
+      <div class="flow-context">Same Edit → Test → Diff → Save loop — version labeled "manual edit"</div>
+
+      <div class="options-card" style="max-width: 600px;">
+        <h2 class="form-section-title">After saving...</h2>
+        <div class="history-item" style="border-color: var(--color-primary); background: rgba(243, 156, 18, 0.05);">
+          <div class="history-meta">
+            <div class="history-version">v4 <span class="current">current</span> <span class="label manual">manual edit</span></div>
+            <div class="history-summary">Added contract negotiation &amp; upsell handling</div>
+            <div class="history-stats">Test: 5/6 pass · Cost: $0.044 · Feb 10, 2025</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v3</div>
+            <div class="history-summary">Strengthened silence instructions</div>
+            <div class="history-stats">Test: 6/6 pass · Feb 8</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Diff</button>
+            <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🏷️</span>
+        <div><strong>Version labels help distinguish how versions were created:</strong> "Setup Assistant", "manual edit", "restored from v1", etc.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('f1')">← F1: Edit</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('g1')">See: Model Switch (G1) →</button>
+      </div>
+    </div>
+
+    <!-- ── G1: Model Switch ── -->
+    <div class="flow-panel" id="flow-g1">
+      <div class="flow-title">Flow G · Model Switch</div>
+      <div class="flow-heading">G1 — Prompt Exists for Gemini 2.5 Flash, Not Optimized for Qwen 3 32B</div>
+      <div class="flow-desc">User changed their active model in settings. The persona editor detects the mismatch.</div>
+
+      <div class="options-card">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: var(--radius-md); margin-bottom: 20px; font-size: 13px; color: var(--color-warning);">
+          ⚠️ Your active model changed to <strong style="color: var(--color-text-primary);">Qwen 3 32B (Groq)</strong>. This prompt was optimized for Gemini 2.5 Flash.
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt <span style="font-size: 11px; color: var(--color-text-muted);">(optimized for Gemini 2.5 Flash)</span></label>
+          <textarea class="prompt-textarea" readonly style="min-height: 100px;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+...</textarea>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Adapt Prompt for Qwen 3 32B</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test on Qwen 3 32B</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;">Keep as-is</button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <span></span>
+        <button class="flow-nav-btn primary" onclick="showFlow('g2')">Next: Adapt →</button>
+      </div>
+    </div>
+
+    <!-- ── G2: Adapt for new model ── -->
+    <div class="flow-panel" id="flow-g2">
+      <div class="flow-title">Flow G · Model Switch</div>
+      <div class="flow-heading">G2 — Adapt Prompt for Qwen 3 32B</div>
+      <div class="flow-desc">The assistant auto-adapts the prompt for Qwen 3 32B's strengths and limitations, then shows the diff.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>Adapt: Gemini 2.5 Flash → Qwen 3 32B</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="diff-block">
+            <span class="diff-same">  You are an expert enterprise cloud sales</span>
+            <span class="diff-same">  specialist. Respond in direct, concise</span>
+            <span class="diff-same">  bullet points.</span>
+            <span class="diff-same">  </span>
+            <span class="diff-add">+ IMPORTANT: Keep responses under 150 tokens.</span>
+            <span class="diff-add">+ Qwen 3 32B works best with explicit length</span>
+            <span class="diff-add">+ constraints.</span>
+            <span class="diff-same">  </span>
+            <span class="diff-same">  YOUR FOCUS:</span>
+            <span class="diff-same">  ...</span>
+            <span class="diff-remove">- WHEN TO STAY SILENT (respond "---"):</span>
+            <span class="diff-add">+ SILENCE RULES (STRICT — respond ONLY "---"):</span>
+            <span class="diff-add">+ Qwen 3 32B tends to over-respond. You MUST</span>
+            <span class="diff-add">+ output exactly three dashes and nothing else:</span>
+            <span class="diff-same">  • Technical architecture questions</span>
+            <span class="diff-same">  ...</span>
+          </div>
+          <div style="margin-top: 12px; font-size: 12px; color: var(--color-text-muted);">
+            Changes: Added token limit guidance, strengthened silence rules for Qwen 3 32B's chattiness
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Keep Gemini 2.5 Flash version</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test Qwen 3 32B version</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save Qwen 3 32B version</button>
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('g1')">← G1: Mismatch</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('g3')">Next: Model Version Saved →</button>
+      </div>
+    </div>
+
+    <!-- ── G3: Model version saved ── -->
+    <div class="flow-panel" id="flow-g3">
+      <div class="flow-title">Flow G · Model Switch</div>
+      <div class="flow-heading">G3 — Model Version Saved</div>
+      <div class="flow-desc">After saving the model-adapted prompt, the persona editor shows the new version with model attribution in version history.</div>
+
+      <div class="options-card">
+        <!-- Success toast -->
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: var(--radius-md); margin-bottom: 20px;">
+          <span style="font-size: 16px;">✅</span>
+          <div>
+            <div style="font-size: 13px; font-weight: 500; color: var(--color-success);">Saved as v3 — optimized for Qwen 3 32B</div>
+            <div style="font-size: 11px; color: var(--color-text-muted);">Adapted from Gemini 2.5 Flash version · Setup Assistant</div>
+          </div>
+        </div>
+
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">System Prompt <span style="font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(244, 143, 66, 0.15); color: #f48f42;">Optimized for: Qwen 3 32B</span></label>
+          <textarea class="prompt-textarea" readonly style="min-height: 100px;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+IMPORTANT: Keep responses under 150 tokens. Qwen 3 32B works best with explicit length constraints.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+...</textarea>
+          <div class="char-count">680 / 10,000 chars</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History <span style="font-size: 10px; background: var(--color-primary-ring); color: var(--color-primary); padding: 1px 6px; border-radius: 8px;">v3</span></button>
+        </div>
+
+        <!-- Version History section -->
+        <div style="margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+          <div class="input-label" style="font-size: 12px; margin-bottom: 12px;">Version History</div>
+          <div class="history-item" style="border-color: var(--color-primary); background: rgba(243, 156, 18, 0.05);">
+            <div class="history-meta">
+              <div class="history-version">v3 <span class="current">current</span></div>
+              <div class="history-summary">Adapted for Qwen 3 32B · Setup Assistant</div>
+              <div class="history-stats">No tests yet · Feb 10, 2025</div>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-version">v2 <span class="label manual">manual edit</span></div>
+              <div class="history-summary">Gemini 2.5 Flash · manual edit</div>
+              <div class="history-stats">Test: 5/6 pass · Feb 8</div>
+            </div>
+            <div class="history-actions">
+              <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-version">v1</div>
+              <div class="history-summary">Gemini 2.5 Flash · Setup Assistant</div>
+              <div class="history-stats">Test: 4/6 pass · Feb 7</div>
+            </div>
+            <div class="history-actions">
+              <button class="btn-secondary btn-small" style="min-width: auto;">Restore</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">📋</span>
+        <div><strong>After saving the model-adapted prompt, version history shows which model each version was optimized for.</strong> The user can always switch back to a Gemini version via Restore.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('g2')">← G2: Adapt</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e1')">See: Version History (E1) →</button>
+      </div>
+    </div>
+
+    <!-- ── H1: Legacy Prompts ── -->
+    <div class="flow-panel" id="flow-h1">
+      <div class="flow-title">Flow H · Legacy Prompts</div>
+      <div class="flow-heading">H1 — Pre-Feature Prompt → Auto v1</div>
+      <div class="flow-desc">User has a prompt from before this feature existed. On first visit, it's automatically imported as v1.</div>
+
+      <div class="options-card">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(96, 165, 250, 0.08); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: var(--radius-md); margin-bottom: 20px; font-size: 13px; color: #60a5fa;">
+          ℹ️ Your existing prompt has been imported as <strong>v1</strong>. You can now use the Setup Assistant, test it, or view its history.
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <textarea class="prompt-textarea" readonly style="min-height: 100px;">You are a helpful sales assistant for enterprise cloud deals. Help the user handle objections and close deals effectively.</textarea>
+          <div class="char-count">124 / 10,000 chars</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History <span style="font-size: 10px; background: rgba(96, 165, 250, 0.15); color: #60a5fa; padding: 1px 6px; border-radius: 8px;">v1</span></button>
+        </div>
+      </div>
+
+      <div class="options-card" style="max-width: 600px; margin-top: 20px;">
+        <h2 class="form-section-title" style="font-size: 14px;">Version History</h2>
+        <div class="history-item">
+          <div class="history-meta">
+            <div class="history-version">v1 <span class="current">current</span> <span class="label imported">imported</span></div>
+            <div class="history-summary">Imported from existing persona prompt</div>
+            <div class="history-stats">No tests yet</div>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span style="font-size: 11px;">🧪</span> Test</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔄</span>
+        <div><strong>From here, all flows apply.</strong> The user can run the Setup Assistant to generate an improved v2, test the existing prompt, or manually edit and save.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a1')">← Back to A1: Start</button>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         NEW SCREENS — 9 missing flows
+         ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- ── A2b: Template Preview ── -->
+    <div class="flow-panel" id="flow-a2b">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A2b — Template Preview (Pick Built-In)</div>
+      <div class="flow-desc">User clicked "Use Sales Closer" in the chat. The template is shown with an option to customize or accept.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>📋 Sales Closer Template</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1;">
+              <div class="input-label" style="font-size: 11px; margin-bottom: 4px;">Template</div>
+              <div style="font-size: 15px; font-weight: 600; color: var(--color-text-primary);">Sales Closer</div>
+              <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 2px;">Built-in · Used by 340+ personas</div>
+            </div>
+          </div>
+
+          <div class="input-label" style="margin-bottom: 8px;">Template Prompt Preview</div>
+          <textarea class="prompt-textarea" readonly style="min-height: 180px; opacity: 0.85;">You are an expert sales closer. Your job is to help the user close deals by providing real-time suggestions during sales calls.
+
+APPROACH:
+• Identify buying signals and reinforce them
+• Handle objections with empathy and data
+• Create urgency without being pushy
+• Suggest next steps and trial closes
+
+WHEN TO RESPOND:
+• Pricing discussions
+• Competitor mentions
+• Objection handling
+• Buying signals
+
+WHEN TO STAY SILENT (respond "---"):
+• Technical deep-dives
+• Internal team discussions
+• Off-topic conversation</textarea>
+
+          <div style="margin-top: 16px; padding: 12px; background: rgba(243, 156, 18, 0.08); border: 1px solid rgba(243, 156, 18, 0.2); border-radius: var(--radius-md);">
+            <div class="input-label" style="margin-bottom: 8px; font-size: 12px; color: var(--color-primary);">What would you like to customize?</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <button class="chat-quick-reply" style="font-size: 11px;">Add competitors</button>
+              <button class="chat-quick-reply" style="font-size: 11px;">Change tone</button>
+              <button class="chat-quick-reply" style="font-size: 11px;">Add KB instructions</button>
+              <button class="chat-quick-reply" style="font-size: 11px;">Change language</button>
+              <button class="chat-quick-reply" style="font-size: 11px;">Adjust silence rules</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to Chat</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Use as-is</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Customize this →</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">💡</span>
+        <div><strong>"Customize this"</strong> returns to the chat with the template loaded. The assistant asks follow-up questions about what to change. <strong>"Use as-is"</strong> skips to A3 (review) with the template prompt pre-filled.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a2')">← A2: Chat</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="flow-nav-btn" onclick="showFlow('a3b')">Use as-is → A3b</button>
+          <button class="flow-nav-btn primary" onclick="showFlow('a3')">Customize → A3</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── A4b: Inline Diff from Editor ── -->
+    <div class="flow-panel" id="flow-a4b">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A4b — Inline Diff from Editor</div>
+      <div class="flow-desc">User clicked "Show diff" while editing. A diff panel slides in below the textarea showing changes vs the generated version.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompts</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="model-selector">
+            <label>Target Model</label>
+            <select>
+              <optgroup label="Gemini (Direct)">
+                <option selected>Gemini 2.5 Flash</option>
+              </optgroup>
+              <optgroup label="OpenRouter">
+                <option>Gemini 2.5 Flash</option>
+                <option>Gemini 2.5 Pro</option>
+                <option>Claude Sonnet 4</option>
+                <option>GPT-4o</option>
+                <option>GPT-4o Mini</option>
+                <option>Llama 3.3 70B</option>
+              </optgroup>
+              <optgroup label="Groq">
+                <option>Llama 4 Scout 17B</option>
+                <option>Qwen 3 32B</option>
+                <option>Llama 3.3 70B Versatile</option>
+                <option>Llama 3.1 8B Instant</option>
+              </optgroup>
+            </select>
+            <span class="model-badge badge-direct">Direct</span>
+          </div>
+          <div class="editing-indicator">
+            <span class="dot"></span> Editing — showing diff vs generated
+          </div>
+
+          <!-- Split view: editor on top, diff below -->
+          <textarea class="prompt-textarea" style="min-height: 100px; border-color: var(--color-warning); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15); border-radius: var(--radius-md) var(--radius-md) 0 0; border-bottom: none;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+...</textarea>
+
+          <div style="padding: 6px 12px; background: var(--color-bg-page); border: 1px solid var(--color-border); border-top: 1px dashed var(--color-border-light); border-radius: 0 0 var(--radius-md) var(--radius-md); margin-bottom: 12px;">
+            <div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-text-muted); margin-bottom: 6px; padding-top: 4px;">Live diff vs generated</div>
+            <div class="diff-block" style="border: none; padding: 4px 0; background: transparent; font-size: 11px;">
+              <span class="diff-same">  You are an expert enterprise cloud sales</span>
+              <span class="diff-remove">- specialist. Your focus:</span>
+              <span class="diff-add">+ specialist. Respond in direct, concise</span>
+              <span class="diff-add">+ bullet points.</span>
+              <span class="diff-add">+</span>
+              <span class="diff-add">+ YOUR FOCUS:</span>
+              <span class="diff-same">  ...</span>
+              <span class="diff-add">+ KB USAGE:</span>
+              <span class="diff-add">+ When the user's knowledge base contains</span>
+              <span class="diff-add">+ relevant data, reference with specific numbers.</span>
+              <span class="diff-same">  ...</span>
+              <span class="diff-add">+ • General small talk</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Hide diff</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test this version</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">👁️</span>
+        <div><strong>Live diff panel</strong> updates as the user types. It sits below the textarea within the same modal — no separate screen. "Hide diff" collapses it back.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a4')">← A4: Edit</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a5')">Next: Test →</button>
+      </div>
+    </div>
+
+    <!-- ── A5b: Custom Q Tab ── -->
+    <div class="flow-panel" id="flow-a5b">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A5b — Custom Q Tab</div>
+      <div class="flow-desc">User switches to "Custom Q" tab in the test harness. They can type their own questions and mark expected behavior.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Prompt Tester</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="test-mode-tabs">
+            <button class="test-mode-tab">Sample Qs</button>
+            <button class="test-mode-tab active">Custom Q</button>
+            <button class="test-mode-tab">KB + Query</button>
+          </div>
+
+          <!-- Existing custom questions -->
+          <div class="test-question-group">
+            <div class="test-question-group-label">Your Custom Questions</div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px;">
+              <input type="checkbox" checked style="accent-color: var(--color-primary);">
+              <span style="flex: 1; font-size: 13px; color: var(--color-text-secondary);">"Can you give us a volume discount for 500 seats?"</span>
+              <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: var(--color-success);">should respond</span>
+              <button class="kb-doc-remove" style="font-size: 14px;">×</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 8px;">
+              <input type="checkbox" checked style="accent-color: var(--color-primary);">
+              <span style="flex: 1; font-size: 13px; color: var(--color-text-secondary);">"What's your uptime SLA?"</span>
+              <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(248, 113, 113, 0.15); color: var(--color-danger);">should stay silent</span>
+              <button class="kb-doc-remove" style="font-size: 14px;">×</button>
+            </div>
+          </div>
+
+          <!-- Add new question -->
+          <div style="border: 1px dashed var(--color-border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;">
+            <div class="input-label" style="font-size: 12px; margin-bottom: 8px;">Add a question</div>
+            <input type="text" class="text-input" placeholder="Type a question the prospect might ask..." style="max-width: 100%; margin-bottom: 10px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <div class="input-label" style="font-size: 11px; margin-bottom: 0;">Expected behavior:</div>
+              <label style="font-size: 12px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px;">
+                <input type="radio" name="expected" checked style="accent-color: var(--color-success);"> Should respond
+              </label>
+              <label style="font-size: 12px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px;">
+                <input type="radio" name="expected" style="accent-color: var(--color-danger);"> Should stay silent
+              </label>
+              <button class="btn-primary btn-small" style="min-width: auto; padding: 4px 12px; font-size: 11px; margin-left: auto;">+ Add</button>
+            </div>
+          </div>
+
+          <div class="test-cost-estimate">
+            <span>💰</span> 2 custom + 6 sample = 8 questions × 1 model = ~$0.02
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to Sample Qs</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">▶ Run All Tests</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✏️</span>
+        <div><strong>Custom questions persist per persona.</strong> They're saved alongside the prompt so users can re-test with the same questions after future edits. Custom Qs are added to (not replacing) the auto-generated sample questions.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a5')">← A5: Sample Qs</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a5c')">Next: KB + Query →</button>
+      </div>
+    </div>
+
+    <!-- ── A5c: KB + Query Tab ── -->
+    <div class="flow-panel" id="flow-a5c">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A5c — KB + Query Tab</div>
+      <div class="flow-desc">Tests whether the persona correctly uses Knowledge Base data. Includes "impossible knowledge" test to prove KB retrieval works.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Prompt Tester — KB Validation</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="test-mode-tabs">
+            <button class="test-mode-tab">Sample Qs</button>
+            <button class="test-mode-tab">Custom Q</button>
+            <button class="test-mode-tab active">KB + Query</button>
+          </div>
+
+          <!-- KB docs attached -->
+          <div style="margin-bottom: 16px;">
+            <div class="test-question-group-label">Knowledge Base Documents</div>
+            <div class="kb-doc-item" style="margin-bottom: 4px;">
+              <span class="kb-doc-icon">📄</span>
+              <div class="kb-doc-info">
+                <div class="kb-doc-name">pricing-guide-2024.pdf</div>
+                <div class="kb-doc-meta">24 sections · 156 KB</div>
+              </div>
+              <input type="checkbox" checked style="accent-color: var(--color-primary);">
+            </div>
+            <div class="kb-doc-item" style="margin-bottom: 4px;">
+              <span class="kb-doc-icon">📄</span>
+              <div class="kb-doc-info">
+                <div class="kb-doc-name">competitor-battlecards.pdf</div>
+                <div class="kb-doc-meta">31 sections · 203 KB</div>
+              </div>
+              <input type="checkbox" checked style="accent-color: var(--color-primary);">
+            </div>
+          </div>
+
+          <!-- KB queries -->
+          <div class="test-question-group">
+            <div class="test-question-group-label">KB-Dependent Questions</div>
+            <div class="test-question"><input type="checkbox" checked> "What's the per-seat pricing for the enterprise tier?"</div>
+            <div class="test-question"><input type="checkbox" checked> "How does our pricing compare to AWS for a 100-seat deal?"</div>
+          </div>
+
+          <!-- Impossible knowledge test -->
+          <div style="border: 1px solid rgba(243, 156, 18, 0.3); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px; background: rgba(243, 156, 18, 0.05);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="font-size: 14px;">🔬</span>
+              <div class="input-label" style="margin-bottom: 0; font-size: 12px; color: var(--color-primary);">Impossible Knowledge Test</div>
+            </div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px; line-height: 1.5;">
+              Injects a fake fact into the KB context (e.g., <strong>"$847/seat/month for the Quantum tier"</strong>). If the LLM cites this number, KB retrieval is working. If it makes up a different number, it's hallucinating.
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" class="text-input" value="$847/seat/month for the Quantum tier" style="max-width: 100%; font-size: 12px;">
+              <label style="font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                <input type="checkbox" checked style="accent-color: var(--color-primary);"> Enable
+              </label>
+            </div>
+            <div class="test-question" style="margin-top: 8px;">
+              <input type="checkbox" checked> "What's the pricing for the Quantum tier?"
+              <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(243, 156, 18, 0.15); color: var(--color-primary); margin-left: auto;">must cite $847</span>
+            </div>
+          </div>
+
+          <div class="test-cost-estimate">
+            <span>💰</span> 3 KB questions × 1 model = ~$0.01 (includes embedding lookup)
+          </div>
+
+          <div style="text-align: center; margin-bottom: 16px;">
+            <button class="btn-primary" style="min-width: 200px; gap: 6px; opacity: 0.4; cursor: default;" disabled>▶ Running...</button>
+          </div>
+
+          <!-- KB Test Results -->
+          <div style="border-top: 1px solid var(--color-border); padding-top: 16px; margin-top: 8px;">
+            <div style="font-size: 13px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px;">KB Test Results</div>
+
+            <!-- Result 1: KB data correctly cited -->
+            <div class="test-result-card">
+              <div class="test-result-question">Q: "What is the per-seat price for enterprise?"</div>
+              <div class="test-result-row" style="grid-template-columns: 1fr;">
+                <div class="test-result-cell" style="border-right: none;">
+                  <div class="provider">Gemini 2.5 Flash</div>
+                  <div class="response">"Based on your pricing guide, the per-seat price is $847/month for the enterprise tier."</div>
+                  <div style="margin-top: 6px;"><span class="silent-badge pass">✓ Pass — correctly cited KB data</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result 2: Impossible knowledge test -->
+            <div class="test-result-card">
+              <div class="test-result-question" style="display: flex; align-items: center; gap: 6px;">
+                Q: "What is the per-seat price for enterprise?" <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(243, 156, 18, 0.15); color: var(--color-primary);">impossible knowledge — injected $999</span>
+              </div>
+              <div class="test-result-row" style="grid-template-columns: 1fr;">
+                <div class="test-result-cell" style="border-right: none;">
+                  <div class="provider">Gemini 2.5 Flash — with $999 injected into KB</div>
+                  <div class="response">"The per-seat price is $999 per seat for the enterprise tier, as listed in the pricing guide."</div>
+                  <div style="margin-top: 6px;"><span class="silent-badge pass">✓ Pass — used injected data, not hallucinated</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Result 3: Not in KB -->
+            <div class="test-result-card">
+              <div class="test-result-question">Q: "What is the SLA uptime guarantee?" <span style="font-size: 11px; color: var(--color-text-muted);">(not in KB)</span></div>
+              <div class="test-result-row" style="grid-template-columns: 1fr;">
+                <div class="test-result-cell" style="border-right: none;">
+                  <div class="provider">Gemini 2.5 Flash</div>
+                  <div class="response">"I don't have specific SLA details in my reference materials. You may want to check with your solutions architect."</div>
+                  <div style="margin-top: 6px;"><span class="silent-badge pass">✓ Pass — correctly declined to answer</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success banner -->
+            <div style="text-align: center; padding: 16px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: var(--radius-md); margin-top: 12px;">
+              <div style="font-size: 15px; font-weight: 600; color: var(--color-success); margin-bottom: 4px;">3/3 KB tests passed</div>
+              <div style="font-size: 12px; color: var(--color-text-secondary);">The model correctly uses KB data and doesn't hallucinate.</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">▶ Run KB Tests</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔬</span>
+        <div><strong>The impossible knowledge test proves KB retrieval works.</strong> Result 1 confirms real KB data is cited. Result 2 (the "$999 injection") proves the model reads from KB rather than relying on training data — if it said "$847" here, it would be hallucinating. Result 3 confirms the model declines when KB has no relevant data instead of making up an answer.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a5b')">← A5b: Custom Q</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a6')">Next: Test Results →</button>
+      </div>
+    </div>
+
+    <!-- ── A7b: Post-Save Confirmation ── -->
+    <div class="flow-panel" id="flow-a7b">
+      <div class="flow-title">Flow A · First-Time Creation</div>
+      <div class="flow-heading">A7b — Post-Save Confirmation</div>
+      <div class="flow-desc">After saving, a toast confirms the save and the persona editor reappears with all buttons enabled.</div>
+
+      <div class="options-card">
+        <!-- Toast notification -->
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: var(--radius-md); margin-bottom: 20px;">
+          <span style="font-size: 16px;">✅</span>
+          <div>
+            <div style="font-size: 13px; font-weight: 500; color: var(--color-success);">Prompt saved as v1</div>
+            <div style="font-size: 11px; color: var(--color-text-muted);">Model-optimized prompt (Gemini 2.5 Flash) · Test results: 6/6 pass · Cost: $0.052</div>
+          </div>
+        </div>
+
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">Name</label>
+          <input type="text" class="text-input" value="Cloud Sales Pro" readonly style="max-width: 300px;">
+        </div>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <textarea class="prompt-textarea" readonly style="min-height: 100px;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+...</textarea>
+          <div class="char-count">612 / 10,000 chars</div>
+        </div>
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px;"><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History <span style="font-size: 10px; background: var(--color-primary-ring); color: var(--color-primary); padding: 1px 6px; border-radius: 8px;">v1</span></button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">✅</span>
+        <div><strong>All three buttons now enabled.</strong> The toast auto-dismisses after 5 seconds. The user can now close the editor, or continue with testing/history/assistant.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a7')">← A7: Diff & Save</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('c1')">See: Return Later (C1) →</button>
+      </div>
+    </div>
+
+    <!-- ── C2b: Auto-Generated Test Questions ── -->
+    <div class="flow-panel" id="flow-c2b">
+      <div class="flow-title">Flow C · Return to Improve</div>
+      <div class="flow-heading">C2b — Auto-Generated Test Questions</div>
+      <div class="flow-desc">User clicked "Yes, add test Q too" in the chat. The assistant generates test questions tailored to the new prompt feature.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Generated Prompt + Test Questions</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="prompt-tabs">
+            <button class="prompt-tab active">Prompt (v4)</button>
+            <button class="prompt-tab">Test Questions</button>
+          </div>
+
+          <!-- Test questions tab content shown -->
+          <div style="padding: 4px 0;">
+            <div class="test-question-group">
+              <div class="test-question-group-label">Auto-Generated — Should Respond</div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px;">
+                <input type="checkbox" checked style="accent-color: var(--color-primary);">
+                <span style="flex: 1; font-size: 13px; color: var(--color-text-secondary);">"Can you give us a 20% discount on the annual plan?"</span>
+                <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(243, 156, 18, 0.15); color: var(--color-primary);">new</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px;">
+                <input type="checkbox" checked style="accent-color: var(--color-primary);">
+                <span style="flex: 1; font-size: 13px; color: var(--color-text-secondary);">"We need a lower price to get budget approval"</span>
+                <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(243, 156, 18, 0.15); color: var(--color-primary);">new</span>
+              </div>
+            </div>
+
+            <div class="test-question-group">
+              <div class="test-question-group-label">Auto-Generated — Should NOT Offer a Discount</div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px;">
+                <input type="checkbox" checked style="accent-color: var(--color-primary);">
+                <span style="flex: 1; font-size: 13px; color: var(--color-text-secondary);">"What's the cheapest option you have?"</span>
+                <span style="font-size: 10px; padding: 2px 8px; border-radius: 10px; background: rgba(243, 156, 18, 0.15); color: var(--color-primary);">new · must redirect to value</span>
+              </div>
+            </div>
+
+            <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: var(--radius-md);">
+              These questions were generated based on the new "discount handling" feature you requested. They'll be added to your existing test suite (6 sample + 2 custom = 11 total).
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Remove test Qs</button>
+          <button class="btn-secondary btn-small" style="min-width: auto; gap: 4px;"><span>🧪</span> Test now</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">Save prompt + test Qs</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🤖</span>
+        <div><strong>AI-generated test questions are context-aware.</strong> Because the user asked for "discount handling", the assistant generated questions that specifically test discount scenarios — including one that checks the persona redirects to value instead of offering a discount.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('c2')">← C2: Chat</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('c3')">Next: Test & Save →</button>
+      </div>
+    </div>
+
+    <!-- ── E4: Test Old Version from History ── -->
+    <div class="flow-panel" id="flow-e4">
+      <div class="flow-title">Flow E · Version History</div>
+      <div class="flow-heading">E4 — Test Old Version from History</div>
+      <div class="flow-desc">User clicked "Test" on v1 from the version history. The test harness loads with v1's prompt instead of the current version.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Prompt Tester — v1 <span style="font-size: 11px; color: var(--color-warning); font-weight: 400;">(not current)</span></h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <!-- Version indicator -->
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: var(--radius-md); margin-bottom: 16px; font-size: 12px; color: var(--color-warning);">
+            ⚠️ Testing <strong style="margin: 0 4px;">v1</strong> (Initial generation) — not the current version (v3)
+          </div>
+
+          <div class="test-mode-tabs">
+            <button class="test-mode-tab active">Sample Qs</button>
+            <button class="test-mode-tab">Custom Q</button>
+            <button class="test-mode-tab">KB + Query</button>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label class="input-label" style="font-size: 12px;">Compare against:</label>
+            <div style="display: flex; gap: 12px; margin-top: 4px;">
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-e4" style="accent-color: var(--color-primary);"> None
+              </label>
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-e4" checked style="accent-color: var(--color-primary);"> Current version (v3)
+              </label>
+              <label style="font-size: 13px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                <input type="radio" name="compare-e4" style="accent-color: var(--color-primary);"> v2
+              </label>
+            </div>
+          </div>
+
+          <div class="test-cost-estimate">
+            <span>💰</span> 6 questions × 1 model × 2 versions = ~$0.02
+          </div>
+
+          <div style="text-align: center;">
+            <button class="btn-primary" style="min-width: 200px; gap: 6px;">▶ Run Tests on v1</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Back to History</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">Restore v1</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🕐</span>
+        <div><strong>Compare old vs current.</strong> The user can A/B test v1 against v3 (current) to see if their improvements actually made things better. The "Restore v1" button is available directly from here if v1 turns out to be better.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('e1')">← E1: History</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e3')">See: Restore →</button>
+      </div>
+    </div>
+
+    <!-- ── E5: Delete Version Confirmation ── -->
+    <div class="flow-panel" id="flow-e5">
+      <div class="flow-title">Flow E · Version History</div>
+      <div class="flow-heading">E5 — Delete Version Confirmation</div>
+      <div class="flow-desc">User clicked "Delete" on v1 from the version history. A confirmation dialog prevents accidental deletion.</div>
+
+      <!-- Dimmed background -->
+      <div style="position: relative; width: 100%; max-width: 600px;">
+        <div class="options-card" style="opacity: 0.3; pointer-events: none;">
+          <h2 class="form-section-title">Prompt History — Cloud Sales Pro</h2>
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-version">v3 <span class="current">current</span></div>
+              <div class="history-summary">Strengthened silence instructions</div>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-meta">
+              <div class="history-version">v2</div>
+              <div class="history-summary">Bullet-point style</div>
+            </div>
+          </div>
+          <div class="history-item" style="border-color: rgba(248, 113, 113, 0.4);">
+            <div class="history-meta">
+              <div class="history-version">v1</div>
+              <div class="history-summary">Initial generation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmation dialog overlay -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 24px; z-index: 10;">
+          <div style="font-size: 16px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 8px;">Delete v1?</div>
+          <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 16px; line-height: 1.5;">
+            This will permanently delete <strong>v1</strong> (Initial generation) and its test results. This action cannot be undone.
+          </div>
+          <div style="padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: var(--radius-md); margin-bottom: 20px; font-size: 12px; color: var(--color-text-secondary);">
+            <strong style="color: var(--color-danger);">Note:</strong> If any other version was restored from v1, those versions remain unaffected.
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn-secondary btn-small" style="min-width: auto;">Cancel</button>
+            <button class="btn-primary btn-small" style="min-width: auto; background: var(--color-danger); box-shadow: none;">Delete v1</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🗑️</span>
+        <div><strong>Destructive but scoped.</strong> Only the selected version is deleted. The current version cannot be deleted (no Delete button shown for it). Versions restored from a deleted version are not affected — they're independent copies.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('e1')">← E1: History</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('e3')">See: Restore (E3) →</button>
+      </div>
+    </div>
+
+    <!-- ── I1: Discard/Close Warning ── -->
+    <div class="flow-panel" id="flow-i1">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I1 — Discard / Close Warning</div>
+      <div class="flow-desc">Shown whenever the user clicks "×" or navigates away with unsaved changes. Applies to all modals.</div>
+
+      <!-- Dimmed background modal overlay -->
+      <div style="position: relative; width: 100%; max-width: 640px;">
+        <!-- Background: blurred/dimmed existing modal -->
+        <div class="modal-frame" style="opacity: 0.3; pointer-events: none;">
+          <div class="modal-header">
+            <h3>✨ Generated Prompts</h3>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-body-area" style="min-height: 200px;">
+            <div style="font-size: 13px; color: var(--color-text-muted);">[ editing in progress... ]</div>
+          </div>
+        </div>
+
+        <!-- Warning dialog on top -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 380px; background: var(--color-bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); border: 1px solid var(--color-border); z-index: 10;">
+          <div style="padding: 24px; text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
+            <div style="font-size: 15px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 8px;">Unsaved Changes</div>
+            <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 20px; line-height: 1.5;">
+              You have edited prompts that haven't been saved. If you close now, your changes will be lost.
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn-secondary btn-small" style="min-width: auto; color: var(--color-danger); border-color: var(--color-danger);">Discard</button>
+              <button class="btn-secondary btn-small" style="min-width: auto;">← Keep Editing</button>
+              <button class="btn-primary btn-small" style="min-width: auto;">Save & Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top: 80px;">
+        <span class="callout-icon">🛡️</span>
+        <div><strong>Three options:</strong><br>
+          • <strong>Discard</strong> — lose all changes, close modal<br>
+          • <strong>Keep Editing</strong> — dismiss warning, return to editor<br>
+          • <strong>Save &amp; Close</strong> — save as new version and close
+        </div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a4')">← See: Edit screen (A4)</button>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- ── I2: All-Pass Success State ── -->
+    <div class="flow-panel" id="flow-i2">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I2 — All-Pass Success State</div>
+      <div class="flow-desc">All tests passed. The test harness shows a success banner with a clear call to save.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Test Results</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <!-- Success banner -->
+          <div style="text-align: center; padding: 24px 16px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: var(--radius-md); margin-bottom: 16px;">
+            <div style="font-size: 36px; margin-bottom: 8px;">🎉</div>
+            <div style="font-size: 18px; font-weight: 600; color: var(--color-success); margin-bottom: 4px;">All Tests Passed</div>
+            <div style="font-size: 13px; color: var(--color-text-secondary);">6/6 questions · Gemini 2.5 Flash · v2</div>
+          </div>
+
+          <!-- Summary grid -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div style="flex: 1; text-align: center; padding: 12px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+              <div style="font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Gemini 2.5 Flash</div>
+              <div style="font-size: 18px; font-weight: 600; color: var(--color-success); margin-top: 4px;">6/6 ✓</div>
+            </div>
+            <div style="font-size: 11px; color: var(--color-text-muted); line-height: 1.5;">
+              Use the model selector<br>to test other models
+            </div>
+          </div>
+
+          <!-- Improvement vs previous -->
+          <div style="padding: 10px 14px; background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.15); border-radius: var(--radius-md); margin-bottom: 12px; font-size: 12px; color: var(--color-text-secondary);">
+            <strong style="color: var(--color-success);">↑ Improved from v1:</strong> Silence compliance went from 2/3 → 3/3. Cost per test run: $0.052.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">View Details</button>
+          <button class="btn-secondary btn-small" style="min-width: auto;">← Edit More</button>
+          <button class="btn-primary btn-small" style="min-width: auto;">✓ Save as v2</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🎯</span>
+        <div><strong>Clear victory state.</strong> Per-model score with option to test other models, improvement vs previous version, and a prominent "Save" CTA. "View Details" expands to show individual test responses. "Edit More" goes back to the prompt editor if the user wants to keep refining.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a5')">← See: Test Harness (A5)</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('a7b')">Next: Post-Save →</button>
+      </div>
+    </div>
+
+    <!-- ── I3: No API Key Warning ── -->
+    <div class="flow-panel" id="flow-i3">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I3 — No API Key for Model</div>
+      <div class="flow-desc">User selects a model whose provider has no API key configured. Buttons are disabled until the key is added.</div>
+
+      <div class="options-card">
+        <h2 class="form-section-title">Edit Persona</h2>
+        <div class="form-group">
+          <label class="input-label">System Prompt</label>
+          <textarea class="prompt-textarea" readonly style="min-height: 100px;">You are an expert enterprise cloud sales specialist. Respond in direct, concise bullet points.
+
+YOUR FOCUS:
+• Reframe pricing objections around TCO and ROI
+...</textarea>
+          <div class="char-count">612 / 10,000 chars</div>
+        </div>
+
+        <!-- Warning banner -->
+        <div style="display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: var(--radius-md); margin-bottom: 20px;">
+          <span style="font-size: 18px; flex-shrink: 0;">⚠️</span>
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--color-warning); margin-bottom: 4px;">No OpenRouter API key configured</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 8px;">GPT-4o requires an OpenRouter API key. The Setup Assistant and Test features need a valid API key to call the target model.</div>
+            <button class="btn-secondary btn-small" style="min-width: auto; padding: 4px 12px; font-size: 11px; color: var(--color-primary); border-color: var(--color-primary);">Configure in Settings → Setup tab</button>
+          </div>
+        </div>
+
+        <div class="prompt-actions">
+          <button class="btn-primary btn-small" style="gap: 6px; opacity: 0.4; cursor: not-allowed;" disabled><span>✨</span> Prompt Setup Assistant</button>
+          <button class="btn-secondary btn-small" style="gap: 6px; opacity: 0.4; cursor: not-allowed;" disabled><span>🧪</span> Test Current Prompts</button>
+          <button class="btn-secondary btn-small" style="gap: 6px;"><span>📋</span> Version History <span style="font-size: 10px; background: var(--color-primary-ring); color: var(--color-primary); padding: 1px 6px; border-radius: 8px;">v3</span></button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔑</span>
+        <div><strong>Appears when the user selects a model whose provider has no API key configured.</strong> The warning is contextual -- it names the specific provider needed. "Test" and "Generate Prompts" buttons are disabled. Version History still works since it doesn't require API calls.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a1')">← A1: Editor</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('i1')">Next: Discard Warning →</button>
+      </div>
+    </div>
+
+    <!-- ── I4: Chat Error State ── -->
+    <div class="flow-panel" id="flow-i4">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I4 — Assistant Error</div>
+      <div class="flow-desc">An API error occurs during the assistant chat. The error is shown inline without losing chat context.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>✨ Prompt Setup Assistant <span class="cost-hint">Powered by Gemini · ~$0.001</span></h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <div class="chat-messages">
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                <strong>What will this persona help you with?</strong><br>
+                For example: "closing enterprise SaaS deals" or "conducting technical interviews"
+              </div>
+            </div>
+            <div class="chat-msg user">
+              <div class="chat-bubble">Handling pricing objections for our cloud platform</div>
+            </div>
+            <div class="chat-msg bot">
+              <div class="chat-avatar">🤖</div>
+              <div class="chat-bubble">
+                That sounds similar to our <strong>Sales Closer</strong> template. Let me generate some follow-up questions...
+              </div>
+            </div>
+
+            <!-- Error message -->
+            <div class="chat-msg bot">
+              <div class="chat-avatar" style="background: linear-gradient(135deg, #991b1b, #dc2626);">!</div>
+              <div class="chat-bubble" style="background: rgba(248, 113, 113, 0.08); border-color: rgba(248, 113, 113, 0.3);">
+                <strong style="color: var(--color-danger);">Failed to generate prompts.</strong><br>
+                <span style="color: var(--color-text-secondary);">The Gemini API returned an error: Rate limit exceeded. Please wait a moment and try again.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">
+            <span>🔄</span> Retry
+          </button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🔴</span>
+        <div><strong>API errors during the assistant chat are shown inline.</strong> The user can retry or close and come back later. Previous chat context is preserved -- the conversation doesn't reset on error.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a2')">← A2: Discovery Chat</button>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- ── I5: All Tests Fail ── -->
+    <div class="flow-panel" id="flow-i5">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I5 — All Tests Fail</div>
+      <div class="flow-desc">Every test question failed. The UI steers toward re-generation rather than manual fixing.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Test Results — 0/6 pass</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <!-- All-fail banner -->
+          <div style="padding: 16px; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); border-radius: var(--radius-md); margin-bottom: 16px;">
+            <div style="font-size: 15px; font-weight: 600; color: var(--color-danger); margin-bottom: 6px;">All tests failed</div>
+            <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 12px;">This prompt may need significant revision. Consider re-running the Setup Assistant with different inputs, or try a different target model.</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-primary btn-small" style="min-width: auto; gap: 4px;"><span>✨</span> Re-run Assistant</button>
+              <button class="btn-secondary btn-small" style="min-width: auto;">Edit Prompt Manually</button>
+            </div>
+          </div>
+
+          <!-- Failed results -->
+          <div class="test-result-card">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08); color: var(--color-danger);">
+              ✗ Q1: "Your platform costs 3x more than AWS"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response" style="color: var(--color-danger);">"I'm sorry, I can't help with pricing questions." <span class="silent-badge fail">✗ Wrong behavior</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="test-result-card">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08); color: var(--color-danger);">
+              ✗ Q2: "We need to think about the budget"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response" style="color: var(--color-danger);">"---" <span class="silent-badge fail">✗ Should have responded</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="test-result-card">
+            <div class="test-result-question" style="background: rgba(248, 113, 113, 0.08); color: var(--color-danger);">
+              ✗ Q3: "How do you compare to Azure's pricing?"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response" style="color: var(--color-danger);">"Azure is a great platform too!" <span class="silent-badge fail">✗ Off-topic response</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: var(--color-text-muted); padding: 8px 14px;">+ 3 more failures (silence tests)</div>
+          <div class="test-actual-cost">0/6 passed · 6 failures · Actual cost: $0.032</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">🚨</span>
+        <div><strong>Different from partial failure (A6).</strong> When ALL tests fail, the issue is likely fundamental -- wrong persona, wrong model, or badly corrupted prompt. The UI steers toward re-generation rather than manual fixing.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('d1')">← D1: Test</button>
+        <button class="flow-nav-btn primary" onclick="showFlow('b1')">Next: Re-run Assistant (B1) →</button>
+      </div>
+    </div>
+
+    <!-- ── I6: Test Run Error (mid-run) ── -->
+    <div class="flow-panel" id="flow-i6">
+      <div class="flow-title">Flow I · Shared UI States</div>
+      <div class="flow-heading">I6 — Test Run Error (Mid-Run)</div>
+      <div class="flow-desc">An API error interrupts a test run partway through. Passed tests are preserved; failed/skipped tests can be retried.</div>
+
+      <div class="modal-frame">
+        <div class="modal-header">
+          <h3>🧪 Test Results — Interrupted</h3>
+          <button class="modal-close">×</button>
+        </div>
+        <div class="modal-body-area">
+          <!-- Interruption banner -->
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: var(--radius-md); margin-bottom: 16px;">
+            <span style="font-size: 16px;">⚠️</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 500; color: var(--color-warning);">Test run interrupted</div>
+              <div style="font-size: 11px; color: var(--color-text-muted);">2 of 6 tests completed before an API error.</div>
+            </div>
+          </div>
+
+          <!-- Q1: pass -->
+          <div class="test-result-card">
+            <div class="test-result-question">
+              <span style="color: var(--color-success);">✓</span> Q1: "Your platform costs 3x more than AWS"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response">• TCO over 3 years is 20% lower<br>• No egress fees on our platform <span class="silent-badge pass">✓ Pass</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q2: pass -->
+          <div class="test-result-card">
+            <div class="test-result-question">
+              <span style="color: var(--color-success);">✓</span> Q2: "We need to think about the budget"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response">• Let me walk you through the ROI calculator <span class="silent-badge pass">✓ Pass</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q3: API error -->
+          <div class="test-result-card" style="border-color: rgba(251, 191, 36, 0.4);">
+            <div class="test-result-question" style="background: rgba(251, 191, 36, 0.08); color: var(--color-warning);">
+              ⚠ Q3: "How do you compare to Azure's pricing?"
+            </div>
+            <div class="test-result-row" style="grid-template-columns: 1fr;">
+              <div class="test-result-cell" style="border-right: none;">
+                <div class="response" style="color: var(--color-warning); font-style: italic;">API error: model returned 429 (rate limited)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Q4-Q6: skipped -->
+          <div style="padding: 12px 16px; background: var(--color-bg-page); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 12px;">
+            <div style="font-size: 12px; color: var(--color-text-muted);">
+              <span style="opacity: 0.6;">Q4:</span> "How does your API handle failover?" — <span style="color: var(--color-text-muted);">Skipped</span><br>
+              <span style="opacity: 0.6;">Q5:</span> "Tell me about SOC2 compliance" — <span style="color: var(--color-text-muted);">Skipped</span><br>
+              <span style="opacity: 0.6;">Q6:</span> "So how's the weather over there?" — <span style="color: var(--color-text-muted);">Skipped</span>
+            </div>
+          </div>
+
+          <div class="test-actual-cost">2/6 completed · 1 error · 3 skipped</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary btn-small" style="min-width: auto;">Close</button>
+          <button class="btn-primary btn-small" style="min-width: auto; gap: 6px;">🔄 Retry Failed Tests</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">⚡</span>
+        <div><strong>Distinguishes API errors from prompt quality failures.</strong> The user can retry just the failed tests without re-running passed ones. Passed results (Q1, Q2) are preserved. This saves both time and API cost.</div>
+      </div>
+
+      <div class="flow-nav">
+        <button class="flow-nav-btn" onclick="showFlow('a5')">← A5: Test</button>
+        <span></span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function showFlow(id) {
+      // Hide all panels
+      document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+      // Show selected
+      const panel = document.getElementById('flow-' + id);
+      if (panel) {
+        panel.classList.add('active');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      // Update sidebar
+      document.querySelectorAll('.flow-item').forEach(i => i.classList.remove('active'));
+      // Find the matching sidebar item
+      document.querySelectorAll('.flow-item').forEach(i => {
+        if (i.getAttribute('onclick') === "showFlow('" + id + "')") {
+          i.classList.add('active');
+          // Expand parent group if collapsed
+          const group = i.closest('.flow-group');
+          if (group && group.classList.contains('collapsed')) {
+            group.classList.remove('collapsed');
+          }
+        }
+      });
+    }
+
+    function toggleGroup(header) {
+      header.closest('.flow-group').classList.toggle('collapsed');
+    }
+  </script>
+</body>
+</html>

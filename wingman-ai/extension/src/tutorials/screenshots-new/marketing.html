@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingman AI — Real-Time AI Assistant for Google Meet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-ring: rgba(243, 156, 18, 0.25);
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-bg-surface-alt: #374151;
+      --color-border: #374151;
+      --gradient-header: linear-gradient(135deg, #7c2d12 0%, #b45309 30%, #d97706 60%, #f59e0b 100%);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-family);
+      color: var(--color-text-primary);
+      background: var(--color-bg-page);
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      background: url('../../assets/header-banner.png') center/cover no-repeat;
+      padding: 80px 24px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    .hero-content {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero .tagline {
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 10px;
+      font-weight: 500;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero .hero-sub {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 28px;
+      font-weight: 400;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      font-size: 13px;
+      color: white;
+      font-weight: 500;
+      backdrop-filter: blur(8px);
+    }
+
+    .cta-btn {
+      display: inline-block;
+      padding: 14px 36px;
+      background: linear-gradient(135deg, #b45309, #d97706);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 20px rgba(243, 156, 18, 0.2);
+    }
+
+    .cta-btn:hover {
+      background: linear-gradient(135deg, #92400e, #b45309);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(243, 156, 18, 0.3);
+    }
+
+    /* Sections */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      font-size: 16px;
+      color: var(--color-text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--color-bg-surface);
+      border-radius: 12px;
+      padding: 28px;
+      border: 1px solid var(--color-border);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: rgba(243, 156, 18, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Screenshot Showcase */
+    .showcase {
+      background: var(--color-bg-surface);
+      border-radius: 16px;
+      border: 1px solid var(--color-border);
+      overflow: hidden;
+    }
+
+    .showcase-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .showcase-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .showcase-body {
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .showcase-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .showcase-caption {
+      padding: 16px 24px;
+      border-top: 1px solid var(--color-border);
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    /* Two column layout */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .two-col-text h3 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .two-col-text p {
+      font-size: 15px;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .two-col-text ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .two-col-text li {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .two-col-text li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .two-col-img {
+      display: flex;
+      justify-content: center;
+    }
+
+    .two-col-img img {
+      max-width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      padding: 40px 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--color-border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* BYOK callout */
+    .byok-callout {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 0.1) 0%, rgba(231, 126, 34, 0.05) 100%);
+      border: 1px solid rgba(243, 156, 18, 0.2);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .byok-callout h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .byok-callout p {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 48px 24px;
+      border-top: 1px solid var(--color-border);
+      margin-top: 48px;
+    }
+
+    .footer p {
+      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .hero .tagline { font-size: 16px; }
+      .two-col { grid-template-columns: 1fr; }
+      .stats-bar { gap: 24px; }
+      .stat-value { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <img src="../../icons/icon-128.png" alt="Wingman Logo" class="hero-logo">
+      <h1>Wingman AI</h1>
+      <p class="tagline">Your real-time AI assistant for Google Meet</p>
+      <p class="hero-sub">Free and open-source. No credit card, no subscription. Just bring your own API keys.</p>
+      <div class="hero-badges">
+        <span class="hero-badge">Live Transcription</span>
+        <span class="hero-badge">AI Suggestions</span>
+        <span class="hero-badge">Emotion Detection</span>
+        <span class="hero-badge">Call Summaries</span>
+        <span class="hero-badge">Knowledge Base</span>
+      </div>
+      <a href="https://github.com/AntoineDubuc/Wingman-AI" class="cta-btn">Get Started Free</a>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-value">BYOK</div>
+      <div class="stat-label">Bring Your Own Keys</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">12</div>
+      <div class="stat-label">Built-in Persona Templates</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">4</div>
+      <div class="stat-label">Simultaneous Personas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$0</div>
+      <div class="stat-label">No Subscription Required</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Feature Grid -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">Features</span>
+      <h2>Everything You Need During a Call</h2>
+      <p>Live transcription, contextual AI suggestions, and emotion awareness — all running silently alongside your conversation.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#127908;</div>
+        <h3>Live Transcription</h3>
+        <p>Real-time speech-to-text via Deepgram Nova-3. See what everyone says as they say it, with configurable pause sensitivity.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#129302;</div>
+        <h3>AI Suggestions</h3>
+        <p>Contextual suggestions powered by Gemini, OpenRouter, or Groq. Your wingman surfaces the right thing to say, when it matters.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128161;</div>
+        <h3>Emotion Detection</h3>
+        <p>Hume AI reads vocal tone in real-time. Know when the other person is frustrated, engaged, or thinking — before they tell you.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128100;</div>
+        <h3>Multi-Persona System</h3>
+        <p>Run up to 4 AI personas at once. Each expert listens independently and only speaks up when their specialty is relevant.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128218;</div>
+        <h3>Knowledge Base</h3>
+        <p>Upload PDFs, Markdown, and text. Semantic search pulls in the exact data you need — pricing sheets, battle cards, playbooks.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128203;</div>
+        <h3>Call Summaries</h3>
+        <p>Auto-generated summaries with action items, key moments, and one-click export to Google Drive or clipboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Setup — use Hume options mock for a clean, focused screenshot -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-label">Setup</span>
+      <h2>Plug In Your Keys and Go</h2>
+      <p>Enter your API keys, pick your AI provider, and optionally enable Hume AI for emotion detection. Keys never leave your browser.</p>
+    </div>
+
+    <div class="showcase">
+      <div class="showcase-header">
+        <h3>Options Page — API Key Configuration</h3>
+      </div>
+      <div class="showcase-body">
+        <img src="hume-options-states.png" alt="Hume AI section — configured vs empty state" style="max-width: 700px;">
+      </div>
+      <div class="showcase-caption">
+        Hume AI emotion detection — configured (left) with valid credentials, and empty state (right). Deepgram and Gemini/OpenRouter/Groq keys configured the same way above.
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Emotion Detection -->
+  <section class="section">
+    <div class="two-col">
+      <div class="two-col-text">
+        <span class="section-label">New</span>
+        <h3>Read the Room in Real Time</h3>
+        <p>Hume AI analyzes vocal tone to detect how the other person is feeling. A live badge in the overlay header tells you at a glance.</p>
+        <ul>
+          <li>Engaged — they're interested, lean into it</li>
+          <li>Frustrated — slow down, acknowledge their concern</li>
+          <li>Thinking — give them space, don't rush</li>
+          <li>Neutral — steady state, carry on</li>
+        </ul>
+      </div>
+      <div class="two-col-img">
+        <img src="overlay-emotion-states.png" alt="Overlay showing frustrated and engaged emotion badges">
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Personas -->
+  <section class="section">
+    <div class="two-col">
+      <div class="two-col-img">
+        <img src="persona-editor-refreshed.png" alt="Persona editor with system prompt and Knowledge Base documents">
+      </div>
+      <div class="two-col-text">
+        <span class="section-label">Personas</span>
+        <h3>A Different Expert for Every Call</h3>
+        <p>Each persona bundles a system prompt with its own Knowledge Base documents. Switch context in one click.</p>
+        <ul>
+          <li>12 built-in templates — sales, interview, fundraising, and more</li>
+          <li>Attach PDFs, Markdown, and text files per persona</li>
+          <li>Semantic search pulls relevant data into suggestions</li>
+          <li>Import/export personas with attached documents</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Conclave / Multi-Persona -->
+  <section class="section">
+    <div class="two-col">
+      <div class="two-col-text">
+        <span class="section-label">Conclave</span>
+        <h3>Multiple Experts, One Call</h3>
+        <p>Activate up to 4 personas at once. Each listens independently and only chimes in when their domain is relevant.</p>
+        <ul>
+          <li>Save persona combos as instant-switch presets</li>
+          <li>Set a Conclave Leader to shape post-call summaries</li>
+          <li>Each persona scoped to its own Knowledge Base</li>
+          <li>Quick-activate from the popup dropdown</li>
+        </ul>
+      </div>
+      <div class="two-col-img">
+        <img src="popup-conclave-refreshed.png" alt="Popup showing conclave presets and active personas">
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Call Summary -->
+  <section class="section">
+    <div class="two-col">
+      <div class="two-col-img">
+        <img src="summary-single-state.png" alt="Call summary with action items and key moments">
+      </div>
+      <div class="two-col-text">
+        <span class="section-label">Post-Call</span>
+        <h3>Never Forget a Follow-Up</h3>
+        <p>When your call ends, Wingman generates a summary with action items and notable moments. One click to copy or save to Drive.</p>
+        <ul>
+          <li>Action items tagged by owner (You / Them)</li>
+          <li>Key moments — buying signals, objections, commitments</li>
+          <li>Copy to clipboard or auto-save to Google Drive</li>
+          <li>Google Doc, Markdown, plain text, or JSON format</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- BYOK Callout -->
+  <section class="section">
+    <div class="byok-callout">
+      <h3>Your Keys, Your Data, Your Control</h3>
+      <p>Wingman runs entirely in your browser. No backend, no subscription, no data collection. You bring your own API keys — Deepgram (free tier), Gemini (free tier), OpenRouter, Groq, and optionally Hume AI. You control your costs and your privacy.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Built by <a href="https://www.linkedin.com/in/antoinedubuc/" target="_blank" rel="noopener noreferrer">Antoine Dubuc</a> — Senior Technical PM at <a href="https://www.cloudgeometry.com/solutions/langbuilder" target="_blank" rel="noopener noreferrer">CloudGeometry</a></p>
+    <div class="footer-links">
+      <a href="https://github.com/AntoineDubuc/Wingman-AI" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://buymeacoffee.com/antoinedubuc" target="_blank" rel="noopener noreferrer">Buy Me a Coffee</a>
+    </div>
+  </footer>
+</body>
+</html>

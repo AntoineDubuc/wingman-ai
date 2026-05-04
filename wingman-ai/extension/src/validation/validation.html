@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingman AI - Validation Tests</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    h1 { margin-bottom: 8px; color: #4ade80; }
+    .subtitle { color: #888; margin-bottom: 24px; }
+    .controls { margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+    button {
+      background: #4ade80;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover { background: #22c55e; transform: translateY(-1px); }
+    button:disabled { background: #555; cursor: not-allowed; transform: none; }
+    button.secondary { background: #334155; color: #eee; }
+    button.secondary:hover { background: #475569; }
+    .results { display: flex; flex-direction: column; gap: 12px; }
+    .test-result {
+      background: #252540;
+      border-radius: 8px;
+      padding: 16px;
+      border-left: 4px solid #666;
+    }
+    .test-result.success { border-left-color: #4ade80; }
+    .test-result.failure { border-left-color: #ef4444; }
+    .test-result.running { border-left-color: #eab308; }
+    .test-name { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+    .test-status { font-size: 12px; margin-bottom: 8px; }
+    .test-status.success { color: #4ade80; }
+    .test-status.failure { color: #ef4444; }
+    .test-status.running { color: #eab308; }
+    .test-details { font-size: 13px; color: #aaa; line-height: 1.6; }
+    .test-error { color: #ef4444; margin-top: 8px; font-size: 13px; }
+    .summary {
+      background: #252540;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .summary.visible { display: block; }
+    .summary-stats { display: flex; gap: 24px; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 32px; font-weight: bold; }
+    .stat-label { font-size: 12px; color: #888; }
+    .stat.passed .stat-value { color: #4ade80; }
+    .stat.failed .stat-value { color: #ef4444; }
+    .stat.total .stat-value { color: #60a5fa; }
+    .api-key-warning {
+      background: #422;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .api-key-warning h3 { color: #ef4444; margin-bottom: 8px; }
+    pre { background: #1a1a2e; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Validation Tests</h1>
+  <p class="subtitle">Testing Knowledge Base technical assumptions</p>
+
+  <div id="apiKeyWarning" class="api-key-warning" style="display: none;">
+    <h3>⚠️ API Key Required</h3>
+    <p>Some tests require a Gemini API key. Please set it in the extension Options page first.</p>
+  </div>
+
+  <div class="controls">
+    <button id="runAll">Run All Tests</button>
+    <button id="runSelected" class="secondary">Run Selected</button>
+  </div>
+
+  <div id="summary" class="summary">
+    <div class="summary-stats">
+      <div class="stat passed">
+        <div class="stat-value" id="passedCount">0</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat failed">
+        <div class="stat-value" id="failedCount">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat total">
+        <div class="stat-value" id="totalCount">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="results"></div>
+
+  <script>
+    const resultsDiv = document.getElementById('results');
+    const summaryDiv = document.getElementById('summary');
+    const runAllBtn = document.getElementById('runAll');
+    const runSelectedBtn = document.getElementById('runSelected');
+    const apiKeyWarning = document.getElementById('apiKeyWarning');
+
+    // Check if Gemini API key is set
+    async function checkApiKey() {
+      try {
+        const result = await chrome.storage.local.get(['geminiApiKey']);
+        if (!result.geminiApiKey) {
+          apiKeyWarning.style.display = 'block';
+        }
+      } catch (e) {
+        console.error('Failed to check API key:', e);
+      }
+    }
+
+    function createTestCard(name, status = 'pending') {
+      const card = document.createElement('div');
+      card.className = `test-result ${status}`;
+      card.id = `test-${name}`;
+      card.innerHTML = `
+        <div class="test-name">${name}</div>
+        <div class="test-status ${status}">${status === 'running' ? '⏳ Running...' : status}</div>
+        <div class="test-details"></div>
+      `;
+      return card;
+    }
+
+    function updateTestCard(name, result) {
+      const card = document.getElementById(`test-${name}`);
+      if (!card) return;
+
+      const status = result.success ? 'success' : 'failure';
+      card.className = `test-result ${status}`;
+
+      const statusEl = card.querySelector('.test-status');
+      statusEl.className = `test-status ${status}`;
+      statusEl.textContent = result.success ? '✅ Passed' : '❌ Failed';
+
+      const detailsEl = card.querySelector('.test-details');
+      detailsEl.textContent = result.details || '';
+
+      if (result.error) {
+        const errorEl = document.createElement('div');
+        errorEl.className = 'test-error';
+        errorEl.textContent = `Error: ${result.error}`;
+        card.appendChild(errorEl);
+      }
+
+      if (result.duration) {
+        const durationEl = document.createElement('div');
+        durationEl.style.cssText = 'font-size: 12px; color: #666; margin-top: 8px;';
+        durationEl.textContent = `Duration: ${result.duration}ms`;
+        card.appendChild(durationEl);
+      }
+    }
+
+    function updateSummary(results) {
+      const passed = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+      const total = results.length;
+
+      document.getElementById('passedCount').textContent = passed;
+      document.getElementById('failedCount').textContent = failed;
+      document.getElementById('totalCount').textContent = total;
+      summaryDiv.classList.add('visible');
+    }
+
+    async function runAllTests() {
+      runAllBtn.disabled = true;
+      runAllBtn.textContent = 'Running...';
+      resultsDiv.innerHTML = '';
+      summaryDiv.classList.remove('visible');
+
+      // Get list of tests first
+      const listResponse = await chrome.runtime.sendMessage({ type: 'RUN_VALIDATION', test: 'list' });
+      const testNames = listResponse.tests || [];
+
+      // Create cards for all tests
+      for (const name of testNames) {
+        const card = createTestCard(name, 'running');
+        resultsDiv.appendChild(card);
+      }
+
+      // Run all tests
+      try {
+        const response = await chrome.runtime.sendMessage({ type: 'RUN_VALIDATION', test: 'all' });
+        console.log('Validation results:', response);
+
+        if (response.success && response.results) {
+          for (const result of response.results) {
+            updateTestCard(result.name, result);
+          }
+          updateSummary(response.results);
+        } else {
+          resultsDiv.innerHTML = `<div class="test-result failure">
+            <div class="test-name">Error</div>
+            <div class="test-error">${response.error || 'Unknown error'}</div>
+          </div>`;
+        }
+      } catch (error) {
+        console.error('Failed to run tests:', error);
+        resultsDiv.innerHTML = `<div class="test-result failure">
+          <div class="test-name">Error</div>
+          <div class="test-error">${error.message}</div>
+        </div>`;
+      }
+
+      runAllBtn.disabled = false;
+      runAllBtn.textContent = 'Run All Tests';
+    }
+
+    runAllBtn.addEventListener('click', runAllTests);
+    runSelectedBtn.addEventListener('click', () => {
+      alert('Select tests to run by clicking on individual test cards (coming soon)');
+    });
+
+    // Check API key on load
+    checkApiKey();
+
+    // Log available tests
+    chrome.runtime.sendMessage({ type: 'RUN_VALIDATION', test: 'list' }, (response) => {
+      console.log('Available tests:', response?.tests || []);
+    });
+  </script>
+</body>
+</html>

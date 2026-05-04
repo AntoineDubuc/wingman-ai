@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Popup Default - Dark Mode</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Dark mode variables matching popup.css */
+    :root {
+      --color-bg: #1f2937;
+      --color-bg-secondary: #374151;
+      --color-text: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-border: #4b5563;
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-disabled: #5d4e37;
+      --color-danger: #f87171;
+      --color-success: #4ade80;
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, sans-serif;
+      background: #111827 url('../../assets/header-banner.png') center/cover no-repeat fixed;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .popup {
+      width: 320px;
+      background: var(--color-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      padding: 16px;
+      color: var(--color-text);
+    }
+
+    /* Header - matches popup.css */
+    .popup-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #b45309, #d97706);
+      border-radius: 10px;
+    }
+
+    .popup-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    .subtitle {
+      width: 100%;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin-top: -4px;
+    }
+
+    /* Status section - matches popup.css */
+    .status-section {
+      background: var(--color-bg-secondary);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .status-row:not(:last-child) {
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-danger);
+    }
+
+    .status-dot.connected { background: var(--color-success); }
+    .status-dot.inactive { background: var(--color-text-muted); }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--color-text);
+    }
+
+    /* Persona section - matches popup.css */
+    .persona-section {
+      background: var(--color-bg-secondary);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+
+    .persona-section-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .persona-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .persona-empty {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      padding: 8px 0;
+      text-align: center;
+    }
+
+    .persona-add-btn {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-primary);
+      background: transparent;
+      border: 1px dashed var(--color-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .persona-add-btn:hover {
+      background: var(--color-bg);
+      border-color: var(--color-primary);
+    }
+
+    /* Controls section */
+    .controls-section {
+      margin-bottom: 16px;
+    }
+
+    .controls-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      text-align: center;
+    }
+
+    .controls-hint a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    /* Primary button - matches popup.css */
+    .primary-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .primary-btn:disabled {
+      background: var(--color-primary-disabled);
+      cursor: not-allowed;
+    }
+
+    /* Footer - matches popup.css */
+    .popup-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      color: var(--color-text-muted);
+      font-size: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-primary);
+      text-decoration: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .footer-link:hover {
+      background: var(--color-bg-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="popup">
+    <div class="popup-header">
+      <div class="logo"></div>
+      <h1>Wingman</h1>
+      <p class="subtitle">Real-Time AI Assistant for Google Meet</p>
+    </div>
+
+    <div class="persona-section">
+      <label class="persona-section-label">Active Personas</label>
+      <div class="persona-empty">No personas selected</div>
+      <button class="persona-add-btn">+ Add persona</button>
+    </div>
+
+    <div class="status-section">
+      <div class="status-row">
+        <span class="status-label">API Keys</span>
+        <span class="status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Not Configured</span>
+        </span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Session</span>
+        <span class="status-indicator">
+          <span class="status-dot inactive"></span>
+          <span class="status-text">Inactive</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="controls-section">
+      <button class="primary-btn" disabled>Start Session</button>
+      <p class="controls-hint">Configure your API keys in <a href="#">Options</a> to get started.</p>
+    </div>
+
+    <div class="popup-footer">
+      <span class="version">v1.0.0</span>
+      <div class="footer-links">
+        <a href="#" class="footer-link">Options</a>
+        <a href="#" class="footer-link">Tutorials</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

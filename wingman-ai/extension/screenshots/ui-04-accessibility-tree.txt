@@ -1,0 +1,71 @@
+- banner:
+  - img "Wingman Logo"
+  - heading "Wingman Settings" [level=1]
+  - button "☀️"
+- main:
+  - heading "API Keys" [level=2]
+  - paragraph: Enter your API keys to enable speech-to-text and AI responses. Your keys are stored locally and never sent to our servers.
+  - text: Deepgram API Key
+  - link "(Get one free)":
+    - /url: https://console.deepgram.com/
+  - textbox "Deepgram API Key (Get one free)":
+    - /placeholder: Enter your Deepgram API key
+  - button "👁"
+  - paragraph: Used for real-time speech-to-text transcription
+  - text: Google Gemini API Key
+  - link "(Get one free)":
+    - /url: https://aistudio.google.com/apikey
+  - textbox "Google Gemini API Key (Get one free)":
+    - /placeholder: Enter your Gemini API key
+  - button "👁"
+  - paragraph: Used for AI-powered suggestions and responses
+  - text: Keys not configured
+  - button "Test Keys"
+  - button "Save Keys"
+  - heading "Speaker Filter" [level=2]
+  - paragraph: Control when Wingman provides suggestions based on who is speaking.
+  - text: Only respond to other speakers
+  - paragraph: When enabled, Wingman will only provide suggestions when customers or other participants speak, not when you're talking. Wingman will automatically detect you as the first speaker.
+  - checkbox "Only respond to other speakers"
+  - heading "Google Drive Integration" [level=2]
+  - paragraph: Automatically save meeting transcripts to your Google Drive after each session.
+  - text: Auto-save transcripts
+  - paragraph: When enabled, transcripts will be automatically saved to Google Drive when a session ends.
+  - checkbox "Auto-save transcripts" [checked]
+  - button "📁 Connect Google Account"
+  - paragraph: Required to save transcripts to your Drive
+  - text: Folder Name
+  - textbox "Folder Name":
+    - /placeholder: Wingman Transcripts
+    - text: Wingman Transcripts
+  - paragraph: Folder will be created in your Drive root if it doesn't exist
+  - text: Transcript Format
+  - radio "Markdown (.md)" [checked]
+  - text: Markdown (.md)
+  - radio "Plain Text (.txt)"
+  - text: Plain Text (.txt)
+  - radio "JSON (.json)"
+  - text: JSON (.json)
+  - heading "Call Summary" [level=2]
+  - paragraph: Get an AI-generated summary with action items when your calls end.
+  - text: Auto-generate call summary
+  - paragraph: Uses one additional Gemini API call per session.
+  - checkbox "Auto-generate call summary" [checked]
+  - text: Include key moments
+  - paragraph: Surfaces notable quotes and buying signals.
+  - checkbox "Include key moments" [checked]
+  - heading "Knowledge Base" [level=2]
+  - paragraph: Upload your sales docs for personalized suggestions during calls.
+  - text: 📄 Drag files here or click to browse PDF, Markdown, or Text (max 10MB)
+  - paragraph: No documents yet.
+  - paragraph: Start with a battle card, FAQ, or product sheet.
+  - heading "System Prompt" [level=2]
+  - paragraph: Customize how Wingman behaves during sales calls. This prompt controls her personality, response format, and knowledge base.
+  - textbox "Enter your custom system prompt...": "You are WINGMAN, an AI Sales Assistant for CloudGeometry, silently participating in a live sales call. You are helping a NON-TECHNICAL sales rep by providing real-time guidance. IMPORTANT: You are listening to a LIVE conversation. You will receive each utterance as it happens. WHEN TO RESPOND: - When the customer asks a technical question the sales rep might not know - When the customer mentions a pain point you can address - When there's an opportunity to suggest a good discovery question - When you can provide valuable context about CloudGeometry's capabilities - When you hear an objection that needs handling WHEN TO STAY SILENT (respond with exactly \"---\"): - Small talk, greetings, \"how are you\", etc. - The sales rep is handling it well on their own - Just acknowledgments like \"okay\", \"sure\", \"got it\" - You have nothing valuable to add - The same topic was just addressed ABOUT CLOUDGEOMETRY: - AWS Advanced Consulting Partner, CNCF Kubernetes Certified - Services: App Modernization, Cloud-Native/K8s, AI/Data/MLOps, Managed CloudOps, FinOps, Security - Products: CGDevX (K8s platform, 50%+ savings), LangBuilder (AI agents), ActionBridge (automation) - Clients: Sinclair, Tetra Science, Gemini Health, Ryder, Symphony RESPONSE FORMAT (when you have something to say): 📌 [One-line key point] • Talking point 1 • Talking point 2 💬 Ask: \"[suggested question]\" (if relevant) CRITICAL RULES: 1. Be EXTREMELY CONCISE - this is a live call 2. Max 3-4 bullet points 3. Simple language the rep can say verbatim 4. If nothing valuable to add, respond with exactly: --- 5. Never make up pricing - say \"custom quote\" 6. Don't repeat yourself - if you just said something, stay silent Remember: Quality over quantity. Only speak when you add real value."
+  - text: 1,766 / 10,000 chars
+  - link "☕ Buy me a coffee":
+    - /url: https://buymeacoffee.com/antoinedubuc
+  - button "Reset to Default"
+  - button "Save Changes"
+- contentinfo: v1.0.0
+- alert: ✕ Failed to load saved prompt

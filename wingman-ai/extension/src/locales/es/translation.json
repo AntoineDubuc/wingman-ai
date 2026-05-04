@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
+    "generated_date": "2026-05-02",
+    "revision": "1.0.0",
+    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+  },
+  "popup": {
+    "start_session": "Iniciar sesión",
+    "stop_session": "Detener sesión",
+    "status": {
+      "active": "Sesión activa",
+      "idle": "Listo",
+      "connecting": "Conectando…"
+    }
+  },
+  "options": {
+    "setup": {
+      "title": "Configuración",
+      "language_picker_label": "Idioma",
+      "language_locked_tooltip": "Idioma bloqueado durante una sesión activa",
+      "api_keys_title": "Claves API",
+      "save_button": "Guardar",
+      "cancel_button": "Cancelar"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "default_interviewer": "Entrevistador predeterminado",
+      "executive_communicator": "Comunicador ejecutivo",
+      "add_persona_button": "Agregar persona"
+    },
+    "upgrade_banner": {
+      "title": "Wingman ahora habla su idioma",
+      "body": "Su idioma se ha configurado automáticamente según los ajustes de su navegador. Puede cambiarlo en cualquier momento en Configuración → Idioma.",
+      "dismiss_button": "Entendido"
+    }
+  },
+  "overlay": {
+    "suggestion": {
+      "try_again": "Intentar de nuevo",
+      "thinking": "Pensando…",
+      "no_suggestion": "Escuchando…"
+    },
+    "speaker": {
+      "you": "Usted",
+      "speaker_n": "Participante {{n}}"
+    },
+    "transcript": {
+      "live": "En vivo",
+      "paused": "En pausa"
+    },
+    "controls": {
+      "minimize": "Minimizar",
+      "close": "Cerrar",
+      "dock": "Anclar",
+      "undock": "Desanclar"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Resumen",
+      "action_items": "Acciones pendientes",
+      "key_moments": "Momentos clave"
+    },
+    "action_item_owner": {
+      "you": "Usted",
+      "them": "Ellos"
+    },
+    "moment_types": {
+      "signal": "Señal",
+      "objection": "Objeción",
+      "decision": "Decisión",
+      "quote": "Cita"
+    },
+    "cost": {
+      "label": "Costo estimado",
+      "format": "{{amount}} USD"
+    },
+    "save_to_drive": "Guardar en Drive",
+    "saving": "Guardando…",
+    "saved": "Guardado"
+  },
+  "mic_permission": {
+    "title": "Se requiere acceso al micrófono",
+    "body": "Wingman necesita acceso a su micrófono para transcribir la reunión.",
+    "grant_button": "Permitir acceso",
+    "cancel_button": "Cancelar"
+  },
+  "errors": {
+    "deepgram_failed": "Reconocimiento de voz no disponible. {{rawError}}",
+    "mic_revoked": "Acceso al micrófono perdido. Restablezca el acceso e intente de nuevo.",
+    "api_key_missing": "Clave API de {{provider}} no configurada. Agréguela en Configuración.",
+    "generic": "Algo salió mal. Por favor, intente de nuevo.",
+    "session_interrupted": "Sesión interrumpida inesperadamente."
+  },
+  "tutorials": {
+    "english_only_banner": "El contenido de los tutoriales solo está disponible en inglés por el momento. Estamos trabajando en traducciones para una versión futura."
+  },
+  "common": {
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "dismiss": "Descartar",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
+    "generated_date": "2026-05-02",
+    "revision": "1.0.0",
+    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+  },
+  "popup": {
+    "start_session": "Démarrer la session",
+    "stop_session": "Arrêter la session",
+    "status": {
+      "active": "Session active",
+      "idle": "Prêt",
+      "connecting": "Connexion en cours…"
+    }
+  },
+  "options": {
+    "setup": {
+      "title": "Paramètres",
+      "language_picker_label": "Langue",
+      "language_locked_tooltip": "Langue verrouillée pendant une session active",
+      "api_keys_title": "Clés API",
+      "save_button": "Enregistrer",
+      "cancel_button": "Annuler"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "default_interviewer": "Intervieweur par défaut",
+      "executive_communicator": "Communicateur exécutif",
+      "add_persona_button": "Ajouter un persona"
+    },
+    "upgrade_banner": {
+      "title": "Wingman parle maintenant votre langue",
+      "body": "Votre langue a été automatiquement définie en fonction des paramètres de votre navigateur. Vous pouvez la modifier à tout moment dans Paramètres → Langue.",
+      "dismiss_button": "Compris"
+    }
+  },
+  "overlay": {
+    "suggestion": {
+      "try_again": "Réessayer",
+      "thinking": "Réflexion en cours…",
+      "no_suggestion": "Écoute en cours…"
+    },
+    "speaker": {
+      "you": "Vous",
+      "speaker_n": "Intervenant {{n}}"
+    },
+    "transcript": {
+      "live": "En direct",
+      "paused": "En pause"
+    },
+    "controls": {
+      "minimize": "Réduire",
+      "close": "Fermer",
+      "dock": "Ancrer",
+      "undock": "Désancrer"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Résumé",
+      "action_items": "Actions à réaliser",
+      "key_moments": "Moments clés"
+    },
+    "action_item_owner": {
+      "you": "Vous",
+      "them": "Eux"
+    },
+    "moment_types": {
+      "signal": "Signal",
+      "objection": "Objection",
+      "decision": "Décision",
+      "quote": "Citation"
+    },
+    "cost": {
+      "label": "Coût estimé",
+      "format": "{{amount}} USD"
+    },
+    "save_to_drive": "Enregistrer sur Drive",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré"
+  },
+  "mic_permission": {
+    "title": "Accès au microphone requis",
+    "body": "Wingman a besoin d'accéder à votre microphone pour transcrire la réunion.",
+    "grant_button": "Autoriser l'accès",
+    "cancel_button": "Annuler"
+  },
+  "errors": {
+    "deepgram_failed": "Reconnaissance vocale indisponible. {{rawError}}",
+    "mic_revoked": "Accès au microphone perdu. Veuillez rétablir l'accès et réessayer.",
+    "api_key_missing": "Clé API {{provider}} non configurée. Veuillez l'ajouter dans Paramètres.",
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "session_interrupted": "Session interrompue de façon inattendue."
+  },
+  "tutorials": {
+    "english_only_banner": "Le contenu des tutoriels n'est actuellement disponible qu'en anglais. Nous travaillons sur des traductions pour une prochaine version."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "retry": "Réessayer",
+    "dismiss": "Ignorer",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  }
+}

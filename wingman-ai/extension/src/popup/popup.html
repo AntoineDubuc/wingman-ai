@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <img src="../icons/icon-48.png" alt="Logo" class="logo">
+      <h1>Wingman</h1>
+      <p class="subtitle">Real-Time AI Assistant for Google Meet</p>
+    </header>
+
+    <section class="persona-section" id="persona-section" style="display: none;">
+      <label class="persona-section-label">Active Personas</label>
+      <div class="persona-chips" id="persona-chips"></div>
+      <div class="persona-add-row" id="persona-add-row">
+        <button class="persona-add-btn" id="persona-add-btn">+ Add persona</button>
+        <select id="persona-dropdown" class="persona-dropdown" style="display: none;"></select>
+      </div>
+      <div class="persona-status" id="persona-status"></div>
+    </section>
+
+    <section class="status-section">
+      <div class="status-row">
+        <span class="status-label">API Keys</span>
+        <span class="status-indicator" id="api-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Not Configured</span>
+        </span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Session</span>
+        <span class="status-indicator" id="session-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Inactive</span>
+        </span>
+      </div>
+    </section>
+
+    <section class="error-section" id="error-section" style="display: none;">
+      <p id="error-message"></p>
+    </section>
+
+    <section class="controls-section">
+      <button id="session-btn" class="primary-btn" disabled>
+        Start Session
+      </button>
+      <p class="controls-hint" id="controls-hint">
+        Configure your API keys in <a href="#" id="open-options">Options</a> to get started.
+      </p>
+    </section>
+
+    <footer class="popup-footer">
+      <span class="version">v1.0.0</span>
+      <div class="footer-links">
+        <a href="#" id="open-options-footer" class="footer-link">Options</a>
+        <a href="#" id="open-tutorials" class="footer-link">Tutorials</a>
+        <a href="https://buymeacoffee.com/antoinedubuc" target="_blank" rel="noopener noreferrer" class="coffee-link">
+          <img src="../assets/icons/icon-coffee.png" width="14" height="14" alt="" style="vertical-align: middle;"> Support
+        </a>
+      </div>
+    </footer>
+  </div>
+  <script src="popup.ts" type="module"></script>
+</body>
+</html>

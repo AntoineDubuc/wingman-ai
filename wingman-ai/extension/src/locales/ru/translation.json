@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
+    "generated_date": "2026-05-02",
+    "revision": "1.0.0",
+    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+  },
+  "popup": {
+    "start_session": "Начать сессию",
+    "stop_session": "Завершить сессию",
+    "status": {
+      "active": "Сессия активна",
+      "idle": "Готово",
+      "connecting": "Подключение…"
+    }
+  },
+  "options": {
+    "setup": {
+      "title": "Настройки",
+      "language_picker_label": "Язык",
+      "language_locked_tooltip": "Язык заблокирован во время активной сессии",
+      "api_keys_title": "Ключи API",
+      "save_button": "Сохранить",
+      "cancel_button": "Отмена"
+    },
+    "personas": {
+      "section_title": "Персоны",
+      "default_interviewer": "Интервьюер по умолчанию",
+      "executive_communicator": "Исполнительный коммуникатор",
+      "add_persona_button": "Добавить персону"
+    },
+    "upgrade_banner": {
+      "title": "Wingman теперь говорит на вашем языке",
+      "body": "Ваш язык был автоматически установлен на основе настроек браузера. Вы можете изменить его в любое время в Настройки → Язык.",
+      "dismiss_button": "Понятно"
+    }
+  },
+  "overlay": {
+    "suggestion": {
+      "try_again": "Повторить",
+      "thinking": "Обработка…",
+      "no_suggestion": "Прослушивание…"
+    },
+    "speaker": {
+      "you": "Вы",
+      "speaker_n": "Участник {{n}}"
+    },
+    "transcript": {
+      "live": "В эфире",
+      "paused": "На паузе"
+    },
+    "controls": {
+      "minimize": "Свернуть",
+      "close": "Закрыть",
+      "dock": "Закрепить",
+      "undock": "Открепить"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Сводка",
+      "action_items": "Задачи",
+      "key_moments": "Ключевые моменты"
+    },
+    "action_item_owner": {
+      "you": "Вы",
+      "them": "Они"
+    },
+    "moment_types": {
+      "signal": "Сигнал",
+      "objection": "Возражение",
+      "decision": "Решение",
+      "quote": "Цитата"
+    },
+    "cost": {
+      "label": "Примерная стоимость",
+      "format": "{{amount}} USD"
+    },
+    "save_to_drive": "Сохранить на Drive",
+    "saving": "Сохранение…",
+    "saved": "Сохранено"
+  },
+  "mic_permission": {
+    "title": "Требуется доступ к микрофону",
+    "body": "Wingman требует доступ к вашему микрофону для транскрипции встречи.",
+    "grant_button": "Разрешить доступ",
+    "cancel_button": "Отмена"
+  },
+  "errors": {
+    "deepgram_failed": "Распознавание речи недоступно. {{rawError}}",
+    "mic_revoked": "Доступ к микрофону потерян. Восстановите доступ и повторите попытку.",
+    "api_key_missing": "Ключ API {{provider}} не настроен. Добавьте его в Настройки.",
+    "generic": "Что-то пошло не так. Пожалуйста, повторите попытку.",
+    "session_interrupted": "Сессия неожиданно прервана."
+  },
+  "tutorials": {
+    "english_only_banner": "Содержимое обучающих материалов доступно только на английском языке. Мы работаем над переводами для будущего выпуска."
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "retry": "Повторить",
+    "dismiss": "Закрыть",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  }
+}

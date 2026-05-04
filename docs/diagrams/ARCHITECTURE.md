@@ -1,0 +1,281 @@
+# System Architecture Diagram
+
+## Component Overview
+
+```mermaid
+graph TB
+    subgraph "Chrome Extension"
+        subgraph "UI Layer"
+            Popup[Popup<br/>popup.ts]
+            Options[Options Page<br/>options.ts]
+            Overlay[Overlay<br/>overlay.ts<br/>Shadow DOM]
+        end
+
+        subgraph "Content Script"
+            ContentScript[Content Script<br/>content-script.ts<br/>Google Meet tab]
+            AudioWorklet[AudioWorklet<br/>audio-processor.worklet.js<br/>16kHz PCM16]
+        end
+
+        subgraph "Service Worker"
+            SW[Service Worker<br/>service-worker.ts<br/>Orchestrator]
+        end
+
+        subgraph "Offscreen Document"
+            Offscreen[Offscreen<br/>offscreen.ts<br/>Tab capture]
+            TabAudio[AudioWorklet<br/>audio-processor.js]
+        end
+
+        subgraph "Services (Singletons)"
+            Deepgram[deepgramClient<br/>WebSocket STT]
+            Hume[humeClient<br/>WebSocket Emotions]
+            Gemini[geminiClient<br/>Multi-Provider LLM]
+            Drive[driveService<br/>OAuth + Save]
+            KB[kbDatabase<br/>IndexedDB]
+            Collector[transcriptCollector<br/>Session data]
+            CostTracker[costTracker<br/>Live Cost Tracking]
+            Pricing[pricing.ts<br/>Hardcoded Model Rates]
+        end
+
+        subgraph "Storage"
+            ChromeStorage[(chrome.storage.local<br/>Personas, Keys, Settings<br/>Provider Config)]
+            IndexedDB[(IndexedDB<br/>KB Documents + Embeddings)]
+        end
+    end
+
+    subgraph "External APIs"
+        DeepgramAPI[Deepgram API<br/>wss://api.deepgram.com<br/>Nova-3 STT]
+        HumeAPI[Hume AI API<br/>wss://api.hume.ai<br/>Expression Measurement]
+        GeminiAPI[Gemini API<br/>Gemini 2.5 Flash<br/>Suggestions + Embeddings]
+        OpenRouterAPI[OpenRouter API<br/>OpenAI-compatible<br/>Multi-model]
+        GroqAPI[Groq API<br/>OpenAI-compatible<br/>Fast inference]
+        DriveAPI[Google Drive API<br/>Save transcripts<br/>OAuth]
+    end
+
+    %% UI Connections
+    Popup <-->|messages| SW
+    Options <-->|chrome.storage| ChromeStorage
+    ContentScript -->|injects| Overlay
+    Overlay -->|renders| ContentScript
+
+    %% Audio Flow
+    ContentScript -->|mic audio| AudioWorklet
+    AudioWorklet -->|AUDIO_CHUNK| SW
+    SW -->|START_DUAL_CAPTURE| Offscreen
+    Offscreen -->|tab audio| TabAudio
+    TabAudio -->|AUDIO_CHUNK| SW
+
+    %% Service Worker to Services
+    SW -->|sendAudio| Deepgram
+    SW -->|sendAudio| Hume
+    SW -->|processTranscript| Gemini
+    SW -->|saveTranscript| Drive
+    SW -->|addTranscript| Collector
+
+    %% Services to External APIs
+    Deepgram <-->|WebSocket<br/>Sec-WebSocket-Protocol| DeepgramAPI
+    Hume <-->|WebSocket<br/>WAV-wrapped audio| HumeAPI
+    Gemini <-->|Gemini REST API| GeminiAPI
+    Gemini <-->|OpenAI-compatible| OpenRouterAPI
+    Gemini <-->|OpenAI-compatible| GroqAPI
+    Drive <-->|HTTPS<br/>OAuth 2.0| DriveAPI
+
+    %% Storage Access
+    SW <-->|read/write| ChromeStorage
+    Gemini <-->|embeddings| KB
+    KB <-->|vectors| IndexedDB
+
+    %% Cost Tracking
+    SW -->|addLLMUsage| CostTracker
+    CostTracker -->|lookupPricing| Pricing
+    SW -->|chrome.alarms| SW
+
+    %% Messages back to UI
+    SW -->|transcript<br/>suggestion<br/>call_summary<br/>cost_update<br/>emotion_update| ContentScript
+    ContentScript -->|display| Overlay
+    Hume -->|emotion_update| SW
+```
+
+## Message Type Convention
+
+```mermaid
+graph LR
+    subgraph "UPPERCASE Messages"
+        Popup1[Popup]
+        Content1[Content Script]
+        Offscreen1[Offscreen]
+    end
+
+    subgraph "Service Worker"
+        SW1[chrome.runtime.onMessage<br/>Receives UPPERCASE]
+        SW2[chrome.tabs.sendMessage<br/>Sends lowercase]
+    end
+
+    subgraph "lowercase Messages"
+        Content2[Content Script<br/>overlay.ts]
+    end
+
+    Popup1 -->|START_SESSION<br/>STOP_SESSION<br/>GET_STATUS| SW1
+    Content1 -->|INIT_OVERLAY| SW1
+    Offscreen1 -->|AUDIO_CHUNK<br/>CAPTURE_STATUS| SW1
+
+    SW2 -->|transcript<br/>suggestion<br/>call_summary<br/>summary_loading<br/>cost_update| Content2
+
+```
+
+## Data Flow: Audio to Transcript and Emotion
+
+```mermaid
+flowchart TD
+    Start([User speaks]) --> Mic[Microphone Input<br/>48kHz Float32]
+    Participant([Participant speaks]) --> Tab[Tab Capture<br/>48kHz Float32]
+
+    Mic --> Worklet1[AudioWorklet<br/>content-script.ts]
+    Tab --> Worklet2[AudioWorklet<br/>offscreen.ts]
+
+    Worklet1 --> Resample1[Resample to 16kHz<br/>Linear interpolation]
+    Worklet2 --> Resample2[Resample to 16kHz<br/>Linear interpolation]
+
+    Resample1 --> Convert1[Float32 → Int16 PCM<br/>Stereo interleaving]
+    Resample2 --> Convert2[Float32 → Int16 PCM<br/>Stereo interleaving]
+
+    Convert1 --> Chunk1[AUDIO_CHUNK message]
+    Convert2 --> Chunk2[AUDIO_CHUNK message]
+
+    Chunk1 --> SW[Service Worker]
+    Chunk2 --> SW
+
+    SW --> Buffer1[deepgramClient.audioBuffer]
+    SW --> Buffer2[humeClient<br/>WAV wrapper]
+
+    Buffer1 --> |threshold >= 4096| Flush1[flushBuffer]
+    Buffer2 --> |threshold| Flush2[sendWAVChunk]
+
+    Flush1 --> WS1[WebSocket.send<br/>ArrayBuffer]
+    Flush2 --> WS2[WebSocket.send<br/>WAV-wrapped audio]
+
+    WS1 --> Deepgram[Deepgram API<br/>Nova-3 STT]
+    WS2 --> Hume[Hume AI API<br/>Expression Measurement]
+
+    Deepgram --> Results{Results message}
+    Results -->|interim| Interim[is_final=false<br/>Emit immediately]
+    Results -->|partial final| Accumulate[is_final=true<br/>speech_final=false<br/>Accumulate segments]
+    Results -->|final| Final[is_final=true<br/>speech_final=true<br/>Flush & emit]
+
+    Interim --> Callback[onTranscriptCallback]
+    Accumulate --> Callback
+    Final --> Callback
+
+    Hume --> Emotions[48 emotions<br/>with confidence scores]
+    Emotions --> Simplify[Simplify to 4 states<br/>engaged/frustrated/thinking/neutral]
+    Simplify --> EmotionCallback[onEmotionCallback]
+
+    Callback --> Display[Overlay displays<br/>transcript bubble]
+    EmotionCallback --> Badge[Overlay displays<br/>emotion badge in header]
+
+```
+
+## Persona System Architecture
+
+```mermaid
+graph TB
+    subgraph "Storage Layer"
+        Storage[(chrome.storage.local)]
+        IDB[(IndexedDB<br/>KB Documents)]
+    end
+
+    subgraph "Persona Data"
+        Personas[Personas Array<br/>id, name, color<br/>systemPrompt<br/>kbDocumentIds]
+        ActiveID[activePersonaId]
+        Templates[12 Built-in Templates<br/>Sales, Interview, etc.]
+    end
+
+    subgraph "Session Start"
+        Load[Load Active Persona]
+        LoadProvider[Load Provider Config<br/>llmProvider, model, apiKey]
+        SetPrompt[Set System Prompt<br/>+ Model Tuning Profile]
+        SetFilter[Set KB<br/>Document Filter]
+    end
+
+    subgraph "Runtime Usage"
+        GeminiClient[geminiClient<br/>processTranscript<br/>Multi-provider routing]
+        KBSearch[KB Search<br/>searchKB]
+        CostTracker2[costTracker<br/>Live cost ticker]
+        Overlay2[Overlay Header<br/>Active Persona Label<br/>Cost Ticker]
+    end
+
+    Storage --> Personas
+    Storage --> ActiveID
+    Templates -.->|seed on first run| Personas
+
+    Load --> Personas
+    Load --> ActiveID
+    LoadProvider --> Storage
+    Load --> SetPrompt
+    LoadProvider --> SetPrompt
+    Load --> SetFilter
+
+    SetPrompt --> GeminiClient
+    SetFilter --> KBSearch
+
+    KBSearch -->|filter by documentIds| IDB
+    GeminiClient -->|inject KB context| SetPrompt
+    GeminiClient -->|addLLMUsage| CostTracker2
+
+    Personas --> Overlay2
+    CostTracker2 -->|cost_update| Overlay2
+
+```
+
+## Key Conventions
+
+### 1. Singleton Pattern
+All services export singleton instances, not classes:
+```typescript
+export const deepgramClient = new DeepgramClient();
+export const geminiClient = new GeminiClient();
+```
+
+### 2. Message Case Convention
+- **Service Worker receives**: UPPERCASE (`START_SESSION`, `AUDIO_CHUNK`)
+- **Service Worker sends to content script**: lowercase (`transcript`, `suggestion`)
+
+### 3. WebSocket Auth
+Deepgram requires `Sec-WebSocket-Protocol` header (browser limitation):
+```typescript
+new WebSocket(url, ['token', apiKey]);  // ✅ Correct
+```
+
+### 4. Multi-Provider LLM Routing
+`geminiClient.buildRequest()` routes based on `llmProvider` stored in `chrome.storage.local`:
+- **gemini**: Gemini REST API (native format)
+- **openrouter**: OpenRouter API (OpenAI-compatible format)
+- **groq**: Groq API (OpenAI-compatible format)
+
+Model tuning profiles adjust temperature and prompt structure per model family.
+
+### 5. Chrome Alarms for Cost Updates
+`chrome.alarms` fires periodic `cost_update` messages to the content script during an active session. Cleared on session stop.
+
+### 6. Async Message Responses
+```typescript
+chrome.runtime.onMessage.addListener((message, _, sendResponse) => {
+  handleAsync(message).then(sendResponse);
+  return true;  // ⚠️ Critical: keeps channel open
+});
+```
+
+## Component Responsibilities
+
+| Component | Responsibility | Context |
+|-----------|---------------|---------|
+| **Service Worker** | Orchestration, message routing, session lifecycle | Background |
+| **Content Script** | Mic capture, overlay injection, message bridge | Google Meet tab |
+| **Offscreen Document** | Tab audio capture (requires offscreen context) | Offscreen |
+| **Overlay** | UI rendering (Shadow DOM isolation), emotion badge | Google Meet tab |
+| **deepgramClient** | WebSocket STT connection | Service Worker |
+| **humeClient** | WebSocket emotion detection (Expression Measurement API) | Service Worker |
+| **geminiClient** | Multi-provider LLM for suggestions + embeddings | Service Worker |
+| **costTracker** | Live token cost tracking per session | Service Worker |
+| **driveService** | OAuth + file upload to Drive | Service Worker |
+| **kbDatabase** | IndexedDB wrapper for vectors | Service Worker |
+| **transcriptCollector** | Session data accumulation | Service Worker |

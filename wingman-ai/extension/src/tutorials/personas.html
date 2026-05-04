@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creating Personas - Wingman AI</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="back-link">&larr; All Tutorials</a>
+    <h1>Creating Personas</h1>
+    <p>Build expert personas with custom prompts and dedicated Knowledge Base documents</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open the Personas Tab</div>
+      </div>
+      <p class="step-description">
+        Go to Settings and click the Personas tab. You'll see a list of your personas with colored indicators, KB document counts, and edit controls.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/09-personas-list-populated.png" target="_blank">
+          <img src="screenshots-new/09-personas-list-populated.png" alt="Personas list with multiple personas" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>What's a persona?</strong> A persona bundles a system prompt with specific Knowledge Base documents. Switch personas to change how Wingman thinks and what information it can access.
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Create a New Persona</div>
+      </div>
+      <p class="step-description">
+        Click "+ New Persona" to create a blank persona, or choose from 12 built-in templates (Sales Closer, Technical Expert, Discovery Coach, and more).
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/03-personas-tab-empty.png" target="_blank">
+          <img src="screenshots-new/03-personas-tab-empty.png" alt="Empty personas tab with new persona button" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Templates:</strong> Start with a template to get pre-written prompts for common scenarios. You can always customize them later.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Name and Color</div>
+      </div>
+      <p class="step-description">
+        Give your persona a descriptive name and pick a color. The color appears in the popup dropdown and helps you quickly identify which persona is active.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/12-persona-editor.png" target="_blank">
+          <img src="screenshots-new/12-persona-editor.png" alt="Persona editor with name and color fields" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Write the System Prompt</div>
+      </div>
+      <p class="step-description">
+        The system prompt defines your persona's expertise and behavior. Include what topics it should respond to, what it should stay silent on (respond with "---"), and any specific instructions.
+      </p>
+      <div class="step-annotation">
+        <strong>Prompt tips:</strong> Be specific about when to respond vs. stay silent. Include "WHEN TO RESPOND" and "WHEN TO STAY SILENT" sections for multi-persona (Hydra) mode.
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Attach Knowledge Base Documents</div>
+      </div>
+      <p class="step-description">
+        Drag and drop PDF, Markdown, or text files into the Knowledge Base section. These documents are scoped to this persona — only this persona can search them during calls.
+      </p>
+      <div class="step-annotation">
+        <strong>Best documents:</strong> Pricing guides, objection handling playbooks, competitor battle cards, product specs — anything the persona might need to reference.
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Save and Activate</div>
+      </div>
+      <p class="step-description">
+        Click "Save Changes" to save your persona. Then open the popup and select it from the dropdown to make it active. The colored dot shows which persona is currently selected.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="screenshots-new/05-popup-default.png" target="_blank">
+          <img src="screenshots-new/05-popup-default.png" alt="Popup with persona selector" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Next:</strong> Learn how to run multiple personas simultaneously with Hydra mode, or save persona combinations as Conclave presets.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI &mdash; Creating Personas Tutorial
+  </footer>
+
+</body>
+</html>

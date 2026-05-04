@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingman AI — Call Summary Testing Tutorial</title>
+  <style>
+    :root {
+      --bg: #0f0f17;
+      --surface: #1a1a2e;
+      --surface2: #242440;
+      --border: #2d2d4a;
+      --text: #e0e0f0;
+      --text-muted: #8888aa;
+      --accent: #e8750a;
+      --accent-glow: rgba(232, 117, 10, 0.15);
+      --blue: #89b4fa;
+      --green: #a6e3a1;
+      --red: #f38ba8;
+      --yellow: #f9e2af;
+      --purple: #cba6f7;
+      --orange: #fab387;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 48px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Table of contents */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 40px auto;
+      max-width: 820px;
+    }
+    .toc h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .toc ol {
+      padding-left: 20px;
+    }
+    .toc li {
+      margin-bottom: 6px;
+    }
+    .toc a {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 15px;
+    }
+    .toc a:hover { text-decoration: underline; }
+
+    /* Sections */
+    .section {
+      margin: 48px auto;
+      max-width: 820px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .section-number {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .section h2 {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+    .card p, .card li {
+      font-size: 14px;
+      color: var(--text);
+    }
+    .card ul, .card ol {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+    .card li { margin-bottom: 6px; }
+
+    /* Steps */
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .step-badge {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .step-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .step-body {
+      padding: 20px;
+    }
+    .step-body p {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    /* Expected result callout */
+    .expect {
+      background: rgba(166, 227, 161, 0.08);
+      border-left: 3px solid var(--green);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .expect strong {
+      color: var(--green);
+    }
+
+    /* Warning callout */
+    .warn {
+      background: rgba(249, 226, 175, 0.08);
+      border-left: 3px solid var(--yellow);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .warn strong {
+      color: var(--yellow);
+    }
+
+    /* Info callout */
+    .info {
+      background: rgba(137, 180, 250, 0.08);
+      border-left: 3px solid var(--blue);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .info strong {
+      color: var(--blue);
+    }
+
+    /* Screenshot images */
+    .screenshot {
+      margin: 16px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .screenshot img {
+      display: block;
+      width: 100%;
+      cursor: pointer;
+    }
+    .screenshot-caption {
+      background: var(--surface2);
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Code blocks */
+    code {
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      color: var(--orange);
+    }
+    pre {
+      background: var(--surface2);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      color: var(--text);
+      margin: 12px 0;
+      border: 1px solid var(--border);
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    .tag-you { background: var(--orange); color: #1e1e2e; }
+    .tag-them { background: var(--blue); color: #1e1e2e; }
+    .tag-new { background: var(--green); color: #1e1e2e; }
+    .tag-setting { background: var(--purple); color: #1e1e2e; }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-box {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      margin-top: 2px;
+    }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 10000;
+      cursor: pointer;
+      justify-content: center;
+      align-items: center;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 8px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+  <img id="lightbox-img" src="" alt="Full-size screenshot">
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-badge">Phase 4 &mdash; New Feature</div>
+  <h1>Call Summary &amp; Action Items</h1>
+  <p>Manual testing guide for Wingman AI's post-call summary feature. Follow these steps on a real Google Meet call to verify everything works end-to-end.</p>
+</header>
+
+<!-- Table of Contents -->
+<nav class="toc container">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#prereqs">Prerequisites</a></li>
+    <li><a href="#settings">Configure Summary Settings</a></li>
+    <li><a href="#run-call">Run a Test Call</a></li>
+    <li><a href="#summary-overlay">Verify the Summary Overlay</a></li>
+    <li><a href="#copy">Copy to Clipboard</a></li>
+    <li><a href="#drive">Verify Google Drive Save</a></li>
+    <li><a href="#edge-cases">Edge Cases to Test</a></li>
+    <li><a href="#checklist">Final Checklist</a></li>
+  </ol>
+</nav>
+
+<main class="container">
+
+<!-- 1. Prerequisites -->
+<section class="section" id="prereqs">
+  <div class="section-header">
+    <span class="section-number">1</span>
+    <h2>Prerequisites</h2>
+  </div>
+
+  <div class="card">
+    <h3>Build &amp; Load the Extension</h3>
+    <ol>
+      <li>Open a terminal in <code>wingman-ai/extension/</code></li>
+      <li>Run <code>npm run build</code> &mdash; verify it exits with no errors</li>
+      <li>Open <code>chrome://extensions/</code> in Chrome</li>
+      <li>Enable <strong>Developer mode</strong> (top-right toggle)</li>
+      <li>Click <strong>Load unpacked</strong> &rarr; select <code>wingman-ai/extension/dist</code></li>
+      <li>If the extension was already loaded, click the refresh icon instead</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>Required API Keys</h3>
+    <p>Open the extension Options page (right-click the Wingman icon &rarr; Options) and verify:</p>
+    <ul>
+      <li><strong>Deepgram API Key</strong> &mdash; required for transcription</li>
+      <li><strong>Gemini API Key</strong> &mdash; required for suggestions <em>and</em> the new summary feature</li>
+    </ul>
+    <div class="info">
+      <strong>Note:</strong> The summary uses one additional Gemini API call per session. With Gemini 2.5 Flash, this costs fractions of a cent.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Google Drive (Optional)</h3>
+    <p>If you want to test Drive integration, connect your Google account on the Options page under <strong>Google Drive Integration</strong>.</p>
+  </div>
+</section>
+
+<hr>
+
+<!-- 2. Configure Summary Settings -->
+<section class="section" id="settings">
+  <div class="section-header">
+    <span class="section-number">2</span>
+    <h2>Configure Summary Settings</h2>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">A</span>
+      <span class="step-title">Open the Options page</span>
+    </div>
+    <div class="step-body">
+      <p>Right-click the Wingman extension icon &rarr; <strong>Options</strong>. Scroll down past the Google Drive card.</p>
+      <p>You should see a new <strong>Call Summary</strong> card with two toggles.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-01-summary-settings/02-summary-card-visible.png" alt="Call Summary settings card" onclick="openLightbox(this)">
+        <div class="screenshot-caption">The Call Summary card between Google Drive and Knowledge Base</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">B</span>
+      <span class="step-title">Verify the two toggles</span>
+    </div>
+    <div class="step-body">
+      <p><span class="tag tag-setting">Toggle 1</span> <strong>Auto-generate call summary</strong> &mdash; enabled by default. When on, Wingman sends the full transcript to Gemini after every session and displays a structured summary.</p>
+      <p><span class="tag tag-setting">Toggle 2</span> <strong>Include key moments</strong> &mdash; enabled by default. When on, the summary also extracts notable quotes and buying signals.</p>
+
+      <div class="expect">
+        <strong>Expected:</strong> Both toggles are ON (orange). The sub-descriptions are visible below each toggle.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">C</span>
+      <span class="step-title">Test the toggle dependency</span>
+    </div>
+    <div class="step-body">
+      <p>Turn <strong>OFF</strong> the "Auto-generate call summary" toggle.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-01-summary-settings/03-summary-disabled.png" alt="Summary disabled, moments grayed" onclick="openLightbox(this)">
+        <div class="screenshot-caption">When summary is disabled, the key moments toggle becomes visually disabled</div>
+      </div>
+
+      <div class="expect">
+        <strong>Expected:</strong> The "Include key moments" toggle fades to 50% opacity and becomes non-interactive. It retains its ON/OFF state &mdash; it's just visually disabled, not reset.
+      </div>
+
+      <p style="margin-top: 12px;">Turn summary back <strong>ON</strong>. The key moments toggle should return to full opacity and become interactive again.</p>
+
+      <div class="info">
+        <strong>Why:</strong> Key moments are part of the summary. Disabling the parent toggle disables the child, but re-enabling restores the previous preference.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">D</span>
+      <span class="step-title">Verify persistence</span>
+    </div>
+    <div class="step-body">
+      <p>Set the toggles to your preferred state, then close and reopen the Options page.</p>
+      <div class="expect">
+        <strong>Expected:</strong> Toggle states are preserved across page loads. No "Save" button needed &mdash; settings save automatically on toggle change.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- 3. Run a Test Call -->
+<section class="section" id="run-call">
+  <div class="section-header">
+    <span class="section-number">3</span>
+    <h2>Run a Test Call</h2>
+  </div>
+
+  <div class="card">
+    <h3>Start a Google Meet session</h3>
+    <ol>
+      <li>Open <a href="https://meet.google.com/new" style="color: var(--blue);">meet.google.com/new</a> to create a new meeting</li>
+      <li>Join the meeting (you can test solo, but ideally have a second participant for richer transcripts)</li>
+      <li>Click the Wingman extension icon and press <strong>Start Session</strong></li>
+      <li>Talk for at least 30-60 seconds to generate enough transcripts (you need at least 5 transcript entries for a summary to be generated)</li>
+    </ol>
+    <div class="warn">
+      <strong>Minimum threshold:</strong> If the call has fewer than 5 final transcript entries, the summary will be <em>skipped</em> and the overlay will simply hide. Make sure to talk enough.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Good test dialogue</h3>
+    <p>For the best test results, simulate a sales conversation with clear action items:</p>
+    <ul>
+      <li><em>"Let me walk you through our enterprise pricing. It's $50 per seat per month."</em></li>
+      <li><em>"Do you have SOC2 certification? That's a requirement for us."</em></li>
+      <li><em>"Yes, I'll send you the SOC2 report by Friday."</em></li>
+      <li><em>"Sounds good. Our budget is approved for Q2. Let's schedule a call with our CTO next week."</em></li>
+      <li><em>"Perfect, I'll send over a detailed proposal and loop in our solutions engineer."</em></li>
+    </ul>
+    <div class="info">
+      <strong>Tip:</strong> If testing solo, just speak both sides of the conversation. Deepgram will transcribe everything, and Gemini will still produce a meaningful summary.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Stop the session</h3>
+    <p>Click the Wingman extension icon and press <strong>Stop Session</strong>, or close the Wingman overlay by clicking the <strong>X</strong> button.</p>
+    <p>When you stop the session, the following happens automatically:</p>
+    <ol>
+      <li>Microphone capture stops</li>
+      <li>The overlay header changes to <strong>"Generating Summary..."</strong> with an amber indicator</li>
+      <li>Wingman sends the full transcript to Gemini for analysis (2-8 seconds)</li>
+      <li>The summary card appears in the overlay</li>
+      <li>If Drive is connected, the transcript + summary saves to Drive</li>
+    </ol>
+  </div>
+</section>
+
+<hr>
+
+<!-- 4. Verify the Summary Overlay -->
+<section class="section" id="summary-overlay">
+  <div class="section-header">
+    <span class="section-number">4</span>
+    <h2>Verify the Summary Overlay</h2>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">A</span>
+      <span class="step-title">Loading state</span>
+    </div>
+    <div class="step-body">
+      <p>Immediately after stopping the session, the overlay transitions to a loading state.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/01-loading-state.png" alt="Loading state" onclick="openLightbox(this)">
+        <div class="screenshot-caption">The overlay shows "Generating Summary..." with a pulsing amber indicator</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong> Header says "Generating Summary...". Status dot is amber/yellow and pulsing. Previous suggestions are cleared.
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">B</span>
+      <span class="step-title">Summary card appears</span>
+    </div>
+    <div class="step-body">
+      <p>After a few seconds, the loading state is replaced by the full summary card.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/02-summary-card.png" alt="Summary card" onclick="openLightbox(this)">
+        <div class="screenshot-caption">The summary card with bullet points, action items, and collapsed key moments</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong> Header changes to "Call Summary" with a purple status dot. Three sections are visible:
+      </div>
+      <ul style="margin-top: 8px;">
+        <li><strong>Summary</strong> &mdash; 1-5 topic-organized bullet points</li>
+        <li><strong>Action Items</strong> &mdash; checklist with <span class="tag tag-you">YOU</span> and <span class="tag tag-them">THEM</span> owner badges</li>
+        <li><strong>Key Moments</strong> &mdash; collapsible section showing the count (collapsed by default)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">C</span>
+      <span class="step-title">Verify action items</span>
+    </div>
+    <div class="step-body">
+      <p>Check that action items have correct owner attribution:</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/03-action-items.png" alt="Action items with badges" onclick="openLightbox(this)">
+        <div class="screenshot-caption">Action items with orange YOU badges and blue THEM badges</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong>
+        <br>&bull; <span class="tag tag-you">YOU</span> (orange) &mdash; things the sales rep committed to ("I'll send the report")
+        <br>&bull; <span class="tag tag-them">THEM</span> (blue) &mdash; things the prospect committed to ("They'll loop in their CTO")
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">D</span>
+      <span class="step-title">Expand Key Moments</span>
+    </div>
+    <div class="step-body">
+      <p>Click the <strong>"Key Moments (N)"</strong> header to expand the section.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/04-key-moments-expanded.png" alt="Key moments expanded" onclick="openLightbox(this)">
+        <div class="screenshot-caption">Expanded key moments with color-coded left borders</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong> The arrow rotates from right-pointing to downward. Quotes appear with color-coded left borders:
+        <br>&bull; <span style="color: var(--green);">Green</span> = buying signal
+        <br>&bull; <span style="color: var(--red);">Red</span> = objection
+        <br>&bull; <span style="color: var(--blue);">Blue</span> = decision
+        <br>&bull; <span style="color: var(--text-muted);">Gray</span> = notable quote
+      </div>
+      <p style="margin-top: 10px;">Click the header again to collapse it.</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- 5. Copy to Clipboard -->
+<section class="section" id="copy">
+  <div class="section-header">
+    <span class="section-number">5</span>
+    <h2>Copy to Clipboard</h2>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">A</span>
+      <span class="step-title">Click the Copy button</span>
+    </div>
+    <div class="step-body">
+      <p>At the bottom of the summary card, click the <strong>Copy</strong> button.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/05-copied-feedback.png" alt="Copied feedback" onclick="openLightbox(this)">
+        <div class="screenshot-caption">The button shows "Copied!" feedback</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong> Button text changes to "Copied!" for 2 seconds, then reverts to "Copy".
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">B</span>
+      <span class="step-title">Paste the result</span>
+    </div>
+    <div class="step-body">
+      <p>Open any text editor or CRM and paste (Cmd+V / Ctrl+V). You should see clean markdown:</p>
+      <pre>## Call Summary &mdash; Jan 31, 2026
+**Duration:** 34 min | **Speakers:** 2
+
+### Summary
+- Discussed enterprise pricing at $50/seat/month
+- Prospect confirmed Q2 budget approval
+
+### Action Items
+- [ ] **You:** Send SOC2 report by Friday
+- [ ] **Them:** Loop in CTO for next call
+
+### Key Moments
+- "We have budget approved for Q2"</pre>
+      <div class="expect">
+        <strong>Expected:</strong> Well-structured markdown with summary bullets, action items (with owner labels and checkboxes), and key moments (if enabled). No emojis.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- 6. Google Drive Save -->
+<section class="section" id="drive">
+  <div class="section-header">
+    <span class="section-number">6</span>
+    <h2>Verify Google Drive Save</h2>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">A</span>
+      <span class="step-title">Check the Drive status indicator</span>
+    </div>
+    <div class="step-body">
+      <p>If Drive auto-save is enabled and you're connected, look at the summary footer bar next to the Copy button.</p>
+      <div class="screenshot">
+        <img src="user-flows/uf-02-summary-overlay/07-drive-status.png" alt="Drive status" onclick="openLightbox(this)">
+        <div class="screenshot-caption">"Saved to Drive" indicator in the summary footer</div>
+      </div>
+      <div class="expect">
+        <strong>Expected:</strong> "Saved to Drive" text appears in the footer. If Drive is not connected, this indicator is absent (no error shown).
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-badge">B</span>
+      <span class="step-title">Check the file in Google Drive</span>
+    </div>
+    <div class="step-body">
+      <p>Open <a href="https://drive.google.com" style="color: var(--blue);">Google Drive</a> and navigate to the <strong>Wingman Transcripts</strong> folder (or whatever folder name you configured).</p>
+      <p>Open the latest transcript file. It should contain:</p>
+      <ol>
+        <li><strong>Meeting header</strong> with date, duration, speakers</li>
+        <li><span class="tag tag-new">NEW</span> <strong>Call Summary section</strong> &mdash; prepended before the conversation</li>
+        <li><strong>Full conversation transcript</strong></li>
+        <li><strong>Session info</strong></li>
+      </ol>
+      <div class="expect">
+        <strong>Expected:</strong> The Call Summary section appears between the meeting header and the conversation. It includes the same summary, action items, and key moments visible in the overlay.
+      </div>
+      <div class="info">
+        <strong>All three formats supported:</strong>
+        <br>&bull; <strong>Markdown (.md)</strong> &mdash; Uses <code>## Call Summary</code> heading from the markdown formatter
+        <br>&bull; <strong>Plain Text (.txt)</strong> &mdash; Uses <code>CALL SUMMARY</code> block with indented bullets
+        <br>&bull; <strong>JSON (.json)</strong> &mdash; Adds a <code>"summary"</code> top-level key alongside <code>"metadata"</code> and <code>"transcripts"</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- 7. Edge Cases -->
+<section class="section" id="edge-cases">
+  <div class="section-header">
+    <span class="section-number">7</span>
+    <h2>Edge Cases to Test</h2>
+  </div>
+
+  <div class="card">
+    <h3>Short call (fewer than 5 transcript entries)</h3>
+    <p>Start a session, say just one or two words, and stop. The summary should be <strong>skipped</strong> &mdash; the overlay hides normally without showing a loading state or error.</p>
+    <div class="expect">
+      <strong>Expected:</strong> Overlay hides. No summary generated. Transcript still saves to Drive (if enabled).
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Summary disabled in settings</h3>
+    <p>Turn OFF "Auto-generate call summary" in Options, then run a call and stop.</p>
+    <div class="expect">
+      <strong>Expected:</strong> The overlay hides normally after stopping (no loading state, no summary). The Gemini API is NOT called for the summary.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Key moments disabled</h3>
+    <p>Keep "Auto-generate call summary" ON but turn OFF "Include key moments". Run a call.</p>
+    <div class="expect">
+      <strong>Expected:</strong> The summary card appears with Summary bullets and Action Items, but the Key Moments section is absent.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>User closes overlay before session ends</h3>
+    <p>During an active session, close the overlay by clicking the X button. Then stop the session from the extension popup.</p>
+    <div class="expect">
+      <strong>Expected:</strong> The overlay does NOT reopen to show the summary. The user's intent to dismiss is respected. The summary still generates and saves to Drive (if enabled) &mdash; it's just not shown in the overlay.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Navigating away during summary generation</h3>
+    <p>Stop the session, then immediately navigate to a different URL before the summary appears.</p>
+    <div class="expect">
+      <strong>Expected:</strong> No errors in the service worker console. The summary generation continues in the background. Drive save still completes (if enabled). The content script is gone, so overlay messages silently fail.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>No action items in conversation</h3>
+    <p>Have a conversation with no commitments or follow-ups (e.g., a casual chat or status update).</p>
+    <div class="expect">
+      <strong>Expected:</strong> Summary card renders with summary bullets only. Action Items section is omitted entirely (not shown as empty). Same for Key Moments if none detected.
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- 8. Final Checklist -->
+<section class="section" id="checklist">
+  <div class="section-header">
+    <span class="section-number">8</span>
+    <h2>Final Checklist</h2>
+  </div>
+
+  <div class="card">
+    <h3>Settings</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span> Call Summary card visible on Options page between Drive and KB</li>
+      <li><span class="check-box"></span> Both toggles default to ON</li>
+      <li><span class="check-box"></span> Disabling summary grays out key moments toggle</li>
+      <li><span class="check-box"></span> Re-enabling summary restores key moments to previous state</li>
+      <li><span class="check-box"></span> Settings persist across Options page reloads</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Summary Generation</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span> Loading state shows "Generating Summary..." with amber indicator</li>
+      <li><span class="check-box"></span> Summary card appears within 2-8 seconds</li>
+      <li><span class="check-box"></span> Header changes to "Call Summary" with purple indicator</li>
+      <li><span class="check-box"></span> Summary has 1-5 topic-organized bullets</li>
+      <li><span class="check-box"></span> Action items have correct YOU/THEM attribution</li>
+      <li><span class="check-box"></span> Key Moments section is collapsible with arrow toggle</li>
+      <li><span class="check-box"></span> Short calls (&lt;5 transcripts) skip summary silently</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Copy &amp; Drive</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span> Copy button shows "Copied!" for 2 seconds then reverts</li>
+      <li><span class="check-box"></span> Pasted content is clean markdown with no emojis</li>
+      <li><span class="check-box"></span> Drive file includes Call Summary section before conversation</li>
+      <li><span class="check-box"></span> "Saved to Drive" indicator appears in footer</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Resilience</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span> Overlay stays dismissed if user closed it mid-session</li>
+      <li><span class="check-box"></span> No console errors in service worker during summary flow</li>
+      <li><span class="check-box"></span> Navigating away mid-generation doesn't crash</li>
+      <li><span class="check-box"></span> Disabled summary setting prevents Gemini API call</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>Wingman AI &mdash; Call Summary Testing Tutorial &mdash; Phase 4</p>
+  <p>Generated 2026-01-31</p>
+</footer>
+
+<script>
+function openLightbox(img) {
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  lbImg.src = img.src;
+  lb.classList.add('active');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('active');
+});
+</script>
+
+</body>
+</html>

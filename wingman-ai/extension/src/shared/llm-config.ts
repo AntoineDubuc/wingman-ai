@@ -1,0 +1,127 @@
+/**
+ * LLM Provider Configuration
+ *
+ * Types and constants for the multi-provider system (Gemini direct + OpenRouter + Groq).
+ * Embeddings always use Gemini regardless of provider selection.
+ */
+
+export type LLMProvider = 'gemini' | 'openrouter' | 'groq';
+
+export interface ProviderConfig {
+  provider: LLMProvider;
+  openrouterApiKey?: string;
+  openrouterModel: string;
+  groqApiKey?: string;
+  groqModel: string;
+  suggestionCooldownMs: number;
+}
+
+export interface OpenRouterModel {
+  id: string;
+  label: string;
+}
+
+export const OPENROUTER_MODELS: OpenRouterModel[] = [
+  { id: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6 (New)' },
+  { id: 'anthropic/claude-opus-4.6', label: 'Claude Opus 4.6 (New)' },
+  { id: 'openai/gpt-5.4', label: 'GPT-5.4 (New)' },
+  { id: 'openai/gpt-5.4-mini', label: 'GPT-5.4 Mini (New)' },
+  { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
+  { id: 'openai/gpt-4o', label: 'GPT-4o' },
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+  { id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
+];
+
+/** Groq model entries — IDs are Groq-native format (not OpenRouter) */
+export interface GroqModel {
+  id: string;
+  label: string;
+}
+
+export const GROQ_MODELS: GroqModel[] = [
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout — Fast & Balanced (recommended)' },
+  { id: 'openai/gpt-oss-120b', label: 'GPT-OSS 120B — High Quality (New)' },
+  { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B — Ultra Fast (New)' },
+  { id: 'qwen/qwen3-32b', label: 'Qwen 3 32B — Strong Reasoning' },
+  { id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B — Highest Quality' },
+  { id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B — Ultra Fast, Basic' },
+];
+
+export const DEFAULT_PROVIDER_CONFIG: ProviderConfig = {
+  provider: 'gemini',
+  openrouterModel: 'google/gemini-2.5-flash',
+  groqModel: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  suggestionCooldownMs: 15000,
+};
+
+/**
+ * Provider-specific cooldown defaults (ms).
+ *
+ * Gemini free-tier enforces strict per-minute quotas → 15 s gap.
+ * OpenRouter paid tier has no platform RPM cap (rate = $balance RPS),
+ * so we only add a 2 s padding against upstream bursts.
+ * Groq free tier allows 30 RPM → 2 s is safe.
+ */
+export const PROVIDER_COOLDOWNS: Record<LLMProvider, number> = {
+  gemini: 15000,
+  openrouter: 2000,
+  groq: 2000,
+};
+
+/** Storage keys used for provider configuration */
+export const PROVIDER_STORAGE_KEYS = [
+  'llmProvider',
+  'openrouterApiKey',
+  'openrouterModel',
+  'groqApiKey',
+  'groqModel',
+  'suggestionCooldownMs',
+] as const;
+
+/** OpenRouter API base URL */
+export const OPENROUTER_API_BASE = 'https://openrouter.ai/api/v1';
+
+/** Groq API base URL */
+export const GROQ_API_BASE = 'https://api.groq.com/openai/v1';
+
+/**
+ * Per-model Hydra stagger timing (ms between parallel persona calls).
+ * Based on latency testing with 1.5x buffer for variance.
+ * Used to prevent rate limiting during multi-persona bursts.
+ */
+export const MODEL_STAGGER_MS: Record<string, number> = {
+  // Gemini direct
+  'gemini-2.0-flash': 200,
+  'gemini-2.5-flash-preview-05-20': 200, // Estimated, same as 2.0
+
+  // Groq (fast LPU inference)
+  'meta-llama/llama-4-scout-17b-16e-instruct': 50,
+  'qwen/qwen3-32b': 120,
+  'llama-3.3-70b-versatile': 75,
+  'llama-3.1-8b-instant': 50,
+
+  // OpenRouter (varies by upstream provider)
+  'anthropic/claude-sonnet-4.6': 290,
+  'anthropic/claude-opus-4.6': 500,
+  'openai/gpt-5.4': 200,
+  'openai/gpt-5.4-mini': 150,
+  'google/gemini-2.5-flash': 225,
+  'google/gemini-2.5-pro': 775,
+  'anthropic/claude-sonnet-4': 290,
+  'openai/gpt-4o': 135,
+  'openai/gpt-4o-mini': 400,
+  'meta-llama/llama-3.3-70b-instruct': 240,
+
+  // Groq — new models
+  'openai/gpt-oss-120b': 100,
+  'openai/gpt-oss-20b': 50,
+};
+
+/** Fallback stagger by provider if model not in MODEL_STAGGER_MS */
+export const PROVIDER_STAGGER_FALLBACK: Record<LLMProvider, number> = {
+  gemini: 200,
+  groq: 75,
+  openrouter: 350,
+};

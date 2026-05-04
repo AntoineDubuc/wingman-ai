@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UF-02: View and Interact with Summary Overlay</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+    .step:nth-child(7) { animation-delay: 0.4s; }
+    .step:nth-child(8) { animation-delay: 0.45s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.92);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 1001;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>UF-02: View and Interact with Summary Overlay</h1>
+    <p>Wingman AI -- Summary overlay lifecycle and interaction walkthrough</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Loading State Appears</div>
+      </div>
+      <p class="step-description">
+        When a session ends, the summary overlay appears in the top-right corner showing a "Generating Summary..." loading state with an animated indicator and the message "Analyzing your conversation..."
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="01-loading-state.png" onclick="openLightbox(event, this)">
+          <img src="01-loading-state.png" alt="Step 1: Summary overlay in loading state with 'Generating Summary...' message" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> A dark overlay card appears in the top-right with "Generating Summary..." title, a pulsing dot indicator, and "Analyzing your conversation..." subtitle.
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Summary Card Appears</div>
+      </div>
+      <p class="step-description">
+        Once Gemini returns the summary, the overlay transitions to display the full "Call Summary" card. It shows a SUMMARY section with bullet points, an ACTION ITEMS section with labeled items (YOU/THEM badges), a collapsed KEY MOMENTS section, and a Copy button.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="02-summary-card.png" onclick="openLightbox(event, this)">
+          <img src="02-summary-card.png" alt="Step 2: Full summary card with summary bullets, action items, and collapsed key moments" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The card header reads "Call Summary" with a green dot and close (X) button. The SUMMARY section lists key discussion points. ACTION ITEMS show orange "YOU" and teal "THEM" badges. KEY MOMENTS (3) is collapsed with a triangle indicator.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">View Action Items</div>
+      </div>
+      <p class="step-description">
+        The ACTION ITEMS section is visible by default within the summary card. Each item is labeled with a badge indicating responsibility -- "YOU" (orange) for your follow-ups and "THEM" (teal) for the prospect's commitments.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="03-action-items.png" onclick="openLightbox(event, this)">
+          <img src="03-action-items.png" alt="Step 3: Action items visible with YOU and THEM badges" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> Action items are displayed with clear responsibility labels. Example items: "Send detailed pricing quote by Friday" (YOU), "Share SOC2 compliance report" (YOU), "Loop in CTO for technical deep-dive" (THEM).
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Expand Key Moments</div>
+      </div>
+      <p class="step-description">
+        Click the "KEY MOMENTS (3)" header to expand the section. Notable quotes and buying signals from the conversation are revealed, each with a colored left border indicating significance.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="04-key-moments-expanded.png" onclick="openLightbox(event, this)">
+          <img src="04-key-moments-expanded.png" alt="Step 4: Key moments section expanded showing notable quotes" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The KEY MOMENTS section is expanded (downward triangle). Three quoted moments are shown: "We have budget approved for Q2" (green border), "We are also evaluating Competitor X" (red border), "Let's schedule the CTO call for next Tuesday" (yellow border).
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Click Copy Button</div>
+      </div>
+      <p class="step-description">
+        Click the "Copy" button at the bottom of the summary card. The button text changes to "Copied!" to confirm the summary has been copied to the clipboard.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="05-copied-feedback.png" onclick="openLightbox(event, this)">
+          <img src="05-copied-feedback.png" alt="Step 5: Copy button showing 'Copied!' feedback state" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The button label changes from "Copy" to "Copied!" providing immediate visual feedback that the summary text was copied to the clipboard.
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Copy Button Reverts</div>
+      </div>
+      <p class="step-description">
+        After a brief delay, the "Copied!" button reverts back to "Copy", ready for another click. This transient feedback pattern avoids permanent UI changes.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="06-copy-reverted.png" onclick="openLightbox(event, this)">
+          <img src="06-copy-reverted.png" alt="Step 6: Copy button reverted back to 'Copy' text" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The button text has reverted from "Copied!" back to "Copy". The button is fully interactive and can be clicked again.
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <div class="step-title">Drive Save Indicator</div>
+      </div>
+      <p class="step-description">
+        If Google Drive integration is connected, a "Saved to Drive" status indicator appears at the bottom-right of the summary card, confirming the transcript has been auto-saved.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="07-drive-status.png" onclick="openLightbox(event, this)">
+          <img src="07-drive-status.png" alt="Step 7: 'Saved to Drive' indicator visible at bottom-right of overlay" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> A green "Saved to Drive" text label appears in the bottom-right corner of the summary card, next to the Copy button. This confirms the transcript was auto-saved to Google Drive.
+      </div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">8</div>
+        <div class="step-title">Close Overlay</div>
+      </div>
+      <p class="step-description">
+        Click the close (X) button in the top-right corner of the summary card. The overlay is dismissed and the underlying page is fully visible again.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="08-overlay-closed.png" onclick="openLightbox(event, this)">
+          <img src="08-overlay-closed.png" alt="Step 8: Overlay closed, full settings page visible" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The summary overlay is completely removed. The Wingman Settings page is fully visible with no overlay elements remaining.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI -- User Flow Test Documentation -- UF-02
+  </footer>
+
+  <!-- Lightbox overlay -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="Full-size screenshot">
+  </div>
+
+  <script>
+    function openLightbox(event, anchor) {
+      event.preventDefault();
+      var src = anchor.querySelector('img').src;
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+
+</body>
+</html>

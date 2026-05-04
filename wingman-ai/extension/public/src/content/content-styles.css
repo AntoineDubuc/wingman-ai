@@ -1,0 +1,6 @@
+/* Content script styles - minimal since overlay uses Shadow DOM */
+
+#presales-ai-overlay-container {
+  /* Container positioning handled by Shadow DOM */
+  pointer-events: auto;
+}

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wingman AI — The Meeting AI That Doesn't Phone Home</title>
+  <meta name="description" content="Real-time AI copilot for Google Meet. Live transcription, smart suggestions, emotion detection — 100% in your browser. No servers. No subscriptions. Open source.">
+  <meta property="og:title" content="Wingman AI — The Meeting AI That Doesn't Phone Home">
+  <meta property="og:description" content="See exactly what to say, when to say it, and how the room is really feeling — live, inside Google Meet. Open source. Zero servers.">
+  <meta property="og:image" content="https://antoinedubuc.github.io/wingman-ai/images/hero-mockup.webp">
+  <meta property="og:url" content="https://antoinedubuc.github.io/wingman-ai/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://antoinedubuc.github.io/wingman-ai/images/hero-mockup.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <style>
+    :root {
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --max-w: 1200px;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: 0.3s ease;
+      --accent: #3B82F6;
+      --accent-hover: #2563EB;
+      --accent-glow: rgba(59, 130, 246, 0.3);
+      --purple: #8B5CF6;
+      --green: #10B981;
+      --pink: #EC4899;
+      --orange: #F59E0B;
+    }
+
+    [data-theme="light"] {
+      --bg: #FAFAF9; --bg-alt: #F3F4F6; --bg-card: #FFFFFF;
+      --bg-hero: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 50%, #F0F9FF 100%);
+      --text: #1E293B; --text-secondary: #64748B; --text-muted: #94A3B8;
+      --border: #E2E8F0; --shadow: 0 4px 24px rgba(0,0,0,0.06); --shadow-lg: 0 8px 40px rgba(0,0,0,0.1);
+      --hero-img-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      --badge-bg: #EEF2FF; --badge-text: #3B82F6; --faq-bg: #F8FAFC;
+      --callout-bg: #FFF7ED; --callout-border: #FDBA74;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0A0F1E; --bg-alt: #111827; --bg-card: #1A1F2E;
+      --bg-hero: linear-gradient(135deg, #0A0F1E 0%, #111827 50%, #0F172A 100%);
+      --text: #F1F5F9; --text-secondary: #94A3B8; --text-muted: #64748B;
+      --border: #1E293B; --shadow: 0 4px 24px rgba(0,0,0,0.3); --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+      --hero-img-shadow: 0 20px 60px rgba(59, 130, 246, 0.15);
+      --badge-bg: rgba(59, 130, 246, 0.15); --badge-text: #60A5FA; --faq-bg: #111827;
+      --callout-bg: rgba(251, 191, 36, 0.08); --callout-border: #92400E;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; transition: background var(--transition), color var(--transition); }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); }
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 99px;
+      width: 48px; height: 48px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: var(--shadow); transition: background var(--transition), border-color var(--transition), transform 0.15s ease;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    .theme-toggle .icon-sun, .theme-toggle .icon-moon { display: none; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+    /* Hero */
+    .hero { background: var(--bg-hero); padding: 80px 24px 100px; text-align: center; transition: background var(--transition); }
+    .hero-inner { max-width: var(--max-w); margin: 0 auto; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--badge-bg); color: var(--badge-text);
+      padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 24px;
+    }
+    .hero-badge::before {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.3); } }
+
+    .hero h1 { font-size: clamp(32px, 4.5vw, 56px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { font-size: clamp(16px, 1.8vw, 19px); color: var(--text-secondary); max-width: 640px; margin: 0 auto 12px; line-height: 1.6; }
+    .hero-identity { font-size: 15px; color: var(--text-muted); font-style: italic; margin-bottom: 32px; }
+
+    .hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 60px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--accent); color: #fff; padding: 14px 28px; border-radius: 99px;
+      font-size: 16px; font-weight: 600;
+      transition: background var(--transition), transform 0.15s ease, box-shadow var(--transition);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-primary:hover { background: var(--accent-hover); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--bg-card); color: var(--text); padding: 14px 28px; border-radius: 99px;
+      font-size: 16px; font-weight: 600; border: 1px solid var(--border);
+      transition: background var(--transition), border-color var(--transition), transform 0.15s ease;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
+
+    .hero-image { max-width: 960px; margin: 0 auto; border-radius: var(--radius); box-shadow: var(--hero-img-shadow); overflow: hidden; }
+    .hero-image img { width: 100%; border-radius: var(--radius); }
+
+    .hero-screenshots {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+      max-width: 860px; margin: 48px auto 0; align-items: start;
+    }
+    @media (max-width: 700px) { .hero-screenshots { grid-template-columns: 1fr; max-width: 400px; } }
+
+    .screenshot-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow); cursor: zoom-in;
+      transition: background var(--transition), border-color var(--transition), transform 0.2s ease;
+    }
+    .screenshot-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .screenshot-card img { width: 100%; border-radius: var(--radius-sm); }
+    .screenshot-card .caption { margin-top: 14px; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; }
+    .screenshot-card .caption-sub { font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 4px; }
+
+    /* Loss aversion callout */
+    .loss-callout {
+      max-width: 720px; margin: 60px auto 0;
+      background: var(--callout-bg); border-left: 4px solid var(--callout-border);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 24px 28px;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .loss-callout p { font-size: 16px; color: var(--text); line-height: 1.6; }
+    .loss-callout .source { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+    /* Sections */
+    section { padding: 120px 24px; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 8px; color: var(--accent);
+      font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px;
+    }
+    .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--text); }
+    .section-subtitle { font-size: clamp(16px, 1.5vw, 18px); color: var(--text-secondary); max-width: 600px; line-height: 1.6; }
+    .section-subtitle.center { margin: 0 auto; }
+
+    /* Mid-page CTA */
+    .mid-cta { text-align: center; margin-top: 64px; }
+    .mid-cta p { font-size: 14px; color: var(--text-muted); margin-top: 12px; }
+
+    /* Features */
+    .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 64px; }
+    @media (max-width: 768px) { .features-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background var(--transition), border-color var(--transition);
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px;
+    }
+    .feature-icon.blue { background: rgba(59,130,246,0.12); color: #3B82F6; }
+    .feature-icon.purple { background: rgba(139,92,246,0.12); color: #8B5CF6; }
+    .feature-icon.green { background: rgba(16,185,129,0.12); color: #10B981; }
+    .feature-icon.pink { background: rgba(236,72,153,0.12); color: #EC4899; }
+    .feature-icon.orange { background: rgba(245,158,11,0.12); color: #F59E0B; }
+    .feature-icon.cyan { background: rgba(6,182,212,0.12); color: #06B6D4; }
+
+    .feature-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .feature-pain { font-size: 14px; color: var(--text-muted); font-style: italic; margin-bottom: 8px; }
+    .feature-card p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Conclave */
+    .conclave { background: var(--bg-alt); text-align: center; transition: background var(--transition); }
+    .conclave-image { max-width: 800px; margin: 48px auto 0; border-radius: var(--radius); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .conclave-image img { width: 100%; border-radius: var(--radius); }
+    .persona-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+    .persona-pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 99px;
+      font-size: 14px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-secondary); transition: background var(--transition), border-color var(--transition);
+    }
+    .persona-pill .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* Trust */
+    .trust { text-align: center; }
+    .trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 64px; }
+    @media (max-width: 768px) { .trust-grid { grid-template-columns: 1fr; } }
+    .trust-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 36px 28px; text-align: center; transition: background var(--transition), border-color var(--transition);
+    }
+    .trust-card .trust-icon { font-size: 36px; margin-bottom: 16px; }
+    .trust-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .trust-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Pricing */
+    .pricing { text-align: center; }
+    .pricing-card {
+      max-width: 500px; margin: 48px auto 0; background: var(--bg-card);
+      border: 2px solid var(--accent); border-radius: var(--radius); padding: 48px 36px;
+      box-shadow: 0 8px 40px var(--accent-glow); transition: background var(--transition);
+    }
+    .pricing-card .price { font-size: 56px; font-weight: 800; color: var(--text); line-height: 1; }
+    .pricing-card .price-sub { font-size: 18px; color: var(--text-secondary); margin-top: 4px; }
+    .pricing-card .price-detail { font-size: 14px; color: var(--text-muted); margin-top: 16px; line-height: 1.6; }
+    .pricing-card .pricing-breakdown { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px; text-align: left; }
+    .pricing-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; color: var(--text-secondary); }
+    .pricing-row strong { color: var(--text); font-weight: 600; }
+    .pricing-free { color: var(--green); font-weight: 600; }
+    .pricing-cta { margin-top: 28px; }
+
+    /* Architecture */
+    .architecture { background: var(--bg-alt); text-align: center; transition: background var(--transition); }
+    .architecture-image { max-width: 900px; margin: 48px auto 0; border-radius: var(--radius); box-shadow: var(--shadow-lg); overflow: hidden; }
+    .architecture-image img { width: 100%; border-radius: var(--radius); }
+
+    /* Founder note */
+    .founder-note {
+      max-width: 640px; margin: 0 auto; padding: 32px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      text-align: left; transition: background var(--transition), border-color var(--transition);
+    }
+    .founder-note .fn-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .founder-note .fn-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+    .founder-note .fn-name { font-size: 15px; font-weight: 700; color: var(--text); }
+    .founder-note .fn-role { font-size: 13px; color: var(--text-muted); }
+    .founder-note p { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* FAQ */
+    .faq { transition: background var(--transition); }
+    .faq-list { max-width: 720px; margin: 48px auto 0; }
+    .faq-item { border-bottom: 1px solid var(--border); transition: border-color var(--transition); }
+    .faq-question {
+      width: 100%; background: none; border: none; padding: 24px 0; font-size: 16px; font-weight: 600;
+      color: var(--text); text-align: left; cursor: pointer; display: flex; justify-content: space-between;
+      align-items: center; font-family: var(--font); transition: color var(--transition);
+    }
+    .faq-question:hover { color: var(--accent); }
+    .faq-chevron { font-size: 20px; transition: transform 0.2s ease; color: var(--text-muted); }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .faq-answer-inner { padding: 0 0 24px; font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+    .faq-item.open .faq-answer { max-height: 300px; }
+
+    /* Final CTA */
+    .final-cta { text-align: center; padding: 120px 24px; }
+    .final-cta h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--text); }
+    .final-cta p { font-size: 18px; color: var(--text-secondary); margin-bottom: 12px; }
+    .final-cta .final-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 48px 24px; text-align: center; transition: border-color var(--transition); }
+    .footer-inner { max-width: var(--max-w); margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .footer-copy { font-size: 13px; color: var(--text-muted); }
+
+    code { background: var(--bg-alt); padding: 2px 6px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+    /* Lightbox */
+    .lightbox-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 40px; cursor: zoom-out;
+    }
+    .lightbox-overlay.open { display: flex; }
+    .lightbox-overlay img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius); box-shadow: 0 20px 80px rgba(0,0,0,0.5); object-fit: contain; }
+    .lightbox-close { position: absolute; top: 20px; right: 24px; background: none; border: none; color: #fff; font-size: 32px; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; }
+    .lightbox-close:hover { opacity: 1; }
+
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" aria-label="Toggle dark mode" onclick="toggleTheme()">
+    <span class="icon-sun">&#9728;&#65039;</span>
+    <span class="icon-moon">&#127769;</span>
+  </button>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">100% Client-Side &middot; Zero Servers &middot; Open Source</div>
+      <h1>
+        Your next meeting has a<br>
+        <span class="gradient-text">secret weapon.</span>
+      </h1>
+      <p class="hero-sub">See exactly what to say, when to say it, and how the room is really feeling — live, inside Google Meet. No subscription. No server touching your data.</p>
+      <p class="hero-identity">Built for professionals who refuse to wing their most important conversations.</p>
+      <div class="hero-buttons">
+        <a href="https://github.com/AntoineDubuc/wingman-ai" class="btn-primary">
+          Clone &amp; Build (3 min)
+        </a>
+        <a href="#features" class="btn-secondary">
+          See What It Does
+        </a>
+      </div>
+      <div class="hero-image reveal">
+        <img src="images/hero-mockup.webp" alt="Wingman AI overlay inside a Google Meet call showing live transcription, AI suggestions, and emotion detection" width="960" height="540" loading="eager">
+      </div>
+      <div class="hero-screenshots reveal">
+        <div class="screenshot-card">
+          <picture>
+            <source srcset="images/overlay-real.webp" type="image/webp">
+            <img src="images/overlay-real.png" alt="Real overlay UI showing emotion detection — frustrated and engaged states" width="756" height="1178" loading="lazy">
+          </picture>
+          <div class="caption">Emotion-Aware Overlay</div>
+          <div class="caption-sub">A live read on the room. See the exact moment someone disengages.</div>
+        </div>
+        <div class="screenshot-card">
+          <picture>
+            <source srcset="images/summary-real.webp" type="image/webp">
+            <img src="images/summary-real.png" alt="Post-call summary with action items and key moments" width="350" height="569" loading="lazy">
+          </picture>
+          <div class="caption">Post-Call Summary</div>
+          <div class="caption-sub">Action items, key moments, and decisions — before you close the tab.</div>
+        </div>
+      </div>
+      <div class="loss-callout reveal">
+        <p>You forget <strong>70% of new information within 24 hours.</strong> Your last important call is already fading. Every detail you missed is a follow-up that won't happen and a deal that slips.</p>
+        <div class="source">— Ebbinghaus forgetting curve (1885), replicated in modern cognitive science</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Features ===== -->
+  <section id="features">
+    <div class="container">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you're missing<br>in your meetings</h2>
+      <p class="section-subtitle">Powered by Deepgram, Hume AI, and your choice of Gemini, OpenRouter, or Groq. Enterprise-grade AI. Zero enterprise pricing.</p>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon blue">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/><circle cx="12" cy="12" r="5"/></svg>
+          </div>
+          <div class="feature-pain">Stop scrambling for notes</div>
+          <h3>Real-Time Transcription</h3>
+          <p>Every word, every speaker, captured while you stay focused on the conversation. Search it later. Never say "can you repeat that?" again.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon purple">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <div class="feature-pain">Stop guessing what to say next</div>
+          <h3>AI-Powered Suggestions</h3>
+          <p>Context-aware responses that understand the full conversation. The right words surface exactly when you need them — not five minutes too late.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon orange">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="13" cy="10" r="1" fill="currentColor"/><circle cx="17" cy="10" r="1" fill="currentColor"/></svg>
+          </div>
+          <div class="feature-pain">Stop alt-tabbing during the call</div>
+          <h3>In-Meeting AI Assistant <span style="color:#F59E0B;font-size:11px;font-weight:700;letter-spacing:0.5px;">NEW</span></h3>
+          <p>Switch the overlay to Assistant mode mid-call to ask the AI a question. Answers stream back grounded in the live transcript, your persona Knowledge Bases, and (optionally) live web search. Each reply tags which sources it used.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon pink">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <div class="feature-pain">Stop missing the room</div>
+          <h3>Emotion Detection</h3>
+          <p>A live read on the room. See the exact moment someone disengages — and pivot before you lose them. Powered by voice prosody analysis, not video.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon green">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="feature-pain">Meetings end, context disappears</div>
+          <h3>Post-Call Summaries</h3>
+          <p>Action items, key decisions, and follow-ups — generated and saved to Google Drive as a native Doc before you close the tab. Your future self will thank you.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon orange">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="feature-pain">One prompt can't fit every call</div>
+          <h3>Multi-Persona System</h3>
+          <p>11 built-in personas — Sales Coach, Interviewer, Fundraiser, and more. Each with its own system prompt and knowledge base. Switch your AI's expertise in one click.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-icon cyan">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </div>
+          <div class="feature-pain">Generic AI doesn't know your domain</div>
+          <h3>Knowledge Base</h3>
+          <p>Upload your PDFs, docs, and notes. Wingman searches them semantically and injects the right context into every suggestion. Your AI, trained on your world.</p>
+        </div>
+      </div>
+      <div class="mid-cta reveal">
+        <a href="https://github.com/AntoineDubuc/wingman-ai" class="btn-primary">Clone the Repo</a>
+        <p>4 commands. 3 minutes. Try it on your next call.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== In-Meeting Assistant Showcase ===== -->
+  <section class="conclave" id="assistant" style="background: linear-gradient(180deg, var(--bg) 0%, rgba(245,158,11,0.04) 50%, var(--bg) 100%);">
+    <div class="container">
+      <div class="section-label">New &mdash; April 2026</div>
+      <h2 class="section-title">Stop alt-tabbing.<br>Just ask the AI <span class="gradient-text">mid-call.</span></h2>
+      <p class="section-subtitle center">Switch the overlay to Assistant mode and type a question. Answers stream back grounded in the live transcript, your persona Knowledge Bases, and (optionally) live web search. Each reply tags which sources contributed. The chat history persists across pill toggles.</p>
+      <div class="conclave-image reveal" style="display:flex;justify-content:center;margin-top:32px;">
+        <img src="images/in-meeting-assistant/hero-assistant-transcript-query.png" alt="In-meeting AI Assistant answering a question grounded in the live transcript and a persona Knowledge Base — source tags &quot;transcript&quot; and &quot;Architect KB&quot; visible at the bottom of the answer" style="max-width: 360px; width: 100%; height: auto; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);" loading="lazy">
+      </div>
+      <div class="persona-pills reveal" style="margin-top: 36px;">
+        <span class="persona-pill"><span class="dot" style="background:#22C55E"></span> Transcript-grounded</span>
+        <span class="persona-pill"><span class="dot" style="background:#A855F7"></span> Persona KB-grounded</span>
+        <span class="persona-pill"><span class="dot" style="background:#F59E0B"></span> Live web search</span>
+        <span class="persona-pill"><span class="dot" style="background:#94A3B8"></span> General knowledge</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Conclave Mode ===== -->
+  <section class="conclave" id="conclave">
+    <div class="container">
+      <div class="section-label">The Differentiator</div>
+      <h2 class="section-title">One AI assistant is nice.<br>Four is <span class="gradient-text">unfair.</span></h2>
+      <p class="section-subtitle center">Conclave Mode activates up to 4 AI personas simultaneously. A designated leader coordinates their insights into one cohesive strategy — live, during your call. No other tool does this.</p>
+      <div class="conclave-image reveal">
+        <img src="images/conclave-mode.webp" alt="Conclave Mode — 4 AI personas collaborating in real-time during a live meeting" width="800" height="450" loading="lazy">
+      </div>
+      <div class="persona-pills reveal" style="margin-top: 36px;">
+        <span class="persona-pill"><span class="dot" style="background:#3B82F6"></span> Sales Coach</span>
+        <span class="persona-pill"><span class="dot" style="background:#8B5CF6"></span> Negotiator</span>
+        <span class="persona-pill"><span class="dot" style="background:#10B981"></span> Technical Expert</span>
+        <span class="persona-pill"><span class="dot" style="background:#EC4899"></span> Empathy Guide</span>
+        <span class="persona-pill"><span class="dot" style="background:#F59E0B"></span> Strategy Lead</span>
+        <span class="persona-pill"><span class="dot" style="background:#06B6D4"></span> Interview Coach</span>
+        <span class="persona-pill"><span class="dot" style="background:#EF4444"></span> Fundraising</span>
+        <span class="persona-pill"><span class="dot" style="background:#84CC16"></span> Customer Success</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Trust & Privacy ===== -->
+  <section class="trust" id="trust">
+    <div class="container">
+      <div class="section-label">Privacy First</div>
+      <h2 class="section-title">Your keys. Your data.<br>No middleman.</h2>
+      <p class="section-subtitle center">100% client-side. No backend server. No data collection. No accounts. Don't take our word for it — <a href="https://github.com/AntoineDubuc/wingman-ai">read the code yourself</a>.</p>
+      <div class="trust-grid reveal">
+        <div class="trust-card">
+          <div class="trust-icon">&#128272;</div>
+          <h3>Bring Your Own Keys</h3>
+          <p>You provide your own API keys for Deepgram, Gemini, OpenRouter, Groq, and Hume. We never see them. They stay in your browser, always.</p>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">&#128421;</div>
+          <h3>Zero Servers</h3>
+          <p>No backend. No database. No user accounts. No analytics. The extension runs entirely in your browser. There is nothing to phone home to.</p>
+        </div>
+        <div class="trust-card">
+          <div class="trust-icon">&#128064;</div>
+          <h3>Fully Open Source</h3>
+          <p>Every line of code is public. TypeScript strict mode. Vitest coverage. No obfuscation. Audit it, fork it, or contribute — it's yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Pricing ===== -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Free to start. Pennies to run.</h2>
+      <p class="section-subtitle center">No subscription. No markup. You pay the API providers directly at their published rates. We take nothing.</p>
+      <div class="pricing-card reveal">
+        <div class="price">~$0.50</div>
+        <div class="price-sub">per hour of meeting</div>
+        <div class="price-detail">With generous free tiers, your first 100+ hours cost nothing.</div>
+        <div class="pricing-breakdown">
+          <div class="pricing-row"><span>Deepgram (transcription)</span> <strong>$0.0077/min</strong></div>
+          <div class="pricing-row"><span>Deepgram free tier</span> <span class="pricing-free">$200 credit (~430 hrs)</span></div>
+          <div class="pricing-row"><span>Gemini Flash (suggestions)</span> <strong>~$0.02/hr</strong></div>
+          <div class="pricing-row"><span>Gemini free tier</span> <span class="pricing-free">1,500 req/day</span></div>
+          <div class="pricing-row"><span>Hume AI (emotion)</span> <strong>Optional</strong></div>
+        </div>
+        <div class="pricing-cta">
+          <a href="https://github.com/AntoineDubuc/wingman-ai" class="btn-primary" style="width:100%;justify-content:center;">Start Free &mdash; Clone the Repo</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Architecture ===== -->
+  <section class="architecture" id="architecture">
+    <div class="container">
+      <div class="section-label">Under the Hood</div>
+      <h2 class="section-title">Built for speed and privacy</h2>
+      <p class="section-subtitle center">Audio flows directly from your browser to the APIs you choose. Insights flow back in real time. No intermediaries. No black boxes.</p>
+      <div class="architecture-image reveal">
+        <img src="images/architecture.webp" alt="Wingman AI radial architecture diagram" width="900" height="506" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" id="faq">
+    <div class="container" style="text-align:center;">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Questions? Answers.</h2>
+      <div class="faq-list" style="text-align:left;">
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Is my meeting audio stored anywhere?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">No. Audio is streamed directly from your browser to Deepgram and Hume AI for processing. Nothing is saved, recorded, or sent to our servers — because we don't have servers. Transcripts are only stored locally in your browser session unless you explicitly save them to Google Drive.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            I'm not a developer. Can I still use this?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Right now, setup requires a few terminal commands: <code>git clone</code>, <code>cd extension</code>, <code>npm install</code>, <code>npm run build</code>. If you're comfortable with that, you're good. A Chrome Web Store listing is planned — star the repo to get notified when it ships.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Does it work on browsers other than Chrome?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes — any Chromium-based browser works: Chrome, Edge, Vivaldi, and others. The extension uses Chrome's TabCapture API and falls back to web-based OAuth for non-Chrome browsers.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            What about accuracy? Does the emotion detection actually work?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Emotion detection uses Hume AI's research-grade expression measurement API, which analyzes voice prosody (tone, pace, pitch) — not facial expressions. From 48 emotion signals, it distills 4 actionable states: Engaged, Frustrated, Thinking, and Neutral. It's a directional signal, not a lie detector. Think of it as a pulse check on how the conversation is landing.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            Can I customize the AI's behavior?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Fully. Each persona has a customizable system prompt. Upload domain-specific documents to the Knowledge Base. Run up to 4 personas simultaneously in Conclave Mode. Import and export persona configs. Built-in tutorials walk you through everything after install.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            What if my costs spike unexpectedly?
+            <span class="faq-chevron">&#9660;</span>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Costs are capped by your API key limits — you set those directly with Deepgram and Gemini. Wingman shows real-time cost tracking during every session so you always know what you're spending. A typical 1-hour call costs about $0.50 after free tiers expire. There are no hidden fees because there's no middleman.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Founder Note ===== -->
+  <section style="padding: 80px 24px;">
+    <div class="container">
+      <div class="founder-note reveal">
+        <div class="fn-header">
+          <div class="fn-avatar">AD</div>
+          <div>
+            <div class="fn-name">Antoine Dubuc</div>
+            <div class="fn-role">Founder &middot; AI Entourage, Inc.</div>
+          </div>
+        </div>
+        <p>I built Wingman AI because every meeting tool I tried wanted my data on their servers. I don't think your conversations should live on someone else's infrastructure. This is early, it's open source, and it's built by one person who cares more about getting the architecture right than hitting a launch date. If that resonates, clone it, try it, and tell me what's broken. The code is the proof.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Final CTA ===== -->
+  <section class="final-cta">
+    <div class="container">
+      <h2>Your next meeting could have<br>a <span class="gradient-text">Wingman.</span></h2>
+      <p>Open source. Free APIs. Four terminal commands.</p>
+      <p class="final-sub">Your competitors are still winging it.</p>
+      <a href="https://github.com/AntoineDubuc/wingman-ai" class="btn-primary">
+        Clone &amp; Build — It's Free
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-copy">&copy; 2025-2026 Antoine Dubuc — AI Entourage, Inc. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Lightbox -->
+  <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" aria-label="Close">&times;</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
+  <script>
+    function toggleTheme() {
+      var html = document.documentElement;
+      var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    }
+
+    function toggleFaq(btn) {
+      var item = btn.parentElement;
+      var wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(function(el) { el.classList.remove('open'); });
+      if (!wasOpen) item.classList.add('open');
+    }
+
+    document.querySelectorAll('.screenshot-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var img = card.querySelector('img');
+        var lb = document.getElementById('lightbox');
+        document.getElementById('lightbox-img').src = img.src;
+        document.getElementById('lightbox-img').alt = img.alt;
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeLightbox(); });
+
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+  </script>
+
+</body>
+</html>

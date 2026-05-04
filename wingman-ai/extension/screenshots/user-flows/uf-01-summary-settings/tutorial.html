@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UF-01: Configure Summary Settings</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+    .step:nth-child(7) { animation-delay: 0.4s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.92);
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      cursor: zoom-out;
+    }
+
+    .lightbox.open {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      z-index: 1001;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .lightbox-close:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>UF-01: Configure Summary Settings</h1>
+    <p>Wingman AI -- Options page summary configuration walkthrough</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open Options Page</div>
+      </div>
+      <p class="step-description">
+        Navigate to the Wingman Settings page. The full options page is displayed with all configuration sections: API Keys, Speaker Filter, Google Drive Integration, Call Summary, Knowledge Base, and System Prompt.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="01-options-page.png" onclick="openLightbox(event, this)">
+          <img src="01-options-page.png" alt="Step 1: Full options page showing all settings sections" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The page loads with the orange Wingman header and all settings cards are visible.
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Scroll to Summary Card</div>
+      </div>
+      <p class="step-description">
+        Scroll down to the "Call Summary" settings card. Both toggles -- "Auto-generate call summary" and "Include key moments" -- are enabled (orange) by default.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="02-summary-card-visible.png" onclick="openLightbox(event, this)">
+          <img src="02-summary-card-visible.png" alt="Step 2: Call Summary card with both toggles enabled" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> Both "Auto-generate call summary" and "Include key moments" toggles appear in the ON (orange) position.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Disable Auto-Summary</div>
+      </div>
+      <p class="step-description">
+        Click the "Auto-generate call summary" toggle to disable it. The toggle switches to the OFF (gray) position.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="03-summary-disabled.png" onclick="openLightbox(event, this)">
+          <img src="03-summary-disabled.png" alt="Step 3: Auto-generate call summary toggle disabled" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The "Auto-generate call summary" toggle is now gray/OFF. The "Include key moments" row becomes visually grayed out.
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Verify Moments Toggle Grays Out</div>
+      </div>
+      <p class="step-description">
+        With auto-summary disabled, the "Include key moments" toggle is grayed out and non-interactive. This is a dependent setting -- key moments cannot be configured without auto-summary enabled.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="04-moments-toggle-state.png" onclick="openLightbox(event, this)">
+          <img src="04-moments-toggle-state.png" alt="Step 4: Key moments toggle grayed out when auto-summary is off" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> The "Include key moments" label and description text appear faded. The toggle shows a muted/disabled state.
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Re-enable Auto-Summary</div>
+      </div>
+      <p class="step-description">
+        Click the "Auto-generate call summary" toggle again to re-enable it. Both toggles return to their active (orange) state.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="05-summary-re-enabled.png" onclick="openLightbox(event, this)">
+          <img src="05-summary-re-enabled.png" alt="Step 5: Auto-summary re-enabled, both toggles active" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> Both toggles are back to ON (orange). The "Include key moments" text is no longer faded.
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Disable Key Moments Only</div>
+      </div>
+      <p class="step-description">
+        With auto-summary still enabled, click the "Include key moments" toggle to disable it independently. The auto-summary toggle remains ON while key moments is OFF.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="06-moments-disabled.png" onclick="openLightbox(event, this)">
+          <img src="06-moments-disabled.png" alt="Step 6: Key moments disabled while auto-summary remains enabled" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> "Auto-generate call summary" is ON (orange). "Include key moments" is OFF (gray). Both labels remain at full opacity since the parent toggle is enabled.
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <div class="step-title">Settings Persisted After Reload</div>
+      </div>
+      <p class="step-description">
+        Reload the options page to confirm settings are persisted via chrome.storage. Both toggles should reflect the saved state from the previous step.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="07-settings-persisted.png" onclick="openLightbox(event, this)">
+          <img src="07-settings-persisted.png" alt="Step 7: Settings persisted after page reload" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Verify:</strong> After reload, the toggles match the last saved configuration. Settings survive page navigation and browser restarts.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI -- User Flow Test Documentation -- UF-01
+  </footer>
+
+  <!-- Lightbox overlay -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="Full-size screenshot">
+  </div>
+
+  <script>
+    function openLightbox(event, anchor) {
+      event.preventDefault();
+      var src = anchor.querySelector('img').src;
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+
+</body>
+</html>

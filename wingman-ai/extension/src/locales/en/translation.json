@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generator": "Manual (canonical source)",
+    "generated_date": "2026-05-02",
+    "revision": "1.0.0",
+    "reviewer": "N/A — canonical English source"
+  },
+  "popup": {
+    "start_session": "Start Session",
+    "stop_session": "Stop Session",
+    "status": {
+      "active": "Session Active",
+      "idle": "Ready",
+      "connecting": "Connecting…"
+    }
+  },
+  "options": {
+    "setup": {
+      "title": "Settings",
+      "language_picker_label": "Language",
+      "language_locked_tooltip": "Language locked during active session",
+      "api_keys_title": "API Keys",
+      "save_button": "Save",
+      "cancel_button": "Cancel"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "default_interviewer": "Default Interviewer",
+      "executive_communicator": "Executive Communicator",
+      "add_persona_button": "Add Persona"
+    },
+    "upgrade_banner": {
+      "title": "Wingman now speaks your language",
+      "body": "Your language has been automatically set based on your browser settings. You can change it anytime in Settings → Language.",
+      "dismiss_button": "Got it"
+    }
+  },
+  "overlay": {
+    "suggestion": {
+      "try_again": "Try Again",
+      "thinking": "Thinking…",
+      "no_suggestion": "Listening…"
+    },
+    "speaker": {
+      "you": "You",
+      "speaker_n": "Speaker {{n}}"
+    },
+    "transcript": {
+      "live": "Live",
+      "paused": "Paused"
+    },
+    "controls": {
+      "minimize": "Minimize",
+      "close": "Close",
+      "dock": "Dock",
+      "undock": "Undock"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Summary",
+      "action_items": "Action Items",
+      "key_moments": "Key Moments"
+    },
+    "action_item_owner": {
+      "you": "You",
+      "them": "Them"
+    },
+    "moment_types": {
+      "signal": "Signal",
+      "objection": "Objection",
+      "decision": "Decision",
+      "quote": "Quote"
+    },
+    "cost": {
+      "label": "Estimated cost",
+      "format": "{{amount}} USD"
+    },
+    "save_to_drive": "Save to Drive",
+    "saving": "Saving…",
+    "saved": "Saved"
+  },
+  "mic_permission": {
+    "title": "Microphone Access Required",
+    "body": "Wingman needs access to your microphone to transcribe the meeting.",
+    "grant_button": "Allow Access",
+    "cancel_button": "Cancel"
+  },
+  "errors": {
+    "deepgram_failed": "Speech recognition unavailable. {{rawError}}",
+    "mic_revoked": "Microphone access lost. Please restore access and retry.",
+    "api_key_missing": "{{provider}} API key not configured. Please add it in Settings.",
+    "generic": "Something went wrong. Please try again.",
+    "session_interrupted": "Session interrupted unexpectedly."
+  },
+  "tutorials": {
+    "english_only_banner": "Tutorial content is currently available in English only. We're working on translations for a future release."
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Retry",
+    "dismiss": "Dismiss",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  }
+}

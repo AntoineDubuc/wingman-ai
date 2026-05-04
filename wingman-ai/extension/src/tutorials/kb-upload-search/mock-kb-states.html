@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock KB States - Dark Mode</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Dark mode variables matching options.css [data-theme="dark"] */
+    :root {
+      --color-primary: #f39c12;
+      --color-primary-hover: #e67e22;
+      --color-primary-ring: rgba(243, 156, 18, 0.25);
+      --color-danger: #f87171;
+      --color-text-primary: #f3f4f6;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      --color-bg-page: #111827;
+      --color-bg-surface: #1f2937;
+      --color-bg-surface-glass: rgba(31, 41, 55, 0.75);
+      --color-border: #374151;
+      --color-border-light: #4b5563;
+      --gradient-primary: linear-gradient(135deg, #b45309, #d97706);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--color-bg-page);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      color: var(--color-text-primary);
+    }
+
+    .state-label {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* Options card - matches options.css exactly */
+    .options-card {
+      background: var(--color-bg-surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      max-width: 800px;
+    }
+
+    .form-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+
+    .form-section-description {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    /* KB Drop Zone - matches options.css exactly */
+    .kb-drop-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 32px;
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .kb-drop-zone:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-ring);
+      transform: translateY(-2px);
+    }
+
+    .kb-drop-zone.active {
+      border-color: var(--color-primary);
+      border-style: solid;
+      background: var(--color-primary-ring);
+      transform: scale(1.01);
+    }
+
+    .kb-drop-icon {
+      font-size: 32px;
+      color: var(--color-text-muted);
+    }
+
+    .kb-drop-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--color-text-muted);
+    }
+
+    .kb-drop-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+    }
+
+    .kb-drop-hint {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+
+    /* KB Document List - matches options.css exactly */
+    .kb-doc-list {
+      margin-top: 16px;
+    }
+
+    .kb-doc-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--color-bg-page);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .kb-doc-item:hover {
+      transform: translateX(2px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .kb-doc-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      color: var(--color-text-muted);
+    }
+
+    .kb-doc-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .kb-doc-name {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .kb-doc-meta {
+      display: block;
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    .kb-doc-delete {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--color-text-muted);
+      flex-shrink: 0;
+    }
+
+    .kb-doc-delete:hover {
+      background: rgba(234, 67, 53, 0.1);
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+
+    /* KB Empty state - matches options.css */
+    .kb-empty {
+      margin-top: 16px;
+      padding: 16px;
+      text-align: center;
+      color: var(--color-text-secondary);
+      font-size: 13px;
+    }
+
+    .kb-empty-hint {
+      font-size: 12px;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    /* KB Test section - matches options.css */
+    .kb-test-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--color-border-light);
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .kb-test-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .text-input {
+      flex: 1;
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background: var(--color-bg-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-ring);
+    }
+
+    .text-input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .btn-secondary {
+      padding: 8px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+      background: var(--color-primary-ring);
+    }
+
+    /* KB Test results - matches options.css */
+    .kb-test-results {
+      margin-top: 16px;
+    }
+
+    .kb-test-result {
+      padding: 16px;
+      background: var(--color-bg-page);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .kb-test-result-source {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-primary);
+      margin-bottom: 4px;
+    }
+
+    .kb-test-result-text {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    .kb-test-result-score {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- State 1: Empty state (no documents) -->
+  <div>
+    <div class="state-label">01 - Empty State</div>
+    <div class="options-card">
+      <h2 class="form-section-title">Knowledge Base</h2>
+      <p class="form-section-description">
+        Upload documents to give Wingman context during calls. Supported formats: PDF, Markdown, plain text.
+      </p>
+      <div class="kb-drop-zone">
+        <span class="kb-drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="kb-drop-text">Drop files here or click to browse</span>
+        <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+      </div>
+      <div class="kb-empty">
+        No documents uploaded yet.
+        <div class="kb-empty-hint">Drag files above to add knowledge.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State 2: Document uploaded with test section visible -->
+  <div>
+    <div class="state-label">02 - Document Uploaded</div>
+    <div class="options-card">
+      <h2 class="form-section-title">Knowledge Base</h2>
+      <p class="form-section-description">
+        Upload documents to give Wingman context during calls. Supported formats: PDF, Markdown, plain text.
+      </p>
+      <div class="kb-drop-zone">
+        <span class="kb-drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="kb-drop-text">Drop files here or click to browse</span>
+        <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+      </div>
+      <div class="kb-doc-list">
+        <div class="kb-doc-item">
+          <span class="kb-doc-icon">&#128196;</span>
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">acme-product-faq.pdf</div>
+            <div class="kb-doc-meta">42 sections - 128 KB</div>
+          </div>
+          <button class="kb-doc-delete">&#215;</button>
+        </div>
+      </div>
+      <div class="kb-test-section">
+        <label class="input-label">Test Knowledge Base</label>
+        <div class="kb-test-row">
+          <input type="text" class="text-input" placeholder="e.g. What security certifications do we have?">
+          <button class="btn-secondary">Test</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State 3: Query typed -->
+  <div>
+    <div class="state-label">03 - Query Typed</div>
+    <div class="options-card">
+      <h2 class="form-section-title">Knowledge Base</h2>
+      <p class="form-section-description">
+        Upload documents to give Wingman context during calls. Supported formats: PDF, Markdown, plain text.
+      </p>
+      <div class="kb-drop-zone">
+        <span class="kb-drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="kb-drop-text">Drop files here or click to browse</span>
+        <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+      </div>
+      <div class="kb-doc-list">
+        <div class="kb-doc-item">
+          <span class="kb-doc-icon">&#128196;</span>
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">acme-product-faq.pdf</div>
+            <div class="kb-doc-meta">42 sections - 128 KB</div>
+          </div>
+          <button class="kb-doc-delete">&#215;</button>
+        </div>
+      </div>
+      <div class="kb-test-section">
+        <label class="input-label">Test Knowledge Base</label>
+        <div class="kb-test-row">
+          <input type="text" class="text-input" value="What security certifications do you have?">
+          <button class="btn-secondary">Test</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State 4: Search results -->
+  <div>
+    <div class="state-label">04 - Search Results</div>
+    <div class="options-card">
+      <h2 class="form-section-title">Knowledge Base</h2>
+      <p class="form-section-description">
+        Upload documents to give Wingman context during calls. Supported formats: PDF, Markdown, plain text.
+      </p>
+      <div class="kb-drop-zone">
+        <span class="kb-drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </span>
+        <span class="kb-drop-text">Drop files here or click to browse</span>
+        <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+      </div>
+      <div class="kb-doc-list">
+        <div class="kb-doc-item">
+          <span class="kb-doc-icon">&#128196;</span>
+          <div class="kb-doc-info">
+            <div class="kb-doc-name">acme-product-faq.pdf</div>
+            <div class="kb-doc-meta">42 sections - 128 KB</div>
+          </div>
+          <button class="kb-doc-delete">&#215;</button>
+        </div>
+      </div>
+      <div class="kb-test-section">
+        <label class="input-label">Test Knowledge Base</label>
+        <div class="kb-test-row">
+          <input type="text" class="text-input" value="What security certifications do you have?">
+          <button class="btn-secondary">Test</button>
+        </div>
+        <div class="kb-test-results">
+          <div class="kb-test-result">
+            <div class="kb-test-result-source">acme-product-faq.pdf - Section 12</div>
+            <div class="kb-test-result-text">ACME holds SOC 2 Type II certification, ISO 27001 compliance, and GDPR readiness certification. Our security team conducts annual penetration testing and quarterly vulnerability assessments.</div>
+            <div class="kb-test-result-score">Relevance: 94%</div>
+          </div>
+          <div class="kb-test-result">
+            <div class="kb-test-result-source">acme-product-faq.pdf - Section 15</div>
+            <div class="kb-test-result-text">All data is encrypted at rest using AES-256 and in transit using TLS 1.3. We maintain a 99.9% uptime SLA with redundant infrastructure across multiple availability zones.</div>
+            <div class="kb-test-result-score">Relevance: 78%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

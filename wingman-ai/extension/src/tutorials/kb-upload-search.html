@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Base Upload &amp; Search - Wingman AI</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    header {
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      padding: 40px 24px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    header h1 {
+      color: #fff;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      margin-top: 8px;
+    }
+
+    .progress-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: background 0.3s;
+    }
+
+    .progress-dot.active {
+      background: #fff;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    .step {
+      margin-bottom: 64px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.15s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    .step:nth-child(4) { animation-delay: 0.25s; }
+    .step:nth-child(5) { animation-delay: 0.3s; }
+    .step:nth-child(6) { animation-delay: 0.35s; }
+    .step:nth-child(7) { animation-delay: 0.4s; }
+    .step:nth-child(8) { animation-delay: 0.45s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e8750a 0%, #d4680a 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-title {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .step-description {
+      color: #a6adc8;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      padding-left: 56px;
+    }
+
+    .screenshot-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #313244;
+      background: #181825;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .screenshot-wrapper:hover {
+      border-color: #e8750a;
+      box-shadow: 0 0 24px rgba(232, 117, 10, 0.15);
+    }
+
+    .screenshot-wrapper a {
+      display: block;
+    }
+
+    .screenshot-wrapper img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .step-annotation {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #313244;
+      border-radius: 8px;
+      border-left: 3px solid #e8750a;
+      font-size: 0.875rem;
+      color: #bac2de;
+    }
+
+    .step-annotation strong {
+      color: #e8750a;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.85);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #fff;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #313244;
+      color: #585b70;
+      font-size: 0.8rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html" class="back-link">&larr; All Tutorials</a>
+    <h1>Knowledge Base Upload &amp; Search</h1>
+    <p>Upload documents and use them to power smarter AI suggestions during calls</p>
+    <div class="progress-bar">
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot active"></div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">Open Settings</div>
+      </div>
+      <p class="step-description">
+        Open the Wingman extension settings. You'll see all configuration sections including API Keys, Speaker Filter, Google Drive, Call Summary, Knowledge Base, and System Prompt.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/01-options-page.png" target="_blank">
+          <img src="kb-upload-search/01-options-page.png" alt="Full settings page" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Tip:</strong> You can access settings from the popup by clicking the gear icon, or right-click the extension icon and choose "Options".
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">Find the Knowledge Base Section</div>
+      </div>
+      <p class="step-description">
+        Scroll down to the Knowledge Base section. You'll see a heading, description, and a file drop zone for uploading documents.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/02-kb-section.png" target="_blank">
+          <img src="kb-upload-search/02-kb-section.png" alt="Knowledge Base section" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>What it does:</strong> The Knowledge Base lets Wingman reference your documents during calls to give more accurate, context-aware suggestions.
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">3</div>
+        <div class="step-title">Empty State</div>
+      </div>
+      <p class="step-description">
+        Before uploading anything, you'll see a "No documents yet" message with a hint to upload a battle card, FAQ, or product sheet.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/03-empty-state.png" target="_blank">
+          <img src="kb-upload-search/03-empty-state.png" alt="Empty state message" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">4</div>
+        <div class="step-title">Upload a Document</div>
+      </div>
+      <p class="step-description">
+        Drag a file onto the drop zone or click "browse" to select one. Supported formats: PDF, Markdown, and plain text (up to 10MB).
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/04-drop-zone.png" target="_blank">
+          <img src="kb-upload-search/04-drop-zone.png" alt="Drop zone with format hints" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Best documents to upload:</strong> Battle cards, product FAQs, competitor comparisons, pricing sheets, or any reference material you'd want at your fingertips during a call.
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">5</div>
+        <div class="step-title">Test Query (Hidden Until Upload)</div>
+      </div>
+      <p class="step-description">
+        The test query section stays hidden until you upload at least one document. This prevents searching against an empty knowledge base.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/05-test-hidden.png" target="_blank">
+          <img src="kb-upload-search/05-test-hidden.png" alt="Test query section hidden" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">6</div>
+        <div class="step-title">Document Appears in List</div>
+      </div>
+      <p class="step-description">
+        After uploading, your document appears in the list with its filename, section count, and a delete button. The test query section becomes visible.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/06-document-uploaded.png" target="_blank">
+          <img src="kb-upload-search/06-document-uploaded.png" alt="Document in list after upload" loading="lazy">
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">7</div>
+        <div class="step-title">Try a Test Query</div>
+      </div>
+      <p class="step-description">
+        Type a question in the test input to verify Wingman can find relevant answers from your uploaded documents.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/07-query-typed.png" target="_blank">
+          <img src="kb-upload-search/07-query-typed.png" alt="Test query typed in input" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Try asking:</strong> Questions a prospect might ask during a call, like "What security certifications do you have?" or "How does your pricing work?"
+      </div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-number">8</div>
+        <div class="step-title">Review Search Results</div>
+      </div>
+      <p class="step-description">
+        Click "Test" to see matching sections from your documents. The results show relevant text with source attribution, so you can verify the knowledge base has what Wingman needs.
+      </p>
+      <div class="screenshot-wrapper">
+        <a href="kb-upload-search/08-search-results.png" target="_blank">
+          <img src="kb-upload-search/08-search-results.png" alt="Search results from knowledge base" loading="lazy">
+        </a>
+      </div>
+      <div class="step-annotation">
+        <strong>Next:</strong> During your next Google Meet call, Wingman will automatically search these documents to give you better suggestions in real time.
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Wingman AI &mdash; Knowledge Base Tutorial
+  </footer>
+
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+# Secrets & OAuth credentials
+client_secret*.json
+.env
+.env.local
+.env.*.local
+
+# Root assets (logos, images)
+/assets/
+
+# Internal planning docs (ideation, implementation plans, mockups)
+/ideation/
+/mockups/
+
+# Raw/working source images (not for shipping)
+docs/images/*-raw*.png
+
+# Playwright MCP cache
+.playwright-mcp/
+
+# Generated scripts
+generate-agent-flow-images.ts
+generate-icons.ts
+
+# Internal folders
+/go-to-market/
+/__images_generation__/
+/archive/
+/screenshots/
+/evidence/
+/phase-25/
+/Claude Code Features/
+/Research/
+.cg-aix-sdlc/
+
+# Build artifacts
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Markdown files (internal docs, plans, templates)
+*.md
+!README.md
+!wingman-ai/LICENSE
+!docs/README.md
+!docs/GETTING-STARTED.md
+!docs/CODE-PATTERNS.md
+!docs/FILE-STRUCTURE-MAP.md
+!docs/flows/*.md
+!docs/diagrams/*.md

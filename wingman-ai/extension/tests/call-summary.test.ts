@@ -250,4 +250,13 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
     // Russian May abbreviation must appear ("мая" = of May, genitive case).
     expect(md).toMatch(/мая/);
   });
+
+  it('falls back to en when locale is undefined', () => {
+    const mdUndefined = formatSummaryAsMarkdown(baseSummary, undefined);
+    const mdEn = formatSummaryAsMarkdown(baseSummary, 'en');
+    // Undefined locale produces same output as 'en' (NFR-R01 fallback).
+    expect(mdUndefined).toBe(mdEn);
+    // Output never leaks the literal string 'undefined'.
+    expect(mdUndefined).not.toContain('undefined');
+  });
 });

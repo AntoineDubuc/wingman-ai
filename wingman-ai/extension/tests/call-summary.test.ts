@@ -211,4 +211,11 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
     const md = formatSummaryAsMarkdown(baseSummary, 'fr');
     expect(md).toContain(`## Call Summary — ${expected}`);
   });
+
+  it('formats date in en locale correctly', () => {
+    const md = formatSummaryAsMarkdown(baseSummary, 'en');
+    // English short month name must appear (e.g., "May") — this is the
+    // semantic check from the plan AC: month is rendered in English.
+    expect(md).toMatch(/## Call Summary — .*\bMay\b.*2026/);
+  });
 });

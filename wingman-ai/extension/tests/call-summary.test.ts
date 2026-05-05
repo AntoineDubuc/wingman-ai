@@ -228,4 +228,14 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
     const md = formatSummaryAsMarkdown(baseSummary, 'es');
     expect(md).toContain(`## Call Summary — ${expected}`);
   });
+
+  it('formats date in ro locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('ro', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'ro');
+    expect(md).toContain(`## Call Summary — ${expected}`);
+  });
 });

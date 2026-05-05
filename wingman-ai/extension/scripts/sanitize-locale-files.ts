@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, extname } from 'path';
+import { join, extname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const LOCALES_DIR = join(process.cwd(), 'src', 'locales');
 
@@ -83,6 +84,11 @@ function main() {
   console.log(`BUILD-03 PASSED: ${jsonFiles.length} locale files have no Unicode violations`);
 }
 
-if (import.meta.url === new URL(process.argv[1], 'file://').href) {
+// CLI entrypoint check that works on both POSIX and Windows.
+// Windows-specific issues with the previous `import.meta.url === new URL(argv[1], 'file://').href`
+// pattern: argv[1] uses `\` separators while import.meta.url uses `/`; drive-letter case differs;
+// import.meta.url percent-encodes characters like `~` in path segments. Comparing the resolved
+// filesystem path on both sides sidesteps all three. See plan v1 Task 3 fix-up (2026-05-05).
+if (fileURLToPath(import.meta.url) === resolve(process.argv[1] ?? '')) {
   main();
 }

@@ -107,4 +107,10 @@ describe('InstallationStateService — FRESH_INSTALL branch (Plan 1 Task 4)', ()
     const state = await installationStateService.getState();
     expect(state).toBe('FRESH_INSTALL');
   });
+
+  it("AC-FI-2: returns UPGRADE_PENDING after recordInstall('update') without acknowledge", async () => {
+    await installationStateService.recordInstall('update');
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
 });

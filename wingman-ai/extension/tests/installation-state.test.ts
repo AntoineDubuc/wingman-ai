@@ -100,3 +100,11 @@ describe('InstallationStateService — v1 storage fixture (pre-localization user
     expect(state).toBe('UPGRADE_PENDING');
   });
 });
+
+describe('InstallationStateService — FRESH_INSTALL branch (Plan 1 Task 4)', () => {
+  it("AC-FI-1: returns FRESH_INSTALL after recordInstall('install') without acknowledge", async () => {
+    await installationStateService.recordInstall('install');
+    const state = await installationStateService.getState();
+    expect(state).toBe('FRESH_INSTALL');
+  });
+});

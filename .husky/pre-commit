@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Plan 1 Task 3 — NFR-SEC03 pre-commit gate.
+# Runs the locale-file Unicode sanitizer before every commit.
+# cd into the extension package because that's where package.json + node_modules live.
+cd wingman-ai/extension && npm run unicode-check

@@ -1,43 +1,162 @@
 {
   "_meta": {
-    "generator": "Manual (canonical source)",
-    "generated_date": "2026-05-02",
-    "revision": "1.0.0",
-    "reviewer": "N/A — canonical English source"
+    "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "1.1.0",
+    "reviewer_status": "canonical-english-source"
   },
   "popup": {
+    "title": "Wingman",
     "start_session": "Start Session",
     "stop_session": "Stop Session",
     "status": {
       "active": "Session Active",
       "idle": "Ready",
-      "connecting": "Connecting…"
+      "connecting": "Connecting…",
+      "live": "Live",
+      "error": "Error",
+      "session_active_other_tab": "Session active in another tab"
+    },
+    "actions": {
+      "open_settings": "Open Settings",
+      "open_meet": "Open Google Meet"
     }
   },
   "options": {
+    "tabs": {
+      "setup": "Setup",
+      "calls": "Calls",
+      "personas": "Personas",
+      "conclave": "Conclave",
+      "langbuilder": "LangBuilder",
+      "websearch": "Web Search",
+      "support": "Support"
+    },
     "setup": {
       "title": "Settings",
       "language_picker_label": "Language",
       "language_locked_tooltip": "Language locked during active session",
       "api_keys_title": "API Keys",
+      "api_keys": {
+        "description": "Configure API keys for transcription and AI services.",
+        "gemini_label": "Gemini API Key",
+        "deepgram_label": "Deepgram API Key",
+        "test_button": "Test",
+        "test_pass": "Connection successful",
+        "test_fail": "Connection failed: {{rawError}}"
+      },
       "save_button": "Save",
       "cancel_button": "Cancel"
+    },
+    "calls": {
+      "title": "Call Settings",
+      "retention_label": "Transcript Retention",
+      "summary_options_label": "Summary Options"
     },
     "personas": {
       "section_title": "Personas",
       "default_interviewer": "Default Interviewer",
       "executive_communicator": "Executive Communicator",
-      "add_persona_button": "Add Persona"
+      "add_persona_button": "Add Persona",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Job Interview Candidate",
+          "description": "Coaching for behavioral and situational interview questions."
+        },
+        "startup_founder_fundraising": {
+          "name": "Startup Founder (Fundraising)",
+          "description": "Pitch coaching for VC and angel investor meetings."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Freelancer (Rate Negotiation)",
+          "description": "Rate-setting and scope-negotiation coaching for client calls."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Nonprofit Grant Pitcher",
+          "description": "Funder-facing coaching for grant program presentations."
+        },
+        "patient_advocate": {
+          "name": "Patient Advocate",
+          "description": "Coaching for medical appointments and care decisions."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Tenant (Lease Negotiation)",
+          "description": "Lease-renewal and dispute-resolution coaching for tenants."
+        },
+        "parent_iep_meeting": {
+          "name": "Parent (IEP Meeting)",
+          "description": "Coaching for school IEP meetings and special-education advocacy."
+        },
+        "small_business_loan_seeker": {
+          "name": "Small Business Loan Seeker",
+          "description": "Coaching for SBA and bank loan officer meetings."
+        },
+        "journalist_interviewer": {
+          "name": "Journalist Interviewer",
+          "description": "Source-interview coaching for reporters and journalists."
+        },
+        "esl_professional": {
+          "name": "ESL Professional",
+          "description": "English-language coaching for non-native business speakers."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Cloud Solutions Sales Consultant",
+          "description": "Technical pre-sales coaching for cloud platform deals."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclave",
+      "description": "Multi-persona group conversation mode.",
+      "enable_label": "Enable Conclave"
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Custom language flow builder."
+    },
+    "websearch": {
+      "title": "Web Search",
+      "description": "Brave Search integration for chat assistant context.",
+      "brave_key_label": "Brave Search API Key"
+    },
+    "support": {
+      "title": "Support",
+      "description": "Documentation and issue reporting.",
+      "docs_link": "Documentation",
+      "issues_link": "Report an Issue"
+    },
+    "drive": {
+      "auth_button": "Sign in with Google",
+      "signed_in": "Signed in as {{email}}",
+      "sign_out": "Sign out",
+      "save_label": "Save summaries to Drive"
     },
     "upgrade_banner": {
       "title": "Wingman now speaks your language",
-      "body": "Your language has been automatically set based on your browser settings. You can change it anytime in Settings → Language.",
+      "body": "Your language has been automatically set based on your browser settings. You can change it anytime in the Setup tab.",
       "dismiss_button": "Got it"
     }
   },
   "overlay": {
+    "timer": {
+      "label": "Session Time"
+    },
+    "session": {
+      "connecting": "Connecting…",
+      "live": "Live",
+      "error": "Connection error",
+      "disconnected": "Disconnected"
+    },
+    "transcript": {
+      "live": "Live",
+      "paused": "Paused",
+      "empty_placeholder": "Waiting for speech…",
+      "someone_speaking": "Someone is speaking…"
+    },
     "suggestion": {
       "try_again": "Try Again",
+      "try_again_tooltip": "Regenerate this suggestion in your language",
+      "after_retry_label": "Regenerated",
       "thinking": "Thinking…",
       "no_suggestion": "Listening…"
     },
@@ -45,22 +164,26 @@
       "you": "You",
       "speaker_n": "Speaker {{n}}"
     },
-    "transcript": {
-      "live": "Live",
-      "paused": "Paused"
-    },
     "controls": {
       "minimize": "Minimize",
       "close": "Close",
       "dock": "Dock",
       "undock": "Undock"
+    },
+    "emotion": {
+      "label_prefix": "Tone:"
+    },
+    "cost": {
+      "label": "Estimated Cost"
     }
   },
   "summary": {
     "headers": {
       "summary": "Summary",
       "action_items": "Action Items",
-      "key_moments": "Key Moments"
+      "key_moments": "Key Moments",
+      "personas_used": "Personas Used",
+      "session_cost_estimate": "Session Cost Estimate"
     },
     "action_item_owner": {
       "you": "You",
@@ -80,18 +203,121 @@
     "saving": "Saving…",
     "saved": "Saved"
   },
+  "speakers": {
+    "you": "You",
+    "them": "Them",
+    "speaker_n": "Speaker {{n}}"
+  },
   "mic_permission": {
     "title": "Microphone Access Required",
     "body": "Wingman needs access to your microphone to transcribe the meeting.",
     "grant_button": "Allow Access",
-    "cancel_button": "Cancel"
+    "cancel_button": "Cancel",
+    "denied": {
+      "title": "Microphone Access Denied",
+      "body": "Wingman cannot transcribe without microphone access."
+    },
+    "recovery": {
+      "title": "How to Restore Access",
+      "steps_intro": "Follow these steps:",
+      "step_1": "Click the lock icon in the address bar.",
+      "step_2": "Set Microphone permission to \"Allow\".",
+      "step_3": "Reload this page and try again."
+    }
   },
   "errors": {
     "deepgram_failed": "Speech recognition unavailable. {{rawError}}",
     "mic_revoked": "Microphone access lost. Please restore access and retry.",
     "api_key_missing": "{{provider}} API key not configured. Please add it in Settings.",
     "generic": "Something went wrong. Please try again.",
-    "session_interrupted": "Session interrupted unexpectedly."
+    "session_interrupted": "Session interrupted unexpectedly.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Transcription connection failed.",
+      "session_dropped": "Transcription session ended unexpectedly.",
+      "language_unavailable": "Speech recognition for {{language}} is currently unavailable."
+    },
+    "gemini": {
+      "api_failure": "Gemini service unavailable.",
+      "rate_limit": "Gemini rate limit reached. Please wait a moment.",
+      "quota_exceeded": "Gemini daily quota exceeded."
+    },
+    "groq": {
+      "api_failure": "Groq service unavailable."
+    },
+    "drive": {
+      "oauth_failed": "Google Drive sign-in failed. Please try again.",
+      "save_failed": "Could not save to Drive.",
+      "quota_exceeded": "Drive storage quota exceeded.",
+      "network": "Network error reaching Drive."
+    },
+    "hume": {
+      "disconnected": "Emotion detection disconnected.",
+      "api_failure": "Emotion detection unavailable."
+    },
+    "brave": {
+      "api_failure": "Web search unavailable for this query.",
+      "rate_limit": "Web search rate limit reached."
+    },
+    "langbuilder": {
+      "flow_failed": "Custom flow failed to execute.",
+      "api_failure": "LangBuilder unavailable."
+    }
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Connection Lost",
+      "body": "Lost connection to transcription service.",
+      "reconnecting": "Reconnecting…",
+      "reconnected": "Reconnected"
+    },
+    "mic_revoked": {
+      "title": "Microphone Access Lost",
+      "body": "Microphone access was revoked during this session.",
+      "recovery_action": "Restore Access"
+    },
+    "partial_service": {
+      "title": "Some services degraded",
+      "services_degraded": "{{services}} unavailable; transcription continues."
+    },
+    "actions": {
+      "dismiss": "Dismiss",
+      "retry": "Retry"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} suggestion",
+    "suggestion_other": "{{count}} suggestions",
+    "minute_one": "{{count}} minute",
+    "minute_other": "{{count}} minutes",
+    "second_one": "{{count}} second",
+    "second_other": "{{count}} seconds",
+    "action_item_one": "{{count}} action item",
+    "action_item_other": "{{count}} action items",
+    "persona_one": "{{count}} persona",
+    "persona_other": "{{count}} personas",
+    "character_one": "{{count}} character",
+    "character_other": "{{count}} characters"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Open Wingman overlay",
+      "close": "Close Wingman overlay",
+      "minimize": "Minimize Wingman overlay"
+    },
+    "popup": {
+      "start_session": "Start Wingman session",
+      "stop_session": "Stop Wingman session"
+    },
+    "options": {
+      "tab": "{{tab}} tab",
+      "section": "{{section}} section",
+      "picker": "Language picker"
+    },
+    "banner": {
+      "close": "Close banner",
+      "retry": "Retry"
+    }
   },
   "tutorials": {
     "english_only_banner": "Tutorial content is currently available in English only. We're working on translations for a future release."

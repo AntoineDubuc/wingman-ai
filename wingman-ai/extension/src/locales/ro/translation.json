@@ -1,69 +1,192 @@
 {
   "_meta": {
-    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
-    "generated_date": "2026-05-02",
-    "revision": "1.0.0",
-    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+    "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "1.1.0",
+    "reviewer_status": "pending-native-review"
   },
   "popup": {
-    "start_session": "Pornire sesiune",
-    "stop_session": "Oprire sesiune",
+    "title": "Wingman",
+    "start_session": "Începe sesiunea",
+    "stop_session": "Oprește sesiunea",
     "status": {
       "active": "Sesiune activă",
-      "idle": "Gata",
-      "connecting": "Se conectează…"
+      "idle": "Pregătit",
+      "connecting": "Se conectează…",
+      "live": "În direct",
+      "error": "Eroare",
+      "session_active_other_tab": "Sesiune activă în altă filă"
+    },
+    "actions": {
+      "open_settings": "Deschide setările",
+      "open_meet": "Deschide Google Meet"
     }
   },
   "options": {
+    "tabs": {
+      "setup": "Configurare",
+      "calls": "Apeluri",
+      "personas": "Persoane",
+      "conclave": "Conclav",
+      "langbuilder": "LangBuilder",
+      "websearch": "Căutare web",
+      "support": "Asistență"
+    },
     "setup": {
       "title": "Setări",
       "language_picker_label": "Limbă",
-      "language_locked_tooltip": "Limba este blocată în timpul unei sesiuni active",
+      "language_locked_tooltip": "Limba este blocată pe durata sesiunii active",
       "api_keys_title": "Chei API",
-      "save_button": "Salvare",
-      "cancel_button": "Anulare"
+      "api_keys": {
+        "description": "Configurați cheile API pentru transcriere și serviciile de inteligență artificială.",
+        "gemini_label": "Cheie API Gemini",
+        "deepgram_label": "Cheie API Deepgram",
+        "test_button": "Testează",
+        "test_pass": "Conexiune reușită",
+        "test_fail": "Conexiune eșuată: {{rawError}}"
+      },
+      "save_button": "Salvează",
+      "cancel_button": "Anulează"
+    },
+    "calls": {
+      "title": "Setări de apel",
+      "retention_label": "Retenția transcrierilor",
+      "summary_options_label": "Opțiuni de rezumat"
     },
     "personas": {
       "section_title": "Persoane",
       "default_interviewer": "Intervievator implicit",
       "executive_communicator": "Comunicator executiv",
-      "add_persona_button": "Adăugare persoană"
+      "add_persona_button": "Adaugă persoană",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Candidat la interviu de angajare",
+          "description": "Antrenament pentru întrebări comportamentale și situaționale de interviu."
+        },
+        "startup_founder_fundraising": {
+          "name": "Fondator de startup (strângere de fonduri)",
+          "description": "Antrenament de prezentare pentru întâlniri cu investitori."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Lucrător independent (negociere de tarife)",
+          "description": "Antrenament pentru stabilirea tarifelor și negocierea de scop cu clienții."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Solicitant de granturi pentru ONG",
+          "description": "Antrenament pentru prezentări către finanțatori de granturi."
+        },
+        "patient_advocate": {
+          "name": "Avocat al pacientului",
+          "description": "Antrenament pentru consultații medicale și decizii de îngrijire."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Chiriaș (negocierea contractului de închiriere)",
+          "description": "Antrenament de reînnoire a contractului și soluționarea disputelor pentru chiriași."
+        },
+        "parent_iep_meeting": {
+          "name": "Părinte (ședință de plan educațional individualizat)",
+          "description": "Antrenament pentru ședințe școlare și apărare în educația specială."
+        },
+        "small_business_loan_seeker": {
+          "name": "Solicitant de împrumut pentru IMM",
+          "description": "Antrenament pentru întâlniri cu ofițeri de credite bancari."
+        },
+        "journalist_interviewer": {
+          "name": "Jurnalist intervievator",
+          "description": "Antrenament de interviuri cu surse pentru reporteri și jurnaliști."
+        },
+        "esl_professional": {
+          "name": "Profesionist de engleză ca limbă străină",
+          "description": "Antrenament de engleză de afaceri pentru vorbitori non-nativi."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Consultant de vânzări soluții cloud",
+          "description": "Antrenament tehnic pre-vânzare pentru contracte de platforme cloud."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclav",
+      "description": "Mod conversație de grup multi-persoane.",
+      "enable_label": "Activează Conclav"
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Constructor de fluxuri lingvistice personalizate."
+    },
+    "websearch": {
+      "title": "Căutare web",
+      "description": "Integrare Brave Search pentru contextul asistentului de chat.",
+      "brave_key_label": "Cheie API Brave Search"
+    },
+    "support": {
+      "title": "Asistență",
+      "description": "Documentație și raportarea problemelor.",
+      "docs_link": "Documentație",
+      "issues_link": "Raportează o problemă"
+    },
+    "drive": {
+      "auth_button": "Conectează-te cu Google",
+      "signed_in": "Conectat ca {{email}}",
+      "sign_out": "Deconectează-te",
+      "save_label": "Salvează rezumatele pe Drive"
     },
     "upgrade_banner": {
-      "title": "Wingman vorbește acum în limba dvs.",
-      "body": "Limba dvs. a fost setată automat pe baza setărilor browserului. O puteți schimba oricând în Setări → Limbă.",
+      "title": "Wingman vă vorbește limba",
+      "body": "Limba a fost setată automat conform setărilor browserului. O puteți schimba oricând din fila Configurare.",
       "dismiss_button": "Am înțeles"
     }
   },
   "overlay": {
-    "suggestion": {
-      "try_again": "Reîncercați",
-      "thinking": "Se gândește…",
-      "no_suggestion": "Ascultă…"
+    "timer": {
+      "label": "Durata sesiunii"
     },
-    "speaker": {
-      "you": "Dvs.",
-      "speaker_n": "Vorbitor {{n}}"
+    "session": {
+      "connecting": "Se conectează…",
+      "live": "În direct",
+      "error": "Eroare de conexiune",
+      "disconnected": "Deconectat"
     },
     "transcript": {
-      "live": "Live",
-      "paused": "În pauză"
+      "live": "În direct",
+      "paused": "În pauză",
+      "empty_placeholder": "Se așteaptă vorbire…",
+      "someone_speaking": "Cineva vorbește…"
+    },
+    "suggestion": {
+      "try_again": "Reîncearcă",
+      "try_again_tooltip": "Regenerează această sugestie în limba dumneavoastră",
+      "after_retry_label": "Regenerată",
+      "thinking": "Gândire…",
+      "no_suggestion": "Ascult…"
+    },
+    "speaker": {
+      "you": "Dumneavoastră",
+      "speaker_n": "Vorbitor {{n}}"
     },
     "controls": {
-      "minimize": "Minimizare",
-      "close": "Închidere",
-      "dock": "Andocare",
-      "undock": "Dezandocare"
+      "minimize": "Minimizează",
+      "close": "Închide",
+      "dock": "Andochează",
+      "undock": "Detașează"
+    },
+    "emotion": {
+      "label_prefix": "Ton:"
+    },
+    "cost": {
+      "label": "Cost estimat"
     }
   },
   "summary": {
     "headers": {
       "summary": "Rezumat",
-      "action_items": "Acțiuni de realizat",
-      "key_moments": "Momente cheie"
+      "action_items": "Acțiuni de urmărit",
+      "key_moments": "Momente cheie",
+      "personas_used": "Persoane folosite",
+      "session_cost_estimate": "Cost estimat al sesiunii"
     },
     "action_item_owner": {
-      "you": "Dvs.",
+      "you": "Dumneavoastră",
       "them": "Ei"
     },
     "moment_types": {
@@ -76,30 +199,139 @@
       "label": "Cost estimat",
       "format": "{{amount}} USD"
     },
-    "save_to_drive": "Salvare în Drive",
+    "save_to_drive": "Salvează pe Drive",
     "saving": "Se salvează…",
     "saved": "Salvat"
   },
+  "speakers": {
+    "you": "Dumneavoastră",
+    "them": "Ei",
+    "speaker_n": "Vorbitor {{n}}"
+  },
   "mic_permission": {
     "title": "Acces la microfon necesar",
-    "body": "Wingman are nevoie de acces la microfonul dvs. pentru a transcrie întâlnirea.",
-    "grant_button": "Permitere acces",
-    "cancel_button": "Anulare"
+    "body": "Wingman are nevoie de acces la microfon pentru a transcrie întâlnirea.",
+    "grant_button": "Permite accesul",
+    "cancel_button": "Anulează",
+    "denied": {
+      "title": "Acces la microfon refuzat",
+      "body": "Wingman nu poate transcrie fără acces la microfon."
+    },
+    "recovery": {
+      "title": "Cum se restabilește accesul",
+      "steps_intro": "Urmați acești pași:",
+      "step_1": "Faceți clic pe pictograma de lacăt din bara de adresă.",
+      "step_2": "Setați permisiunea microfonului pe „Permite”.",
+      "step_3": "Reîncărcați această pagină și reîncercați."
+    }
   },
   "errors": {
-    "deepgram_failed": "Recunoașterea vocală este indisponibilă. {{rawError}}",
-    "mic_revoked": "Accesul la microfon a fost pierdut. Restabiliți accesul și reîncercați.",
+    "deepgram_failed": "Recunoaștere vocală indisponibilă. {{rawError}}",
+    "mic_revoked": "Acces la microfon pierdut. Restabiliți accesul și reîncercați.",
     "api_key_missing": "Cheia API {{provider}} nu este configurată. Adăugați-o în Setări.",
-    "generic": "A apărut o eroare. Vă rugăm să încercați din nou.",
-    "session_interrupted": "Sesiunea a fost întreruptă neașteptat."
+    "generic": "Ceva nu a funcționat. Vă rugăm să reîncercați.",
+    "session_interrupted": "Sesiune întreruptă în mod neașteptat.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Conexiunea de transcriere a eșuat.",
+      "session_dropped": "Sesiunea de transcriere s-a încheiat în mod neașteptat.",
+      "language_unavailable": "Recunoașterea vocală pentru {{language}} este indisponibilă în prezent."
+    },
+    "gemini": {
+      "api_failure": "Serviciul Gemini este indisponibil.",
+      "rate_limit": "Limita de apel Gemini atinsă. Vă rugăm să așteptați un moment.",
+      "quota_exceeded": "Cota zilnică Gemini depășită."
+    },
+    "groq": {
+      "api_failure": "Serviciul Groq este indisponibil."
+    },
+    "drive": {
+      "oauth_failed": "Conectarea la Google Drive a eșuat. Vă rugăm să reîncercați.",
+      "save_failed": "Nu s-a putut salva pe Drive.",
+      "quota_exceeded": "Cota de stocare Drive depășită.",
+      "network": "Eroare de rețea la accesarea Drive."
+    },
+    "hume": {
+      "disconnected": "Detectarea emoțiilor deconectată.",
+      "api_failure": "Detectarea emoțiilor indisponibilă."
+    },
+    "brave": {
+      "api_failure": "Căutare web indisponibilă pentru această interogare.",
+      "rate_limit": "Limita de căutare web atinsă."
+    },
+    "langbuilder": {
+      "flow_failed": "Execuția fluxului personalizat a eșuat.",
+      "api_failure": "LangBuilder indisponibil."
+    }
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Conexiune pierdută",
+      "body": "Conexiunea cu serviciul de transcriere s-a pierdut.",
+      "reconnecting": "Se reconectează…",
+      "reconnected": "Reconectat"
+    },
+    "mic_revoked": {
+      "title": "Acces la microfon pierdut",
+      "body": "Accesul la microfon a fost revocat în timpul acestei sesiuni.",
+      "recovery_action": "Restabilește accesul"
+    },
+    "partial_service": {
+      "title": "Unele servicii degradate",
+      "services_degraded": "{{services}} indisponibil(e); transcrierea continuă."
+    },
+    "actions": {
+      "dismiss": "Respinge",
+      "retry": "Reîncearcă"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} sugestie",
+    "suggestion_few": "{{count}} sugestii",
+    "suggestion_other": "{{count}} de sugestii",
+    "minute_one": "{{count}} minut",
+    "minute_few": "{{count}} minute",
+    "minute_other": "{{count}} de minute",
+    "second_one": "{{count}} secundă",
+    "second_few": "{{count}} secunde",
+    "second_other": "{{count}} de secunde",
+    "action_item_one": "{{count}} acțiune de urmărit",
+    "action_item_few": "{{count}} acțiuni de urmărit",
+    "action_item_other": "{{count}} de acțiuni de urmărit",
+    "persona_one": "{{count}} persoană",
+    "persona_few": "{{count}} persoane",
+    "persona_other": "{{count}} de persoane",
+    "character_one": "{{count}} caracter",
+    "character_few": "{{count}} caractere",
+    "character_other": "{{count}} de caractere"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Deschide suprapunerea Wingman",
+      "close": "Închide suprapunerea Wingman",
+      "minimize": "Minimizează suprapunerea Wingman"
+    },
+    "popup": {
+      "start_session": "Începe sesiunea Wingman",
+      "stop_session": "Oprește sesiunea Wingman"
+    },
+    "options": {
+      "tab": "Fila {{tab}}",
+      "section": "Secțiunea {{section}}",
+      "picker": "Selector de limbă"
+    },
+    "banner": {
+      "close": "Închide bannerul",
+      "retry": "Reîncearcă"
+    }
   },
   "tutorials": {
-    "english_only_banner": "Conținutul tutorialelor este disponibil momentan numai în engleză. Lucrăm la traduceri pentru o versiune viitoare."
+    "english_only_banner": "Conținutul tutorialelor este disponibil în prezent doar în engleză. Lucrăm la traduceri pentru o versiune viitoare."
   },
   "common": {
     "loading": "Se încarcă…",
-    "retry": "Reîncercați",
-    "dismiss": "Ignorați",
+    "retry": "Reîncearcă",
+    "dismiss": "Respinge",
     "language_names": {
       "en": "English",
       "fr": "Français",

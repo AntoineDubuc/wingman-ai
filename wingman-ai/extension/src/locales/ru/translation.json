@@ -1,66 +1,189 @@
 {
   "_meta": {
-    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
-    "generated_date": "2026-05-02",
-    "revision": "1.0.0",
-    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+    "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "1.1.0",
+    "reviewer_status": "pending-native-review"
   },
   "popup": {
+    "title": "Wingman",
     "start_session": "Начать сессию",
-    "stop_session": "Завершить сессию",
+    "stop_session": "Остановить сессию",
     "status": {
       "active": "Сессия активна",
-      "idle": "Готово",
-      "connecting": "Подключение…"
+      "idle": "Готов",
+      "connecting": "Подключение…",
+      "live": "В эфире",
+      "error": "Ошибка",
+      "session_active_other_tab": "Сессия активна на другой вкладке"
+    },
+    "actions": {
+      "open_settings": "Открыть настройки",
+      "open_meet": "Открыть Google Meet"
     }
   },
   "options": {
+    "tabs": {
+      "setup": "Настройка",
+      "calls": "Звонки",
+      "personas": "Персоны",
+      "conclave": "Конклав",
+      "langbuilder": "LangBuilder",
+      "websearch": "Веб-поиск",
+      "support": "Поддержка"
+    },
     "setup": {
       "title": "Настройки",
       "language_picker_label": "Язык",
       "language_locked_tooltip": "Язык заблокирован во время активной сессии",
       "api_keys_title": "Ключи API",
+      "api_keys": {
+        "description": "Настройте ключи API для транскрипции и сервисов искусственного интеллекта.",
+        "gemini_label": "Ключ API Gemini",
+        "deepgram_label": "Ключ API Deepgram",
+        "test_button": "Проверить",
+        "test_pass": "Соединение успешно",
+        "test_fail": "Соединение не удалось: {{rawError}}"
+      },
       "save_button": "Сохранить",
       "cancel_button": "Отмена"
+    },
+    "calls": {
+      "title": "Настройки звонков",
+      "retention_label": "Хранение транскрипций",
+      "summary_options_label": "Параметры резюме"
     },
     "personas": {
       "section_title": "Персоны",
       "default_interviewer": "Интервьюер по умолчанию",
-      "executive_communicator": "Исполнительный коммуникатор",
-      "add_persona_button": "Добавить персону"
+      "executive_communicator": "Коммуникатор руководителя",
+      "add_persona_button": "Добавить персону",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Кандидат на собеседование",
+          "description": "Тренировка для поведенческих и ситуационных вопросов на собеседовании."
+        },
+        "startup_founder_fundraising": {
+          "name": "Основатель стартапа (привлечение инвестиций)",
+          "description": "Тренировка презентаций для встреч с венчурными инвесторами и бизнес-ангелами."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Фрилансер (переговоры о ставках)",
+          "description": "Тренировка установления ставок и согласования объёма работ с клиентами."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Соискатель грантов для НКО",
+          "description": "Тренировка презентаций перед грантодателями и фондами."
+        },
+        "patient_advocate": {
+          "name": "Защитник интересов пациента",
+          "description": "Тренировка для медицинских приёмов и решений о лечении."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Арендатор (переговоры о найме)",
+          "description": "Тренировка продления договора и разрешения споров для арендаторов."
+        },
+        "parent_iep_meeting": {
+          "name": "Родитель (встреча по индивидуальному плану обучения)",
+          "description": "Тренировка для школьных встреч и защиты в специальном образовании."
+        },
+        "small_business_loan_seeker": {
+          "name": "Соискатель кредита для малого бизнеса",
+          "description": "Тренировка для встреч с банковскими кредитными специалистами."
+        },
+        "journalist_interviewer": {
+          "name": "Журналист-интервьюер",
+          "description": "Тренировка интервью с источниками для репортёров и журналистов."
+        },
+        "esl_professional": {
+          "name": "Специалист по английскому как иностранному",
+          "description": "Тренировка делового английского для неносителей языка."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Консультант по продажам облачных решений",
+          "description": "Техническая предпродажная тренировка для сделок по облачным платформам."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Конклав",
+      "description": "Режим групповой беседы с несколькими персонами.",
+      "enable_label": "Включить Конклав"
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Конструктор настраиваемых языковых потоков."
+    },
+    "websearch": {
+      "title": "Веб-поиск",
+      "description": "Интеграция Brave Search для контекста чат-ассистента.",
+      "brave_key_label": "Ключ API Brave Search"
+    },
+    "support": {
+      "title": "Поддержка",
+      "description": "Документация и сообщения о проблемах.",
+      "docs_link": "Документация",
+      "issues_link": "Сообщить о проблеме"
+    },
+    "drive": {
+      "auth_button": "Войти через Google",
+      "signed_in": "Выполнен вход как {{email}}",
+      "sign_out": "Выйти",
+      "save_label": "Сохранять резюме на Drive"
     },
     "upgrade_banner": {
       "title": "Wingman теперь говорит на вашем языке",
-      "body": "Ваш язык был автоматически установлен на основе настроек браузера. Вы можете изменить его в любое время в Настройки → Язык.",
+      "body": "Ваш язык был автоматически установлен в соответствии с настройками браузера. Вы можете изменить его в любой момент на вкладке «Настройка».",
       "dismiss_button": "Понятно"
     }
   },
   "overlay": {
-    "suggestion": {
-      "try_again": "Повторить",
-      "thinking": "Обработка…",
-      "no_suggestion": "Прослушивание…"
+    "timer": {
+      "label": "Время сессии"
     },
-    "speaker": {
-      "you": "Вы",
-      "speaker_n": "Участник {{n}}"
+    "session": {
+      "connecting": "Подключение…",
+      "live": "В эфире",
+      "error": "Ошибка соединения",
+      "disconnected": "Отключено"
     },
     "transcript": {
       "live": "В эфире",
-      "paused": "На паузе"
+      "paused": "Приостановлено",
+      "empty_placeholder": "Ожидание речи…",
+      "someone_speaking": "Кто-то говорит…"
+    },
+    "suggestion": {
+      "try_again": "Повторить",
+      "try_again_tooltip": "Сгенерировать это предложение заново на вашем языке",
+      "after_retry_label": "Сгенерировано заново",
+      "thinking": "Размышление…",
+      "no_suggestion": "Слушаю…"
+    },
+    "speaker": {
+      "you": "Вы",
+      "speaker_n": "Говорящий {{n}}"
     },
     "controls": {
       "minimize": "Свернуть",
       "close": "Закрыть",
       "dock": "Закрепить",
       "undock": "Открепить"
+    },
+    "emotion": {
+      "label_prefix": "Тон:"
+    },
+    "cost": {
+      "label": "Ориентировочная стоимость"
     }
   },
   "summary": {
     "headers": {
-      "summary": "Сводка",
-      "action_items": "Задачи",
-      "key_moments": "Ключевые моменты"
+      "summary": "Резюме",
+      "action_items": "Задачи к выполнению",
+      "key_moments": "Ключевые моменты",
+      "personas_used": "Использованные персоны",
+      "session_cost_estimate": "Ориентировочная стоимость сессии"
     },
     "action_item_owner": {
       "you": "Вы",
@@ -73,28 +196,137 @@
       "quote": "Цитата"
     },
     "cost": {
-      "label": "Примерная стоимость",
+      "label": "Ориентировочная стоимость",
       "format": "{{amount}} USD"
     },
     "save_to_drive": "Сохранить на Drive",
     "saving": "Сохранение…",
     "saved": "Сохранено"
   },
+  "speakers": {
+    "you": "Вы",
+    "them": "Они",
+    "speaker_n": "Говорящий {{n}}"
+  },
   "mic_permission": {
     "title": "Требуется доступ к микрофону",
-    "body": "Wingman требует доступ к вашему микрофону для транскрипции встречи.",
+    "body": "Wingman требуется доступ к микрофону для транскрипции встречи.",
     "grant_button": "Разрешить доступ",
-    "cancel_button": "Отмена"
+    "cancel_button": "Отмена",
+    "denied": {
+      "title": "Доступ к микрофону отклонён",
+      "body": "Wingman не может выполнить транскрипцию без доступа к микрофону."
+    },
+    "recovery": {
+      "title": "Как восстановить доступ",
+      "steps_intro": "Выполните следующие шаги:",
+      "step_1": "Нажмите на значок замка в адресной строке.",
+      "step_2": "Установите разрешение микрофона на «Разрешить».",
+      "step_3": "Перезагрузите эту страницу и повторите попытку."
+    }
   },
   "errors": {
     "deepgram_failed": "Распознавание речи недоступно. {{rawError}}",
     "mic_revoked": "Доступ к микрофону потерян. Восстановите доступ и повторите попытку.",
-    "api_key_missing": "Ключ API {{provider}} не настроен. Добавьте его в Настройки.",
+    "api_key_missing": "Ключ API {{provider}} не настроен. Добавьте его в настройках.",
     "generic": "Что-то пошло не так. Пожалуйста, повторите попытку.",
-    "session_interrupted": "Сессия неожиданно прервана."
+    "session_interrupted": "Сессия прервана неожиданно.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Не удалось подключиться к транскрипции.",
+      "session_dropped": "Сессия транскрипции завершилась неожиданно.",
+      "language_unavailable": "Распознавание речи для языка {{language}} в данный момент недоступно."
+    },
+    "gemini": {
+      "api_failure": "Сервис Gemini недоступен.",
+      "rate_limit": "Достигнут лимит обращений Gemini. Подождите немного.",
+      "quota_exceeded": "Превышена дневная квота Gemini."
+    },
+    "groq": {
+      "api_failure": "Сервис Groq недоступен."
+    },
+    "drive": {
+      "oauth_failed": "Вход в Google Drive не удался. Попробуйте ещё раз.",
+      "save_failed": "Не удалось сохранить на Drive.",
+      "quota_exceeded": "Превышена квота хранения Drive.",
+      "network": "Сетевая ошибка при обращении к Drive."
+    },
+    "hume": {
+      "disconnected": "Распознавание эмоций отключено.",
+      "api_failure": "Распознавание эмоций недоступно."
+    },
+    "brave": {
+      "api_failure": "Веб-поиск недоступен для этого запроса.",
+      "rate_limit": "Достигнут лимит веб-поиска."
+    },
+    "langbuilder": {
+      "flow_failed": "Не удалось выполнить настраиваемый поток.",
+      "api_failure": "LangBuilder недоступен."
+    }
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Соединение потеряно",
+      "body": "Соединение со службой транскрипции потеряно.",
+      "reconnecting": "Переподключение…",
+      "reconnected": "Соединение восстановлено"
+    },
+    "mic_revoked": {
+      "title": "Доступ к микрофону потерян",
+      "body": "Доступ к микрофону был отозван во время этой сессии.",
+      "recovery_action": "Восстановить доступ"
+    },
+    "partial_service": {
+      "title": "Некоторые сервисы работают с ограничениями",
+      "services_degraded": "{{services}} недоступн(ы); транскрипция продолжается."
+    },
+    "actions": {
+      "dismiss": "Закрыть",
+      "retry": "Повторить"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} предложение",
+    "suggestion_few": "{{count}} предложения",
+    "suggestion_other": "{{count}} предложений",
+    "minute_one": "{{count}} минута",
+    "minute_few": "{{count}} минуты",
+    "minute_other": "{{count}} минут",
+    "second_one": "{{count}} секунда",
+    "second_few": "{{count}} секунды",
+    "second_other": "{{count}} секунд",
+    "action_item_one": "{{count}} задача к выполнению",
+    "action_item_few": "{{count}} задачи к выполнению",
+    "action_item_other": "{{count}} задач к выполнению",
+    "persona_one": "{{count}} персона",
+    "persona_few": "{{count}} персоны",
+    "persona_other": "{{count}} персон",
+    "character_one": "{{count}} символ",
+    "character_few": "{{count}} символа",
+    "character_other": "{{count}} символов"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Открыть наложение Wingman",
+      "close": "Закрыть наложение Wingman",
+      "minimize": "Свернуть наложение Wingman"
+    },
+    "popup": {
+      "start_session": "Начать сессию Wingman",
+      "stop_session": "Остановить сессию Wingman"
+    },
+    "options": {
+      "tab": "Вкладка {{tab}}",
+      "section": "Раздел {{section}}",
+      "picker": "Выбор языка"
+    },
+    "banner": {
+      "close": "Закрыть баннер",
+      "retry": "Повторить"
+    }
   },
   "tutorials": {
-    "english_only_banner": "Содержимое обучающих материалов доступно только на английском языке. Мы работаем над переводами для будущего выпуска."
+    "english_only_banner": "Содержимое учебных материалов в настоящее время доступно только на английском языке. Мы работаем над переводами для будущей версии."
   },
   "common": {
     "loading": "Загрузка…",

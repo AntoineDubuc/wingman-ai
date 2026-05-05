@@ -1,66 +1,189 @@
 {
   "_meta": {
-    "generator": "AI-assisted (Claude claude-sonnet-4-6)",
-    "generated_date": "2026-05-02",
-    "revision": "1.0.0",
-    "reviewer": "Pending — native speaker review required (NFR-Q02)"
+    "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "1.1.0",
+    "reviewer_status": "pending-native-review"
   },
   "popup": {
+    "title": "Wingman",
     "start_session": "Iniciar sesión",
     "stop_session": "Detener sesión",
     "status": {
       "active": "Sesión activa",
       "idle": "Listo",
-      "connecting": "Conectando…"
+      "connecting": "Conectando…",
+      "live": "En vivo",
+      "error": "Error",
+      "session_active_other_tab": "Sesión activa en otra pestaña"
+    },
+    "actions": {
+      "open_settings": "Abrir configuración",
+      "open_meet": "Abrir Google Meet"
     }
   },
   "options": {
+    "tabs": {
+      "setup": "Configuración",
+      "calls": "Llamadas",
+      "personas": "Personas",
+      "conclave": "Conclave",
+      "langbuilder": "LangBuilder",
+      "websearch": "Búsqueda web",
+      "support": "Soporte"
+    },
     "setup": {
       "title": "Configuración",
       "language_picker_label": "Idioma",
-      "language_locked_tooltip": "Idioma bloqueado durante una sesión activa",
+      "language_locked_tooltip": "Idioma bloqueado durante la sesión activa",
       "api_keys_title": "Claves API",
+      "api_keys": {
+        "description": "Configure las claves API para los servicios de transcripción e IA.",
+        "gemini_label": "Clave API de Gemini",
+        "deepgram_label": "Clave API de Deepgram",
+        "test_button": "Probar",
+        "test_pass": "Conexión exitosa",
+        "test_fail": "Conexión fallida: {{rawError}}"
+      },
       "save_button": "Guardar",
       "cancel_button": "Cancelar"
+    },
+    "calls": {
+      "title": "Configuración de llamadas",
+      "retention_label": "Retención de transcripciones",
+      "summary_options_label": "Opciones de resumen"
     },
     "personas": {
       "section_title": "Personas",
       "default_interviewer": "Entrevistador predeterminado",
       "executive_communicator": "Comunicador ejecutivo",
-      "add_persona_button": "Agregar persona"
+      "add_persona_button": "Agregar persona",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Candidato a entrevista de trabajo",
+          "description": "Entrenamiento para preguntas de entrevista conductuales y situacionales."
+        },
+        "startup_founder_fundraising": {
+          "name": "Fundador de startup (recaudación de fondos)",
+          "description": "Entrenamiento de presentación para reuniones con inversionistas."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Trabajador independiente (negociación de tarifas)",
+          "description": "Entrenamiento para fijación de tarifas y negociación de alcance con clientes."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Presentador de subvenciones para ONG",
+          "description": "Entrenamiento para presentaciones ante donantes y financiadores."
+        },
+        "patient_advocate": {
+          "name": "Defensor del paciente",
+          "description": "Entrenamiento para citas médicas y decisiones de cuidado."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Inquilino (negociación de contrato de arrendamiento)",
+          "description": "Entrenamiento de renovación de contrato y resolución de disputas para inquilinos."
+        },
+        "parent_iep_meeting": {
+          "name": "Padre o madre (reunión de PEI)",
+          "description": "Entrenamiento para reuniones escolares y defensa en educación especial."
+        },
+        "small_business_loan_seeker": {
+          "name": "Solicitante de préstamo PyME",
+          "description": "Entrenamiento para reuniones con oficiales de crédito bancarios."
+        },
+        "journalist_interviewer": {
+          "name": "Periodista entrevistador",
+          "description": "Entrenamiento de entrevistas con fuentes para reporteros y periodistas."
+        },
+        "esl_professional": {
+          "name": "Profesional de inglés como segunda lengua",
+          "description": "Entrenamiento de inglés de negocios para hablantes no nativos."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Consultor de ventas de soluciones en la nube",
+          "description": "Entrenamiento técnico previo a la venta para acuerdos de plataforma en la nube."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclave",
+      "description": "Modo de conversación grupal multi-personas.",
+      "enable_label": "Activar Conclave"
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Constructor de flujos de lenguaje personalizados."
+    },
+    "websearch": {
+      "title": "Búsqueda web",
+      "description": "Integración con Brave Search para el contexto del asistente de chat.",
+      "brave_key_label": "Clave API de Brave Search"
+    },
+    "support": {
+      "title": "Soporte",
+      "description": "Documentación e informes de problemas.",
+      "docs_link": "Documentación",
+      "issues_link": "Reportar un problema"
+    },
+    "drive": {
+      "auth_button": "Iniciar sesión con Google",
+      "signed_in": "Sesión iniciada como {{email}}",
+      "sign_out": "Cerrar sesión",
+      "save_label": "Guardar resúmenes en Drive"
     },
     "upgrade_banner": {
       "title": "Wingman ahora habla su idioma",
-      "body": "Su idioma se ha configurado automáticamente según los ajustes de su navegador. Puede cambiarlo en cualquier momento en Configuración → Idioma.",
+      "body": "Su idioma se ha establecido automáticamente según la configuración de su navegador. Puede cambiarlo en cualquier momento en la pestaña Configuración.",
       "dismiss_button": "Entendido"
     }
   },
   "overlay": {
+    "timer": {
+      "label": "Tiempo de sesión"
+    },
+    "session": {
+      "connecting": "Conectando…",
+      "live": "En vivo",
+      "error": "Error de conexión",
+      "disconnected": "Desconectado"
+    },
+    "transcript": {
+      "live": "En vivo",
+      "paused": "Pausado",
+      "empty_placeholder": "Esperando habla…",
+      "someone_speaking": "Alguien está hablando…"
+    },
     "suggestion": {
-      "try_again": "Intentar de nuevo",
+      "try_again": "Reintentar",
+      "try_again_tooltip": "Regenerar esta sugerencia en su idioma",
+      "after_retry_label": "Regenerada",
       "thinking": "Pensando…",
       "no_suggestion": "Escuchando…"
     },
     "speaker": {
       "you": "Usted",
-      "speaker_n": "Participante {{n}}"
-    },
-    "transcript": {
-      "live": "En vivo",
-      "paused": "En pausa"
+      "speaker_n": "Interlocutor {{n}}"
     },
     "controls": {
       "minimize": "Minimizar",
       "close": "Cerrar",
       "dock": "Anclar",
       "undock": "Desanclar"
+    },
+    "emotion": {
+      "label_prefix": "Tono:"
+    },
+    "cost": {
+      "label": "Costo estimado"
     }
   },
   "summary": {
     "headers": {
       "summary": "Resumen",
-      "action_items": "Acciones pendientes",
-      "key_moments": "Momentos clave"
+      "action_items": "Acciones a seguir",
+      "key_moments": "Momentos clave",
+      "personas_used": "Personas utilizadas",
+      "session_cost_estimate": "Costo estimado de la sesión"
     },
     "action_item_owner": {
       "you": "Usted",
@@ -80,21 +203,124 @@
     "saving": "Guardando…",
     "saved": "Guardado"
   },
+  "speakers": {
+    "you": "Usted",
+    "them": "Ellos",
+    "speaker_n": "Interlocutor {{n}}"
+  },
   "mic_permission": {
-    "title": "Se requiere acceso al micrófono",
-    "body": "Wingman necesita acceso a su micrófono para transcribir la reunión.",
+    "title": "Acceso al micrófono requerido",
+    "body": "Wingman necesita acceso al micrófono para transcribir la reunión.",
     "grant_button": "Permitir acceso",
-    "cancel_button": "Cancelar"
+    "cancel_button": "Cancelar",
+    "denied": {
+      "title": "Acceso al micrófono denegado",
+      "body": "Wingman no puede transcribir sin acceso al micrófono."
+    },
+    "recovery": {
+      "title": "Cómo restaurar el acceso",
+      "steps_intro": "Siga estos pasos:",
+      "step_1": "Haga clic en el ícono de candado en la barra de direcciones.",
+      "step_2": "Establezca el permiso del micrófono en «Permitir».",
+      "step_3": "Recargue esta página y vuelva a intentar."
+    }
   },
   "errors": {
     "deepgram_failed": "Reconocimiento de voz no disponible. {{rawError}}",
-    "mic_revoked": "Acceso al micrófono perdido. Restablezca el acceso e intente de nuevo.",
+    "mic_revoked": "Acceso al micrófono perdido. Restaure el acceso y reintente.",
     "api_key_missing": "Clave API de {{provider}} no configurada. Agréguela en Configuración.",
-    "generic": "Algo salió mal. Por favor, intente de nuevo.",
-    "session_interrupted": "Sesión interrumpida inesperadamente."
+    "generic": "Ocurrió un error. Por favor, vuelva a intentar.",
+    "session_interrupted": "Sesión interrumpida de forma inesperada.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Falló la conexión de transcripción.",
+      "session_dropped": "La sesión de transcripción terminó de forma inesperada.",
+      "language_unavailable": "El reconocimiento de voz para {{language}} no está disponible actualmente."
+    },
+    "gemini": {
+      "api_failure": "Servicio Gemini no disponible.",
+      "rate_limit": "Se alcanzó el límite de Gemini. Por favor, espere un momento.",
+      "quota_exceeded": "Se excedió la cuota diaria de Gemini."
+    },
+    "groq": {
+      "api_failure": "Servicio Groq no disponible."
+    },
+    "drive": {
+      "oauth_failed": "Inicio de sesión de Google Drive fallido. Vuelva a intentar.",
+      "save_failed": "No se pudo guardar en Drive.",
+      "quota_exceeded": "Se excedió la cuota de almacenamiento de Drive.",
+      "network": "Error de red al acceder a Drive."
+    },
+    "hume": {
+      "disconnected": "Detección de emociones desconectada.",
+      "api_failure": "Detección de emociones no disponible."
+    },
+    "brave": {
+      "api_failure": "Búsqueda web no disponible para esta consulta.",
+      "rate_limit": "Se alcanzó el límite de búsqueda web."
+    },
+    "langbuilder": {
+      "flow_failed": "Falló la ejecución del flujo personalizado.",
+      "api_failure": "LangBuilder no disponible."
+    }
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Conexión perdida",
+      "body": "Se perdió la conexión con el servicio de transcripción.",
+      "reconnecting": "Reconectando…",
+      "reconnected": "Reconectado"
+    },
+    "mic_revoked": {
+      "title": "Acceso al micrófono perdido",
+      "body": "El acceso al micrófono se revocó durante esta sesión.",
+      "recovery_action": "Restaurar acceso"
+    },
+    "partial_service": {
+      "title": "Algunos servicios degradados",
+      "services_degraded": "{{services}} no disponible(s); la transcripción continúa."
+    },
+    "actions": {
+      "dismiss": "Descartar",
+      "retry": "Reintentar"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} sugerencia",
+    "suggestion_other": "{{count}} sugerencias",
+    "minute_one": "{{count}} minuto",
+    "minute_other": "{{count}} minutos",
+    "second_one": "{{count}} segundo",
+    "second_other": "{{count}} segundos",
+    "action_item_one": "{{count}} acción a seguir",
+    "action_item_other": "{{count}} acciones a seguir",
+    "persona_one": "{{count}} persona",
+    "persona_other": "{{count}} personas",
+    "character_one": "{{count}} carácter",
+    "character_other": "{{count}} caracteres"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Abrir superposición de Wingman",
+      "close": "Cerrar superposición de Wingman",
+      "minimize": "Minimizar superposición de Wingman"
+    },
+    "popup": {
+      "start_session": "Iniciar sesión de Wingman",
+      "stop_session": "Detener sesión de Wingman"
+    },
+    "options": {
+      "tab": "Pestaña {{tab}}",
+      "section": "Sección {{section}}",
+      "picker": "Selector de idioma"
+    },
+    "banner": {
+      "close": "Cerrar banner",
+      "retry": "Reintentar"
+    }
   },
   "tutorials": {
-    "english_only_banner": "El contenido de los tutoriales solo está disponible en inglés por el momento. Estamos trabajando en traducciones para una versión futura."
+    "english_only_banner": "El contenido de los tutoriales está disponible actualmente solo en inglés. Estamos trabajando en traducciones para una versión futura."
   },
   "common": {
     "loading": "Cargando…",

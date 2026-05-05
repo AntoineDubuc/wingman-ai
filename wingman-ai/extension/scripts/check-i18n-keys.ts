@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const LOCALES_DIR = join(process.cwd(), 'src', 'locales');
 const NON_ENGLISH_LOCALES = ['fr', 'es', 'ro', 'ru'];
@@ -23,22 +24,42 @@ export function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[]
 }
 
 /**
+ * Strips an i18next plural-form suffix from a leaf key, normalizing it to its
+ * "logical" form for cross-locale comparison.
+ *
+ * i18next plural-form suffixes per CLDR: `_zero`, `_one`, `_two`, `_few`, `_many`, `_other`.
+ * Different locales use different subsets — e.g., English uses `_one`/`_other` (2 forms),
+ * Russian and Romanian use `_one`/`_few`/`_other` (3 forms each, with different rules).
+ * The canonical English bundle declares plural keys with `_one`/`_other`; a non-English
+ * bundle may add `_few` (or other CLDR forms) without that being a key-set mismatch —
+ * those are i18next plural-form variants of the same logical key.
+ */
+export function normalizeKey(key: string): string {
+  return key.replace(/_(?:zero|one|two|few|many|other)$/, '');
+}
+
+/**
  * Compares a locale bundle against the canonical English key list.
  * Returns an array of error strings (empty = pass).
+ *
+ * Plural-form suffixes are normalized before comparison (see `normalizeKey`)
+ * so that locale-specific extra plural forms (e.g., Russian/Romanian `_few`)
+ * do not register as EXTRA keys when the corresponding logical key exists in en.
  */
 export function checkLocaleKeys(enKeys: string[], bundle: Record<string, unknown>): string[] {
-  const localeKeys = new Set(flattenKeys(bundle));
-  const enKeySet = new Set(enKeys);
+  const localeKeys = flattenKeys(bundle);
+  const enLogicalSet = new Set(enKeys.map(normalizeKey));
+  const localeLogicalSet = new Set(localeKeys.map(normalizeKey));
   const errors: string[] = [];
 
-  for (const key of enKeys) {
-    if (!localeKeys.has(key)) {
-      errors.push(`MISSING: ${key}`);
+  for (const logicalKey of enLogicalSet) {
+    if (!localeLogicalSet.has(logicalKey)) {
+      errors.push(`MISSING: ${logicalKey}`);
     }
   }
-  for (const key of localeKeys) {
-    if (!enKeySet.has(key)) {
-      errors.push(`EXTRA: ${key}`);
+  for (const logicalKey of localeLogicalSet) {
+    if (!enLogicalSet.has(logicalKey)) {
+      errors.push(`EXTRA: ${logicalKey}`);
     }
   }
   return errors;
@@ -100,6 +121,11 @@ function main() {
   );
 }
 
-if (import.meta.url === new URL(process.argv[1], 'file://').href) {
+// CLI entrypoint check that works on both POSIX and Windows.
+// Same fix as scripts/sanitize-locale-files.ts (Plan 1 Task 3) — the original
+// `import.meta.url === new URL(argv[1], 'file://').href` comparison fails on
+// Windows due to path-separator/drive-case/percent-encoding differences,
+// making the NFR-M02 CI gate silently inert. Compare resolved filesystem paths.
+if (fileURLToPath(import.meta.url) === resolve(process.argv[1] ?? '')) {
   main();
 }

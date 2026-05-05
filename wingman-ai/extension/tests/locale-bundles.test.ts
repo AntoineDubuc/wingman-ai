@@ -22,6 +22,19 @@ function getLeafPaths(obj: unknown, prefix = ''): string[] {
   );
 }
 
+/**
+ * Strips i18next plural-form suffixes for cross-locale key-structure comparison.
+ *
+ * Different locales use different plural forms per CLDR. English/French/Spanish use
+ * 2-form (`_one`/`_other`); Romanian and Russian use 3-form (`_one`/`_few`/`_other`).
+ * Plan 3 introduced `_few` keys in ro/ru bundles. This test compares the LOGICAL key
+ * shape — the suffix is normalized away so locale-specific plural variants do not
+ * register as structural mismatches.
+ */
+function normalizePluralSuffix(path: string): string {
+  return path.replace(/_(?:zero|one|two|few|many|other)$/, '');
+}
+
 function findInterpolationVars(obj: unknown): Set<string> {
   const found = new Set<string>();
   const str = JSON.stringify(obj);
@@ -53,10 +66,13 @@ describe('Locale bundle files', () => {
   });
 
   test('all locales have identical key structure', () => {
-    const enPaths = getLeafPaths(loadLocale('en')).sort();
+    // Plural-form suffixes are normalized so ro/ru can have 3-form plurals
+    // (`_one`/`_few`/`_other`) while en uses 2-form (`_one`/`_other`) without
+    // registering as a structural mismatch. See `normalizePluralSuffix` above.
+    const enPaths = Array.from(new Set(getLeafPaths(loadLocale('en')).map(normalizePluralSuffix))).sort();
     for (const locale of SUPPORTED_LOCALES.filter(l => l !== 'en')) {
-      const localePaths = getLeafPaths(loadLocale(locale)).sort();
-      expect(localePaths, `${locale} key structure should match English`).toEqual(enPaths);
+      const localePaths = Array.from(new Set(getLeafPaths(loadLocale(locale)).map(normalizePluralSuffix))).sort();
+      expect(localePaths, `${locale} logical key structure should match English`).toEqual(enPaths);
     }
   });
 

@@ -184,3 +184,31 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
     expect(md).not.toContain('### Personas Used');
   });
 });
+
+describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
+  // Fixed date fixture so locale assertions are deterministic.
+  const FIXED_GENERATED_AT = '2026-05-05T12:00:00Z';
+  const fixedDate = new Date(FIXED_GENERATED_AT);
+
+  const baseSummary: CallSummary = {
+    summary: ['Discussed product features.'],
+    actionItems: [],
+    keyMoments: [],
+    metadata: {
+      generatedAt: FIXED_GENERATED_AT,
+      durationMinutes: 10,
+      speakerCount: 2,
+      transcriptCount: 20,
+    },
+  };
+
+  it('formats date in fr locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('fr', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'fr');
+    expect(md).toContain(`## Call Summary — ${expected}`);
+  });
+});

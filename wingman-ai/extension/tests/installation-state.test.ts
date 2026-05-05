@@ -14,7 +14,7 @@
  * Task F4-T1
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { installationStateService } from '../src/services/installation-state';
 import v1StorageSnapshot from './fixtures/v1-storage-snapshot.json';
 
@@ -112,5 +112,21 @@ describe('InstallationStateService — FRESH_INSTALL branch (Plan 1 Task 4)', ()
     await installationStateService.recordInstall('update');
     const state = await installationStateService.getState();
     expect(state).toBe('UPGRADE_PENDING');
+  });
+
+  it('AC-FI-3: recordInstall stores both installTimestamp and installReason atomically (single chrome.storage.local.set call)', async () => {
+    // Spy on chrome.storage.local.set to capture call count and payload shape
+    const setSpy = vi.spyOn(chrome.storage.local, 'set');
+
+    await installationStateService.recordInstall('install');
+
+    // Atomic write: exactly one set() call with BOTH fields in the same payload
+    expect(setSpy).toHaveBeenCalledTimes(1);
+    const payload = setSpy.mock.calls[0]![0] as Record<string, unknown>;
+    expect(payload).toHaveProperty('installTimestamp');
+    expect(payload).toHaveProperty('installReason', 'install');
+    expect(typeof payload.installTimestamp).toBe('number');
+
+    setSpy.mockRestore();
   });
 });

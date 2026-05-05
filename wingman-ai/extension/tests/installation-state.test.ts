@@ -129,4 +129,27 @@ describe('InstallationStateService — FRESH_INSTALL branch (Plan 1 Task 4)', ()
 
     setSpy.mockRestore();
   });
+
+  it('AC-FI-4: recordInstall is idempotent on installReason — second call with different reason does not overwrite', async () => {
+    // First call records 'install' with timestamp T1
+    await installationStateService.recordInstall('install');
+    const r1 = await chrome.storage.local.get(['installTimestamp', 'installReason']);
+    const t1 = r1.installTimestamp;
+    expect(r1.installReason).toBe('install');
+
+    // Small delay to ensure Date.now() would differ if re-written
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    // Second call with a DIFFERENT reason must be a no-op on both fields
+    await installationStateService.recordInstall('update');
+    const r2 = await chrome.storage.local.get(['installTimestamp', 'installReason']);
+
+    // Neither field overwritten — first call wins
+    expect(r2.installTimestamp).toBe(t1);
+    expect(r2.installReason).toBe('install');
+
+    // State remains FRESH_INSTALL (would be UPGRADE_PENDING if reason had been overwritten)
+    const state = await installationStateService.getState();
+    expect(state).toBe('FRESH_INSTALL');
+  });
 });

@@ -138,15 +138,18 @@ describe('service-worker onInstalled handler (F4-T2)', () => {
     expect(typeof result.installTimestamp).toBe('number');
   });
 
-  // AC2
-  it('does NOT set installTimestamp when reason === "update"', async () => {
+  // AC2 — UPDATED for Plan 1 Task 4: handler now also sets installTimestamp for 'update'
+  // (with installReason='update' so getState() still returns UPGRADE_PENDING — preserves
+  // the original semantic intent of distinguishing 'update' from 'install').
+  it('sets installTimestamp + installReason="update" when reason === "update"', async () => {
     await fakeBrowser.runtime.onInstalled.trigger({
       reason: 'update',
       previousVersion: '1.0.0',
     } as any);
 
-    const result = await chrome.storage.local.get('installTimestamp');
-    expect(result.installTimestamp).toBeUndefined();
+    const result = await chrome.storage.local.get(['installTimestamp', 'installReason']);
+    expect(typeof result.installTimestamp).toBe('number');
+    expect(result.installReason).toBe('update');
   });
 
   // AC2

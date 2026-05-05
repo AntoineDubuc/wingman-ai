@@ -78,9 +78,19 @@ let lastTranscript: import('../services/deepgram-client').Transcript | null = nu
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('[ServiceWorker] Extension installed:', details.reason);
 
+  // Dispatch on details.reason — Plan 1 Task 4 (FR-032 FRESH_INSTALL branch).
+  // chrome.runtime.onInstalled has 4 documented reasons:
+  //   'install'              → brand-new installer (FR-032 FRESH_INSTALL path)
+  //   'update'               → existing user upgrading (FR-034 UPGRADE_PENDING path)
+  //   'chrome_update'        → browser update (no-op for our state machine)
+  //   'shared_module_update' → declarative-net-request etc. update (no-op)
   if (details.reason === 'install') {
-    // New installation — record install timestamp for upgrade detection (FR-034)
-    await installationStateService.recordInstall();
+    await installationStateService.recordInstall('install');
+  } else if (details.reason === 'update') {
+    await installationStateService.recordInstall('update');
+  } else {
+    // chrome_update or shared_module_update — explicit no-op
+    console.log('[ServiceWorker] onInstalled: no-op for reason', details.reason);
   }
 });
 

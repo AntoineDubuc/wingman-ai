@@ -40,12 +40,11 @@ describe('manifest.json — i18n fields (F1-T9)', () => {
     expect(manifest.manifest_version).toBe(3);
   });
 
-  test('manifest.json contains default_locale field', () => {
-    expect(manifest).toHaveProperty('default_locale');
-  });
-
-  test('default_locale is set to "en"', () => {
-    expect(manifest.default_locale).toBe('en');
+  test('manifest.json does NOT contain default_locale field', () => {
+    // Per delta.md Entry 1 + PRD §3 Technology Standards (chrome.i18n rejected),
+    // the default_locale field was removed from manifest.json. The project uses
+    // i18next at runtime, not chrome.i18n. The absence of this field is intentional.
+    expect(manifest).not.toHaveProperty('default_locale');
   });
 
   test('manifest.json contains minimum_chrome_version field', () => {

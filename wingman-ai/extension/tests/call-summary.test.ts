@@ -238,4 +238,16 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
     const md = formatSummaryAsMarkdown(baseSummary, 'ro');
     expect(md).toContain(`## Call Summary — ${expected}`);
   });
+
+  it('formats date in ru locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('ru', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'ru');
+    expect(md).toContain(`## Call Summary — ${expected}`);
+    // Russian May abbreviation must appear ("мая" = of May, genitive case).
+    expect(md).toMatch(/мая/);
+  });
 });

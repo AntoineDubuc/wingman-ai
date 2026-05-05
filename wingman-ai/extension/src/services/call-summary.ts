@@ -8,7 +8,7 @@
 import type { CollectedTranscript } from './transcript-collector';
 import type { CostEstimate } from '@shared/pricing';
 import { addLanguageInstruction } from '../shared/language-injection';
-import type { SupportedLocale } from '../shared/i18n-types';
+import { type SupportedLocale, SUPPORTED_LOCALES } from '../shared/i18n-types';
 
 // --- Types ---
 
@@ -145,12 +145,17 @@ function formatTranscriptLine(t: CollectedTranscript): string {
  * - Empty keyMoments: omit ### Key Moments heading entirely
  * - Empty summary: show fallback bullet "- No summary available"
  *
- * Date formatting: explicit en-US locale for consistent output.
+ * Date formatting: locale-aware via FR-020. Pass user's selected locale.
  * No emojis — they render inconsistently across CRMs.
  */
-export function formatSummaryAsMarkdown(summary: CallSummary): string {
+export function formatSummaryAsMarkdown(
+  summary: CallSummary,
+  locale: SupportedLocale | undefined
+): string {
+  // NFR-R01 fallback: SUPPORTED_LOCALES[0] is 'en' (first entry).
+  const effectiveLocale: SupportedLocale = locale ?? (SUPPORTED_LOCALES[0] ?? 'en');
   const date = new Date(summary.metadata.generatedAt).toLocaleDateString(
-    'en-US',
+    effectiveLocale,
     { month: 'short', day: 'numeric', year: 'numeric' }
   );
 

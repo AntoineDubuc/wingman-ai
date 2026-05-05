@@ -9,6 +9,7 @@
 import type { CallSummary } from '../services/call-summary';
 import { formatSummaryAsMarkdown } from '../services/call-summary';
 import { registerChatPipeline } from '../services/chat-pipeline';
+import { languagePreferenceService } from '../services/language-preference';
 
 export interface Suggestion {
   type: 'answer' | 'objection' | 'info';
@@ -1623,7 +1624,8 @@ export class AIOverlay {
     try {
       let text: string;
       if (this.activePostCallView === 'summary' && this.currentSummary) {
-        text = formatSummaryAsMarkdown(this.currentSummary);
+        const locale = await languagePreferenceService.getLanguage();
+        text = formatSummaryAsMarkdown(this.currentSummary, locale);
       } else {
         text = this.formatTimelineAsText();
       }

@@ -116,7 +116,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
   };
 
   it('omits Personas Used section when no personas', () => {
-    const md = formatSummaryAsMarkdown(baseSummary);
+    const md = formatSummaryAsMarkdown(baseSummary, 'en');
     expect(md).not.toContain('### Personas Used');
   });
 
@@ -132,7 +132,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('### Personas Used');
     expect(md).toContain('- Sales Pro — 4 suggestions');
     expect(md).toContain('- Tech Advisor — 2 suggestions');
@@ -149,7 +149,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('- Single Persona — 1 suggestion');
   });
 
@@ -164,7 +164,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('### Personas Used');
     expect(md).toContain('Solo Expert — 5 suggestions');
   });
@@ -180,7 +180,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).not.toContain('### Personas Used');
   });
 });

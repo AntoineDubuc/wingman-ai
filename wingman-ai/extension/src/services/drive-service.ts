@@ -6,6 +6,8 @@
  */
 
 import { type CallSummary, formatSummaryAsMarkdown } from './call-summary';
+import { languagePreferenceService } from './language-preference';
+import type { SupportedLocale } from '../shared/i18n-types';
 
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
@@ -180,11 +182,13 @@ class DriveService {
       }
 
       // Generate file content
+      const locale = await languagePreferenceService.getLanguage();
       const formatted = this.formatTranscript(
         transcripts,
         metadata,
         fileFormat,
-        summary ?? null
+        summary ?? null,
+        locale
       );
 
       // Upload file
@@ -438,7 +442,8 @@ class DriveService {
     transcripts: TranscriptData[],
     metadata: SessionMetadata,
     fileFormat: string,
-    summary: CallSummary | null
+    summary: CallSummary | null,
+    locale: SupportedLocale
   ): { filename: string; content: string; mimeType: string; convertToGoogleDoc: boolean } {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -474,7 +479,7 @@ class DriveService {
     } else {
       return {
         filename: `${baseName}.md`,
-        content: this.formatMarkdown(transcripts, metadata, summary),
+        content: this.formatMarkdown(transcripts, metadata, summary, locale),
         mimeType: 'text/markdown',
         convertToGoogleDoc: false,
       };
@@ -614,7 +619,7 @@ class DriveService {
     return h.join('\n');
   }
 
-  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
+  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null, locale: SupportedLocale): string {
     const dateStr = metadata.startTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -646,7 +651,7 @@ class DriveService {
 
     // Call summary
     if (summary) {
-      lines.push(formatSummaryAsMarkdown(summary));
+      lines.push(formatSummaryAsMarkdown(summary, locale));
       lines.push('');
     }
 

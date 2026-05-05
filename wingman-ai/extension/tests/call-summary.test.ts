@@ -218,4 +218,14 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
     // semantic check from the plan AC: month is rendered in English.
     expect(md).toMatch(/## Call Summary — .*\bMay\b.*2026/);
   });
+
+  it('formats date in es locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('es', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'es');
+    expect(md).toContain(`## Call Summary — ${expected}`);
+  });
 });

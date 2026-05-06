@@ -11,6 +11,7 @@ import { assembleChatContext } from './chat-context-assembler';
 import { geminiClient } from './gemini-client';
 import { costTracker } from './cost-tracker';
 import { addLanguageInstruction } from '../shared/language-injection';
+import { createI18nInstance } from '../shared/i18n-init';
 import { getActiveLocale } from '../background/sw-locale';
 import type { AssistantView } from '../content/overlay/assistant-view';
 
@@ -155,37 +156,42 @@ function resetIdleTimer(
 
 /**
  * Classify an error into a user-visible message.
+ *
+ * Plan 10 FR-017: returns localized text using the active locale's bundle.
+ * The raw error text is included separately by the caller (rendered in
+ * monospace below the primary message) per FR-017 pattern.
  */
 function classifyError(err: unknown, _accumulated: string): string {
   const msg = err instanceof Error ? err.message : String(err);
   const name = err instanceof Error ? err.name : '';
+  const i18n = createI18nInstance(getActiveLocale());
 
   // 401 — invalid API key
   if (/401/.test(msg)) {
-    return 'The LLM API key is invalid or missing. Open extension settings to configure.';
+    return i18n.t('errors.api_key_missing', { provider: 'LLM' });
   }
 
   // 429 — rate limited
   if (/429/.test(msg)) {
-    return 'Rate limit reached. Wait a moment and try again.';
+    return i18n.t('errors.gemini.rate_limit');
   }
 
   // 5xx — server error
   if (/5\d\d/.test(msg)) {
-    return 'The LLM service is temporarily unavailable. Try again in a moment.';
+    return i18n.t('errors.gemini.api_failure');
   }
 
   // Network / abort errors
   if (name === 'AbortError' || name === 'NetworkError' || /abort/i.test(msg) || /network/i.test(msg) || /fetch/i.test(msg)) {
-    return 'The connection was interrupted. The partial response above may be incomplete.';
+    return i18n.t('errors.session_interrupted');
   }
 
   // Assembler error (typically validation)
   if (/userText required/i.test(msg) || /invalid chatHistory/i.test(msg)) {
-    return 'Sorry, I couldn\'t prepare your question. Check the console for details.';
+    return i18n.t('errors.generic');
   }
 
   // Fallback
   console.error('[chat-pipeline] unexpected error', err);
-  return 'Something went wrong. Check the console for details.';
+  return i18n.t('errors.generic');
 }

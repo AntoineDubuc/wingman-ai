@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-finish-2026-05-06",
+    "revision": "plan-final-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -653,6 +653,11 @@
     "kb": {
       "search_aria_label": "Caută în baza de cunoștințe",
       "answer_aria_label": "Răspuns KB: {{answer}}"
+    },
+    "empty": {
+      "listening": "Ascult conversația...",
+      "waiting_suggestions": "Aștept sugestii...",
+      "unknown_speaker": "Necunoscut"
     }
   },
   "summary": {
@@ -758,7 +763,16 @@
     "langbuilder": {
       "flow_failed": "Execuția fluxului personalizat a eșuat.",
       "api_failure": "LangBuilder indisponibil."
-    }
+    },
+    "deepgram_key_missing": "Cheia API Deepgram nu este configurată. Mergeți la Opțiuni pentru a adăuga cheia.",
+    "deepgram_connect_failed": "Conectare la Deepgram eșuată. Verificați cheia API.",
+    "no_active_meet_tab": "Nicio filă Google Meet activă găsită",
+    "no_query_text": "Niciun text de interogare furnizat.",
+    "kb_gemini_required": "Cheia API Gemini necesară pentru căutarea în baza de cunoștințe. Configurați în Setări.",
+    "kb_no_results": "Nicio informație relevantă găsită în baza de cunoștințe pentru acest subiect.",
+    "kb_answer_failed": "Nu s-a putut genera răspunsul. Verificați cheile API.",
+    "network": "Eroare de rețea. Verificați conexiunea.",
+    "langbuilder_not_configured": "LangBuilder neconfigurat"
   },
   "banners": {
     "connection_lost": {

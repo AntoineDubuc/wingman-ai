@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-finish-2026-05-06",
+    "revision": "plan-final-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -649,6 +649,11 @@
     "kb": {
       "search_aria_label": "Search Knowledge Base",
       "answer_aria_label": "KB Answer: {{answer}}"
+    },
+    "empty": {
+      "listening": "Listening for conversation...",
+      "waiting_suggestions": "Waiting for suggestions...",
+      "unknown_speaker": "Unknown"
     }
   },
   "summary": {
@@ -753,7 +758,16 @@
     "langbuilder": {
       "flow_failed": "Custom flow failed to execute.",
       "api_failure": "LangBuilder unavailable."
-    }
+    },
+    "deepgram_key_missing": "Deepgram API key not configured. Go to Options to add your key.",
+    "deepgram_connect_failed": "Failed to connect to Deepgram. Check your API key.",
+    "no_active_meet_tab": "No active Google Meet tab found",
+    "no_query_text": "No query text provided.",
+    "kb_gemini_required": "Gemini API key required for Knowledge Base search. Configure in Settings.",
+    "kb_no_results": "No relevant information found in your Knowledge Base for this topic.",
+    "kb_answer_failed": "Could not generate answer. Check your API keys.",
+    "network": "Network error. Check your connection.",
+    "langbuilder_not_configured": "LangBuilder not configured"
   },
   "banners": {
     "connection_lost": {

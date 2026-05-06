@@ -23,6 +23,16 @@ import { costTracker } from '../services/cost-tracker';
 import { humeClient, HumeClient } from '../services/hume-client';
 import { searchKB } from '../services/kb/kb-search';
 import type { EmotionUpdate } from '../shared/constants';
+import { createI18nInstance } from '../shared/i18n-init';
+import { getActiveLocale } from './sw-locale';
+
+/** Plan-final: localized SW error string. Creates a fresh i18n instance per
+ * call (cheap; bundles are static-imported). The active locale is pulled from
+ * sw-locale's getActiveLocale(). */
+function swErr(key: string, opts?: Record<string, unknown>): string {
+  const i18n = createI18nInstance(getActiveLocale());
+  return i18n.t(key, opts) as string;
+}
 import { installationStateService } from '../services/installation-state';
 
 // Locale rehydration — RISK-T02: activeLocale must be set before any LLM call.
@@ -177,7 +187,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         })();
         return true; // Keep channel open for async
       }
-      sendResponse({ success: false, error: 'Validation tests not available in production' });
+      sendResponse({ success: false, error: swErr('errors.generic') });
       return false;
 
     case 'RUN_LANGBUILDER_FLOW':
@@ -186,7 +196,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const storage = await chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey', 'langbuilderFlows']);
           if (!storage.langbuilderUrl || !storage.langbuilderApiKey) {
             console.warn('[ServiceWorker] LangBuilder not configured');
-            sendResponse({ success: false, error: 'LangBuilder not configured' });
+            sendResponse({ success: false, error: swErr('errors.langbuilder_not_configured') });
             return;
           }
           // Look up cached inputType for this flow (chat vs text)
@@ -232,7 +242,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         try {
           const text = message.text as string | undefined;
           if (!text) {
-            sendResponse({ error: 'No query text provided.' });
+            sendResponse({ error: swErr('errors.no_query_text') });
             return;
           }
 
@@ -244,7 +254,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           // Check Gemini API key (needed for embeddings)
           const storage = await chrome.storage.local.get(['geminiApiKey']);
           if (!storage.geminiApiKey) {
-            sendResponse({ error: 'Gemini API key required for Knowledge Base search. Configure in Settings.' });
+            sendResponse({ error: swErr('errors.kb_gemini_required') });
             return;
           }
 
@@ -261,7 +271,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const kbResults = await searchKB(text, 5, 0.40, personaDocIds.length > 0 ? personaDocIds : undefined);
 
           if (kbResults.length === 0) {
-            sendResponse({ error: 'No relevant information found in your Knowledge Base for this topic.' });
+            sendResponse({ error: swErr('errors.kb_no_results') });
             return;
           }
 
@@ -275,7 +285,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const result = await geminiClient.generateKBAnswer(text, chunks, personaRole);
 
           if (!result) {
-            sendResponse({ error: 'Could not generate answer. Check your API keys.' });
+            sendResponse({ error: swErr('errors.kb_answer_failed') });
             return;
           }
 
@@ -287,7 +297,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           });
         } catch (err) {
           console.error('[ServiceWorker] KB_QUERY error:', err);
-          sendResponse({ error: 'Network error. Check your connection.' });
+          sendResponse({ error: swErr('errors.network') });
         }
       })();
       return true; // Keep channel open for async response
@@ -360,7 +370,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     if (!storage.deepgramApiKey) {
       return {
         success: false,
-        error: 'Deepgram API key not configured. Go to Options to add your key.',
+        error: swErr('errors.deepgram_key_missing'),
       };
     }
 
@@ -390,7 +400,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     });
 
     if (!tab?.id) {
-      return { success: false, error: 'No active Google Meet tab found' };
+      return { success: false, error: swErr('errors.no_active_meet_tab') };
     }
 
     // Close any existing offscreen documents first
@@ -476,7 +486,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     if (!connected) {
       return {
         success: false,
-        error: 'Failed to connect to Deepgram. Check your API key.',
+        error: swErr('errors.deepgram_connect_failed'),
       };
     }
     // Connected to Deepgram

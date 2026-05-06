@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-finish-2026-05-06",
+    "revision": "plan-final-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -653,6 +653,11 @@
     "kb": {
       "search_aria_label": "Поиск в базе знаний",
       "answer_aria_label": "Ответ KB: {{answer}}"
+    },
+    "empty": {
+      "listening": "Слушаю разговор...",
+      "waiting_suggestions": "Ожидаю подсказки...",
+      "unknown_speaker": "Неизвестен"
     }
   },
   "summary": {
@@ -758,7 +763,16 @@
     "langbuilder": {
       "flow_failed": "Не удалось выполнить настраиваемый поток.",
       "api_failure": "LangBuilder недоступен."
-    }
+    },
+    "deepgram_key_missing": "Ключ API Deepgram не настроен. Откройте Настройки, чтобы добавить ключ.",
+    "deepgram_connect_failed": "Не удалось подключиться к Deepgram. Проверьте ключ API.",
+    "no_active_meet_tab": "Активная вкладка Google Meet не найдена",
+    "no_query_text": "Текст запроса не предоставлен.",
+    "kb_gemini_required": "Требуется ключ API Gemini для поиска в Базе знаний. Настройте в Настройках.",
+    "kb_no_results": "Не найдена релевантная информация в Базе знаний по этой теме.",
+    "kb_answer_failed": "Не удалось сгенерировать ответ. Проверьте ваши ключи API.",
+    "network": "Сетевая ошибка. Проверьте соединение.",
+    "langbuilder_not_configured": "LangBuilder не настроен"
   },
   "banners": {
     "connection_lost": {

@@ -824,10 +824,16 @@ export class AIOverlay {
     this.activePostCallView = 'summary';
     this.isNearBottom = true;
 
-    // Clear timeline DOM
+    // Clear timeline DOM — Plan final: localized empty state + safe DOM
     if (this.timelineEl) {
-      const emptyText = this.suggestionsOnly ? 'Waiting for suggestions...' : 'Listening for conversation...';
-      this.timelineEl.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+      const emptyText = this.suggestionsOnly
+        ? this.t('overlay.empty.waiting_suggestions')
+        : this.t('overlay.empty.listening');
+      this.timelineEl.replaceChildren();
+      const emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.textContent = emptyText;
+      this.timelineEl.appendChild(emptyEl);
       this.timelineEl.style.display = 'flex';
     }
 
@@ -1232,7 +1238,7 @@ export class AIOverlay {
       const alignClass = entry.isSelf ? 'self' : 'participant';
       bubble.className = `bubble ${alignClass}`;
       bubble.setAttribute('role', 'article');
-      bubble.setAttribute('aria-label', `${entry.speaker || 'Unknown'}: ${entry.text || ''}`);
+      bubble.setAttribute('aria-label', `${entry.speaker || this.t('overlay.empty.unknown_speaker')}: ${entry.text || ''}`);
       bubble.style.animation = 'bubbleIn 200ms ease-out forwards';
       bubble.innerHTML =
         `<div class="bubble-content">` +
@@ -1676,14 +1682,20 @@ export class AIOverlay {
   private createFooter(): void {
     this.panel.querySelector('.summary-footer')?.remove();
 
+    // Plan final: localized Copy button + safe DOM (was innerHTML).
     const footer = document.createElement('div');
     footer.className = 'summary-footer';
-    footer.innerHTML = `<button class="copy-btn">Copy</button><span class="drive-status"></span>`;
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = this.t('overlay.actions.copy');
+    const driveStatus = document.createElement('span');
+    driveStatus.className = 'drive-status';
+    footer.appendChild(copyBtn);
+    footer.appendChild(driveStatus);
 
     const resizeHandle = this.panel.querySelector('.resize-handle');
     this.panel.insertBefore(footer, resizeHandle);
 
-    const copyBtn = footer.querySelector('.copy-btn') as HTMLButtonElement;
     copyBtn.addEventListener('click', () => this.handleCopy(copyBtn));
   }
 

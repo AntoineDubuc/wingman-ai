@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-finish-2026-05-06",
+    "revision": "plan-final-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -649,6 +649,11 @@
     "kb": {
       "search_aria_label": "Rechercher dans la base de connaissances",
       "answer_aria_label": "Réponse KB: {{answer}}"
+    },
+    "empty": {
+      "listening": "En écoute de la conversation...",
+      "waiting_suggestions": "En attente de suggestions...",
+      "unknown_speaker": "Inconnu"
     }
   },
   "summary": {
@@ -753,7 +758,16 @@
     "langbuilder": {
       "flow_failed": "Échec de l'exécution du flux personnalisé.",
       "api_failure": "LangBuilder indisponible."
-    }
+    },
+    "deepgram_key_missing": "Clé d'API Deepgram non configurée. Ouvrez Options pour ajouter votre clé.",
+    "deepgram_connect_failed": "Échec de la connexion à Deepgram. Vérifiez votre clé d'API.",
+    "no_active_meet_tab": "Aucun onglet Google Meet actif trouvé",
+    "no_query_text": "Aucun texte de requête fourni.",
+    "kb_gemini_required": "Clé d'API Gemini requise pour la recherche dans la base de connaissances. Configurez dans Paramètres.",
+    "kb_no_results": "Aucune information pertinente trouvée dans votre base de connaissances pour ce sujet.",
+    "kb_answer_failed": "Impossible de générer une réponse. Vérifiez vos clés d'API.",
+    "network": "Erreur réseau. Vérifiez votre connexion.",
+    "langbuilder_not_configured": "LangBuilder non configuré"
   },
   "banners": {
     "connection_lost": {

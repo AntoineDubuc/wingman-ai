@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-finish-2026-05-06",
+    "revision": "plan-final-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -649,6 +649,11 @@
     "kb": {
       "search_aria_label": "Buscar en la Base de Conocimientos",
       "answer_aria_label": "Respuesta KB: {{answer}}"
+    },
+    "empty": {
+      "listening": "Escuchando la conversación...",
+      "waiting_suggestions": "Esperando sugerencias...",
+      "unknown_speaker": "Desconocido"
     }
   },
   "summary": {
@@ -753,7 +758,16 @@
     "langbuilder": {
       "flow_failed": "Falló la ejecución del flujo personalizado.",
       "api_failure": "LangBuilder no disponible."
-    }
+    },
+    "deepgram_key_missing": "Clave API de Deepgram no configurada. Vaya a Opciones para añadir su clave.",
+    "deepgram_connect_failed": "Error al conectar con Deepgram. Verifique su clave API.",
+    "no_active_meet_tab": "No se encontró ninguna pestaña activa de Google Meet",
+    "no_query_text": "No se proporcionó texto de consulta.",
+    "kb_gemini_required": "Clave API de Gemini requerida para búsqueda en Base de Conocimientos. Configure en Ajustes.",
+    "kb_no_results": "No se encontró información relevante en su Base de Conocimientos para este tema.",
+    "kb_answer_failed": "No se pudo generar la respuesta. Verifique sus claves API.",
+    "network": "Error de red. Verifique su conexión.",
+    "langbuilder_not_configured": "LangBuilder no configurado"
   },
   "banners": {
     "connection_lost": {

@@ -18,6 +18,25 @@ import { installationStateService } from '../services/installation-state';
 import type { i18n as I18n } from 'i18next';
 import type { SupportedLocale } from '../shared/i18n-types';
 
+// Plan 5: localize tab labels using i18n keys at options.tabs.{tabId}.
+// The tab id (data-tab attribute) maps directly to a key in the bundle.
+function localizeTabs(i18n: I18n): void {
+  const tabs = document.querySelectorAll<HTMLElement>('.tab[data-tab]');
+  for (const tab of tabs) {
+    const tabId = tab.getAttribute('data-tab');
+    if (!tabId) continue;
+    const labelEl = tab.querySelector<HTMLElement>('.tab-label');
+    if (!labelEl) continue;
+    const key = `options.tabs.${tabId}`;
+    const translated = i18n.t(key);
+    // i18n.t returns the key string itself when missing; only swap if we got
+    // a real translation (not the key path).
+    if (translated && translated !== key) {
+      labelEl.textContent = translated;
+    }
+  }
+}
+
 // chrome.runtime.sendMessage without an explicit extensionId is sender-authenticated to this
 // extension's own service worker — the SW will only respond to messages from this extension's
 // own contexts (popup, options, content scripts). No cross-extension trust boundary is crossed.
@@ -134,6 +153,7 @@ class OptionsController {
     const { i18n, locale } = await initOptionsI18n();
     await maybeShowUpgradeBanner(i18n);
     await setupLanguagePickerWiring(i18n, locale);
+    localizeTabs(i18n);
 
     const toast = new ToastManager();
     const modal = new ModalManager();

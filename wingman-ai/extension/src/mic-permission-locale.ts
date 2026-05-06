@@ -59,6 +59,13 @@ export function renderMicPermissionStrings(i18n: I18n): void {
   if (bodyEl) {
     bodyEl.textContent = i18n.t('mic_permission.body');
   }
+
+  // Plan 9 FR-007: render denied-state text. The element starts hidden via CSS;
+  // mic-permission.js toggles display when getUserMedia rejects.
+  const deniedEl = document.querySelector('#denied');
+  if (deniedEl) {
+    deniedEl.textContent = i18n.t('mic_permission.denied.body');
+  }
 }
 
 /**

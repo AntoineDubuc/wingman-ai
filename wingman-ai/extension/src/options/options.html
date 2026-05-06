@@ -77,7 +77,7 @@
             <strong>Security reminder:</strong> API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.
           </p>
           <details style="margin-bottom: 12px;">
-            <summary style="cursor: pointer; font-weight: 500;">Folder format</summary>
+            <summary style="cursor: pointer; font-weight: 500;" data-i18n="options.html.setup.folder_format_summary">Folder format</summary>
             <p style="margin-top: 8px;"><strong>.env</strong> at the top level with any of these keys:</p>
             <pre style="background: rgba(0,0,0,0.04); padding: 10px; border-radius: 4px; font-size: 12px;">DEEPGRAM_API_KEY=...
 GEMINI_API_KEY=...
@@ -267,7 +267,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               </div>
 
               <div class="api-key-section" style="margin-bottom: 12px;">
-                <label for="hume-secret-key" class="input-label input-label-small">Secret Key</label>
+                <label for="hume-secret-key" class="input-label input-label-small" data-i18n="options.html.setup.hume_secret_key_label_short">Secret Key</label>
                 <div class="password-input-wrapper">
                   <input
                     type="password"
@@ -292,7 +292,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="button-row">
             <div class="api-status" id="api-status">
               <span class="status-dot status-unconfigured"></span>
-              <span class="status-text">Keys not configured</span>
+              <span class="status-text" data-i18n="options.html.setup.status_keys_not_configured">Keys not configured</span>
             </div>
             <div class="button-group">
               <button id="test-keys-btn" class="btn-secondary" type="button">
@@ -314,8 +314,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <label for="drive-autosave-toggle" class="toggle-label">Auto-save transcripts</label>
-              <p class="toggle-description">
+              <label for="drive-autosave-toggle" class="toggle-label" data-i18n="options.html.setup.autosave_label">Auto-save transcripts</label>
+              <p class="toggle-description" data-i18n="options.html.setup.autosave_description">
                 When enabled, transcripts will be automatically saved to Google Drive when a session ends.
               </p>
             </div>
@@ -337,7 +337,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             <div id="drive-connected" class="drive-status" style="display: none;">
               <div class="drive-account-info">
                 <span class="drive-icon">&#10003;</span>
-                <span id="drive-account-email">Connected</span>
+                <span id="drive-account-email" data-i18n="options.html.setup.connected_label">Connected</span>
               </div>
               <button id="drive-disconnect-btn" class="btn-secondary btn-small" type="button">
                 Disconnect
@@ -415,7 +415,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="slider-group">
             <div class="slider-header">
-              <label for="endpointing-range" class="toggle-label">Pause threshold</label>
+              <label for="endpointing-range" class="toggle-label" data-i18n="options.html.calls.pause_threshold_label">Pause threshold</label>
               <span id="endpointing-value" class="slider-value">0.7s</span>
             </div>
             <input type="range" id="endpointing-range" class="styled-slider" min="500" max="5000" step="100" value="700">
@@ -423,7 +423,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               <span>0.5s</span>
               <span>5s</span>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.pause_threshold_hint">
               How long a speaker must pause before a new transcript bubble is created. Takes effect next session.
             </p>
           </div>
@@ -442,16 +442,16 @@ LANGBUILDER_FLOW_ID=...</pre>
                 <input type="checkbox" id="auto-suggestions-toggle" checked>
                 <span class="toggle-slider"></span>
               </label>
-              <label for="auto-suggestions-toggle" class="toggle-label">Auto-suggestions</label>
+              <label for="auto-suggestions-toggle" class="toggle-label" data-i18n="options.html.calls.auto_suggestions_label">Auto-suggestions</label>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.auto_suggestions_hint">
               When off, Wingman won't suggest automatically. Use the KB search icon or search bar to get answers on demand. Takes effect next session.
             </p>
           </div>
 
           <div class="slider-group" id="cooldown-slider-group">
             <div class="slider-header">
-              <label for="cooldown-range" class="toggle-label">Cooldown</label>
+              <label for="cooldown-range" class="toggle-label" data-i18n="options.html.calls.cooldown_label">Cooldown</label>
               <span id="cooldown-value" class="slider-value">15s</span>
             </div>
             <input type="range" id="cooldown-range" class="styled-slider" min="2000" max="30000" step="1000" value="15000">
@@ -459,7 +459,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               <span>2s</span>
               <span>30s</span>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.cooldown_hint">
               After each suggestion, Wingman waits this long before considering the next one. Takes effect next session.
             </p>
           </div>
@@ -498,8 +498,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <label for="speaker-filter-toggle" class="toggle-label">Only respond to other speakers</label>
-              <p class="toggle-description">
+              <label for="speaker-filter-toggle" class="toggle-label" data-i18n="options.html.calls.speaker_filter_label">Only respond to other speakers</label>
+              <p class="toggle-description" data-i18n="options.html.calls.speaker_filter_hint">
                 When enabled, Wingman will only provide suggestions when customers or other participants speak,
                 not when you're talking. Wingman will automatically detect you as the first speaker.
               </p>
@@ -543,8 +543,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="toggle-row" id="summary-enabled-row">
             <div class="toggle-info">
-              <label for="summary-enabled-toggle" class="toggle-label">Auto-generate call summary</label>
-              <p class="toggle-description">
+              <label for="summary-enabled-toggle" class="toggle-label" data-i18n="options.html.calls.auto_summary_label">Auto-generate call summary</label>
+              <p class="toggle-description" data-i18n="options.html.calls.auto_summary_hint">
                 Uses one additional AI API call per session.
               </p>
             </div>
@@ -556,8 +556,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="toggle-row" id="summary-moments-row">
             <div class="toggle-info">
-              <label for="summary-moments-toggle" class="toggle-label">Include key moments</label>
-              <p class="toggle-description">
+              <label for="summary-moments-toggle" class="toggle-label" data-i18n="options.html.calls.include_key_moments_label">Include key moments</label>
+              <p class="toggle-description" data-i18n="options.html.calls.moments_hint">
                 Surfaces notable quotes and buying signals.
               </p>
             </div>
@@ -594,7 +594,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="persona-list" class="persona-list"></div>
 
           <!-- Empty state -->
-          <div id="persona-empty" class="persona-empty">
+          <div id="persona-empty" class="persona-empty" data-i18n="options.html.personas.empty_state">
             <p>Create your first persona to bundle a system prompt with specific Knowledge Base documents.</p>
           </div>
         </div>
@@ -606,7 +606,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <!-- Name -->
           <div class="form-group">
             <label for="persona-name-input" class="input-label" data-i18n="options.html.personas.name_label">Name</label>
-            <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" maxlength="60">
+            <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" data-i18n="options.html.personas.name_placeholder" data-i18n-attr="placeholder" maxlength="60">
           </div>
 
           <!-- Icon picker -->
@@ -615,7 +615,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             <div id="persona-icon-picker" class="icon-picker">
               <div class="icon-search-wrapper">
                 <span class="icon-search-icon">&#128269;</span>
-                <input type="text" id="persona-icon-search" class="text-input icon-search-input" placeholder="Search 4,000+ icons...">
+                <input type="text" id="persona-icon-search" class="text-input icon-search-input" placeholder="Search 4,000+ icons..." data-i18n="options.html.personas.icon_search_placeholder" data-i18n-attr="placeholder">
                 <button id="persona-icon-search-clear" class="icon-search-clear" hidden>&times;</button>
               </div>
               <div id="persona-icon-selected" class="icon-selected-row" hidden>
@@ -623,10 +623,10 @@ LANGBUILDER_FLOW_ID=...</pre>
                 <img id="persona-icon-selected-img" class="icon-selected-img" width="32" height="32" alt="">
                 <button id="persona-icon-clear-btn" class="link-btn link-btn--danger">Clear</button>
               </div>
-              <div id="persona-icon-grid-label" class="icon-grid-label">Quick picks</div>
+              <div id="persona-icon-grid-label" class="icon-grid-label" data-i18n="options.html.personas.icon_quick_picks">Quick picks</div>
               <div id="persona-icon-grid" class="icon-grid"></div>
-              <div id="persona-icon-loading" class="icon-loading" hidden>Loading icons...</div>
-              <div id="persona-icon-empty" class="icon-empty" hidden>No icons found. Try different keywords like "face", "work", "animal".</div>
+              <div id="persona-icon-loading" class="icon-loading" hidden data-i18n="options.html.personas.icon_loading">Loading icons...</div>
+              <div id="persona-icon-empty" class="icon-empty" hidden data-i18n="options.html.personas.icon_no_results">No icons found. Try different keywords like "face", "work", "animal".</div>
             </div>
           </div>
 
@@ -643,7 +643,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               <textarea
                 id="persona-prompt-textarea"
                 class="prompt-textarea"
-                placeholder="Enter your system prompt..."
+                placeholder="Enter your system prompt..." data-i18n="options.html.personas.prompt_placeholder" data-i18n-attr="placeholder"
                 spellcheck="false"
               ></textarea>
               <div class="char-count" id="persona-char-count">
@@ -666,22 +666,22 @@ LANGBUILDER_FLOW_ID=...</pre>
             <!-- Drop Zone -->
             <div id="persona-kb-drop-zone" class="kb-drop-zone">
               <span class="kb-drop-icon"><svg width="32" height="32" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
-              <span class="kb-drop-text">Drop files here or click to browse</span>
-              <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+              <span class="kb-drop-text" data-i18n="options.html.personas.kb_drop_text">Drop files here or click to browse</span>
+              <span class="kb-drop-hint" data-i18n="options.html.personas.kb_drop_hint">PDF, Markdown, or Text (max 10MB)</span>
               <input type="file" id="persona-kb-file-input" multiple accept=".pdf,.md,.txt,.markdown" hidden>
             </div>
 
             <!-- Progress (hidden by default) -->
             <div id="persona-kb-progress" class="kb-progress" hidden>
               <div class="kb-progress-bar"><div id="persona-kb-progress-fill" class="kb-progress-fill"></div></div>
-              <span id="persona-kb-progress-text" class="kb-progress-text">Processing...</span>
+              <span id="persona-kb-progress-text" class="kb-progress-text" data-i18n="options.html.personas.kb_processing">Processing...</span>
             </div>
 
             <!-- Document List (populated by JS) -->
             <div id="persona-kb-doc-list" class="kb-doc-list"></div>
 
             <!-- Empty State -->
-            <div id="persona-kb-empty" class="persona-kb-empty">No documents uploaded yet. Drag files above to add knowledge.</div>
+            <div id="persona-kb-empty" class="persona-kb-empty" data-i18n="options.html.personas.kb_empty_state">No documents uploaded yet. Drag files above to add knowledge.</div>
 
             <!-- Stats -->
             <div id="persona-kb-stats" class="kb-stats"></div>
@@ -801,7 +801,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="button-row">
             <div class="api-status" id="langbuilder-status">
               <span class="status-dot status-unconfigured"></span>
-              <span class="status-text">Not configured</span>
+              <span class="status-text" data-i18n="options.html.langbuilder.status_unconfigured">Not configured</span>
             </div>
             <div class="button-group">
               <button id="langbuilder-test-btn" class="btn-secondary" type="button">

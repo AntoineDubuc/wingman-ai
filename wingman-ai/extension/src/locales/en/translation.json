@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-hints-2026-05-06",
+    "revision": "plan-5-finish-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -430,7 +430,17 @@
         "model_choice_hint": "Choose which AI model to use for suggestions and summaries",
         "groq_hint": "Ultra-fast inference on open-source models — free tier at console.groq.com",
         "folder_hint": "Folder will be created in your Drive root if it doesn't exist",
-        "active_personas_hint": "Each active persona evaluates transcripts independently. Limit to 4 to keep latency low."
+        "active_personas_hint": "Each active persona evaluates transcripts independently. Limit to 4 to keep latency low.",
+        "hume_api_key_label": "API Key",
+        "hume_secret_key_label_short": "Secret Key",
+        "hume_get_keys": "(Get keys)",
+        "hume_description": "Show real-time customer emotion during calls. Requires a Hume AI account at platform.hume.ai. Used only when keys are configured — emotion detection is opt-in.",
+        "status_keys_not_configured": "Keys not configured",
+        "autosave_description": "When enabled, transcripts will be automatically saved to your Drive folder after each call ends.",
+        "connected_label": "Connected",
+        "folder_format_summary": "Folder format",
+        "folder_format_env_intro": "at the top level with any of these keys:",
+        "folder_format_persona_files": "Persona JSON files anywhere in the folder (any filename containing \"persona\" and ending in .json)."
       },
       "calls": {
         "transcription_sensitivity_title": "Transcription Sensitivity",
@@ -461,7 +471,13 @@
         "speaker_filter_description": "Control when Wingman provides suggestions based on who is speaking.",
         "panel_layout_description": "Controls where the Wingman panel appears during calls and what it shows.",
         "call_summary_description": "Get an AI-generated summary with action items and key moments after each call.",
-        "tuning_mode_hint": "Auto applies model-specific adjustments at runtime without modifying your saved prompts."
+        "tuning_mode_hint": "Auto applies model-specific adjustments at runtime without modifying your saved prompts.",
+        "pause_threshold_hint": "How long a speaker must pause before a new transcript bubble is created. Lower = more responsive but may split sentences; higher = smoother but adds delay.",
+        "auto_suggestions_hint": "When off, Wingman won't suggest automatically — you can still trigger manually.",
+        "cooldown_hint": "After each suggestion, Wingman waits this long before considering another one.",
+        "speaker_filter_hint": "When enabled, Wingman will only provide suggestions when other participants speak — never on your own audio.",
+        "auto_summary_hint": "Uses one additional AI API call per session.",
+        "moments_hint": "Surfaces notable quotes and buying signals."
       },
       "personas": {
         "personas_title": "Personas",
@@ -484,7 +500,21 @@
         "duplicate_button": "Duplicate",
         "delete_button": "Delete",
         "save_button": "Save",
-        "personas_description": "Bundle a system prompt with specific Knowledge Base documents. Each persona gives the AI its own voice and context."
+        "personas_description": "Bundle a system prompt with specific Knowledge Base documents. Each persona gives the AI its own voice and context.",
+        "empty_state": "Create your first persona to bundle a system prompt with KB documents.",
+        "kb_drop_text": "Drop files here or click to browse",
+        "kb_drop_hint": "PDF, Markdown, or Text (max 10MB)",
+        "kb_processing": "Processing...",
+        "kb_empty_state": "No documents uploaded yet. Drag files above or click to browse.",
+        "icon_quick_picks": "Quick picks",
+        "icon_loading": "Loading icons...",
+        "icon_no_results": "No icons found. Try different keywords like \"face\", \"work\", \"animal\".",
+        "icon_selected": "Selected:",
+        "icon_search_placeholder": "Search 4,000+ icons...",
+        "name_placeholder": "e.g. Cloud Security Demo",
+        "prompt_placeholder": "Enter your system prompt...",
+        "kb_test_placeholder": "e.g. What security certifications do you have?",
+        "char_count_initial": "0 / 10,000 chars"
       },
       "conclave": {
         "settings_title": "Conclave Settings",
@@ -507,7 +537,8 @@
         "url_placeholder": "https://langflow.company.com",
         "api_key_placeholder": "Enter your LangBuilder API key",
         "url_hint": "Base URL of your LangBuilder instance",
-        "api_key_hint": "x-api-key token from your LangBuilder settings"
+        "api_key_hint": "x-api-key token from your LangBuilder settings",
+        "status_unconfigured": "Not configured"
       },
       "websearch": {
         "provider_title": "Web Search Provider",

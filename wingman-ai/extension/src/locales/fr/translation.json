@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-hints-2026-05-06",
+    "revision": "plan-5-finish-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -430,7 +430,17 @@
         "model_choice_hint": "Choisissez le modèle IA à utiliser pour les suggestions et résumés",
         "groq_hint": "Inférence ultra rapide sur modèles open-source — version gratuite à console.groq.com",
         "folder_hint": "Le dossier sera créé à la racine de votre Drive s'il n'existe pas",
-        "active_personas_hint": "Chaque persona actif évalue les transcriptions indépendamment. Limitez-vous à 4 pour garder la latence basse."
+        "active_personas_hint": "Chaque persona actif évalue les transcriptions indépendamment. Limitez-vous à 4 pour garder la latence basse.",
+        "hume_api_key_label": "Clé d'API",
+        "hume_secret_key_label_short": "Clé secrète",
+        "hume_get_keys": "(Obtenir les clés)",
+        "hume_description": "Affiche les émotions du client en temps réel pendant les appels. Nécessite un compte Hume AI sur platform.hume.ai. Utilisé uniquement lorsque les clés sont configurées — la détection des émotions est facultative.",
+        "status_keys_not_configured": "Clés non configurées",
+        "autosave_description": "Lorsqu'activé, les transcriptions sont automatiquement enregistrées dans votre dossier Drive à la fin de chaque appel.",
+        "connected_label": "Connecté",
+        "folder_format_summary": "Format du dossier",
+        "folder_format_env_intro": "au niveau supérieur avec n'importe laquelle de ces clés:",
+        "folder_format_persona_files": "Fichiers persona JSON n'importe où dans le dossier (tout nom contenant « persona » et se terminant par .json)."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilité de la transcription",
@@ -461,7 +471,13 @@
         "speaker_filter_description": "Contrôle quand Wingman fournit des suggestions selon qui parle.",
         "panel_layout_description": "Contrôle où le panneau Wingman apparaît pendant les appels et ce qu'il affiche.",
         "call_summary_description": "Obtenez un résumé généré par IA avec actions à entreprendre et moments clés après chaque appel.",
-        "tuning_mode_hint": "Auto applique des ajustements spécifiques au modèle à l'exécution sans modifier vos prompts enregistrés."
+        "tuning_mode_hint": "Auto applique des ajustements spécifiques au modèle à l'exécution sans modifier vos prompts enregistrés.",
+        "pause_threshold_hint": "Combien de temps un locuteur doit faire une pause avant qu'une nouvelle bulle de transcription soit créée. Plus bas = plus réactif mais peut couper les phrases; plus haut = plus fluide mais ajoute du délai.",
+        "auto_suggestions_hint": "Désactivé, Wingman ne suggère pas automatiquement — vous pouvez déclencher manuellement.",
+        "cooldown_hint": "Après chaque suggestion, Wingman attend ce délai avant d'en considérer une autre.",
+        "speaker_filter_hint": "Lorsque activé, Wingman fournit des suggestions uniquement quand d'autres participants parlent — jamais sur votre propre audio.",
+        "auto_summary_hint": "Utilise un appel d'API IA supplémentaire par session.",
+        "moments_hint": "Met en évidence les citations notables et les signaux d'achat."
       },
       "personas": {
         "personas_title": "Personas",
@@ -484,7 +500,21 @@
         "duplicate_button": "Dupliquer",
         "delete_button": "Supprimer",
         "save_button": "Enregistrer",
-        "personas_description": "Regroupez un prompt système avec des documents de la base de connaissances. Chaque persona donne à l'IA sa voix et son contexte."
+        "personas_description": "Regroupez un prompt système avec des documents de la base de connaissances. Chaque persona donne à l'IA sa voix et son contexte.",
+        "empty_state": "Créez votre premier persona pour regrouper un prompt système avec des documents KB.",
+        "kb_drop_text": "Déposez les fichiers ici ou cliquez pour parcourir",
+        "kb_drop_hint": "PDF, Markdown ou texte (max 10 Mo)",
+        "kb_processing": "Traitement...",
+        "kb_empty_state": "Aucun document téléchargé. Glissez des fichiers ci-dessus ou cliquez pour parcourir.",
+        "icon_quick_picks": "Choix rapides",
+        "icon_loading": "Chargement des icônes...",
+        "icon_no_results": "Aucune icône trouvée. Essayez d'autres mots-clés comme « visage », « travail », « animal ».",
+        "icon_selected": "Sélectionné:",
+        "icon_search_placeholder": "Rechercher 4 000+ icônes...",
+        "name_placeholder": "ex. Démo Sécurité Cloud",
+        "prompt_placeholder": "Saisissez votre prompt système...",
+        "kb_test_placeholder": "ex. Quelles certifications de sécurité avez-vous?",
+        "char_count_initial": "0 / 10 000 caractères"
       },
       "conclave": {
         "settings_title": "Paramètres du Conclave",
@@ -507,7 +537,8 @@
         "url_placeholder": "https://langflow.entreprise.com",
         "api_key_placeholder": "Saisissez votre clé d'API LangBuilder",
         "url_hint": "URL de base de votre instance LangBuilder",
-        "api_key_hint": "Jeton x-api-key issu de vos paramètres LangBuilder"
+        "api_key_hint": "Jeton x-api-key issu de vos paramètres LangBuilder",
+        "status_unconfigured": "Non configuré"
       },
       "websearch": {
         "provider_title": "Fournisseur de recherche web",

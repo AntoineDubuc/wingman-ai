@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-hints-2026-05-06",
+    "revision": "plan-5-finish-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -433,7 +433,17 @@
         "model_choice_hint": "Alegeți ce model IA să folosiți pentru sugestii și rezumate",
         "groq_hint": "Inferență ultra rapidă pe modele open-source — nivel gratuit la console.groq.com",
         "folder_hint": "Folderul va fi creat în rădăcina Drive dacă nu există",
-        "active_personas_hint": "Fiecare personaj activ evaluează transcrierile independent. Limitați la 4 pentru a păstra latența scăzută."
+        "active_personas_hint": "Fiecare personaj activ evaluează transcrierile independent. Limitați la 4 pentru a păstra latența scăzută.",
+        "hume_api_key_label": "Cheie API",
+        "hume_secret_key_label_short": "Cheie secretă",
+        "hume_get_keys": "(Obține cheile)",
+        "hume_description": "Afișează emoțiile clientului în timp real în timpul apelurilor. Necesită un cont Hume AI la platform.hume.ai. Folosit doar când cheile sunt configurate — detectarea emoțiilor este opțională.",
+        "status_keys_not_configured": "Cheile neconfigurate",
+        "autosave_description": "Când este activat, transcrierile sunt salvate automat în folderul Drive după fiecare apel.",
+        "connected_label": "Conectat",
+        "folder_format_summary": "Format folder",
+        "folder_format_env_intro": "la nivelul superior cu oricare dintre aceste chei:",
+        "folder_format_persona_files": "Fișiere persona JSON oriunde în folder (orice nume care conține „persona\" și se termină în .json)."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilitate transcriere",
@@ -464,7 +474,13 @@
         "speaker_filter_description": "Controlează când Wingman oferă sugestii în funcție de cine vorbește.",
         "panel_layout_description": "Controlează unde apare panoul Wingman în timpul apelurilor și ce afișează.",
         "call_summary_description": "Obțineți un rezumat generat de IA cu elemente de acțiune și momente cheie după fiecare apel.",
-        "tuning_mode_hint": "Auto aplică ajustări specifice modelului la rulare fără a modifica prompturile salvate."
+        "tuning_mode_hint": "Auto aplică ajustări specifice modelului la rulare fără a modifica prompturile salvate.",
+        "pause_threshold_hint": "Cât trebuie să pauzeze un vorbitor înainte de a se crea o nouă bulă de transcriere. Mai mic = mai reactiv dar poate tăia propoziții; mai mare = mai fluid dar adaugă întârziere.",
+        "auto_suggestions_hint": "Dezactivat, Wingman nu sugerează automat — puteți declanșa manual.",
+        "cooldown_hint": "După fiecare sugestie, Wingman așteaptă această durată înainte de a considera alta.",
+        "speaker_filter_hint": "Când este activat, Wingman oferă sugestii doar când vorbesc alți participanți — niciodată pe audio-ul propriu.",
+        "auto_summary_hint": "Folosește un apel API IA suplimentar pe sesiune.",
+        "moments_hint": "Evidențiază citate notabile și semnale de cumpărare."
       },
       "personas": {
         "personas_title": "Personaje",
@@ -487,7 +503,21 @@
         "duplicate_button": "Duplică",
         "delete_button": "Șterge",
         "save_button": "Salvează",
-        "personas_description": "Combinați un prompt de sistem cu documente specifice ale bazei de cunoștințe. Fiecare personaj oferă IA propria voce și context."
+        "personas_description": "Combinați un prompt de sistem cu documente specifice ale bazei de cunoștințe. Fiecare personaj oferă IA propria voce și context.",
+        "empty_state": "Creați primul personaj pentru a combina un prompt sistem cu documente KB.",
+        "kb_drop_text": "Aruncați fișierele aici sau dați clic pentru a naviga",
+        "kb_drop_hint": "PDF, Markdown sau Text (max 10MB)",
+        "kb_processing": "Procesare...",
+        "kb_empty_state": "Niciun document încă încărcat. Trageți fișiere mai sus sau dați clic pentru a naviga.",
+        "icon_quick_picks": "Alegeri rapide",
+        "icon_loading": "Se încarcă pictogramele...",
+        "icon_no_results": "Nicio pictogramă găsită. Încercați alte cuvinte cheie precum „față\", „lucru\", „animal\".",
+        "icon_selected": "Selectat:",
+        "icon_search_placeholder": "Căutați 4.000+ pictograme...",
+        "name_placeholder": "ex. Demo Securitate Cloud",
+        "prompt_placeholder": "Introduceți promptul sistemului...",
+        "kb_test_placeholder": "ex. Ce certificări de securitate aveți?",
+        "char_count_initial": "0 / 10.000 caractere"
       },
       "conclave": {
         "settings_title": "Setări Conclave",
@@ -510,7 +540,8 @@
         "url_placeholder": "https://langflow.companie.com",
         "api_key_placeholder": "Introduceți cheia API LangBuilder",
         "url_hint": "URL de bază al instanței LangBuilder",
-        "api_key_hint": "Token x-api-key din setările LangBuilder"
+        "api_key_hint": "Token x-api-key din setările LangBuilder",
+        "status_unconfigured": "Neconfigurat"
       },
       "websearch": {
         "provider_title": "Furnizor căutare web",

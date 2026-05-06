@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-hints-2026-05-06",
+    "revision": "plan-5-finish-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -430,7 +430,17 @@
         "model_choice_hint": "Elija qué modelo IA usar para sugerencias y resúmenes",
         "groq_hint": "Inferencia ultra rápida en modelos open-source — versión gratuita en console.groq.com",
         "folder_hint": "La carpeta se creará en la raíz de su Drive si no existe",
-        "active_personas_hint": "Cada persona activo evalúa las transcripciones independientemente. Limite a 4 para mantener baja latencia."
+        "active_personas_hint": "Cada persona activo evalúa las transcripciones independientemente. Limite a 4 para mantener baja latencia.",
+        "hume_api_key_label": "Clave API",
+        "hume_secret_key_label_short": "Clave secreta",
+        "hume_get_keys": "(Obtener claves)",
+        "hume_description": "Muestra las emociones del cliente en tiempo real durante las llamadas. Requiere una cuenta Hume AI en platform.hume.ai. Usado solo cuando las claves están configuradas — la detección de emociones es opt-in.",
+        "status_keys_not_configured": "Claves no configuradas",
+        "autosave_description": "Cuando está activado, las transcripciones se guardan automáticamente en su carpeta Drive al final de cada llamada.",
+        "connected_label": "Conectado",
+        "folder_format_summary": "Formato de carpeta",
+        "folder_format_env_intro": "en el nivel superior con cualquiera de estas claves:",
+        "folder_format_persona_files": "Archivos persona JSON en cualquier lugar de la carpeta (cualquier nombre que contenga \"persona\" y termine en .json)."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilidad de la transcripción",
@@ -461,7 +471,13 @@
         "speaker_filter_description": "Controla cuándo Wingman provee sugerencias según quién habla.",
         "panel_layout_description": "Controla dónde aparece el panel de Wingman durante las llamadas y qué muestra.",
         "call_summary_description": "Obtenga un resumen generado por IA con elementos de acción y momentos clave después de cada llamada.",
-        "tuning_mode_hint": "Auto aplica ajustes específicos del modelo en tiempo de ejecución sin modificar sus prompts guardados."
+        "tuning_mode_hint": "Auto aplica ajustes específicos del modelo en tiempo de ejecución sin modificar sus prompts guardados.",
+        "pause_threshold_hint": "Cuánto tiempo debe pausar un hablante antes de crear una nueva burbuja de transcripción. Bajo = más responsivo pero puede cortar oraciones; alto = más suave pero añade retraso.",
+        "auto_suggestions_hint": "Desactivado, Wingman no sugiere automáticamente — aún puede activar manualmente.",
+        "cooldown_hint": "Después de cada sugerencia, Wingman espera este tiempo antes de considerar otra.",
+        "speaker_filter_hint": "Cuando activado, Wingman solo proporciona sugerencias cuando hablan otros participantes — nunca sobre su propio audio.",
+        "auto_summary_hint": "Usa una llamada API IA adicional por sesión.",
+        "moments_hint": "Muestra citas notables y señales de compra."
       },
       "personas": {
         "personas_title": "Personas",
@@ -484,7 +500,21 @@
         "duplicate_button": "Duplicar",
         "delete_button": "Eliminar",
         "save_button": "Guardar",
-        "personas_description": "Empaquete un prompt de sistema con documentos específicos de la Base de Conocimientos. Cada persona da a la IA su propia voz y contexto."
+        "personas_description": "Empaquete un prompt de sistema con documentos específicos de la Base de Conocimientos. Cada persona da a la IA su propia voz y contexto.",
+        "empty_state": "Cree su primer persona para agrupar un prompt de sistema con documentos KB.",
+        "kb_drop_text": "Suelte archivos aquí o haga clic para explorar",
+        "kb_drop_hint": "PDF, Markdown o Texto (max 10MB)",
+        "kb_processing": "Procesando...",
+        "kb_empty_state": "No hay documentos cargados. Arrastre archivos arriba o haga clic para explorar.",
+        "icon_quick_picks": "Selección rápida",
+        "icon_loading": "Cargando iconos...",
+        "icon_no_results": "No se encontraron iconos. Pruebe otras palabras clave como \"cara\", \"trabajo\", \"animal\".",
+        "icon_selected": "Seleccionado:",
+        "icon_search_placeholder": "Buscar más de 4.000 iconos...",
+        "name_placeholder": "ej. Demo de Seguridad Cloud",
+        "prompt_placeholder": "Ingrese su prompt de sistema...",
+        "kb_test_placeholder": "ej. ¿Qué certificaciones de seguridad tiene?",
+        "char_count_initial": "0 / 10.000 caracteres"
       },
       "conclave": {
         "settings_title": "Configuración del Conclave",
@@ -507,7 +537,8 @@
         "url_placeholder": "https://langflow.empresa.com",
         "api_key_placeholder": "Ingrese su clave API de LangBuilder",
         "url_hint": "URL base de su instancia LangBuilder",
-        "api_key_hint": "Token x-api-key de su configuración LangBuilder"
+        "api_key_hint": "Token x-api-key de su configuración LangBuilder",
+        "status_unconfigured": "No configurado"
       },
       "websearch": {
         "provider_title": "Proveedor de búsqueda web",

@@ -3,7 +3,11 @@
   all: initial;
   position: fixed;
   z-index: 999999;
-  font-family: 'Google Sans', Roboto, 'Noto Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* Plan 6 NFR-C02: explicit Cyrillic-supporting fallback after Latin-script primary fonts.
+     'Noto Sans' family covers Cyrillic; 'Segoe UI' covers it on Windows;
+     'PT Sans' is a Cyrillic-first sans-serif fallback. The cascade ensures Russian
+     overlay text never falls back to a glyph-missing default. */
+  font-family: 'Google Sans', Roboto, 'Noto Sans', 'Segoe UI', 'PT Sans', system-ui, -apple-system, sans-serif;
   --overlay-bg: #ffffff;
   --overlay-bg-secondary: #f8f9fa;
   --overlay-bg-tertiary: #f1f3f4;

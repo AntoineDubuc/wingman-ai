@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-final-2026-05-06",
+    "revision": "overlay-assistant-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -654,6 +654,23 @@
       "listening": "En écoute de la conversation...",
       "waiting_suggestions": "En attente de suggestions...",
       "unknown_speaker": "Inconnu"
+    },
+    "assistant": {
+      "chat_empty_title": "Comment puis-je aider?",
+      "chat_empty_subtitle": "Demandez n'importe quoi. Activez les sources de contexte ci-dessus pour inclure la transcription de la réunion ou la base de connaissances des personas.",
+      "chat_input_placeholder": "Demandez n'importe quoi...",
+      "context_transcript": "Transcription",
+      "context_web_search": "Recherche web",
+      "attach_persona_knowledge": "Joindre la base de connaissances du persona",
+      "personas_load_failed": "Impossible de charger les personas — rechargez l'extension.",
+      "no_personas_configured": "Aucun persona configuré.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} de plus",
+      "suggestion_chip_1": "Qu'est-ce que le flux PKCE mentionné par Sarah?",
+      "suggestion_chip_2": "Rédigez un courriel de suivi avec les actions à entreprendre",
+      "suggestion_chip_3": "Expliquez les bonnes pratiques de rotation des jetons OAuth 2.0",
+      "suggestion_chip_4": "Que sait notre architecte de la migration de session?"
     }
   },
   "summary": {

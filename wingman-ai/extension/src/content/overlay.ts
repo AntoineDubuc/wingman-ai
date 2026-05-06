@@ -325,6 +325,10 @@ export class AIOverlay {
 
     // AssistantView devtools hook (Plan 3 Task 7). Same pattern as above.
     this.assistantView = new AssistantView();
+    // Plan: hand the locale-bound i18n to the AssistantView BEFORE mount()
+    // so the chat empty state, suggestion chips, input placeholder, persona
+    // dropdown, and context toggles all paint in the user's language.
+    this.assistantView.setI18n(this.i18n);
     (this.container as unknown as { __wingmanAssistantView__?: AssistantView }).__wingmanAssistantView__ = this.assistantView;
 
     this.loadStyles();

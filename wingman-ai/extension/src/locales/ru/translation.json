@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-final-2026-05-06",
+    "revision": "overlay-assistant-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -658,6 +658,23 @@
       "listening": "Слушаю разговор...",
       "waiting_suggestions": "Ожидаю подсказки...",
       "unknown_speaker": "Неизвестен"
+    },
+    "assistant": {
+      "chat_empty_title": "Чем я могу помочь?",
+      "chat_empty_subtitle": "Спросите что угодно. Включите источники контекста выше, чтобы добавить транскрипт встречи или базу знаний персонажа.",
+      "chat_input_placeholder": "Спросите что угодно...",
+      "context_transcript": "Транскрипция",
+      "context_web_search": "Поиск в сети",
+      "attach_persona_knowledge": "Прикрепить базу знаний персонажа",
+      "personas_load_failed": "Не удалось загрузить персонажей — перезагрузите расширение.",
+      "no_personas_configured": "Персонажи не настроены.",
+      "personas_btn_count": "Персонажи ({{count}})",
+      "personas_btn_unknown": "Персонажи (?)",
+      "sources_more": "+ещё {{count}}",
+      "suggestion_chip_1": "Что такое поток PKCE, о котором упомянула Sarah?",
+      "suggestion_chip_2": "Составьте письмо с последующими действиями",
+      "suggestion_chip_3": "Объясните лучшие практики ротации токенов OAuth 2.0",
+      "suggestion_chip_4": "Что наш архитектор знает о миграции сессий?"
     }
   },
   "summary": {

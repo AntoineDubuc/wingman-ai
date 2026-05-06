@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-final-2026-05-06",
+    "revision": "overlay-assistant-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -654,6 +654,23 @@
       "listening": "Listening for conversation...",
       "waiting_suggestions": "Waiting for suggestions...",
       "unknown_speaker": "Unknown"
+    },
+    "assistant": {
+      "chat_empty_title": "How can I help?",
+      "chat_empty_subtitle": "Ask me anything. Toggle context sources above to include meeting transcript or persona knowledge.",
+      "chat_input_placeholder": "Ask anything...",
+      "context_transcript": "Transcript",
+      "context_web_search": "Web Search",
+      "attach_persona_knowledge": "Attach persona knowledge",
+      "personas_load_failed": "Could not load personas — reload the extension.",
+      "no_personas_configured": "No personas configured.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} more",
+      "suggestion_chip_1": "What is the PKCE flow Sarah mentioned?",
+      "suggestion_chip_2": "Draft a follow-up email with action items",
+      "suggestion_chip_3": "Explain OAuth 2.0 token rotation best practices",
+      "suggestion_chip_4": "What does our Architect know about session migration?"
     }
   },
   "summary": {

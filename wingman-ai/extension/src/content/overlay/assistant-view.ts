@@ -15,6 +15,8 @@
 
 import { getActivePersonas } from '../../shared/persona';
 import type { Persona } from '../../shared/persona';
+import type { i18n as I18n } from 'i18next';
+import { createI18nInstance } from '../../shared/i18n-init';
 
 /** Shape returned by getContextState() and passed to onSend subscribers. */
 export interface ContextState {
@@ -33,16 +35,25 @@ export interface ChatMessage {
   sources?: string[];
 }
 
-/** Suggestion chip definitions for the empty state. */
-const SUGGESTION_CHIPS = [
-  { icon: '\uD83D\uDCC4', text: 'What is the PKCE flow Sarah mentioned?' },
-  { icon: '\u2709', text: 'Draft a follow-up email with action items' },
-  { icon: '\uD83D\uDCDA', text: 'Explain OAuth 2.0 token rotation best practices' },
-  { icon: '\uD83E\uDDE0', text: 'What does our Architect know about session migration?' },
-] as const;
+/** Suggestion chip definitions for the empty state. The text comes from the
+ *  bundle key `overlay.assistant.suggestion_chip_{N}` at render time. */
+const SUGGESTION_CHIP_ICONS = ['\uD83D\uDCC4', '\u2709', '\uD83D\uDCDA', '\uD83E\uDDE0'] as const;
 
 export class AssistantView {
   private mounted = false;
+  // Plan: i18n instance — defaults to English, upgraded via setI18n() before mount.
+  private i18n: I18n = createI18nInstance('en');
+
+  /** Set the localized translation function used by all rendered text.
+   *  Call BEFORE mount() so the first paint uses the user's locale. */
+  setI18n(i18n: I18n): void {
+    this.i18n = i18n;
+  }
+
+  private t(key: string, opts?: Record<string, unknown>): string {
+    return this.i18n.t(key, opts) as string;
+  }
+
   private container: HTMLElement | null = null;
   private root: HTMLElement | null = null;
 
@@ -450,7 +461,7 @@ export class AssistantView {
     if (effectiveSources.length > AssistantView.MAX_SOURCE_TAGS) {
       const moreTag = document.createElement('span');
       moreTag.className = 'msg-source-tag';
-      moreTag.textContent = `+${effectiveSources.length - AssistantView.MAX_SOURCE_TAGS} more`;
+      moreTag.textContent = this.t('overlay.assistant.sources_more', { count: effectiveSources.length - AssistantView.MAX_SOURCE_TAGS });
       container.appendChild(moreTag);
     }
 
@@ -496,7 +507,7 @@ export class AssistantView {
     bar.className = 'context-bar';
 
     // 1. Transcript toggle (default active)
-    const transcriptToggle = this.createContextToggle('transcript', 'Transcript', this.transcriptActive);
+    const transcriptToggle = this.createContextToggle('transcript', this.t('overlay.assistant.context_transcript'), this.transcriptActive);
     transcriptToggle.addEventListener('click', () => {
       this.transcriptActive = !this.transcriptActive;
       transcriptToggle.classList.toggle('active', this.transcriptActive);
@@ -535,7 +546,7 @@ export class AssistantView {
     sep2.className = 'context-separator';
 
     // 5. Web Search toggle (default inactive)
-    const webToggle = this.createContextToggle('web', 'Web Search', this.webActive);
+    const webToggle = this.createContextToggle('web', this.t('overlay.assistant.context_web_search'), this.webActive);
     webToggle.addEventListener('click', () => {
       this.webActive = !this.webActive;
       webToggle.classList.toggle('active', this.webActive);
@@ -577,7 +588,7 @@ export class AssistantView {
 
     const label = document.createElement('div');
     label.className = 'persona-dropdown-label';
-    label.textContent = 'Attach persona knowledge';
+    label.textContent = this.t('overlay.assistant.attach_persona_knowledge');
     dropdown.appendChild(label);
 
     const list = document.createElement('div');
@@ -585,11 +596,11 @@ export class AssistantView {
 
     if (this.personaLoadFailed) {
       const errMsg = document.createElement('span');
-      errMsg.textContent = 'Could not load personas \u2014 reload the extension.';
+      errMsg.textContent = this.t('overlay.assistant.personas_load_failed');
       list.appendChild(errMsg);
     } else if (this.personas.length === 0) {
       const emptyMsg = document.createElement('span');
-      emptyMsg.textContent = 'No personas configured.';
+      emptyMsg.textContent = this.t('overlay.assistant.no_personas_configured');
       list.appendChild(emptyMsg);
     } else {
       for (const persona of this.personas) {
@@ -655,9 +666,9 @@ export class AssistantView {
 
   private getPersonaBtnText(): string {
     if (this.personaLoadFailed) {
-      return 'Personas (?)';
+      return this.t('overlay.assistant.personas_btn_unknown');
     }
-    return `Personas (${this.checkedPersonaIds.size})`;
+    return this.t('overlay.assistant.personas_btn_count', { count: this.checkedPersonaIds.size });
   }
 
   // ── Private: Chat Messages Area ──
@@ -714,34 +725,37 @@ export class AssistantView {
     // Title
     const title = document.createElement('div');
     title.className = 'chat-empty-title';
-    title.textContent = 'How can I help?';
+    title.textContent = this.t('overlay.assistant.chat_empty_title');
 
     // Subtitle
     const subtitle = document.createElement('div');
     subtitle.className = 'chat-empty-subtitle';
-    subtitle.textContent = 'Ask me anything. Toggle context sources above to include meeting transcript or persona knowledge.';
+    subtitle.textContent = this.t('overlay.assistant.chat_empty_subtitle');
 
-    // Suggestion chips
+    // Suggestion chips — Plan: text comes from the bundle, icon is static.
     const suggestions = document.createElement('div');
     suggestions.className = 'chat-empty-suggestions';
 
-    for (const chipDef of SUGGESTION_CHIPS) {
+    for (let i = 0; i < SUGGESTION_CHIP_ICONS.length; i++) {
+      const text = this.t(`overlay.assistant.suggestion_chip_${i + 1}`);
+      const icon = SUGGESTION_CHIP_ICONS[i]!;
+
       const chip = document.createElement('div');
       chip.className = 'suggestion-chip';
-      chip.dataset.text = chipDef.text;
+      chip.dataset.text = text;
 
       const chipIcon = document.createElement('span');
       chipIcon.className = 'suggestion-icon';
-      chipIcon.textContent = chipDef.icon;
+      chipIcon.textContent = icon;
 
       const chipText = document.createElement('span');
-      chipText.textContent = chipDef.text;
+      chipText.textContent = text;
 
       chip.appendChild(chipIcon);
       chip.appendChild(chipText);
 
       chip.addEventListener('click', () => {
-        this.handleSuggestionClick(chipDef.text);
+        this.handleSuggestionClick(text);
       });
 
       suggestions.appendChild(chip);
@@ -778,7 +792,7 @@ export class AssistantView {
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'chat-input';
-    input.placeholder = 'Ask anything...';
+    input.placeholder = this.t('overlay.assistant.chat_input_placeholder');
     input.maxLength = 4000;
     this.chatInputEl = input;
 

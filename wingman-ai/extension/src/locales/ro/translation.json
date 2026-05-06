@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-final-2026-05-06",
+    "revision": "overlay-assistant-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -658,6 +658,23 @@
       "listening": "Ascult conversația...",
       "waiting_suggestions": "Aștept sugestii...",
       "unknown_speaker": "Necunoscut"
+    },
+    "assistant": {
+      "chat_empty_title": "Cu ce vă pot ajuta?",
+      "chat_empty_subtitle": "Întrebați orice. Activați sursele de context de mai sus pentru a include transcrierea întâlnirii sau baza de cunoștințe a personajului.",
+      "chat_input_placeholder": "Întrebați orice...",
+      "context_transcript": "Transcriere",
+      "context_web_search": "Căutare web",
+      "attach_persona_knowledge": "Atașează baza de cunoștințe a personajului",
+      "personas_load_failed": "Nu s-au putut încărca personajele — reîncărcați extensia.",
+      "no_personas_configured": "Niciun personaj configurat.",
+      "personas_btn_count": "Personaje ({{count}})",
+      "personas_btn_unknown": "Personaje (?)",
+      "sources_more": "+{{count}} în plus",
+      "suggestion_chip_1": "Care este fluxul PKCE menționat de Sarah?",
+      "suggestion_chip_2": "Schițați un e-mail de urmărire cu acțiuni de urmat",
+      "suggestion_chip_3": "Explicați cele mai bune practici de rotație a token-urilor OAuth 2.0",
+      "suggestion_chip_4": "Ce știe arhitectul nostru despre migrarea sesiunilor?"
     }
   },
   "summary": {

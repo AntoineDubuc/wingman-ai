@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-final-2026-05-06",
+    "revision": "overlay-assistant-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -654,6 +654,23 @@
       "listening": "Escuchando la conversación...",
       "waiting_suggestions": "Esperando sugerencias...",
       "unknown_speaker": "Desconocido"
+    },
+    "assistant": {
+      "chat_empty_title": "¿Cómo puedo ayudar?",
+      "chat_empty_subtitle": "Pregunte cualquier cosa. Active las fuentes de contexto arriba para incluir la transcripción de la reunión o la base de conocimientos del persona.",
+      "chat_input_placeholder": "Pregunte cualquier cosa...",
+      "context_transcript": "Transcripción",
+      "context_web_search": "Búsqueda web",
+      "attach_persona_knowledge": "Adjuntar conocimiento del persona",
+      "personas_load_failed": "No se pudieron cargar los personas — recargue la extensión.",
+      "no_personas_configured": "No hay personas configurados.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} más",
+      "suggestion_chip_1": "¿Cuál es el flujo PKCE que Sarah mencionó?",
+      "suggestion_chip_2": "Redacte un correo de seguimiento con elementos de acción",
+      "suggestion_chip_3": "Explique las mejores prácticas de rotación de tokens OAuth 2.0",
+      "suggestion_chip_4": "¿Qué sabe nuestro arquitecto sobre la migración de sesiones?"
     }
   },
   "summary": {

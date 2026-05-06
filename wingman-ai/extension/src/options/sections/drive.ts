@@ -129,16 +129,20 @@ export class DriveSection {
           'success',
         );
       } else {
+        // Plan 10 FR-017: localized primary message + raw drive error in monospace
         this.ctx.showToast(
-          result.error ?? this.ctx.t?.('options.toasts.drive_connect_failed') ?? 'Failed to connect',
+          this.ctx.t?.('errors.drive.oauth_failed') ?? 'Google Drive sign-in failed. Please try again.',
           'error',
+          result.error,
         );
       }
     } catch (error) {
       console.error('Failed to connect Google Drive:', error);
+      const raw = error instanceof Error ? error.message : String(error);
       this.ctx.showToast(
-        this.ctx.t?.('options.toasts.drive_connect_failed') ?? 'Failed to connect',
+        this.ctx.t?.('errors.drive.oauth_failed') ?? 'Google Drive sign-in failed. Please try again.',
         'error',
+        raw,
       );
     } finally {
       if (this.connectBtn) {

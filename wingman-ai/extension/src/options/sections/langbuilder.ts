@@ -127,10 +127,11 @@ export class LangBuilderSection {
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Connection failed';
       this.setStatusDot('status-error', msg);
+      // Plan 10 FR-017: localized primary + raw error in monospace
       this.ctx.showToast(
-        this.ctx.t?.('options.toasts.langbuilder_test_failed', { rawError: msg })
-          ?? `Test failed: ${msg}`,
+        this.ctx.t?.('errors.langbuilder.api_failure') ?? 'LangBuilder unavailable.',
         'error',
+        msg,
       );
     } finally {
       if (this.testBtn) {

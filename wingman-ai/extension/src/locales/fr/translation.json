@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-kb-aria-2026-05-06",
+    "revision": "plan-5-html-descriptions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -413,7 +413,9 @@
         "format_plaintext": "Texte brut (.txt)",
         "format_json": "JSON (.json)",
         "active_personas_title": "Personas actifs pour les appels",
-        "active_personas_description": "Sélectionnez les personas actifs pendant vos appels."
+        "active_personas_description": "Sélectionnez les personas actifs pendant vos appels.",
+        "import_setup_folder_description": "Choisissez un dossier contenant un fichier .env et des fichiers *persona*.json pour importer identifiants et personas en un clic. Vos propres personas et modifications sont préservés — seuls les personas livrés non modifiés sont écrasés.",
+        "import_setup_folder_security": "Rappel de sécurité : les clés d'API sont stockées en clair dans votre profil Chrome. N'importez pas de clés dans un profil Chrome partagé."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilité de la transcription",
@@ -437,7 +439,13 @@
         "display_suggestions_only": "Suggestions seulement",
         "call_summary_title": "Résumé de l'appel",
         "auto_summary_label": "Générer auto le résumé d'appel",
-        "include_key_moments_label": "Inclure les moments clés"
+        "include_key_moments_label": "Inclure les moments clés",
+        "transcription_sensitivity_description": "Contrôle combien de temps Wingman attend avant de considérer la parole d'un locuteur comme finale.",
+        "suggestion_frequency_description": "Délai minimum entre les suggestions IA. Des valeurs basses sont plus réactives; les valeurs élevées réduisent le coût LLM.",
+        "ai_prompt_tuning_description": "Adapte vos prompts de persona pour fonctionner au mieux sur le LLM actif (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Contrôle quand Wingman fournit des suggestions selon qui parle.",
+        "panel_layout_description": "Contrôle où le panneau Wingman apparaît pendant les appels et ce qu'il affiche.",
+        "call_summary_description": "Obtenez un résumé généré par IA avec actions à entreprendre et moments clés après chaque appel."
       },
       "personas": {
         "personas_title": "Personas",
@@ -459,13 +467,16 @@
         "export_button": "Exporter",
         "duplicate_button": "Dupliquer",
         "delete_button": "Supprimer",
-        "save_button": "Enregistrer"
+        "save_button": "Enregistrer",
+        "personas_description": "Regroupez un prompt système avec des documents de la base de connaissances. Chaque persona donne à l'IA sa voix et son contexte."
       },
       "conclave": {
         "settings_title": "Paramètres du Conclave",
         "leader_label": "Leader du Conclave",
         "presets_title": "Préréglages",
-        "new_preset_button": "+ Nouveau préréglage"
+        "new_preset_button": "+ Nouveau préréglage",
+        "settings_description": "Configurez comment plusieurs personas travaillent ensemble quand plus d'un est actif.",
+        "presets_description": "Enregistrez des combinaisons de personas pour activation rapide. Les préréglages n'incluent pas d'identifiants."
       },
       "langbuilder": {
         "connection_title": "Connexion LangBuilder",
@@ -473,7 +484,9 @@
         "api_key_label": "Clé d'API",
         "test_button": "Tester la connexion",
         "save_button": "Enregistrer",
-        "flows_title": "Flux disponibles"
+        "flows_title": "Flux disponibles",
+        "connection_description": "Connectez-vous à votre instance LangBuilder pour exécuter des flux personnalisés depuis la superposition.",
+        "flows_description": "Flux de votre instance LangBuilder, rafraîchis lors du test de connexion."
       },
       "websearch": {
         "provider_title": "Fournisseur de recherche web",
@@ -481,7 +494,9 @@
         "provider_brave": "Brave Search",
         "api_key_label": "Clé d'API",
         "test_button": "Tester la connexion",
-        "budget_title": "Budget quotidien de requêtes"
+        "budget_title": "Budget quotidien de requêtes",
+        "provider_description": "Activez la recherche web en direct pendant les réunions via Brave Search.",
+        "budget_description": "Limitez le nombre de recherches web par jour pour contrôler les coûts API."
       },
       "support": {
         "support_wingman_title": "Soutenir Wingman",
@@ -493,7 +508,13 @@
         "langbuilder_title": "Conçu avec LangBuilder",
         "learn_more_button": "En savoir plus",
         "connect_title": "Connectez-vous au créateur",
-        "linkedin_button": "Se connecter sur LinkedIn"
+        "linkedin_button": "Se connecter sur LinkedIn",
+        "support_wingman_description": "Vous aimez Wingman? Votre soutien m'aide à continuer de créer des outils gratuits axés sur la confidentialité.",
+        "tutorials_description": "Apprenez à tirer le meilleur parti de Wingman avec des guides étape par étape.",
+        "feature_requests_description": "Une idée de fonctionnalité? Un bug trouvé? Ouvrez un ticket sur GitHub.",
+        "langbuilder_description": "Les flux IA de Wingman sont propulsés par LangBuilder, une plateforme d'orchestration open-source.",
+        "connect_intro": "Bonjour, je suis Antoine Dubuc — développeur solo derrière Wingman.",
+        "connect_cta": "J'aimerais savoir comment vous utilisez Wingman et ce que vous aimeriez voir ensuite."
       },
       "modals": {
         "reset_title": "Réinitialiser par défaut?",

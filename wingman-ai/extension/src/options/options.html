@@ -69,11 +69,11 @@
         <!-- Setup Folder Import Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.setup.import_setup_folder_title">Import Setup Folder</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.setup.import_setup_folder_description">
             Pick a folder containing a <code>.env</code> file and <code>*persona*.json</code> files to import credentials and personas in one click.
             Your own personas and edits are preserved — only unedited shipped personas are overwritten.
           </p>
-          <p class="form-section-description" style="color: #aa6600;">
+          <p class="form-section-description" style="color: #aa6600;" data-i18n="options.html.setup.import_setup_folder_security">
             <strong>Security reminder:</strong> API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.
           </p>
           <details style="margin-bottom: 12px;">
@@ -100,7 +100,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- API Keys Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.setup.api_keys_title">API Keys</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.setup.api_keys_description">
             Enter your API keys to enable speech-to-text and AI responses.
             Your keys are stored locally and never sent to our servers.
           </p>
@@ -308,7 +308,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Google Drive Integration Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.setup.google_drive_title">Google Drive Integration</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.setup.google_drive_description">
             Automatically save meeting transcripts to your Google Drive after each session.
           </p>
 
@@ -385,7 +385,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Active Personas Card (Hydra) -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.setup.active_personas_title">Active Personas for Calls</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.setup.active_personas_description">
             Select which personas are active during your calls. Each active persona contributes suggestions from its own expertise and knowledge base.
           </p>
 
@@ -408,7 +408,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Transcription Sensitivity Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.transcription_sensitivity_title">Transcription Sensitivity</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.transcription_sensitivity_description">
             Controls how long Wingman waits for a speaker to pause before finalizing a transcript segment.
             Higher values produce fewer, longer bubbles and fewer API calls.
           </p>
@@ -432,7 +432,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Suggestion Cooldown Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.suggestion_frequency_title">Suggestion Frequency</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.suggestion_frequency_description">
             Minimum time between AI suggestions. Higher values reduce API usage but may miss fast-paced conversation.
           </p>
 
@@ -468,7 +468,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- AI Tuning Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.ai_prompt_tuning_title">AI Prompt Tuning</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.ai_prompt_tuning_description">
             Adapts your persona prompts to work best with your selected AI model.
             Different models respond better to different prompt structures.
           </p>
@@ -492,7 +492,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Speaker Filter Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.speaker_filter_title">Speaker Filter</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.speaker_filter_description">
             Control when Wingman provides suggestions based on who is speaking.
           </p>
 
@@ -514,7 +514,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Panel Layout Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.panel_layout_title">Panel Layout</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.panel_layout_description">
             Controls where the Wingman panel appears during calls. Sidebar modes attach the panel to the browser edge.
           </p>
           <div class="form-group">
@@ -537,7 +537,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Call Summary Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.calls.call_summary_title">Call Summary</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.calls.call_summary_description">
             Get an AI-generated summary with action items when your calls end.
           </p>
 
@@ -575,7 +575,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="persona-header-row">
             <div>
               <h2 class="form-section-title" data-i18n="options.html.personas.personas_title">Personas</h2>
-              <p class="form-section-description">
+              <p class="form-section-description" data-i18n="options.html.personas.personas_description">
                 Bundle a system prompt with specific Knowledge Base documents into switchable presets.
               </p>
             </div>
@@ -723,7 +723,7 @@ LANGBUILDER_FLOW_ID=...</pre>
       <div class="tab-panel" id="panel-conclave" data-panel="conclave" role="tabpanel" aria-labelledby="tab-conclave">
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.conclave.settings_title">Conclave Settings</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.conclave.settings_description">
             Configure how multiple personas work together during calls. The conclave leader guides post-call summaries.
           </p>
 
@@ -742,7 +742,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Presets Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.conclave.presets_title">Presets</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.conclave.presets_description">
             Save persona combinations for quick activation. Click a preset to instantly switch to that persona group.
           </p>
 
@@ -760,7 +760,7 @@ LANGBUILDER_FLOW_ID=...</pre>
       <div class="tab-panel" id="panel-langbuilder" data-panel="langbuilder" role="tabpanel" aria-labelledby="tab-langbuilder">
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.langbuilder.connection_title">LangBuilder Connection</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.langbuilder.connection_description">
             Connect to your LangBuilder instance to run AI workflows during meetings.
           </p>
 
@@ -817,7 +817,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Flow preview (hidden until configured) -->
         <div class="options-card" id="langbuilder-flows-card" style="display: none;">
           <h2 class="form-section-title" data-i18n="options.html.langbuilder.flows_title">Available Flows</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.langbuilder.flows_description">
             Flows from your LangBuilder instance. Select a flow during meetings from the overlay panel.
           </p>
           <select id="langbuilder-flow-preview" class="select-input">
@@ -831,7 +831,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- API Key Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.websearch.provider_title">Web Search Provider</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.websearch.provider_description">
             Enable live web search during meetings. Results are injected into the assistant's context for up-to-date answers.
           </p>
 
@@ -863,7 +863,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         <!-- Daily Cap Card -->
         <div class="options-card">
           <h2 class="form-section-title" data-i18n="options.html.websearch.budget_title">Daily Query Budget</h2>
-          <p class="form-section-description">
+          <p class="form-section-description" data-i18n="options.html.websearch.budget_description">
             Limit the number of web searches per day to control costs. You'll be warned at 80% and blocked at 100%.
           </p>
 
@@ -891,7 +891,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
             <h2 class="form-section-title" data-i18n="options.html.support.support_wingman_title">Support Wingman</h2>
-            <p class="form-section-description">
+            <p class="form-section-description" data-i18n="options.html.support.support_wingman_description">
               Enjoying Wingman? Your support helps fund new features and improvements.
             </p>
           </div>
@@ -906,7 +906,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="12" y1="6" x2="12" y2="10"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg>
             <h2 class="form-section-title" data-i18n="options.html.support.tutorials_title">Tutorials &amp; Guides</h2>
-            <p class="form-section-description">
+            <p class="form-section-description" data-i18n="options.html.support.tutorials_description">
               Learn how to get the most out of Wingman with step-by-step tutorials.
             </p>
           </div>
@@ -921,7 +921,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <h2 class="form-section-title" data-i18n="options.html.support.feature_requests_title">Feature Requests & Bug Reports</h2>
-            <p class="form-section-description">
+            <p class="form-section-description" data-i18n="options.html.support.feature_requests_description">
               Have an idea for a new feature? Found a bug? We'd love to hear from you.
             </p>
           </div>
@@ -936,7 +936,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="support-hero">
             <img src="../assets/langbuilder-logo.png" alt="LangBuilder" width="64" height="64" style="margin-bottom: 8px;">
             <h2 class="form-section-title" data-i18n="options.html.support.langbuilder_title">Built with LangBuilder</h2>
-            <p class="form-section-description">
+            <p class="form-section-description" data-i18n="options.html.support.langbuilder_description">
               Wingman's AI workflows are powered by <strong>LangBuilder</strong> — CloudGeometry's open-source AI agent platform. Build visual AI workflows with no vendor lock-in, supporting GPT, Claude, Gemini, and more.
             </p>
           </div>
@@ -951,10 +951,10 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="support-hero">
             <img src="../assets/linkedin-profile.png" alt="Antoine Dubuc" style="max-width: 100%; height: auto; border-radius: 12px; margin-bottom: 12px; border: 3px solid #e67e22;">
             <h2 class="form-section-title" data-i18n="options.html.support.connect_title">Connect with the Creator</h2>
-            <p class="form-section-description">
+            <p class="form-section-description" data-i18n="options.html.support.connect_intro">
               Hi, I'm Antoine Dubuc — Senior Technical Product Manager for LangBuilder at CloudGeometry.
             </p>
-            <p class="form-section-description" style="margin-top: 8px;">
+            <p class="form-section-description" style="margin-top: 8px;" data-i18n="options.html.support.connect_cta">
               I'd love to hear how you're using Wingman! Also happy to chat if you're curious about LangBuilder.
             </p>
           </div>

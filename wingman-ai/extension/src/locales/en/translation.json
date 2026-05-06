@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-kb-aria-2026-05-06",
+    "revision": "plan-5-html-descriptions-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -413,7 +413,9 @@
         "format_plaintext": "Plain Text (.txt)",
         "format_json": "JSON (.json)",
         "active_personas_title": "Active Personas for Calls",
-        "active_personas_description": "Select which personas are active during your calls."
+        "active_personas_description": "Select which personas are active during your calls.",
+        "import_setup_folder_description": "Pick a folder containing a .env file and *persona*.json files to import credentials and personas in one click. Your own personas and edits are preserved — only unedited shipped personas are overwritten.",
+        "import_setup_folder_security": "Security reminder: API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile."
       },
       "calls": {
         "transcription_sensitivity_title": "Transcription Sensitivity",
@@ -437,7 +439,13 @@
         "display_suggestions_only": "Suggestions only",
         "call_summary_title": "Call Summary",
         "auto_summary_label": "Auto-generate call summary",
-        "include_key_moments_label": "Include key moments"
+        "include_key_moments_label": "Include key moments",
+        "transcription_sensitivity_description": "Controls how long Wingman waits for a speaker to pause before treating their utterance as final.",
+        "suggestion_frequency_description": "Minimum time between AI suggestions. Lower values are more responsive; higher values reduce LLM cost.",
+        "ai_prompt_tuning_description": "Adapts your persona prompts to work best on the active LLM (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Control when Wingman provides suggestions based on who is speaking.",
+        "panel_layout_description": "Controls where the Wingman panel appears during calls and what it shows.",
+        "call_summary_description": "Get an AI-generated summary with action items and key moments after each call."
       },
       "personas": {
         "personas_title": "Personas",
@@ -459,13 +467,16 @@
         "export_button": "Export",
         "duplicate_button": "Duplicate",
         "delete_button": "Delete",
-        "save_button": "Save"
+        "save_button": "Save",
+        "personas_description": "Bundle a system prompt with specific Knowledge Base documents. Each persona gives the AI its own voice and context."
       },
       "conclave": {
         "settings_title": "Conclave Settings",
         "leader_label": "Conclave Leader",
         "presets_title": "Presets",
-        "new_preset_button": "+ New Preset"
+        "new_preset_button": "+ New Preset",
+        "settings_description": "Configure how multiple personas work together when more than one is active.",
+        "presets_description": "Save persona combinations for quick activation. Presets do not include credentials."
       },
       "langbuilder": {
         "connection_title": "LangBuilder Connection",
@@ -473,7 +484,9 @@
         "api_key_label": "API Key",
         "test_button": "Test Connection",
         "save_button": "Save",
-        "flows_title": "Available Flows"
+        "flows_title": "Available Flows",
+        "connection_description": "Connect to your LangBuilder instance to run custom flows from the overlay.",
+        "flows_description": "Flows from your LangBuilder instance, refreshed on Test Connection."
       },
       "websearch": {
         "provider_title": "Web Search Provider",
@@ -481,7 +494,9 @@
         "provider_brave": "Brave Search",
         "api_key_label": "API Key",
         "test_button": "Test Connection",
-        "budget_title": "Daily Query Budget"
+        "budget_title": "Daily Query Budget",
+        "provider_description": "Enable live web search during meetings via Brave Search.",
+        "budget_description": "Limit the number of web searches per day to control API costs."
       },
       "support": {
         "support_wingman_title": "Support Wingman",
@@ -493,7 +508,13 @@
         "langbuilder_title": "Built with LangBuilder",
         "learn_more_button": "Learn More",
         "connect_title": "Connect with the Creator",
-        "linkedin_button": "Connect on LinkedIn"
+        "linkedin_button": "Connect on LinkedIn",
+        "support_wingman_description": "Enjoying Wingman? Your support helps me keep building free, privacy-first tools.",
+        "tutorials_description": "Learn how to get the most out of Wingman with step-by-step guides.",
+        "feature_requests_description": "Have an idea for a new feature? Found a bug? Open an issue on GitHub.",
+        "langbuilder_description": "Wingman's AI workflows are powered by LangBuilder, an open-source orchestration platform.",
+        "connect_intro": "Hi, I'm Antoine Dubuc — solo developer behind Wingman.",
+        "connect_cta": "I'd love to hear how you're using Wingman and what you'd like to see next."
       },
       "modals": {
         "reset_title": "Reset to Default?",

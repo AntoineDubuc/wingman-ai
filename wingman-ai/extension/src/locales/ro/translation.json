@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-kb-aria-2026-05-06",
+    "revision": "plan-5-html-descriptions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -416,7 +416,9 @@
         "format_plaintext": "Text simplu (.txt)",
         "format_json": "JSON (.json)",
         "active_personas_title": "Personaje active pentru apeluri",
-        "active_personas_description": "Selectați ce personaje sunt active în timpul apelurilor."
+        "active_personas_description": "Selectați ce personaje sunt active în timpul apelurilor.",
+        "import_setup_folder_description": "Alegeți un folder care conține un fișier .env și fișiere *persona*.json pentru a importa credențiale și personaje într-un singur clic. Personajele și editările dvs. sunt păstrate — doar personajele livrate needitate sunt suprascrise.",
+        "import_setup_folder_security": "Memento de securitate: cheile API sunt stocate în text simplu în profilul Chrome. Nu importați credențiale într-un profil Chrome partajat."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilitate transcriere",
@@ -440,7 +442,13 @@
         "display_suggestions_only": "Doar sugestii",
         "call_summary_title": "Rezumat apel",
         "auto_summary_label": "Generează automat rezumatul apelului",
-        "include_key_moments_label": "Include momente cheie"
+        "include_key_moments_label": "Include momente cheie",
+        "transcription_sensitivity_description": "Controlează cât așteaptă Wingman ca un vorbitor să facă o pauză înainte de a-i trata discursul ca finalizat.",
+        "suggestion_frequency_description": "Timp minim între sugestii IA. Valori mici sunt mai reactive; valori mari reduc costul LLM.",
+        "ai_prompt_tuning_description": "Adaptează prompturile personajelor pentru a funcționa optim pe LLM-ul activ (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Controlează când Wingman oferă sugestii în funcție de cine vorbește.",
+        "panel_layout_description": "Controlează unde apare panoul Wingman în timpul apelurilor și ce afișează.",
+        "call_summary_description": "Obțineți un rezumat generat de IA cu elemente de acțiune și momente cheie după fiecare apel."
       },
       "personas": {
         "personas_title": "Personaje",
@@ -462,13 +470,16 @@
         "export_button": "Exportă",
         "duplicate_button": "Duplică",
         "delete_button": "Șterge",
-        "save_button": "Salvează"
+        "save_button": "Salvează",
+        "personas_description": "Combinați un prompt de sistem cu documente specifice ale bazei de cunoștințe. Fiecare personaj oferă IA propria voce și context."
       },
       "conclave": {
         "settings_title": "Setări Conclave",
         "leader_label": "Lider Conclave",
         "presets_title": "Presetări",
-        "new_preset_button": "+ Presetare nouă"
+        "new_preset_button": "+ Presetare nouă",
+        "settings_description": "Configurați cum colaborează mai multe personaje când mai mult de unul este activ.",
+        "presets_description": "Salvați combinații de personaje pentru activare rapidă. Presetările nu includ credențiale."
       },
       "langbuilder": {
         "connection_title": "Conexiune LangBuilder",
@@ -476,7 +487,9 @@
         "api_key_label": "Cheie API",
         "test_button": "Testează conexiunea",
         "save_button": "Salvează",
-        "flows_title": "Fluxuri disponibile"
+        "flows_title": "Fluxuri disponibile",
+        "connection_description": "Conectați-vă la instanța LangBuilder pentru a executa fluxuri personalizate din suprapunere.",
+        "flows_description": "Fluxuri din instanța LangBuilder, reîmprospătate la Testare conexiune."
       },
       "websearch": {
         "provider_title": "Furnizor căutare web",
@@ -484,7 +497,9 @@
         "provider_brave": "Brave Search",
         "api_key_label": "Cheie API",
         "test_button": "Testează conexiunea",
-        "budget_title": "Buget zilnic interogări"
+        "budget_title": "Buget zilnic interogări",
+        "provider_description": "Activează căutarea web în direct în timpul întâlnirilor prin Brave Search.",
+        "budget_description": "Limitați numărul de căutări web pe zi pentru a controla costurile API."
       },
       "support": {
         "support_wingman_title": "Sprijină Wingman",
@@ -496,7 +511,13 @@
         "langbuilder_title": "Construit cu LangBuilder",
         "learn_more_button": "Află mai mult",
         "connect_title": "Conectați-vă cu creatorul",
-        "linkedin_button": "Conectează-te pe LinkedIn"
+        "linkedin_button": "Conectează-te pe LinkedIn",
+        "support_wingman_description": "Vă place Wingman? Sprijinul dvs. mă ajută să continuu să construiesc instrumente gratuite axate pe confidențialitate.",
+        "tutorials_description": "Învățați cum să profitați la maximum de Wingman cu ghiduri pas cu pas.",
+        "feature_requests_description": "Aveți o idee pentru o nouă funcționalitate? Ați găsit un bug? Deschideți un issue pe GitHub.",
+        "langbuilder_description": "Fluxurile IA ale Wingman sunt alimentate de LangBuilder, o platformă de orchestrare open-source.",
+        "connect_intro": "Bună, sunt Antoine Dubuc — dezvoltator solo în spatele Wingman.",
+        "connect_cta": "Mi-ar plăcea să aud cum folosiți Wingman și ce ați dori să vedeți în continuare."
       },
       "modals": {
         "reset_title": "Resetare la implicit?",

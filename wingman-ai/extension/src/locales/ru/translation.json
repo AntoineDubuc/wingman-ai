@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-kb-aria-2026-05-06",
+    "revision": "plan-5-html-descriptions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -416,7 +416,9 @@
         "format_plaintext": "Простой текст (.txt)",
         "format_json": "JSON (.json)",
         "active_personas_title": "Активные персонажи для звонков",
-        "active_personas_description": "Выберите, какие персонажи активны во время звонков."
+        "active_personas_description": "Выберите, какие персонажи активны во время звонков.",
+        "import_setup_folder_description": "Выберите папку с файлом .env и файлами *persona*.json для импорта учётных данных и персонажей одним кликом. Ваши персонажи и правки сохраняются — перезаписываются только неотредактированные стандартные персонажи.",
+        "import_setup_folder_security": "Напоминание о безопасности: ключи API хранятся в открытом виде в вашем профиле Chrome. Не импортируйте учётные данные в общий профиль Chrome."
       },
       "calls": {
         "transcription_sensitivity_title": "Чувствительность транскрипции",
@@ -440,7 +442,13 @@
         "display_suggestions_only": "Только подсказки",
         "call_summary_title": "Сводка звонка",
         "auto_summary_label": "Авто-генерация сводки звонка",
-        "include_key_moments_label": "Включать ключевые моменты"
+        "include_key_moments_label": "Включать ключевые моменты",
+        "transcription_sensitivity_description": "Контролирует, как долго Wingman ждёт паузы говорящего, прежде чем считать его высказывание завершённым.",
+        "suggestion_frequency_description": "Минимальное время между подсказками ИИ. Низкие значения более отзывчивы; высокие снижают затраты LLM.",
+        "ai_prompt_tuning_description": "Адаптирует ваши промпты персонажей для лучшей работы на активном LLM (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Контролирует, когда Wingman даёт подсказки в зависимости от того, кто говорит.",
+        "panel_layout_description": "Контролирует, где появляется панель Wingman во время звонков и что показывает.",
+        "call_summary_description": "Получайте сгенерированную ИИ сводку с пунктами действий и ключевыми моментами после каждого звонка."
       },
       "personas": {
         "personas_title": "Персонажи",
@@ -462,13 +470,16 @@
         "export_button": "Экспорт",
         "duplicate_button": "Дублировать",
         "delete_button": "Удалить",
-        "save_button": "Сохранить"
+        "save_button": "Сохранить",
+        "personas_description": "Объедините системный промпт с конкретными документами Базы знаний. Каждый персонаж даёт ИИ свой голос и контекст."
       },
       "conclave": {
         "settings_title": "Настройки Conclave",
         "leader_label": "Лидер Conclave",
         "presets_title": "Пресеты",
-        "new_preset_button": "+ Новый пресет"
+        "new_preset_button": "+ Новый пресет",
+        "settings_description": "Настройте, как несколько персонажей работают вместе, когда активен более одного.",
+        "presets_description": "Сохраняйте комбинации персонажей для быстрой активации. Пресеты не включают учётные данные."
       },
       "langbuilder": {
         "connection_title": "Подключение LangBuilder",
@@ -476,7 +487,9 @@
         "api_key_label": "Ключ API",
         "test_button": "Проверить соединение",
         "save_button": "Сохранить",
-        "flows_title": "Доступные потоки"
+        "flows_title": "Доступные потоки",
+        "connection_description": "Подключитесь к вашему экземпляру LangBuilder для запуска кастомных потоков из оверлея.",
+        "flows_description": "Потоки из вашего экземпляра LangBuilder, обновляемые при Проверке соединения."
       },
       "websearch": {
         "provider_title": "Провайдер веб-поиска",
@@ -484,7 +497,9 @@
         "provider_brave": "Brave Search",
         "api_key_label": "Ключ API",
         "test_button": "Проверить соединение",
-        "budget_title": "Дневной лимит запросов"
+        "budget_title": "Дневной лимит запросов",
+        "provider_description": "Включите живой веб-поиск во время встреч через Brave Search.",
+        "budget_description": "Ограничьте количество веб-поисков в день для контроля затрат API."
       },
       "support": {
         "support_wingman_title": "Поддержать Wingman",
@@ -496,7 +511,13 @@
         "langbuilder_title": "Построено с LangBuilder",
         "learn_more_button": "Узнать больше",
         "connect_title": "Связаться с создателем",
-        "linkedin_button": "Связаться в LinkedIn"
+        "linkedin_button": "Связаться в LinkedIn",
+        "support_wingman_description": "Нравится Wingman? Ваша поддержка помогает мне продолжать создавать бесплатные инструменты с приоритетом приватности.",
+        "tutorials_description": "Узнайте, как извлечь максимум из Wingman с помощью пошаговых руководств.",
+        "feature_requests_description": "Есть идея новой функции? Нашли баг? Откройте issue на GitHub.",
+        "langbuilder_description": "ИИ-рабочие процессы Wingman работают на LangBuilder — открытой платформе оркестрации.",
+        "connect_intro": "Привет, я Антуан Дубук — соло-разработчик Wingman.",
+        "connect_cta": "Мне было бы интересно узнать, как вы используете Wingman и что хотите увидеть дальше."
       },
       "modals": {
         "reset_title": "Сбросить по умолчанию?",

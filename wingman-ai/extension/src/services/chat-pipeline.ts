@@ -13,6 +13,7 @@ import { costTracker } from './cost-tracker';
 import { addLanguageInstruction } from '../shared/language-injection';
 import { createI18nInstance } from '../shared/i18n-init';
 import { getActiveLocale } from '../background/sw-locale';
+import { recordLlmResponse } from '../shared/language-compliance';
 import type { AssistantView } from '../content/overlay/assistant-view';
 
 /** Idle timeout before aborting a hung stream (ms). */
@@ -101,6 +102,9 @@ export function registerChatPipeline(assistantView: AssistantView): void {
           if (chunk.usage) {
             costTracker.addLLMUsage(chunk.usage.inputTokens, chunk.usage.outputTokens);
           }
+
+          // Plan 11 FR-031: record compliance — fire-and-forget; never blocks the UI.
+          void recordLlmResponse(accumulated, getActiveLocale());
 
           isStreaming = false;
           return;

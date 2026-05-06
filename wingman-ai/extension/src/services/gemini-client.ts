@@ -1243,7 +1243,7 @@ export class GeminiClient {
       .map((c, i) => `[Source ${i + 1}: ${c.documentName} (relevance: ${(c.score * 100).toFixed(0)}%)]\n${c.text}`)
       .join('\n\n');
 
-    const prompt =
+    const basePrompt =
       `You are ${role}. A user asked a question during a live call and wants an answer from their Knowledge Base.\n\n` +
       `USER QUESTION: ${query}\n\n` +
       `KNOWLEDGE BASE CONTEXT:\n${chunksContext}\n\n` +
@@ -1251,6 +1251,8 @@ export class GeminiClient {
       `If the context does not contain enough information, say so.\n\n` +
       `Format your response EXACTLY as:\nANSWER: <your primary answer>\nALT 1: <alternative phrasing>\nALT 2: <another alternative phrasing>\n\n` +
       `If the context has no relevant information, respond with: NO_DATA`;
+    // Plan 11 FR-011: ensure KB answers honor the user's selected locale.
+    const prompt = addLanguageInstruction(basePrompt, getActiveLocale());
 
     // Determine providers to try: Groq first if available, then active provider
     const providers: LLMProvider[] = [];

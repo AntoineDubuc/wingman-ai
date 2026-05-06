@@ -207,7 +207,9 @@ export async function generatePrompt(
   const apiKey = await getGeminiKey();
   if (!apiKey) throw new Error('Gemini API key not configured');
 
-  const generationPrompt = buildGenerationPrompt(params, kbDocNames, conversationHistory);
+  const baseGenerationPrompt = buildGenerationPrompt(params, kbDocNames, conversationHistory);
+  // Plan 11 FR-011: localize the generated prompt to the user's active locale.
+  const generationPrompt = addLanguageInstruction(baseGenerationPrompt, getActiveLocale());
 
   const response = await fetch(
     `${GEMINI_API_BASE}/${DISCOVERY_MODEL}:generateContent?key=${apiKey}`,
@@ -264,7 +266,7 @@ export async function generateTestQuestionsFromPrompt(
   const apiKey = await getGeminiKey();
   if (!apiKey) throw new Error('Gemini API key not configured');
 
-  const instruction = [
+  const baseInstruction = [
     'Given this system prompt, generate 6 test questions to validate it.',
     'Generate 3 questions where the AI SHOULD respond (relevant to the prompt\'s domain),',
     'and 3 questions where the AI SHOULD stay silent (off-topic or casual conversation).',
@@ -280,6 +282,8 @@ export async function generateTestQuestionsFromPrompt(
     '  {"text": "...", "expectedBehavior": "silent"}',
     ']}',
   ].join('\n');
+  // Plan 11 FR-011: localize test question text to the user's active locale.
+  const instruction = addLanguageInstruction(baseInstruction, getActiveLocale());
 
   const response = await fetch(
     `${GEMINI_API_BASE}/${DISCOVERY_MODEL}:generateContent?key=${apiKey}`,

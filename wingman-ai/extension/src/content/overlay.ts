@@ -219,6 +219,50 @@ export class AIOverlay {
     this.shadow.querySelector('.connection-lost-banner')?.remove();
   }
 
+  /**
+   * Plan 10 FR-029: mic-revoked banner. Shows when the SW detects that the
+   * mic permission was revoked mid-call (offscreen track 'ended' event).
+   * Includes a localized "Restore Access" button that opens the
+   * mic-permission page so the user can re-grant.
+   */
+  showMicRevokedBanner(): void {
+    const existing = this.shadow.querySelector('.mic-revoked-banner');
+    if (existing) return; // idempotent
+
+    const banner = document.createElement('div');
+    banner.className = 'mic-revoked-banner';
+    banner.setAttribute('role', 'alertdialog');
+    banner.setAttribute('aria-live', 'assertive');
+    banner.style.cssText =
+      'position:absolute;top:8px;left:50%;transform:translateX(-50%);' +
+      'background:#dc2626;color:#fff;padding:12px 20px;border-radius:8px;' +
+      'font-size:13px;font-weight:500;z-index:11;pointer-events:auto;' +
+      'box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:90%;text-align:center;';
+
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = 'font-weight:600;margin-bottom:4px;font-size:14px;';
+    titleEl.textContent = this.t('banners.mic_revoked.title');
+    banner.appendChild(titleEl);
+
+    const bodyEl = document.createElement('div');
+    bodyEl.style.cssText = 'margin-bottom:8px;opacity:0.9;';
+    bodyEl.textContent = this.t('banners.mic_revoked.body');
+    banner.appendChild(bodyEl);
+
+    const restoreBtn = document.createElement('button');
+    restoreBtn.style.cssText =
+      'background:#fff;color:#dc2626;border:none;padding:6px 14px;' +
+      'border-radius:4px;font-weight:600;cursor:pointer;font-size:12px;';
+    restoreBtn.textContent = this.t('banners.mic_revoked.recovery_action');
+    restoreBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('src/mic-permission.html') });
+      banner.remove();
+    });
+    banner.appendChild(restoreBtn);
+
+    this.panel.appendChild(banner);
+  }
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');

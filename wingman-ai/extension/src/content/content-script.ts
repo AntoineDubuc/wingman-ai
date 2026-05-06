@@ -232,6 +232,14 @@ try {
         }
         break;
 
+      // Plan 10 FR-029: mid-call mic revocation banner. SW emits this when
+      // the offscreen mic track ends unexpectedly during an active session.
+      case 'mic_revoked':
+        if (overlay) {
+          overlay.showMicRevokedBanner();
+        }
+        break;
+
       default:
         // Ignore messages not meant for content script (e.g., AUDIO_CHUNK, CAPTURE_STATUS)
         break;

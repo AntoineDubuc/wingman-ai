@@ -307,6 +307,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       // Handled by requestMicPermission() temporary listener
       return false;
 
+    case 'MIC_REVOKED':
+      // Plan 10 FR-029: mic permission revoked mid-call. Stop the session
+      // gracefully and notify the content script so the overlay can show
+      // the recovery banner.
+      if (isSessionActive && activeTabId !== null) {
+        const targetTab = activeTabId;
+        chrome.tabs.sendMessage(targetTab, { type: 'mic_revoked' }).catch(() => {});
+        // Stop session — STOP_SESSION handler does the cleanup
+        chrome.runtime.sendMessage({ type: 'STOP_SESSION' }).catch(() => {});
+      }
+      return false;
+
     default:
       console.warn('[ServiceWorker] Unknown message type:', message.type);
       return false;

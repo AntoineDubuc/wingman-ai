@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-7-summary-keys-2026-05-05",
+    "revision": "plan-4-popup-keys-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -20,6 +20,28 @@
     "actions": {
       "open_settings": "Открыть настройки",
       "open_meet": "Открыть Google Meet"
+    },
+    "api_status": {
+      "configured": "Настроено",
+      "not_configured": "Не настроено"
+    },
+    "session_status": {
+      "active": "Активна",
+      "inactive": "Неактивна"
+    },
+    "personas": {
+      "remove": "Удалить",
+      "locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
+      "count_active_one": "1 активный",
+      "count_active_few": "{{count}} активных",
+      "count_active_other": "{{count}} активных",
+      "add_persona": "+ Добавить персонажа",
+      "add_persona_locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
+      "preset_locked_tooltip": "Остановите сессию, чтобы изменить пресеты"
+    },
+    "errors": {
+      "no_api_keys": "Отсутствуют ключи API",
+      "no_meet_tab": "Вкладка Google Meet не найдена"
     }
   },
   "options": {

@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-7-summary-keys-2026-05-05",
+    "revision": "plan-4-popup-keys-2026-05-05",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -20,6 +20,27 @@
     "actions": {
       "open_settings": "Open Settings",
       "open_meet": "Open Google Meet"
+    },
+    "api_status": {
+      "configured": "Configured",
+      "not_configured": "Not Configured"
+    },
+    "session_status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "personas": {
+      "remove": "Remove",
+      "locked_tooltip": "Stop session to change personas",
+      "count_active_one": "1 active",
+      "count_active_other": "{{count}} active",
+      "add_persona": "+ Add persona",
+      "add_persona_locked_tooltip": "Stop session to change personas",
+      "preset_locked_tooltip": "Stop session to change presets"
+    },
+    "errors": {
+      "no_api_keys": "API keys missing",
+      "no_meet_tab": "No Google Meet tab found"
     }
   },
   "options": {

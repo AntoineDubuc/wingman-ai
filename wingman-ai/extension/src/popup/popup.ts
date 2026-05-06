@@ -16,6 +16,8 @@ import {
   type ConclavePreset,
 } from '../shared/persona';
 import { getIconUrl } from '../shared/persona-icons';
+import { initPopupI18n, handlePopupStorageChange, renderPopupStrings } from './popup-locale';
+import type { i18n as I18n } from 'i18next';
 
 class PopupController {
   private elements: {
@@ -43,6 +45,10 @@ class PopupController {
   private presetDropdownOpen = false;
   private hydraTooltipShown = false;
   private dropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Plan 4: i18n is set by init() before any UI render runs.
+  // The !-non-null assertion is safe because every method that reads i18n is
+  // reachable only via init() or after.
+  private i18n!: I18n;
 
   constructor() {
     this.elements = {
@@ -65,6 +71,10 @@ class PopupController {
   }
 
   private async init(): Promise<void> {
+    // Plan 4 FR-004: initialize i18n FIRST so all subsequent UI renders use translated strings.
+    const i18nResult = await initPopupI18n();
+    this.i18n = i18nResult.i18n;
+
     await this.loadTheme();
     await this.checkHydraTooltip();
     await this.checkApiKeys();
@@ -72,6 +82,26 @@ class PopupController {
     await this.loadPersonas();
     this.attachEventListeners();
     this.startStatusPolling();
+    this.registerLocaleChangeListener();
+  }
+
+  // Plan 4 FR-004: cross-context locale change listener (popup honors FR-006 session lock).
+  private registerLocaleChangeListener(): void {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      void handlePopupStorageChange(
+        changes,
+        areaName,
+        this.i18n,
+        this.isSessionActive,
+        (i18n) => {
+          this.i18n = i18n;
+          renderPopupStrings(i18n);
+          // Re-run state-dependent renders so the new locale takes effect immediately.
+          void this.updateStatus();
+          void this.checkApiKeys();
+        },
+      );
+    });
   }
 
   private async loadTheme(): Promise<void> {
@@ -117,11 +147,11 @@ class PopupController {
 
     if (this.hasApiKeys) {
       apiDot.className = 'status-dot connected';
-      apiText.textContent = 'Configured';
+      apiText.textContent = this.i18n.t('popup.api_status.configured');
       this.elements.controlsHint.style.display = 'none';
     } else {
       apiDot.className = 'status-dot';
-      apiText.textContent = 'Not Configured';
+      apiText.textContent = this.i18n.t('popup.api_status.not_configured');
       this.elements.controlsHint.style.display = 'block';
     }
 
@@ -138,15 +168,17 @@ class PopupController {
 
     if (response?.isSessionActive || response?.isCapturing) {
       sessionDot.className = 'status-dot connected';
-      sessionText.textContent = 'Active';
+      sessionText.textContent = this.i18n.t('popup.session_status.active');
       this.isSessionActive = true;
     } else {
       sessionDot.className = 'status-dot';
-      sessionText.textContent = 'Inactive';
+      sessionText.textContent = this.i18n.t('popup.session_status.inactive');
       this.isSessionActive = false;
     }
 
-    this.elements.sessionBtn.textContent = this.isSessionActive ? 'Stop Session' : 'Start Session';
+    this.elements.sessionBtn.textContent = this.isSessionActive
+      ? this.i18n.t('popup.stop_session')
+      : this.i18n.t('popup.start_session');
     this.elements.sessionBtn.classList.toggle('active', this.isSessionActive);
     this.elements.sessionBtn.disabled = !this.isSessionActive && !this.hasApiKeys;
 

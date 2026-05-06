@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-7-summary-keys-2026-05-05",
+    "revision": "plan-4-popup-keys-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -20,6 +20,28 @@
     "actions": {
       "open_settings": "Deschide setările",
       "open_meet": "Deschide Google Meet"
+    },
+    "api_status": {
+      "configured": "Configurat",
+      "not_configured": "Neconfigurat"
+    },
+    "session_status": {
+      "active": "Activă",
+      "inactive": "Inactivă"
+    },
+    "personas": {
+      "remove": "Elimină",
+      "locked_tooltip": "Oprește sesiunea pentru a schimba personajele",
+      "count_active_one": "1 activă",
+      "count_active_few": "{{count}} active",
+      "count_active_other": "{{count}} de active",
+      "add_persona": "+ Adaugă persona",
+      "add_persona_locked_tooltip": "Oprește sesiunea pentru a schimba personajele",
+      "preset_locked_tooltip": "Oprește sesiunea pentru a schimba presetările"
+    },
+    "errors": {
+      "no_api_keys": "Lipsesc cheile API",
+      "no_meet_tab": "Nicio filă Google Meet găsită"
     }
   },
   "options": {

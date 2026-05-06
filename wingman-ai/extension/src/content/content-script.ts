@@ -68,9 +68,11 @@ function ensureOverlayAttached(): void {
 }
 
 /**
- * Initialize the overlay
+ * Initialize the overlay.
+ * Plan 2 fix: async — awaits the user's locale BEFORE constructing the
+ * overlay so the panel renders in the right language on first paint.
  */
-function initOverlay(): void {
+async function initOverlay(): Promise<void> {
   if (overlay) {
     // Already initialized — ensure it's attached
     ensureOverlayAttached();
@@ -78,12 +80,36 @@ function initOverlay(): void {
   }
 
   console.log('[ContentScript] Initializing overlay');
-  overlay = new AIOverlay(handleOverlayClose);
+  overlay = await AIOverlay.create(handleOverlayClose);
   // Append to <html> instead of <body> — less likely to be removed by Google Meet's framework
   document.documentElement.appendChild(overlay.container);
-  // Plan 6: load user locale into the overlay (sets shadow-host lang + i18n instance).
-  // Fire-and-forget; the synchronous English default keeps the first paint from blocking.
-  void overlay.initLocale();
+}
+
+// Plan 2 fix: rebuild the overlay when the user changes their language so the
+// live overlay updates without requiring a Meet-tab reload (which would drop
+// the call). Reload pattern (location.reload) is unsafe in the Meet tab.
+let lastKnownLocale: string | null = null;
+try {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'sync') return;
+    if (!('language_preference' in changes)) return;
+    const newLocale = changes.language_preference?.newValue as string | undefined;
+    if (!newLocale || newLocale === lastKnownLocale) return;
+    lastKnownLocale = newLocale;
+    console.log('[ContentScript] language_preference changed to', newLocale, '— rebuilding overlay');
+    if (overlay && overlay.container.isConnected) {
+      const wasMinimized = false; // overlay state is module-scoped via transcriptBuffer
+      overlay.container.remove();
+      overlay = null;
+      void initOverlay().then(() => {
+        if (wasMinimized) {
+          // (placeholder for state-restore hooks if needed in future)
+        }
+      });
+    }
+  });
+} catch {
+  // Extension context invalidated; the listener will not be re-registered.
 }
 
 /**
@@ -102,11 +128,13 @@ try {
     switch (message.type) {
       case 'INIT_OVERLAY':
         overlayDismissedByUser = false;
-        initOverlay();
-        // Activate session-state UI (status bar + pill toggle + timer) on session start
-        overlay?.forceShow();
-        sendResponse({ success: true });
-        break;
+        // Plan 2 fix: initOverlay is now async; await it so forceShow runs
+        // after the panel exists. Then send response.
+        void initOverlay().then(() => {
+          overlay?.forceShow();
+          sendResponse({ success: true });
+        });
+        return true; // keep the message channel open for async sendResponse
 
       case 'transcript':
         console.log('[ContentScript] Transcript data:', message.data);
@@ -256,10 +284,10 @@ if (window.location.hostname === 'meet.google.com') {
   // Wait for page to fully load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      if (isExtensionValid()) initOverlay();
+      if (isExtensionValid()) void initOverlay();
     });
   } else {
-    if (isExtensionValid()) initOverlay();
+    if (isExtensionValid()) void initOverlay();
   }
 }
 

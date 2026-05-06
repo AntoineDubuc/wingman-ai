@@ -161,9 +161,40 @@ export class AIOverlay {
   }
 
   /**
-   * Asynchronously upgrades the i18n instance to the user's stored locale.
-   * Called once after construction by content-script.ts. Safe to call multiple
-   * times; idempotent.
+   * Synchronously upgrade the i18n instance + locale BEFORE the constructor
+   * builds the panel. Called by content-script.ts AFTER it has awaited
+   * initOverlayI18n on a temporary host. Must run before `new AIOverlay(...)`
+   * registers DOM via createOverlayStructure().
+   *
+   * Static factory pattern: ContentScript awaits the locale, then calls
+   * `AIOverlay.create({ i18n, locale })` which sets the fields and constructs.
+   */
+  static async create(onClose?: () => void): Promise<AIOverlay> {
+    // We need to read the locale BEFORE the constructor runs. Create a temporary
+    // off-DOM host element to satisfy initOverlayI18n's signature, then pass the
+    // resolved i18n + locale into the constructor via a shared bootstrap object.
+    let resolved: { i18n: I18n; locale: SupportedLocale } | null = null;
+    try {
+      const tempHost = document.createElement('div');
+      resolved = await initOverlayI18n(tempHost);
+    } catch (err) {
+      console.warn('[overlay] static create — initOverlayI18n failed; falling back to English default:', err);
+    }
+    AIOverlay._bootstrap = resolved;
+    try {
+      return new AIOverlay(onClose);
+    } finally {
+      AIOverlay._bootstrap = null;
+    }
+  }
+
+  /** Bootstrap slot consumed by the constructor; set by AIOverlay.create(). */
+  private static _bootstrap: { i18n: I18n; locale: SupportedLocale } | null = null;
+
+  /**
+   * Legacy async upgrade — kept for backward compatibility but now a no-op
+   * when the constructor already received i18n via the static factory.
+   * Re-applies the lang attribute on the shadow host.
    */
   async initLocale(): Promise<void> {
     try {
@@ -264,6 +295,14 @@ export class AIOverlay {
   }
 
   constructor(onClose?: () => void) {
+    // Plan 2 fix: consume the bootstrap from AIOverlay.create() if present so
+    // the locale is set BEFORE createOverlayStructure() reads this.t(). Falls
+    // back to the English default for callers that bypass the static factory.
+    if (AIOverlay._bootstrap) {
+      this.i18n = AIOverlay._bootstrap.i18n;
+      this.locale = AIOverlay._bootstrap.locale;
+    }
+
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
     this.container.id = 'presales-ai-overlay-container';
@@ -274,6 +313,9 @@ export class AIOverlay {
       'pointer-events:none!important;display:block!important;';
 
     this.shadow = this.container.attachShadow({ mode: 'closed' });
+    // Plan 2 fix: set the lang attribute on the shadow host now that we know
+    // the locale (RISK-T01 Spike outcome A — ARIA-compatible approach).
+    this.container.setAttribute('lang', this.locale);
 
     // Devtools hook for manual inspection in the Meet tab console (Task 2).
     // Invisible to page-world JS (isolated-worlds guarantee). Plan 2's

@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-4-popup-keys-2026-05-05",
+    "revision": "plan-8-personas-2026-05-05",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -370,6 +370,54 @@
       "es": "Español",
       "ro": "Română",
       "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Job Interview Candidate",
+        "description": "Real-time interview coaching with structure suggestions and STAR framing."
+      },
+      "startup_founder_fundraising": {
+        "name": "Startup Founder (Fundraising)",
+        "description": "Investor pitch refinement and fundraising-call support."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Freelancer (Rate Negotiation)",
+        "description": "Rate negotiation tactics and contract-term framing."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Nonprofit Grant Pitcher",
+        "description": "Grant pitch refinement and funder Q&A support."
+      },
+      "patient_advocate": {
+        "name": "Patient Advocate",
+        "description": "Medical appointment advocacy and care-plan navigation."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Tenant (Lease Negotiation)",
+        "description": "Lease negotiation tactics and tenant-rights framing."
+      },
+      "parent_iep_meeting": {
+        "name": "Parent (IEP Meeting)",
+        "description": "IEP meeting advocacy and special-education-rights framing."
+      },
+      "small_business_loan_seeker": {
+        "name": "Small Business Loan Seeker",
+        "description": "Loan-officer conversation and credit-question framing."
+      },
+      "journalist_interviewer": {
+        "name": "Journalist Interviewer",
+        "description": "Source interview prep and follow-up question suggestions."
+      },
+      "esl_professional": {
+        "name": "ESL Professional",
+        "description": "ESL professional communication clarity and idiom navigation."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Cloud Solutions Sales Consultant",
+        "description": "Pre-sales technical solutions and discovery-call support."
+      }
     }
   }
 }

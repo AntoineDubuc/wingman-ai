@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-4-popup-keys-2026-05-05",
+    "revision": "plan-8-personas-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -378,6 +378,54 @@
       "es": "Español",
       "ro": "Română",
       "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Candidat la interviu de angajare",
+        "description": "Coaching de interviu în timp real cu sugestii de structură și cadru STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Fondator de startup (strângere de fonduri)",
+        "description": "Rafinarea pitch-ului pentru investitori și sprijin în apeluri de finanțare."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Freelancer (negociere tarif)",
+        "description": "Tactici de negociere a tarifelor și încadrare a termenilor contractuali."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Solicitant grant ONG",
+        "description": "Rafinarea pitch-ului de grant și sprijin pentru întrebările finanțatorilor."
+      },
+      "patient_advocate": {
+        "name": "Susținător al pacientului",
+        "description": "Susținere la programări medicale și navigare a planului de îngrijire."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Chiriaș (negociere contract)",
+        "description": "Tactici de negociere a contractului de închiriere și încadrare a drepturilor chiriașului."
+      },
+      "parent_iep_meeting": {
+        "name": "Părinte (ședință IEP)",
+        "description": "Susținere la ședință IEP și încadrare a drepturilor în educația specială."
+      },
+      "small_business_loan_seeker": {
+        "name": "Solicitant de împrumut pentru IMM",
+        "description": "Conversație cu ofițerul de credite și încadrare a întrebărilor de credit."
+      },
+      "journalist_interviewer": {
+        "name": "Jurnalist intervievator",
+        "description": "Pregătire de interviu cu sursă și sugestii de întrebări de urmărire."
+      },
+      "esl_professional": {
+        "name": "Profesionist ESL",
+        "description": "Claritate în comunicarea profesională ESL și navigare a expresiilor idiomatice."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Consultant vânzări soluții cloud",
+        "description": "Soluții tehnice pre-vânzare și sprijin în apeluri de descoperire."
+      }
     }
   }
 }

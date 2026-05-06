@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-4-popup-keys-2026-05-05",
+    "revision": "plan-8-personas-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -378,6 +378,54 @@
       "es": "Español",
       "ro": "Română",
       "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Кандидат на собеседовании",
+        "description": "Коучинг собеседования в реальном времени со структурными подсказками и подходом STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Основатель стартапа (привлечение средств)",
+        "description": "Доработка питча для инвесторов и поддержка звонков по сбору средств."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Фрилансер (переговоры о ставке)",
+        "description": "Тактика переговоров о ставке и оформление условий контракта."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Заявитель на грант НКО",
+        "description": "Доработка питча заявки на грант и поддержка вопросов спонсоров."
+      },
+      "patient_advocate": {
+        "name": "Защитник пациента",
+        "description": "Защита на медицинском приёме и навигация по плану лечения."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Арендатор (переговоры по аренде)",
+        "description": "Тактика переговоров по аренде и оформление прав арендатора."
+      },
+      "parent_iep_meeting": {
+        "name": "Родитель (встреча IEP)",
+        "description": "Защита на встрече IEP и оформление прав в специальном образовании."
+      },
+      "small_business_loan_seeker": {
+        "name": "Соискатель кредита для МСП",
+        "description": "Разговор с кредитным офицером и оформление вопросов по кредиту."
+      },
+      "journalist_interviewer": {
+        "name": "Журналист-интервьюер",
+        "description": "Подготовка интервью с источником и подсказки уточняющих вопросов."
+      },
+      "esl_professional": {
+        "name": "ESL профессионал",
+        "description": "Ясность профессиональной коммуникации ESL и навигация по идиомам."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Консультант по продажам облачных решений",
+        "description": "Технические решения до продажи и поддержка звонков по обнаружению."
+      }
     }
   }
 }

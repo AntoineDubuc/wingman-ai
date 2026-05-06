@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-4-popup-keys-2026-05-05",
+    "revision": "plan-8-personas-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -370,6 +370,54 @@
       "es": "Español",
       "ro": "Română",
       "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Candidato a entrevista de trabajo",
+        "description": "Coaching de entrevista en tiempo real con sugerencias de estructura y marco STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Fundador de startup (recaudación de fondos)",
+        "description": "Refinamiento del pitch para inversores y apoyo en llamadas de recaudación."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Freelancer (negociación de tarifa)",
+        "description": "Tácticas de negociación de tarifa y encuadre de términos contractuales."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Solicitante de subvención sin fines de lucro",
+        "description": "Refinamiento del pitch de subvención y apoyo a preguntas de los donantes."
+      },
+      "patient_advocate": {
+        "name": "Defensor de paciente",
+        "description": "Defensa en cita médica y navegación del plan de atención."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Inquilino (negociación de contrato)",
+        "description": "Tácticas de negociación de contrato de arrendamiento y derechos del inquilino."
+      },
+      "parent_iep_meeting": {
+        "name": "Padre/Madre (reunión IEP)",
+        "description": "Defensa en reunión IEP y encuadre de derechos en educación especial."
+      },
+      "small_business_loan_seeker": {
+        "name": "Solicitante de préstamo para PYME",
+        "description": "Conversación con el oficial de préstamos y encuadre de preguntas crediticias."
+      },
+      "journalist_interviewer": {
+        "name": "Periodista entrevistador",
+        "description": "Preparación de entrevista con fuente y sugerencias de preguntas de seguimiento."
+      },
+      "esl_professional": {
+        "name": "Profesional ESL",
+        "description": "Claridad de comunicación profesional ESL y navegación de expresiones idiomáticas."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Consultor de ventas de soluciones cloud",
+        "description": "Soluciones técnicas pre-venta y apoyo en llamadas de descubrimiento."
+      }
     }
   }
 }

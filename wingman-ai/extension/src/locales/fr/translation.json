@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-4-popup-keys-2026-05-05",
+    "revision": "plan-8-personas-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -370,6 +370,54 @@
       "es": "Español",
       "ro": "Română",
       "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Candidat à un entretien d'embauche",
+        "description": "Coaching d'entrevue en temps réel avec suggestions de structure et cadre STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Fondateur de startup (collecte de fonds)",
+        "description": "Affinage de pitch d'investisseur et soutien aux appels de financement."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Travailleur autonome (négociation de tarif)",
+        "description": "Tactiques de négociation de tarif et cadrage des termes contractuels."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Demandeur de subvention OBNL",
+        "description": "Affinage du pitch de subvention et soutien aux questions des bailleurs de fonds."
+      },
+      "patient_advocate": {
+        "name": "Défenseur de patient",
+        "description": "Plaidoyer pour rendez-vous médical et navigation du plan de soins."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Locataire (négociation de bail)",
+        "description": "Tactiques de négociation de bail et cadrage des droits du locataire."
+      },
+      "parent_iep_meeting": {
+        "name": "Parent (réunion de PEI)",
+        "description": "Plaidoyer en réunion de PEI et cadrage des droits en éducation spécialisée."
+      },
+      "small_business_loan_seeker": {
+        "name": "Demandeur de prêt PME",
+        "description": "Conversation avec l'agent de prêt et cadrage des questions de crédit."
+      },
+      "journalist_interviewer": {
+        "name": "Journaliste intervieweur",
+        "description": "Préparation d'entrevue avec source et suggestions de questions de suivi."
+      },
+      "esl_professional": {
+        "name": "Professionnel anglophone seconde langue",
+        "description": "Clarté de communication professionnelle ESL et navigation des expressions idiomatiques."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Conseiller en vente de solutions infonuagiques",
+        "description": "Solutions techniques avant-vente et soutien aux appels de découverte."
+      }
     }
   }
 }

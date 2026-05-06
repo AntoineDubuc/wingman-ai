@@ -161,6 +161,10 @@ class OptionsController {
       showToast: toast.show,
       showConfirmModal: modal.show,
       showConfirmModalNode: modal.showNode,
+      // Plan 10 / Plan 5: thread the active i18n into every section so toasts
+      // and modal text can be localized via ctx.t(). Sections that haven't
+      // migrated yet still work — they pass English literals to showToast.
+      t: (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts) as string,
     };
 
     // Cmd/Ctrl+S → save persona editor

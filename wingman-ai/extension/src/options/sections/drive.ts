@@ -89,10 +89,16 @@ export class DriveSection {
         transcriptFormat,
       });
 
-      this.ctx.showToast('Drive settings saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_settings_saved') ?? 'Drive settings saved',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save Drive settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error',
+      );
     }
   }
 
@@ -118,13 +124,22 @@ export class DriveSection {
 
       if (result.success && result.email) {
         this.updateConnectionUI(true, result.email);
-        this.ctx.showToast('Google Drive connected!', 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.drive_connected') ?? 'Google Drive connected!',
+          'success',
+        );
       } else {
-        this.ctx.showToast(result.error || 'Connection failed', 'error');
+        this.ctx.showToast(
+          result.error ?? this.ctx.t?.('options.toasts.drive_connect_failed') ?? 'Failed to connect',
+          'error',
+        );
       }
     } catch (error) {
       console.error('Failed to connect Google Drive:', error);
-      this.ctx.showToast('Failed to connect', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_connect_failed') ?? 'Failed to connect',
+        'error',
+      );
     } finally {
       if (this.connectBtn) {
         this.connectBtn.disabled = false;
@@ -138,10 +153,16 @@ export class DriveSection {
     try {
       await driveService.disconnect();
       this.updateConnectionUI(false);
-      this.ctx.showToast('Google Drive disconnected', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_disconnected') ?? 'Google Drive disconnected',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to disconnect Google Drive:', error);
-      this.ctx.showToast('Failed to disconnect', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_disconnect_failed') ?? 'Failed to disconnect',
+        'error',
+      );
     }
   }
 }

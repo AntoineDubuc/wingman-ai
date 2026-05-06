@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-overlay-actions-2026-05-06",
+    "revision": "plan-10-toast-keys-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -156,6 +156,18 @@
       "title": "Wingman now speaks your language",
       "body": "Your language has been automatically set based on your browser settings. You can change it anytime in the Setup tab.",
       "dismiss_button": "Got it"
+    },
+    "toasts": {
+      "settings_saved": "Settings saved",
+      "settings_save_failed": "Failed to save settings",
+      "api_key_required": "{{provider}} API key is required",
+      "permission_required": "Permission required to connect to {{provider}}",
+      "permission_request_failed": "Failed to request {{provider}} permission",
+      "drive_connected": "Google Drive connected!",
+      "drive_disconnected": "Google Drive disconnected",
+      "drive_connect_failed": "Failed to connect",
+      "drive_disconnect_failed": "Failed to disconnect",
+      "drive_settings_saved": "Drive settings saved"
     }
   },
   "overlay": {

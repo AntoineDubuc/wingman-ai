@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-overlay-actions-2026-05-06",
+    "revision": "plan-10-toast-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -157,6 +157,18 @@
       "title": "Wingman vă vorbește limba",
       "body": "Limba a fost setată automat conform setărilor browserului. O puteți schimba oricând din fila Configurare.",
       "dismiss_button": "Am înțeles"
+    },
+    "toasts": {
+      "settings_saved": "Setări salvate",
+      "settings_save_failed": "Eroare la salvarea setărilor",
+      "api_key_required": "Cheia API {{provider}} este obligatorie",
+      "permission_required": "Permisiune necesară pentru conectare la {{provider}}",
+      "permission_request_failed": "Eroare la solicitarea permisiunii {{provider}}",
+      "drive_connected": "Google Drive conectat!",
+      "drive_disconnected": "Google Drive deconectat",
+      "drive_connect_failed": "Eroare de conectare",
+      "drive_disconnect_failed": "Eroare la deconectare",
+      "drive_settings_saved": "Setări Drive salvate"
     }
   },
   "overlay": {

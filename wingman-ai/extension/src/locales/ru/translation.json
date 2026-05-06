@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-overlay-actions-2026-05-06",
+    "revision": "plan-10-toast-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -157,6 +157,18 @@
       "title": "Wingman теперь говорит на вашем языке",
       "body": "Ваш язык был автоматически установлен в соответствии с настройками браузера. Вы можете изменить его в любой момент на вкладке «Настройка».",
       "dismiss_button": "Понятно"
+    },
+    "toasts": {
+      "settings_saved": "Настройки сохранены",
+      "settings_save_failed": "Ошибка при сохранении настроек",
+      "api_key_required": "Требуется ключ API {{provider}}",
+      "permission_required": "Требуется разрешение для подключения к {{provider}}",
+      "permission_request_failed": "Ошибка запроса разрешения {{provider}}",
+      "drive_connected": "Google Drive подключён!",
+      "drive_disconnected": "Google Drive отключён",
+      "drive_connect_failed": "Ошибка подключения",
+      "drive_disconnect_failed": "Ошибка отключения",
+      "drive_settings_saved": "Настройки Drive сохранены"
     }
   },
   "overlay": {

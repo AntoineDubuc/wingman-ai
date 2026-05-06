@@ -182,13 +182,19 @@ export class ApiKeysSection {
 
       const granted = await chrome.permissions.request({ origins: [OPENROUTER_ORIGIN] });
       if (!granted) {
-        this.ctx.showToast('Permission required to connect to OpenRouter', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.permission_required', { provider: 'OpenRouter' }) ?? 'Permission required to connect to OpenRouter',
+          'error',
+        );
         return false;
       }
       return true;
     } catch (error) {
       console.error('Permission request failed:', error);
-      this.ctx.showToast('Failed to request OpenRouter permission', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.permission_request_failed', { provider: 'OpenRouter' }) ?? 'Failed to request OpenRouter permission',
+        'error',
+      );
       return false;
     }
   }
@@ -200,13 +206,19 @@ export class ApiKeysSection {
 
       const granted = await chrome.permissions.request({ origins: [GROQ_ORIGIN] });
       if (!granted) {
-        this.ctx.showToast('Permission required to connect to Groq', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.permission_required', { provider: 'Groq' }) ?? 'Permission required to connect to Groq',
+          'error',
+        );
         return false;
       }
       return true;
     } catch (error) {
       console.error('Permission request failed:', error);
-      this.ctx.showToast('Failed to request Groq permission', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.permission_request_failed', { provider: 'Groq' }) ?? 'Failed to request Groq permission',
+        'error',
+      );
       return false;
     }
   }
@@ -221,23 +233,26 @@ export class ApiKeysSection {
     const humeApiKey = this.humeApiKeyInput?.value?.trim() || '';
     const humeSecretKey = this.humeSecretKeyInput?.value?.trim() || '';
 
+    const apiKeyRequired = (provider: string): string =>
+      this.ctx.t?.('options.toasts.api_key_required', { provider }) ?? `${provider} API key is required`;
+
     if (!deepgramKey) {
-      this.ctx.showToast('Deepgram API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Deepgram'), 'error');
       return;
     }
 
     if (this.provider === 'gemini' && !geminiKey) {
-      this.ctx.showToast('Gemini API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Gemini'), 'error');
       return;
     }
 
     if (this.provider === 'openrouter' && !openrouterKey) {
-      this.ctx.showToast('OpenRouter API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('OpenRouter'), 'error');
       return;
     }
 
     if (this.provider === 'groq' && !groqKey) {
-      this.ctx.showToast('Groq API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Groq'), 'error');
       return;
     }
 
@@ -270,10 +285,16 @@ export class ApiKeysSection {
         llmProvider: this.provider,
       });
       this.updateStatus();
-      this.ctx.showToast('Settings saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_saved') ?? 'Settings saved',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error',
+      );
     }
   }
 

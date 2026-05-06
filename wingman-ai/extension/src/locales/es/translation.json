@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-overlay-actions-2026-05-06",
+    "revision": "plan-10-toast-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -156,6 +156,18 @@
       "title": "Wingman ahora habla su idioma",
       "body": "Su idioma se ha establecido automáticamente según la configuración de su navegador. Puede cambiarlo en cualquier momento en la pestaña Configuración.",
       "dismiss_button": "Entendido"
+    },
+    "toasts": {
+      "settings_saved": "Configuración guardada",
+      "settings_save_failed": "Error al guardar la configuración",
+      "api_key_required": "Se requiere la clave API de {{provider}}",
+      "permission_required": "Se requiere permiso para conectar a {{provider}}",
+      "permission_request_failed": "Error al solicitar permiso de {{provider}}",
+      "drive_connected": "¡Google Drive conectado!",
+      "drive_disconnected": "Google Drive desconectado",
+      "drive_connect_failed": "Error de conexión",
+      "drive_disconnect_failed": "Error al desconectar",
+      "drive_settings_saved": "Configuración de Drive guardada"
     }
   },
   "overlay": {

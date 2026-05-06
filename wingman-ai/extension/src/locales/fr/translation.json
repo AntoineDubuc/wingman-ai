@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-6-overlay-actions-2026-05-06",
+    "revision": "plan-10-toast-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -156,6 +156,18 @@
       "title": "Wingman parle votre langue",
       "body": "Votre langue a été automatiquement définie selon les paramètres de votre navigateur. Vous pouvez la modifier en tout temps dans l'onglet Configuration.",
       "dismiss_button": "Compris"
+    },
+    "toasts": {
+      "settings_saved": "Paramètres enregistrés",
+      "settings_save_failed": "Échec de l'enregistrement des paramètres",
+      "api_key_required": "La clé d'API {{provider}} est requise",
+      "permission_required": "Autorisation requise pour se connecter à {{provider}}",
+      "permission_request_failed": "Échec de la demande d'autorisation {{provider}}",
+      "drive_connected": "Google Drive connecté!",
+      "drive_disconnected": "Google Drive déconnecté",
+      "drive_connect_failed": "Échec de la connexion",
+      "drive_disconnect_failed": "Échec de la déconnexion",
+      "drive_settings_saved": "Paramètres Drive enregistrés"
     }
   },
   "overlay": {

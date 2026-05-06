@@ -4,6 +4,14 @@ export interface OptionsContext {
   showToast(message: string, type: 'success' | 'error'): void;
   showConfirmModal(title: string, message: string, onConfirm: () => void): void;
   /**
+   * Plan 10 / Plan 5: localized translation function for section-level
+   * toast and modal text. Sections receive this from OptionsController.init().
+   * Optional for backward compat with sections not yet refactored — those
+   * sections will still pass English literals to showToast and they'll
+   * render verbatim until they migrate to ctx.t().
+   */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
+  /**
    * Show a confirm modal with a pre-built DOM node body (for rich content).
    * Unlike `showConfirmModal`, which uses `textContent = message`, this
    * method uses `appendChild(bodyNode)` so the caller can build element

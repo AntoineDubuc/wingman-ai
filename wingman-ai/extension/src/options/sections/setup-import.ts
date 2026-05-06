@@ -98,8 +98,9 @@ export class SetupImportSection {
         // hidden files. If the only file in the folder is `.env`, the FileList
         // will be empty. The walker accepts wingman.env as an alternate.
         this.ctx.showToast(
-          'Folder is empty (or only hidden files). Rename .env to wingman.env and try again.',
-          'error'
+          this.ctx.t?.('options.toasts.setup_folder_empty')
+            ?? 'Folder is empty (or only hidden files). Rename .env to wingman.env and try again.',
+          'error',
         );
         this.processing = false;
         this.setBusy(false);
@@ -115,7 +116,10 @@ export class SetupImportSection {
   private async handleChooseClick(): Promise<void> {
     // Step 1: active-session guard (first check of three — TOCTOU defense).
     if (await this.isSessionActive()) {
-      this.ctx.showToast('Stop the current call before importing.', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.setup_call_in_progress_import') ?? 'Stop the current call before importing.',
+        'error',
+      );
       return;
     }
     this.processing = true;
@@ -129,17 +133,24 @@ export class SetupImportSection {
   private async handleFolderPicked(files: FileList): Promise<void> {
     try {
       if (files.length === 0) {
-        this.ctx.showToast('No files selected', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.setup_no_files') ?? 'No files selected',
+          'error',
+        );
         return;
       }
 
       if (files.length > MAX_FOLDER_FILES) {
         const proceed = await this.confirm(
-          'Large folder',
-          `You selected ${files.length} files. Only .env and *persona*.json files will be processed. Continue?`
+          this.ctx.t?.('options.toasts.setup_large_folder_title') ?? 'Large folder',
+          this.ctx.t?.('options.toasts.setup_large_folder_body', { count: files.length })
+            ?? `You selected ${files.length} files. Only .env and *persona*.json files will be processed. Continue?`,
         );
         if (!proceed) {
-          this.ctx.showToast('Import cancelled', 'error');
+          this.ctx.showToast(
+            this.ctx.t?.('options.toasts.setup_import_cancelled') ?? 'Import cancelled',
+            'error',
+          );
           return;
         }
       }
@@ -149,8 +160,9 @@ export class SetupImportSection {
 
       if (walked.envCredentials === null && walked.personaFiles.length === 0) {
         this.ctx.showToast(
-          'Nothing to import. Folder must contain a .env or *persona*.json file.',
-          'error'
+          this.ctx.t?.('options.toasts.setup_nothing_to_import')
+            ?? 'Nothing to import. Folder must contain a .env or *persona*.json file.',
+          'error',
         );
         return;
       }
@@ -167,7 +179,10 @@ export class SetupImportSection {
         for (const err of mergeResult.log.errors) {
           walked.errors.push({ file: err.file, reason: 'bad_envelope' });
         }
-        this.ctx.showToast('Duplicate persona names — import aborted.', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.setup_duplicate_persona_names') ?? 'Duplicate persona names — import aborted.',
+          'error',
+        );
         return;
       }
 
@@ -189,8 +204,9 @@ export class SetupImportSection {
       const noCredChanges = credsToWriteCount === 0 && credDiff.toClear.length === 0;
       if (noPersonaChanges && noCredChanges) {
         this.ctx.showToast(
-          'Already up to date — credentials and personas match the folder.',
-          'success'
+          this.ctx.t?.('options.toasts.setup_already_up_to_date')
+            ?? 'Already up to date — credentials and personas match the folder.',
+          'success',
         );
         return;
       }
@@ -220,14 +236,20 @@ export class SetupImportSection {
       const previewBody = this.buildPreviewBody(walked, mergeResult, credDiff, permDiff, langbuilderHost);
       const confirmed = await this.showPreviewAndConfirm(previewBody);
       if (!confirmed) {
-        this.ctx.showToast('Import cancelled', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.setup_import_cancelled') ?? 'Import cancelled',
+          'error',
+        );
         return;
       }
 
       // Step 2: second active-session check — TOCTOU defense between
       // preview and write.
       if (await this.isSessionActive()) {
-        this.ctx.showToast('Call started during import. Cancelled.', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.setup_call_started_during_import') ?? 'Call started during import. Cancelled.',
+          'error',
+        );
         return;
       }
 
@@ -260,8 +282,9 @@ export class SetupImportSection {
         // Credentials already written — accept the race for credentials,
         // but skip persona write so mid-call persona doesn't swap under the LLM.
         this.ctx.showToast(
-          'Credentials imported. Persona import cancelled — call in progress.',
-          'error'
+          this.ctx.t?.('options.toasts.setup_credentials_imported_persona_skipped')
+            ?? 'Credentials imported. Persona import cancelled — call in progress.',
+          'error',
         );
         await this.writeLastImport(walked, mergeResult, writeResult.written, writeResult.cleared, permissionsGranted, permDiff.toRevoke);
         return;
@@ -295,12 +318,16 @@ export class SetupImportSection {
       const overwritten = mergeResult.log.overwritten.length;
       const credsWritten = writeResult.written.length;
       this.ctx.showToast(
-        `Imported ${created + overwritten} personas, ${credsWritten} credentials`,
-        'success'
+        this.ctx.t?.('options.toasts.setup_imported_summary', { personas: created + overwritten, credentials: credsWritten })
+          ?? `Imported ${created + overwritten} personas, ${credsWritten} credentials`,
+        'success',
       );
     } catch (err) {
       console.error('[SetupImport] Import failed:', err);
-      this.ctx.showToast('Import failed — see service worker console', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.setup_import_failed') ?? 'Import failed — see service worker console',
+        'error',
+      );
     } finally {
       // Reset state
       this.processing = false;
@@ -484,7 +511,11 @@ export class SetupImportSection {
           resolve(true);
         }
       };
-      this.ctx.showConfirmModalNode('Import setup folder', body, confirm);
+      this.ctx.showConfirmModalNode(
+        this.ctx.t?.('options.toasts.setup_import_modal_title') ?? 'Import setup folder',
+        body,
+        confirm,
+      );
       // If the modal is dismissed without confirm, the Promise would hang.
       // The ModalManager doesn't expose a cancel callback, so we use a
       // timeout-based fallback: if no confirm after 10 minutes, assume cancel.

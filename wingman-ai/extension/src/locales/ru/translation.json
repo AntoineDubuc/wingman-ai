@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-10-toast-keys-2026-05-06",
+    "revision": "plan-5-section-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -168,7 +168,22 @@
       "drive_disconnected": "Google Drive отключён",
       "drive_connect_failed": "Ошибка подключения",
       "drive_disconnect_failed": "Ошибка отключения",
-      "drive_settings_saved": "Настройки Drive сохранены"
+      "drive_settings_saved": "Настройки Drive сохранены",
+      "langbuilder_settings_saved": "Настройки LangBuilder сохранены",
+      "langbuilder_url_required": "Введите URL и ключ API",
+      "langbuilder_test_passed_one": "Подключено! Найден 1 поток",
+      "langbuilder_test_passed_few": "Подключено! Найдено {{count}} потока",
+      "langbuilder_test_passed_other": "Подключено! Найдено {{count}} потоков",
+      "langbuilder_test_failed": "Сбой проверки: {{rawError}}",
+      "langbuilder_permission_required": "Требуется разрешение для подключения к этому серверу",
+      "langbuilder_invalid_url": "Неверный формат URL",
+      "active_personas_max": "Максимум {{count}} активных персонажей",
+      "active_personas_min": "Хотя бы один персонаж должен быть активным",
+      "transcription_pause_threshold": "Порог паузы: {{value}}",
+      "transcription_suggestion_cooldown": "Интервал подсказок: {{value}}",
+      "transcription_auto_suggestions_on": "Автоподсказки: Вкл",
+      "transcription_auto_suggestions_off": "Автоподсказки: Выкл",
+      "transcription_prompt_tuning": "Настройка промпта: {{label}}"
     }
   },
   "overlay": {

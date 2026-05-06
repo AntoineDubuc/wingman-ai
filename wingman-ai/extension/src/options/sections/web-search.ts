@@ -118,7 +118,10 @@ export class WebSearchSection {
       await chrome.storage.local.set({ [STORAGE_KEY_WEB_SEARCH_API_KEY]: key });
     } catch (error) {
       console.error('Failed to save web search API key:', error);
-      this.ctx.showToast('Failed to save API key', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save API key',
+        'error',
+      );
     }
   }
 
@@ -131,7 +134,10 @@ export class WebSearchSection {
       this.updateUsageDisplay(result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter | undefined, cap);
     } catch (error) {
       console.error('Failed to save daily cap:', error);
-      this.ctx.showToast('Failed to save daily cap', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save daily cap',
+        'error',
+      );
     }
   }
 

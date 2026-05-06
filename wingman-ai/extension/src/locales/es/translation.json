@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-10-toast-keys-2026-05-06",
+    "revision": "plan-5-section-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -167,7 +167,21 @@
       "drive_disconnected": "Google Drive desconectado",
       "drive_connect_failed": "Error de conexión",
       "drive_disconnect_failed": "Error al desconectar",
-      "drive_settings_saved": "Configuración de Drive guardada"
+      "drive_settings_saved": "Configuración de Drive guardada",
+      "langbuilder_settings_saved": "Configuración de LangBuilder guardada",
+      "langbuilder_url_required": "Ingrese URL y clave API",
+      "langbuilder_test_passed_one": "¡Conectado! 1 flujo encontrado",
+      "langbuilder_test_passed_other": "¡Conectado! {{count}} flujos encontrados",
+      "langbuilder_test_failed": "Prueba falló: {{rawError}}",
+      "langbuilder_permission_required": "Se requiere permiso para conectar a este servidor",
+      "langbuilder_invalid_url": "Formato de URL inválido",
+      "active_personas_max": "Máximo {{count}} personas activas",
+      "active_personas_min": "Al menos un persona debe estar activo",
+      "transcription_pause_threshold": "Umbral de pausa: {{value}}",
+      "transcription_suggestion_cooldown": "Tiempo entre sugerencias: {{value}}",
+      "transcription_auto_suggestions_on": "Sugerencias automáticas: Activadas",
+      "transcription_auto_suggestions_off": "Sugerencias automáticas: Desactivadas",
+      "transcription_prompt_tuning": "Ajuste del prompt: {{label}}"
     }
   },
   "overlay": {

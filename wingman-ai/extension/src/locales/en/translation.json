@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-10-toast-keys-2026-05-06",
+    "revision": "plan-5-section-keys-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -167,7 +167,21 @@
       "drive_disconnected": "Google Drive disconnected",
       "drive_connect_failed": "Failed to connect",
       "drive_disconnect_failed": "Failed to disconnect",
-      "drive_settings_saved": "Drive settings saved"
+      "drive_settings_saved": "Drive settings saved",
+      "langbuilder_settings_saved": "LangBuilder settings saved",
+      "langbuilder_url_required": "Please enter both URL and API key",
+      "langbuilder_test_passed_one": "Connected! Found 1 flow",
+      "langbuilder_test_passed_other": "Connected! Found {{count}} flows",
+      "langbuilder_test_failed": "Test failed: {{rawError}}",
+      "langbuilder_permission_required": "Permission required to connect to this server",
+      "langbuilder_invalid_url": "Invalid URL format",
+      "active_personas_max": "Maximum {{count}} personas can be active",
+      "active_personas_min": "At least one persona must be active",
+      "transcription_pause_threshold": "Pause threshold: {{value}}",
+      "transcription_suggestion_cooldown": "Suggestion cooldown: {{value}}",
+      "transcription_auto_suggestions_on": "Auto-suggestions: On",
+      "transcription_auto_suggestions_off": "Auto-suggestions: Off",
+      "transcription_prompt_tuning": "Prompt tuning: {{label}}"
     }
   },
   "overlay": {

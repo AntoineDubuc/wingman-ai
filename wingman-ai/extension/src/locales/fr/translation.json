@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-10-toast-keys-2026-05-06",
+    "revision": "plan-5-section-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -167,7 +167,21 @@
       "drive_disconnected": "Google Drive déconnecté",
       "drive_connect_failed": "Échec de la connexion",
       "drive_disconnect_failed": "Échec de la déconnexion",
-      "drive_settings_saved": "Paramètres Drive enregistrés"
+      "drive_settings_saved": "Paramètres Drive enregistrés",
+      "langbuilder_settings_saved": "Paramètres LangBuilder enregistrés",
+      "langbuilder_url_required": "Veuillez saisir l'URL et la clé d'API",
+      "langbuilder_test_passed_one": "Connecté! 1 flux trouvé",
+      "langbuilder_test_passed_other": "Connecté! {{count}} flux trouvés",
+      "langbuilder_test_failed": "Test échoué: {{rawError}}",
+      "langbuilder_permission_required": "Autorisation requise pour se connecter à ce serveur",
+      "langbuilder_invalid_url": "Format d'URL invalide",
+      "active_personas_max": "Maximum {{count}} personas actifs",
+      "active_personas_min": "Au moins un persona doit être actif",
+      "transcription_pause_threshold": "Seuil de pause: {{value}}",
+      "transcription_suggestion_cooldown": "Délai entre suggestions: {{value}}",
+      "transcription_auto_suggestions_on": "Suggestions auto: Activées",
+      "transcription_auto_suggestions_off": "Suggestions auto: Désactivées",
+      "transcription_prompt_tuning": "Réglage du prompt: {{label}}"
     }
   },
   "overlay": {

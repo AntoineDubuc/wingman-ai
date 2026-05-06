@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-10-toast-keys-2026-05-06",
+    "revision": "plan-5-section-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -168,7 +168,22 @@
       "drive_disconnected": "Google Drive deconectat",
       "drive_connect_failed": "Eroare de conectare",
       "drive_disconnect_failed": "Eroare la deconectare",
-      "drive_settings_saved": "Setări Drive salvate"
+      "drive_settings_saved": "Setări Drive salvate",
+      "langbuilder_settings_saved": "Setări LangBuilder salvate",
+      "langbuilder_url_required": "Introduceți URL și cheia API",
+      "langbuilder_test_passed_one": "Conectat! 1 flux găsit",
+      "langbuilder_test_passed_few": "Conectat! {{count}} fluxuri găsite",
+      "langbuilder_test_passed_other": "Conectat! {{count}} de fluxuri găsite",
+      "langbuilder_test_failed": "Testul a eșuat: {{rawError}}",
+      "langbuilder_permission_required": "Permisiune necesară pentru conectare la acest server",
+      "langbuilder_invalid_url": "Format URL invalid",
+      "active_personas_max": "Maximum {{count}} personaje active",
+      "active_personas_min": "Cel puțin un personaj trebuie să fie activ",
+      "transcription_pause_threshold": "Prag pauză: {{value}}",
+      "transcription_suggestion_cooldown": "Întârziere sugestii: {{value}}",
+      "transcription_auto_suggestions_on": "Sugestii automate: Activate",
+      "transcription_auto_suggestions_off": "Sugestii automate: Dezactivate",
+      "transcription_prompt_tuning": "Reglare prompt: {{label}}"
     }
   },
   "overlay": {

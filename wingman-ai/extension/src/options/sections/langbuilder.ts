@@ -59,7 +59,10 @@ export class LangBuilderSection {
     const apiKey = this.apiKeyInput?.value?.trim() || '';
 
     if (!url || !apiKey) {
-      this.ctx.showToast('Please enter both URL and API key', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_url_required') ?? 'Please enter both URL and API key',
+        'error',
+      );
       return;
     }
 
@@ -73,10 +76,16 @@ export class LangBuilderSection {
         langbuilderApiKey: apiKey,
       });
       this.updateStatus();
-      this.ctx.showToast('LangBuilder settings saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_settings_saved') ?? 'LangBuilder settings saved',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save LangBuilder settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error',
+      );
     }
   }
 
@@ -85,7 +94,10 @@ export class LangBuilderSection {
     const apiKey = this.apiKeyInput?.value?.trim() || '';
 
     if (!url || !apiKey) {
-      this.ctx.showToast('Please enter both URL and API key', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_url_required') ?? 'Please enter both URL and API key',
+        'error',
+      );
       return;
     }
 
@@ -107,11 +119,19 @@ export class LangBuilderSection {
 
       this.populateFlows(cached);
       this.setStatusDot('status-configured', `Connected (${flows.length} flows)`);
-      this.ctx.showToast(`Connected! Found ${flows.length} flow${flows.length === 1 ? '' : 's'}`, 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_test_passed', { count: flows.length })
+          ?? `Connected! Found ${flows.length} flow${flows.length === 1 ? '' : 's'}`,
+        'success',
+      );
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Connection failed';
       this.setStatusDot('status-error', msg);
-      this.ctx.showToast(`Test failed: ${msg}`, 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_test_failed', { rawError: msg })
+          ?? `Test failed: ${msg}`,
+        'error',
+      );
     } finally {
       if (this.testBtn) {
         this.testBtn.disabled = false;
@@ -131,13 +151,20 @@ export class LangBuilderSection {
       // Request permission (must be in user-gesture handler)
       const granted = await chrome.permissions.request({ origins: [origin] });
       if (!granted) {
-        this.ctx.showToast('Permission required to connect to this server', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.langbuilder_permission_required')
+            ?? 'Permission required to connect to this server',
+          'error',
+        );
         return false;
       }
       return true;
     } catch (error) {
       console.error('Permission request failed:', error);
-      this.ctx.showToast('Invalid URL format', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.langbuilder_invalid_url') ?? 'Invalid URL format',
+        'error',
+      );
       return false;
     }
   }

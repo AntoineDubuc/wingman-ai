@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-prompt-modals-2026-05-06",
+    "revision": "plan-5-html-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -379,6 +379,132 @@
         "badge_should_silent_lc": "должен молчать",
         "loading_running_tests": "Выполнение тестов... может занять 15-30 секунд.",
         "no_api_key_setup_hint": "Не найден ключ API для активного провайдера. Проверьте свои ключи API на вкладке Настройка."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Настройки расширения",
+        "theme_toggle": "Переключить тёмный режим"
+      },
+      "setup": {
+        "import_setup_folder_title": "Импорт папки конфигурации",
+        "choose_folder_button": "Выбрать папку",
+        "api_keys_description": "Введите ваши ключи API, чтобы включить речевую транскрипцию и ответы AI. Ключи хранятся локально и никогда не отправляются на наши серверы.",
+        "deepgram_label": "Ключ API Deepgram",
+        "gemini_label": "Ключ API Google Gemini",
+        "openrouter_label": "Ключ API OpenRouter",
+        "groq_label": "Ключ API Groq",
+        "hume_label": "Hume AI (распознавание эмоций)",
+        "hume_optional": "Опционально",
+        "hume_secret_key_label": "Секретный ключ",
+        "test_hume_button": "Тест Hume",
+        "test_keys_button": "Тест ключей",
+        "save_keys_button": "Сохранить ключи",
+        "ai_provider_label": "Провайдер ИИ",
+        "model_label": "Модель",
+        "show_hide_key": "Показать/скрыть ключ",
+        "get_one_free": "Получить бесплатно",
+        "google_drive_title": "Интеграция с Google Drive",
+        "google_drive_description": "Автоматически сохраняет транскрипции встреч на ваш Google Drive после каждого звонка.",
+        "autosave_label": "Автосохранение транскрипций",
+        "connect_button": "Подключить аккаунт Google",
+        "disconnect_button": "Отключить",
+        "folder_name_label": "Имя папки",
+        "transcript_format_label": "Формат транскрипции",
+        "format_googledoc": "Google Doc (отформатировано)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Простой текст (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Активные персонажи для звонков",
+        "active_personas_description": "Выберите, какие персонажи активны во время звонков."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Чувствительность транскрипции",
+        "pause_threshold_label": "Порог паузы",
+        "suggestion_frequency_title": "Частота подсказок",
+        "auto_suggestions_label": "Автоподсказки",
+        "cooldown_label": "Интервал",
+        "ai_prompt_tuning_title": "Настройка ИИ-промпта",
+        "tuning_mode_label": "Режим настройки",
+        "tuning_mode_auto": "Авто (рекомендуется)",
+        "tuning_mode_off": "Выкл",
+        "speaker_filter_title": "Фильтр говорящих",
+        "speaker_filter_label": "Отвечать только другим говорящим",
+        "panel_layout_title": "Расположение панели",
+        "panel_position_label": "Позиция панели",
+        "position_floating": "Плавающая",
+        "position_dock_left": "Боковая панель слева",
+        "position_dock_right": "Боковая панель справа",
+        "display_mode_label": "Режим отображения",
+        "display_full": "Полная расшифровка + подсказки",
+        "display_suggestions_only": "Только подсказки",
+        "call_summary_title": "Сводка звонка",
+        "auto_summary_label": "Авто-генерация сводки звонка",
+        "include_key_moments_label": "Включать ключевые моменты"
+      },
+      "personas": {
+        "personas_title": "Персонажи",
+        "import_button": "Импорт",
+        "new_button": "+ Новый персонаж",
+        "editor_title": "Редактирование персонажа",
+        "name_label": "Имя",
+        "icon_label": "Иконка (опционально)",
+        "icon_clear_button": "Очистить",
+        "color_label": "Цветной ярлык",
+        "system_prompt_label": "Системный промпт",
+        "prompt_assistant_button": "Ассистент настройки",
+        "test_prompts_button": "Тестировать промпты",
+        "version_history_button": "История версий",
+        "kb_label": "База знаний",
+        "kb_test_label": "Тест базы знаний",
+        "kb_test_button": "Тест",
+        "cancel_button": "Отмена",
+        "export_button": "Экспорт",
+        "duplicate_button": "Дублировать",
+        "delete_button": "Удалить",
+        "save_button": "Сохранить"
+      },
+      "conclave": {
+        "settings_title": "Настройки Conclave",
+        "leader_label": "Лидер Conclave",
+        "presets_title": "Пресеты",
+        "new_preset_button": "+ Новый пресет"
+      },
+      "langbuilder": {
+        "connection_title": "Подключение LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Ключ API",
+        "test_button": "Проверить соединение",
+        "save_button": "Сохранить",
+        "flows_title": "Доступные потоки"
+      },
+      "websearch": {
+        "provider_title": "Провайдер веб-поиска",
+        "provider_label": "Провайдер",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Ключ API",
+        "test_button": "Проверить соединение",
+        "budget_title": "Дневной лимит запросов"
+      },
+      "support": {
+        "support_wingman_title": "Поддержать Wingman",
+        "donate_button": "Купить мне кофе",
+        "tutorials_title": "Туториалы и руководства",
+        "view_tutorials_button": "Смотреть туториалы",
+        "feature_requests_title": "Запросы функций и баги",
+        "github_button": "Отправить на GitHub",
+        "langbuilder_title": "Построено с LangBuilder",
+        "learn_more_button": "Узнать больше",
+        "connect_title": "Связаться с создателем",
+        "linkedin_button": "Связаться в LinkedIn"
+      },
+      "modals": {
+        "reset_title": "Сбросить по умолчанию?",
+        "reset_cancel": "Отмена",
+        "reset_confirm": "Сброс",
+        "assistant_title": "Ассистент настройки",
+        "send_button": "Отправить",
+        "tester_title": "Тестер промпта"
       }
     }
   },

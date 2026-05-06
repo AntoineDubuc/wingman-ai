@@ -13,7 +13,7 @@ import { PanelLayoutSection } from './sections/panel-layout';
 import { TabManager } from './sections/tabs';
 import { SetupImportSection } from './sections/setup-import';
 import { WebSearchSection } from './sections/web-search';
-import { initOptionsI18n, renderLanguagePicker, handleStorageChange } from './options-locale';
+import { initOptionsI18n, renderLanguagePicker, handleStorageChange, applyI18nAttributes } from './options-locale';
 import { installationStateService } from '../services/installation-state';
 import type { i18n as I18n } from 'i18next';
 import type { SupportedLocale } from '../shared/i18n-types';
@@ -154,6 +154,8 @@ class OptionsController {
     await maybeShowUpgradeBanner(i18n);
     await setupLanguagePickerWiring(i18n, locale);
     localizeTabs(i18n);
+    // Plan 5: walk the static HTML and apply data-i18n attributes.
+    applyI18nAttributes(document, i18n);
 
     const toast = new ToastManager();
     const modal = new ModalManager();

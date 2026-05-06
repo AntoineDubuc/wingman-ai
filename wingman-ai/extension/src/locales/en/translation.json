@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-prompt-modals-2026-05-06",
+    "revision": "plan-5-html-keys-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -376,6 +376,132 @@
         "badge_should_silent_lc": "should stay silent",
         "loading_running_tests": "Running tests... this may take 15-30 seconds.",
         "no_api_key_setup_hint": "No API key found for the active provider. Check your API keys in the Setup tab."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Extension Settings",
+        "theme_toggle": "Toggle dark mode"
+      },
+      "setup": {
+        "import_setup_folder_title": "Import Setup Folder",
+        "choose_folder_button": "Choose Folder",
+        "api_keys_description": "Enter your API keys to enable speech-to-text and AI responses. Your keys are stored locally and never sent to our servers.",
+        "deepgram_label": "Deepgram API Key",
+        "gemini_label": "Google Gemini API Key",
+        "openrouter_label": "OpenRouter API Key",
+        "groq_label": "Groq API Key",
+        "hume_label": "Hume AI (Emotion Detection)",
+        "hume_optional": "Optional",
+        "hume_secret_key_label": "Secret Key",
+        "test_hume_button": "Test Hume",
+        "test_keys_button": "Test Keys",
+        "save_keys_button": "Save Keys",
+        "ai_provider_label": "AI Provider",
+        "model_label": "Model",
+        "show_hide_key": "Show/hide key",
+        "get_one_free": "Get one free",
+        "google_drive_title": "Google Drive Integration",
+        "google_drive_description": "Automatically save meeting transcripts to your Google Drive after each call.",
+        "autosave_label": "Auto-save transcripts",
+        "connect_button": "Connect Google Account",
+        "disconnect_button": "Disconnect",
+        "folder_name_label": "Folder Name",
+        "transcript_format_label": "Transcript Format",
+        "format_googledoc": "Google Doc (formatted)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Plain Text (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Active Personas for Calls",
+        "active_personas_description": "Select which personas are active during your calls."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Transcription Sensitivity",
+        "pause_threshold_label": "Pause threshold",
+        "suggestion_frequency_title": "Suggestion Frequency",
+        "auto_suggestions_label": "Auto-suggestions",
+        "cooldown_label": "Cooldown",
+        "ai_prompt_tuning_title": "AI Prompt Tuning",
+        "tuning_mode_label": "Tuning Mode",
+        "tuning_mode_auto": "Auto (recommended)",
+        "tuning_mode_off": "Off",
+        "speaker_filter_title": "Speaker Filter",
+        "speaker_filter_label": "Only respond to other speakers",
+        "panel_layout_title": "Panel Layout",
+        "panel_position_label": "Panel Position",
+        "position_floating": "Floating",
+        "position_dock_left": "Sidebar Left",
+        "position_dock_right": "Sidebar Right",
+        "display_mode_label": "Display Mode",
+        "display_full": "Full transcript + suggestions",
+        "display_suggestions_only": "Suggestions only",
+        "call_summary_title": "Call Summary",
+        "auto_summary_label": "Auto-generate call summary",
+        "include_key_moments_label": "Include key moments"
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Import",
+        "new_button": "+ New Persona",
+        "editor_title": "Edit Persona",
+        "name_label": "Name",
+        "icon_label": "Icon (optional)",
+        "icon_clear_button": "Clear",
+        "color_label": "Color tag",
+        "system_prompt_label": "System Prompt",
+        "prompt_assistant_button": "Prompt Setup Assistant",
+        "test_prompts_button": "Test Current Prompts",
+        "version_history_button": "Version History",
+        "kb_label": "Knowledge Base",
+        "kb_test_label": "Test Knowledge Base",
+        "kb_test_button": "Test",
+        "cancel_button": "Cancel",
+        "export_button": "Export",
+        "duplicate_button": "Duplicate",
+        "delete_button": "Delete",
+        "save_button": "Save"
+      },
+      "conclave": {
+        "settings_title": "Conclave Settings",
+        "leader_label": "Conclave Leader",
+        "presets_title": "Presets",
+        "new_preset_button": "+ New Preset"
+      },
+      "langbuilder": {
+        "connection_title": "LangBuilder Connection",
+        "url_label": "LangBuilder URL",
+        "api_key_label": "API Key",
+        "test_button": "Test Connection",
+        "save_button": "Save",
+        "flows_title": "Available Flows"
+      },
+      "websearch": {
+        "provider_title": "Web Search Provider",
+        "provider_label": "Provider",
+        "provider_brave": "Brave Search",
+        "api_key_label": "API Key",
+        "test_button": "Test Connection",
+        "budget_title": "Daily Query Budget"
+      },
+      "support": {
+        "support_wingman_title": "Support Wingman",
+        "donate_button": "Buy Me a Coffee",
+        "tutorials_title": "Tutorials & Guides",
+        "view_tutorials_button": "View Tutorials",
+        "feature_requests_title": "Feature Requests & Bug Reports",
+        "github_button": "Submit on GitHub",
+        "langbuilder_title": "Built with LangBuilder",
+        "learn_more_button": "Learn More",
+        "connect_title": "Connect with the Creator",
+        "linkedin_button": "Connect on LinkedIn"
+      },
+      "modals": {
+        "reset_title": "Reset to Default?",
+        "reset_cancel": "Cancel",
+        "reset_confirm": "Reset",
+        "assistant_title": "Prompt Setup Assistant",
+        "send_button": "Send",
+        "tester_title": "Prompt Tester"
       }
     }
   },

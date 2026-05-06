@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-prompt-modals-2026-05-06",
+    "revision": "plan-5-html-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -379,6 +379,132 @@
         "badge_should_silent_lc": "trebuie să tacă",
         "loading_running_tests": "Se execută testele... poate dura 15-30 secunde.",
         "no_api_key_setup_hint": "Nicio cheie API găsită pentru furnizorul activ. Verificați cheile API în fila Configurare."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Setări extensie",
+        "theme_toggle": "Comută modul întunecat"
+      },
+      "setup": {
+        "import_setup_folder_title": "Importați folderul de configurare",
+        "choose_folder_button": "Alegeți folderul",
+        "api_keys_description": "Introduceți cheile API pentru a activa transcrierea vocală și răspunsurile IA. Cheile sunt stocate local și nu sunt trimise la serverele noastre.",
+        "deepgram_label": "Cheie API Deepgram",
+        "gemini_label": "Cheie API Google Gemini",
+        "openrouter_label": "Cheie API OpenRouter",
+        "groq_label": "Cheie API Groq",
+        "hume_label": "Hume AI (detectare emoții)",
+        "hume_optional": "Opțional",
+        "hume_secret_key_label": "Cheie secretă",
+        "test_hume_button": "Testează Hume",
+        "test_keys_button": "Testează cheile",
+        "save_keys_button": "Salvează cheile",
+        "ai_provider_label": "Furnizor IA",
+        "model_label": "Model",
+        "show_hide_key": "Afișează/ascunde cheia",
+        "get_one_free": "Obțineți una gratuit",
+        "google_drive_title": "Integrare Google Drive",
+        "google_drive_description": "Salvează automat transcrierile întâlnirilor în Google Drive după fiecare apel.",
+        "autosave_label": "Salvare automată transcrieri",
+        "connect_button": "Conectează contul Google",
+        "disconnect_button": "Deconectează",
+        "folder_name_label": "Numele folderului",
+        "transcript_format_label": "Format transcrieri",
+        "format_googledoc": "Google Doc (formatat)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Text simplu (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Personaje active pentru apeluri",
+        "active_personas_description": "Selectați ce personaje sunt active în timpul apelurilor."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Sensibilitate transcriere",
+        "pause_threshold_label": "Prag pauză",
+        "suggestion_frequency_title": "Frecvența sugestiilor",
+        "auto_suggestions_label": "Sugestii automate",
+        "cooldown_label": "Întârziere",
+        "ai_prompt_tuning_title": "Reglare prompt IA",
+        "tuning_mode_label": "Mod reglare",
+        "tuning_mode_auto": "Auto (recomandat)",
+        "tuning_mode_off": "Dezactivat",
+        "speaker_filter_title": "Filtru vorbitori",
+        "speaker_filter_label": "Răspunde numai la alți vorbitori",
+        "panel_layout_title": "Aspect panou",
+        "panel_position_label": "Poziție panou",
+        "position_floating": "Plutitor",
+        "position_dock_left": "Bară laterală stânga",
+        "position_dock_right": "Bară laterală dreapta",
+        "display_mode_label": "Mod afișare",
+        "display_full": "Transcriere completă + sugestii",
+        "display_suggestions_only": "Doar sugestii",
+        "call_summary_title": "Rezumat apel",
+        "auto_summary_label": "Generează automat rezumatul apelului",
+        "include_key_moments_label": "Include momente cheie"
+      },
+      "personas": {
+        "personas_title": "Personaje",
+        "import_button": "Importă",
+        "new_button": "+ Personaj nou",
+        "editor_title": "Editare personaj",
+        "name_label": "Nume",
+        "icon_label": "Pictogramă (opțional)",
+        "icon_clear_button": "Șterge",
+        "color_label": "Etichetă culoare",
+        "system_prompt_label": "Prompt sistem",
+        "prompt_assistant_button": "Asistent configurare",
+        "test_prompts_button": "Testează prompturile",
+        "version_history_button": "Istoric versiuni",
+        "kb_label": "Bază cunoștințe",
+        "kb_test_label": "Testează baza cunoștințelor",
+        "kb_test_button": "Testează",
+        "cancel_button": "Anulează",
+        "export_button": "Exportă",
+        "duplicate_button": "Duplică",
+        "delete_button": "Șterge",
+        "save_button": "Salvează"
+      },
+      "conclave": {
+        "settings_title": "Setări Conclave",
+        "leader_label": "Lider Conclave",
+        "presets_title": "Presetări",
+        "new_preset_button": "+ Presetare nouă"
+      },
+      "langbuilder": {
+        "connection_title": "Conexiune LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Cheie API",
+        "test_button": "Testează conexiunea",
+        "save_button": "Salvează",
+        "flows_title": "Fluxuri disponibile"
+      },
+      "websearch": {
+        "provider_title": "Furnizor căutare web",
+        "provider_label": "Furnizor",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Cheie API",
+        "test_button": "Testează conexiunea",
+        "budget_title": "Buget zilnic interogări"
+      },
+      "support": {
+        "support_wingman_title": "Sprijină Wingman",
+        "donate_button": "Oferă o cafea",
+        "tutorials_title": "Tutoriale și ghiduri",
+        "view_tutorials_button": "Vezi tutorialele",
+        "feature_requests_title": "Cereri funcționalități și erori",
+        "github_button": "Trimite pe GitHub",
+        "langbuilder_title": "Construit cu LangBuilder",
+        "learn_more_button": "Află mai mult",
+        "connect_title": "Conectați-vă cu creatorul",
+        "linkedin_button": "Conectează-te pe LinkedIn"
+      },
+      "modals": {
+        "reset_title": "Resetare la implicit?",
+        "reset_cancel": "Anulează",
+        "reset_confirm": "Resetează",
+        "assistant_title": "Asistent configurare",
+        "send_button": "Trimite",
+        "tester_title": "Tester prompt"
       }
     }
   },

@@ -73,6 +73,36 @@ export async function initOptionsI18n(): Promise<{ i18n: I18n; locale: Supported
 }
 
 /**
+ * Plan 5: walks the DOM under `root` and applies localized text to every
+ * element marked with `data-i18n="<key>"`. Optional companion attributes:
+ *   - `data-i18n-attr`     → set the named attribute instead of textContent
+ *                            (e.g., `data-i18n-attr="placeholder"`).
+ *   - `data-i18n-title`    → also set the `title` attribute from `<key>.title`
+ *                            as a sibling lookup. (Not used yet; reserved.)
+ *
+ * Missing keys: i18next returns the key string itself for a missing lookup,
+ * so we only swap textContent if the lookup yields a value DIFFERENT from
+ * the key. This lets unlocalized markup keep its English fallback.
+ *
+ * Idempotent: safe to call multiple times.
+ */
+export function applyI18nAttributes(root: ParentNode, i18n: I18n): void {
+  const elements = root.querySelectorAll<HTMLElement>('[data-i18n]');
+  for (const el of elements) {
+    const key = el.dataset['i18n'];
+    if (!key) continue;
+    const translated = i18n.t(key);
+    if (translated === key) continue; // missing — leave the static fallback
+    const attr = el.dataset['i18nAttr'];
+    if (attr) {
+      el.setAttribute(attr, translated);
+    } else {
+      el.textContent = translated;
+    }
+  }
+}
+
+/**
  * chrome.storage.onChanged handler for language_preference key changes.
  *
  * Updates document.documentElement.lang and triggers i18n.changeLanguage()

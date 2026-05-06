@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-prompt-modals-2026-05-06",
+    "revision": "plan-5-html-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -376,6 +376,132 @@
         "badge_should_silent_lc": "doit se taire",
         "loading_running_tests": "Exécution des tests... cela peut prendre 15-30 secondes.",
         "no_api_key_setup_hint": "Aucune clé d'API trouvée pour le fournisseur actif. Vérifiez vos clés dans l'onglet Configuration."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Paramètres de l'extension",
+        "theme_toggle": "Basculer le mode sombre"
+      },
+      "setup": {
+        "import_setup_folder_title": "Importer un dossier de configuration",
+        "choose_folder_button": "Choisir un dossier",
+        "api_keys_description": "Saisissez vos clés d'API pour activer la transcription vocale et les réponses IA. Vos clés sont stockées localement et ne sont jamais envoyées à nos serveurs.",
+        "deepgram_label": "Clé d'API Deepgram",
+        "gemini_label": "Clé d'API Google Gemini",
+        "openrouter_label": "Clé d'API OpenRouter",
+        "groq_label": "Clé d'API Groq",
+        "hume_label": "Hume AI (détection des émotions)",
+        "hume_optional": "Facultatif",
+        "hume_secret_key_label": "Clé secrète",
+        "test_hume_button": "Tester Hume",
+        "test_keys_button": "Tester les clés",
+        "save_keys_button": "Enregistrer les clés",
+        "ai_provider_label": "Fournisseur d'IA",
+        "model_label": "Modèle",
+        "show_hide_key": "Afficher/masquer la clé",
+        "get_one_free": "En obtenir une gratuitement",
+        "google_drive_title": "Intégration Google Drive",
+        "google_drive_description": "Enregistrez automatiquement les transcriptions de réunion sur votre Google Drive après chaque appel.",
+        "autosave_label": "Enregistrement auto des transcriptions",
+        "connect_button": "Connecter le compte Google",
+        "disconnect_button": "Déconnecter",
+        "folder_name_label": "Nom du dossier",
+        "transcript_format_label": "Format de la transcription",
+        "format_googledoc": "Google Doc (formaté)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Texte brut (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Personas actifs pour les appels",
+        "active_personas_description": "Sélectionnez les personas actifs pendant vos appels."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Sensibilité de la transcription",
+        "pause_threshold_label": "Seuil de pause",
+        "suggestion_frequency_title": "Fréquence des suggestions",
+        "auto_suggestions_label": "Suggestions automatiques",
+        "cooldown_label": "Délai entre suggestions",
+        "ai_prompt_tuning_title": "Réglage du prompt IA",
+        "tuning_mode_label": "Mode de réglage",
+        "tuning_mode_auto": "Auto (recommandé)",
+        "tuning_mode_off": "Désactivé",
+        "speaker_filter_title": "Filtre des locuteurs",
+        "speaker_filter_label": "Répondre uniquement aux autres locuteurs",
+        "panel_layout_title": "Disposition du panneau",
+        "panel_position_label": "Position du panneau",
+        "position_floating": "Flottant",
+        "position_dock_left": "Barre latérale à gauche",
+        "position_dock_right": "Barre latérale à droite",
+        "display_mode_label": "Mode d'affichage",
+        "display_full": "Transcription complète + suggestions",
+        "display_suggestions_only": "Suggestions seulement",
+        "call_summary_title": "Résumé de l'appel",
+        "auto_summary_label": "Générer auto le résumé d'appel",
+        "include_key_moments_label": "Inclure les moments clés"
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Importer",
+        "new_button": "+ Nouveau persona",
+        "editor_title": "Modifier le persona",
+        "name_label": "Nom",
+        "icon_label": "Icône (facultatif)",
+        "icon_clear_button": "Effacer",
+        "color_label": "Étiquette de couleur",
+        "system_prompt_label": "Prompt système",
+        "prompt_assistant_button": "Assistant de configuration",
+        "test_prompts_button": "Tester les prompts",
+        "version_history_button": "Historique des versions",
+        "kb_label": "Base de connaissances",
+        "kb_test_label": "Tester la base de connaissances",
+        "kb_test_button": "Tester",
+        "cancel_button": "Annuler",
+        "export_button": "Exporter",
+        "duplicate_button": "Dupliquer",
+        "delete_button": "Supprimer",
+        "save_button": "Enregistrer"
+      },
+      "conclave": {
+        "settings_title": "Paramètres du Conclave",
+        "leader_label": "Leader du Conclave",
+        "presets_title": "Préréglages",
+        "new_preset_button": "+ Nouveau préréglage"
+      },
+      "langbuilder": {
+        "connection_title": "Connexion LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Clé d'API",
+        "test_button": "Tester la connexion",
+        "save_button": "Enregistrer",
+        "flows_title": "Flux disponibles"
+      },
+      "websearch": {
+        "provider_title": "Fournisseur de recherche web",
+        "provider_label": "Fournisseur",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Clé d'API",
+        "test_button": "Tester la connexion",
+        "budget_title": "Budget quotidien de requêtes"
+      },
+      "support": {
+        "support_wingman_title": "Soutenir Wingman",
+        "donate_button": "Offrez-moi un café",
+        "tutorials_title": "Tutoriels et guides",
+        "view_tutorials_button": "Voir les tutoriels",
+        "feature_requests_title": "Demandes de fonctionnalités et bogues",
+        "github_button": "Soumettre sur GitHub",
+        "langbuilder_title": "Conçu avec LangBuilder",
+        "learn_more_button": "En savoir plus",
+        "connect_title": "Connectez-vous au créateur",
+        "linkedin_button": "Se connecter sur LinkedIn"
+      },
+      "modals": {
+        "reset_title": "Réinitialiser par défaut?",
+        "reset_cancel": "Annuler",
+        "reset_confirm": "Réinitialiser",
+        "assistant_title": "Assistant de configuration",
+        "send_button": "Envoyer",
+        "tester_title": "Testeur de prompt"
       }
     }
   },

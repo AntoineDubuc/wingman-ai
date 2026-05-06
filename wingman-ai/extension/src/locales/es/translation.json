@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-prompt-modals-2026-05-06",
+    "revision": "plan-5-html-keys-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -376,6 +376,132 @@
         "badge_should_silent_lc": "debe guardar silencio",
         "loading_running_tests": "Ejecutando pruebas... puede tardar 15-30 segundos.",
         "no_api_key_setup_hint": "No se encontró clave API para el proveedor activo. Verifique sus claves en la pestaña Configuración."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Configuración de la extensión",
+        "theme_toggle": "Alternar modo oscuro"
+      },
+      "setup": {
+        "import_setup_folder_title": "Importar carpeta de configuración",
+        "choose_folder_button": "Elegir carpeta",
+        "api_keys_description": "Ingrese sus claves API para habilitar transcripción de voz y respuestas IA. Sus claves se almacenan localmente y nunca se envían a nuestros servidores.",
+        "deepgram_label": "Clave API de Deepgram",
+        "gemini_label": "Clave API de Google Gemini",
+        "openrouter_label": "Clave API de OpenRouter",
+        "groq_label": "Clave API de Groq",
+        "hume_label": "Hume AI (Detección de emociones)",
+        "hume_optional": "Opcional",
+        "hume_secret_key_label": "Clave secreta",
+        "test_hume_button": "Probar Hume",
+        "test_keys_button": "Probar claves",
+        "save_keys_button": "Guardar claves",
+        "ai_provider_label": "Proveedor de IA",
+        "model_label": "Modelo",
+        "show_hide_key": "Mostrar/ocultar clave",
+        "get_one_free": "Obtener una gratis",
+        "google_drive_title": "Integración con Google Drive",
+        "google_drive_description": "Guarde automáticamente las transcripciones de reuniones en su Google Drive después de cada llamada.",
+        "autosave_label": "Guardado automático de transcripciones",
+        "connect_button": "Conectar cuenta Google",
+        "disconnect_button": "Desconectar",
+        "folder_name_label": "Nombre de la carpeta",
+        "transcript_format_label": "Formato de transcripción",
+        "format_googledoc": "Google Doc (con formato)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Texto sin formato (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Personas activos para llamadas",
+        "active_personas_description": "Seleccione qué personas están activos durante sus llamadas."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Sensibilidad de la transcripción",
+        "pause_threshold_label": "Umbral de pausa",
+        "suggestion_frequency_title": "Frecuencia de sugerencias",
+        "auto_suggestions_label": "Sugerencias automáticas",
+        "cooldown_label": "Tiempo entre sugerencias",
+        "ai_prompt_tuning_title": "Ajuste del prompt IA",
+        "tuning_mode_label": "Modo de ajuste",
+        "tuning_mode_auto": "Auto (recomendado)",
+        "tuning_mode_off": "Desactivado",
+        "speaker_filter_title": "Filtro de hablantes",
+        "speaker_filter_label": "Solo responder a otros hablantes",
+        "panel_layout_title": "Diseño del panel",
+        "panel_position_label": "Posición del panel",
+        "position_floating": "Flotante",
+        "position_dock_left": "Barra lateral izquierda",
+        "position_dock_right": "Barra lateral derecha",
+        "display_mode_label": "Modo de visualización",
+        "display_full": "Transcripción completa + sugerencias",
+        "display_suggestions_only": "Solo sugerencias",
+        "call_summary_title": "Resumen de la llamada",
+        "auto_summary_label": "Generar resumen de llamada automáticamente",
+        "include_key_moments_label": "Incluir momentos clave"
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Importar",
+        "new_button": "+ Nueva persona",
+        "editor_title": "Editar persona",
+        "name_label": "Nombre",
+        "icon_label": "Icono (opcional)",
+        "icon_clear_button": "Borrar",
+        "color_label": "Etiqueta de color",
+        "system_prompt_label": "Prompt del sistema",
+        "prompt_assistant_button": "Asistente de configuración",
+        "test_prompts_button": "Probar prompts",
+        "version_history_button": "Historial de versiones",
+        "kb_label": "Base de conocimientos",
+        "kb_test_label": "Probar base de conocimientos",
+        "kb_test_button": "Probar",
+        "cancel_button": "Cancelar",
+        "export_button": "Exportar",
+        "duplicate_button": "Duplicar",
+        "delete_button": "Eliminar",
+        "save_button": "Guardar"
+      },
+      "conclave": {
+        "settings_title": "Configuración del Conclave",
+        "leader_label": "Líder del Conclave",
+        "presets_title": "Preajustes",
+        "new_preset_button": "+ Nuevo preajuste"
+      },
+      "langbuilder": {
+        "connection_title": "Conexión LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Clave API",
+        "test_button": "Probar conexión",
+        "save_button": "Guardar",
+        "flows_title": "Flujos disponibles"
+      },
+      "websearch": {
+        "provider_title": "Proveedor de búsqueda web",
+        "provider_label": "Proveedor",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Clave API",
+        "test_button": "Probar conexión",
+        "budget_title": "Presupuesto diario de consultas"
+      },
+      "support": {
+        "support_wingman_title": "Apoyar a Wingman",
+        "donate_button": "Cómprame un café",
+        "tutorials_title": "Tutoriales y guías",
+        "view_tutorials_button": "Ver tutoriales",
+        "feature_requests_title": "Solicitudes de funciones y errores",
+        "github_button": "Enviar en GitHub",
+        "langbuilder_title": "Construido con LangBuilder",
+        "learn_more_button": "Aprende más",
+        "connect_title": "Conéctate con el creador",
+        "linkedin_button": "Conectar en LinkedIn"
+      },
+      "modals": {
+        "reset_title": "¿Restablecer a predeterminado?",
+        "reset_cancel": "Cancelar",
+        "reset_confirm": "Restablecer",
+        "assistant_title": "Asistente de configuración",
+        "send_button": "Enviar",
+        "tester_title": "Probador de prompt"
       }
     }
   },

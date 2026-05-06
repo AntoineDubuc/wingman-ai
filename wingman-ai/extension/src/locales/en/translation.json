@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "1.1.0",
+    "revision": "plan-7-summary-keys-2026-05-05",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -183,7 +183,8 @@
       "action_items": "Action Items",
       "key_moments": "Key Moments",
       "personas_used": "Personas Used",
-      "session_cost_estimate": "Session Cost Estimate"
+      "session_cost_estimate": "Session Cost Estimate",
+      "call_summary": "Call Summary"
     },
     "action_item_owner": {
       "you": "You",
@@ -197,11 +198,27 @@
     },
     "cost": {
       "label": "Estimated cost",
-      "format": "{{amount}} USD"
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "free tier",
+      "free": "Free",
+      "calls_unit": "{{count}} calls",
+      "total": "Total"
     },
     "save_to_drive": "Save to Drive",
     "saving": "Saving…",
-    "saved": "Saved"
+    "saved": "Saved",
+    "metadata_labels": {
+      "duration": "Duration",
+      "speakers": "Speakers",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "No summary available",
+    "personas": {
+      "suggestion_count_one": "1 suggestion",
+      "suggestion_count_other": "{{count}} suggestions"
+    }
   },
   "speakers": {
     "you": "You",

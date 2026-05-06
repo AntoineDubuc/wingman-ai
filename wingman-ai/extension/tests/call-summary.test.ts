@@ -209,7 +209,8 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
       year: 'numeric',
     });
     const md = formatSummaryAsMarkdown(baseSummary, 'fr');
-    expect(md).toContain(`## Call Summary — ${expected}`);
+    // Plan 7: header text is now localized — "Résumé de l'appel" in fr
+    expect(md).toContain(`## Résumé de l'appel — ${expected}`);
   });
 
   it('formats date in en locale correctly', () => {
@@ -226,7 +227,8 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
       year: 'numeric',
     });
     const md = formatSummaryAsMarkdown(baseSummary, 'es');
-    expect(md).toContain(`## Call Summary — ${expected}`);
+    // Plan 7: header text is now localized
+    expect(md).toContain(`## Resumen de la llamada — ${expected}`);
   });
 
   it('formats date in ro locale correctly', () => {
@@ -236,7 +238,8 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
       year: 'numeric',
     });
     const md = formatSummaryAsMarkdown(baseSummary, 'ro');
-    expect(md).toContain(`## Call Summary — ${expected}`);
+    // Plan 7: header text is now localized
+    expect(md).toContain(`## Rezumatul apelului — ${expected}`);
   });
 
   it('formats date in ru locale correctly', () => {
@@ -246,7 +249,8 @@ describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
       year: 'numeric',
     });
     const md = formatSummaryAsMarkdown(baseSummary, 'ru');
-    expect(md).toContain(`## Call Summary — ${expected}`);
+    // Plan 7: header text is now localized — "Сводка по звонку" in ru
+    expect(md).toContain(`## Сводка по звонку — ${expected}`);
     // Russian May abbreviation must appear ("мая" = of May, genitive case).
     expect(md).toMatch(/мая/);
   });

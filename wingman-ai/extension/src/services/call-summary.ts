@@ -9,6 +9,7 @@ import type { CollectedTranscript } from './transcript-collector';
 import type { CostEstimate } from '@shared/pricing';
 import { addLanguageInstruction } from '../shared/language-injection';
 import { type SupportedLocale, SUPPORTED_LOCALES } from '../shared/i18n-types';
+import { createI18nInstance } from '../shared/i18n-init';
 
 // --- Types ---
 
@@ -154,6 +155,9 @@ export function formatSummaryAsMarkdown(
 ): string {
   // NFR-R01 fallback: SUPPORTED_LOCALES[0] is 'en' (first entry).
   const effectiveLocale: SupportedLocale = locale ?? (SUPPORTED_LOCALES[0] ?? 'en');
+  const i18n = createI18nInstance(effectiveLocale);
+  const t = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts);
+
   const date = new Date(summary.metadata.generatedAt).toLocaleDateString(
     effectiveLocale,
     { month: 'short', day: 'numeric', year: 'numeric' }
@@ -162,16 +166,16 @@ export function formatSummaryAsMarkdown(
   const lines: string[] = [];
 
   // Header
-  lines.push(`## Call Summary — ${date}`);
+  lines.push(`## ${t('summary.headers.call_summary')} — ${date}`);
   lines.push(
-    `**Duration:** ${summary.metadata.durationMinutes} min | **Speakers:** ${summary.metadata.speakerCount}`
+    `**${t('summary.metadata_labels.duration')}:** ${summary.metadata.durationMinutes} ${t('summary.metadata_labels.minutes_unit')} | **${t('summary.metadata_labels.speakers')}:** ${summary.metadata.speakerCount}`
   );
   lines.push('');
 
   // Summary bullets
-  lines.push('### Summary');
+  lines.push(`### ${t('summary.headers.summary')}`);
   if (summary.summary.length === 0) {
-    lines.push('- No summary available');
+    lines.push(`- ${t('summary.empty_summary')}`);
   } else {
     for (const bullet of summary.summary) {
       lines.push(`- ${bullet}`);
@@ -181,9 +185,9 @@ export function formatSummaryAsMarkdown(
   // Action Items (omit if empty)
   if (summary.actionItems.length > 0) {
     lines.push('');
-    lines.push('### Action Items');
+    lines.push(`### ${t('summary.headers.action_items')}`);
     for (const item of summary.actionItems) {
-      const owner = item.owner === 'you' ? 'You' : 'Them';
+      const owner = t(`summary.action_item_owner.${item.owner}`);
       lines.push(`- [ ] **${owner}:** ${item.text}`);
     }
   }
@@ -191,7 +195,7 @@ export function formatSummaryAsMarkdown(
   // Key Moments (omit if empty)
   if (summary.keyMoments.length > 0) {
     lines.push('');
-    lines.push('### Key Moments');
+    lines.push(`### ${t('summary.headers.key_moments')}`);
     for (const moment of summary.keyMoments) {
       const timestamp = moment.timestamp ? ` (${moment.timestamp})` : '';
       lines.push(`- "${moment.text}"${timestamp}`);
@@ -204,10 +208,10 @@ export function formatSummaryAsMarkdown(
     const totalSuggestions = personas.reduce((sum, p) => sum + p.suggestionCount, 0);
     if (personas.length > 1 || totalSuggestions > 0) {
       lines.push('');
-      lines.push('### Personas Used');
+      lines.push(`### ${t('summary.headers.personas_used')}`);
       for (const persona of personas) {
-        const countLabel = persona.suggestionCount === 1 ? 'suggestion' : 'suggestions';
-        lines.push(`- ${persona.name} — ${persona.suggestionCount} ${countLabel}`);
+        const countText = t('summary.personas.suggestion_count', { count: persona.suggestionCount });
+        lines.push(`- ${persona.name} — ${countText}`);
       }
     }
   }
@@ -216,16 +220,17 @@ export function formatSummaryAsMarkdown(
   if (summary.costEstimate) {
     const cost = summary.costEstimate;
     const minutes = Math.round(cost.audioMinutes);
+    const minutesUnit = t('summary.cost.minutes_unit');
     const llmLabel = cost.isFreeTier
-      ? `${cost.providerLabel} (free tier)`
-      : `${cost.providerLabel} (${cost.suggestionCount} calls)`;
-    const llmValue = cost.isFreeTier ? 'Free' : `$${cost.llmCost.toFixed(3)}`;
+      ? `${cost.providerLabel} (${t('summary.cost.free_tier_suffix')})`
+      : `${cost.providerLabel} (${t('summary.cost.calls_unit', { count: cost.suggestionCount })})`;
+    const llmValue = cost.isFreeTier ? t('summary.cost.free') : `$${cost.llmCost.toFixed(3)}`;
 
     lines.push('');
-    lines.push('### Session Cost Estimate');
-    lines.push(`- Deepgram STT (${minutes} min): $${cost.deepgramCost.toFixed(3)}`);
+    lines.push(`### ${t('summary.headers.session_cost_estimate')}`);
+    lines.push(`- ${t('summary.cost.deepgram_stt')} (${minutes} ${minutesUnit}): $${cost.deepgramCost.toFixed(3)}`);
     lines.push(`- ${llmLabel}: ${llmValue}`);
-    lines.push(`- **Total: ~$${cost.totalCost.toFixed(2)}**`);
+    lines.push(`- **${t('summary.cost.total')}: ~$${cost.totalCost.toFixed(2)}**`);
   }
 
   lines.push('');

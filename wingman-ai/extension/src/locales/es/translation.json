@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "1.1.0",
+    "revision": "plan-7-summary-keys-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -183,7 +183,8 @@
       "action_items": "Acciones a seguir",
       "key_moments": "Momentos clave",
       "personas_used": "Personas utilizadas",
-      "session_cost_estimate": "Costo estimado de la sesión"
+      "session_cost_estimate": "Costo estimado de la sesión",
+      "call_summary": "Resumen de la llamada"
     },
     "action_item_owner": {
       "you": "Usted",
@@ -197,11 +198,27 @@
     },
     "cost": {
       "label": "Costo estimado",
-      "format": "{{amount}} USD"
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "versión gratuita",
+      "free": "Gratis",
+      "calls_unit": "{{count}} llamadas",
+      "total": "Total"
     },
     "save_to_drive": "Guardar en Drive",
     "saving": "Guardando…",
-    "saved": "Guardado"
+    "saved": "Guardado",
+    "metadata_labels": {
+      "duration": "Duración",
+      "speakers": "Participantes",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "Resumen no disponible",
+    "personas": {
+      "suggestion_count_one": "1 sugerencia",
+      "suggestion_count_other": "{{count}} sugerencias"
+    }
   },
   "speakers": {
     "you": "Usted",

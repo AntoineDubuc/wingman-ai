@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "1.1.0",
+    "revision": "plan-7-summary-keys-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -183,7 +183,8 @@
       "action_items": "Acțiuni de urmărit",
       "key_moments": "Momente cheie",
       "personas_used": "Persoane folosite",
-      "session_cost_estimate": "Cost estimat al sesiunii"
+      "session_cost_estimate": "Cost estimat al sesiunii",
+      "call_summary": "Rezumatul apelului"
     },
     "action_item_owner": {
       "you": "Dumneavoastră",
@@ -197,11 +198,28 @@
     },
     "cost": {
       "label": "Cost estimat",
-      "format": "{{amount}} USD"
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "versiunea gratuită",
+      "free": "Gratuit",
+      "calls_unit": "{{count}} apeluri",
+      "total": "Total"
     },
     "save_to_drive": "Salvează pe Drive",
     "saving": "Se salvează…",
-    "saved": "Salvat"
+    "saved": "Salvat",
+    "metadata_labels": {
+      "duration": "Durată",
+      "speakers": "Vorbitori",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "Nu este disponibil niciun rezumat",
+    "personas": {
+      "suggestion_count_one": "1 sugestie",
+      "suggestion_count_few": "{{count}} sugestii",
+      "suggestion_count_other": "{{count}} de sugestii"
+    }
   },
   "speakers": {
     "you": "Dumneavoastră",

@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "1.1.0",
+    "revision": "plan-7-summary-keys-2026-05-05",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -183,7 +183,8 @@
       "action_items": "Задачи к выполнению",
       "key_moments": "Ключевые моменты",
       "personas_used": "Использованные персоны",
-      "session_cost_estimate": "Ориентировочная стоимость сессии"
+      "session_cost_estimate": "Ориентировочная стоимость сессии",
+      "call_summary": "Сводка по звонку"
     },
     "action_item_owner": {
       "you": "Вы",
@@ -197,11 +198,28 @@
     },
     "cost": {
       "label": "Ориентировочная стоимость",
-      "format": "{{amount}} USD"
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "мин",
+      "free_tier_suffix": "бесплатная версия",
+      "free": "Бесплатно",
+      "calls_unit": "{{count}} вызовов",
+      "total": "Итого"
     },
     "save_to_drive": "Сохранить на Drive",
     "saving": "Сохранение…",
-    "saved": "Сохранено"
+    "saved": "Сохранено",
+    "metadata_labels": {
+      "duration": "Длительность",
+      "speakers": "Участники",
+      "minutes_unit": "мин"
+    },
+    "empty_summary": "Сводка недоступна",
+    "personas": {
+      "suggestion_count_one": "1 предложение",
+      "suggestion_count_few": "{{count}} предложения",
+      "suggestion_count_other": "{{count}} предложений"
+    }
   },
   "speakers": {
     "you": "Вы",

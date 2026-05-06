@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-placeholders-2026-05-06",
+    "revision": "plan-5-hints-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -425,7 +425,15 @@
         "groq_placeholder": "Введите ваш ключ API Groq",
         "hume_api_placeholder": "Введите ваш ключ API Hume",
         "hume_secret_placeholder": "Введите ваш секретный ключ Hume",
-        "drive_folder_placeholder": "Транскрипции Wingman"
+        "drive_folder_placeholder": "Транскрипции Wingman",
+        "deepgram_hint": "Используется для речевой транскрипции в реальном времени",
+        "provider_hint": "Gemini использует ваш ключ напрямую. OpenRouter позволяет выбирать из множества моделей. Groq предлагает сверхбыстрый ИИ с открытым кодом.",
+        "gemini_hint": "Используется для подсказок и ответов на основе ИИ",
+        "openrouter_hint": "Используется для подсказок и ответов на основе ИИ через OpenRouter",
+        "model_choice_hint": "Выберите модель ИИ для подсказок и сводок",
+        "groq_hint": "Сверхбыстрый инференс на open-source моделях — бесплатный уровень на console.groq.com",
+        "folder_hint": "Папка будет создана в корне Drive, если её нет",
+        "active_personas_hint": "Каждый активный персонаж оценивает транскрипции независимо. Ограничьте 4 для низкой задержки."
       },
       "calls": {
         "transcription_sensitivity_title": "Чувствительность транскрипции",
@@ -455,7 +463,8 @@
         "ai_prompt_tuning_description": "Адаптирует ваши промпты персонажей для лучшей работы на активном LLM (Gemini, OpenRouter, Groq).",
         "speaker_filter_description": "Контролирует, когда Wingman даёт подсказки в зависимости от того, кто говорит.",
         "panel_layout_description": "Контролирует, где появляется панель Wingman во время звонков и что показывает.",
-        "call_summary_description": "Получайте сгенерированную ИИ сводку с пунктами действий и ключевыми моментами после каждого звонка."
+        "call_summary_description": "Получайте сгенерированную ИИ сводку с пунктами действий и ключевыми моментами после каждого звонка.",
+        "tuning_mode_hint": "Авто применяет специфичные для модели корректировки во время выполнения без изменения сохранённых промптов."
       },
       "personas": {
         "personas_title": "Персонажи",
@@ -486,7 +495,8 @@
         "presets_title": "Пресеты",
         "new_preset_button": "+ Новый пресет",
         "settings_description": "Настройте, как несколько персонажей работают вместе, когда активен более одного.",
-        "presets_description": "Сохраняйте комбинации персонажей для быстрой активации. Пресеты не включают учётные данные."
+        "presets_description": "Сохраняйте комбинации персонажей для быстрой активации. Пресеты не включают учётные данные.",
+        "leader_hint": "Экспертиза лидера Conclave направляет пост-звонковую сводку. Выберите, какой персонаж должен формировать перспективу сводки."
       },
       "langbuilder": {
         "connection_title": "Подключение LangBuilder",
@@ -498,7 +508,9 @@
         "connection_description": "Подключитесь к вашему экземпляру LangBuilder для запуска кастомных потоков из оверлея.",
         "flows_description": "Потоки из вашего экземпляра LangBuilder, обновляемые при Проверке соединения.",
         "url_placeholder": "https://langflow.company.com",
-        "api_key_placeholder": "Введите ваш ключ API LangBuilder"
+        "api_key_placeholder": "Введите ваш ключ API LangBuilder",
+        "url_hint": "Базовый URL вашего экземпляра LangBuilder",
+        "api_key_hint": "Токен x-api-key из настроек LangBuilder"
       },
       "websearch": {
         "provider_title": "Провайдер веб-поиска",

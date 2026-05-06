@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-placeholders-2026-05-06",
+    "revision": "plan-5-hints-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -422,7 +422,15 @@
         "groq_placeholder": "Saisissez votre clé d'API Groq",
         "hume_api_placeholder": "Saisissez votre clé d'API Hume",
         "hume_secret_placeholder": "Saisissez votre clé secrète Hume",
-        "drive_folder_placeholder": "Transcriptions Wingman"
+        "drive_folder_placeholder": "Transcriptions Wingman",
+        "deepgram_hint": "Utilisé pour la transcription vocale en temps réel",
+        "provider_hint": "Gemini utilise votre clé directement. OpenRouter permet de choisir parmi plusieurs modèles. Groq offre une IA open-source ultra rapide.",
+        "gemini_hint": "Utilisé pour les suggestions et réponses propulsées par IA",
+        "openrouter_hint": "Utilisé pour les suggestions et réponses propulsées par IA via OpenRouter",
+        "model_choice_hint": "Choisissez le modèle IA à utiliser pour les suggestions et résumés",
+        "groq_hint": "Inférence ultra rapide sur modèles open-source — version gratuite à console.groq.com",
+        "folder_hint": "Le dossier sera créé à la racine de votre Drive s'il n'existe pas",
+        "active_personas_hint": "Chaque persona actif évalue les transcriptions indépendamment. Limitez-vous à 4 pour garder la latence basse."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilité de la transcription",
@@ -452,7 +460,8 @@
         "ai_prompt_tuning_description": "Adapte vos prompts de persona pour fonctionner au mieux sur le LLM actif (Gemini, OpenRouter, Groq).",
         "speaker_filter_description": "Contrôle quand Wingman fournit des suggestions selon qui parle.",
         "panel_layout_description": "Contrôle où le panneau Wingman apparaît pendant les appels et ce qu'il affiche.",
-        "call_summary_description": "Obtenez un résumé généré par IA avec actions à entreprendre et moments clés après chaque appel."
+        "call_summary_description": "Obtenez un résumé généré par IA avec actions à entreprendre et moments clés après chaque appel.",
+        "tuning_mode_hint": "Auto applique des ajustements spécifiques au modèle à l'exécution sans modifier vos prompts enregistrés."
       },
       "personas": {
         "personas_title": "Personas",
@@ -483,7 +492,8 @@
         "presets_title": "Préréglages",
         "new_preset_button": "+ Nouveau préréglage",
         "settings_description": "Configurez comment plusieurs personas travaillent ensemble quand plus d'un est actif.",
-        "presets_description": "Enregistrez des combinaisons de personas pour activation rapide. Les préréglages n'incluent pas d'identifiants."
+        "presets_description": "Enregistrez des combinaisons de personas pour activation rapide. Les préréglages n'incluent pas d'identifiants.",
+        "leader_hint": "L'expertise du leader du Conclave guide le résumé post-appel. Choisissez quel persona devrait façonner la perspective du résumé."
       },
       "langbuilder": {
         "connection_title": "Connexion LangBuilder",
@@ -495,7 +505,9 @@
         "connection_description": "Connectez-vous à votre instance LangBuilder pour exécuter des flux personnalisés depuis la superposition.",
         "flows_description": "Flux de votre instance LangBuilder, rafraîchis lors du test de connexion.",
         "url_placeholder": "https://langflow.entreprise.com",
-        "api_key_placeholder": "Saisissez votre clé d'API LangBuilder"
+        "api_key_placeholder": "Saisissez votre clé d'API LangBuilder",
+        "url_hint": "URL de base de votre instance LangBuilder",
+        "api_key_hint": "Jeton x-api-key issu de vos paramètres LangBuilder"
       },
       "websearch": {
         "provider_title": "Fournisseur de recherche web",

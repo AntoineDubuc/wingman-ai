@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-placeholders-2026-05-06",
+    "revision": "plan-5-hints-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -422,7 +422,15 @@
         "groq_placeholder": "Ingrese su clave API de Groq",
         "hume_api_placeholder": "Ingrese su clave API de Hume",
         "hume_secret_placeholder": "Ingrese su clave secreta de Hume",
-        "drive_folder_placeholder": "Transcripciones Wingman"
+        "drive_folder_placeholder": "Transcripciones Wingman",
+        "deepgram_hint": "Usado para transcripción de voz en tiempo real",
+        "provider_hint": "Gemini usa su clave directamente. OpenRouter le permite elegir entre múltiples modelos. Groq ofrece IA open-source ultra rápida.",
+        "gemini_hint": "Usado para sugerencias y respuestas con IA",
+        "openrouter_hint": "Usado para sugerencias y respuestas con IA via OpenRouter",
+        "model_choice_hint": "Elija qué modelo IA usar para sugerencias y resúmenes",
+        "groq_hint": "Inferencia ultra rápida en modelos open-source — versión gratuita en console.groq.com",
+        "folder_hint": "La carpeta se creará en la raíz de su Drive si no existe",
+        "active_personas_hint": "Cada persona activo evalúa las transcripciones independientemente. Limite a 4 para mantener baja latencia."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilidad de la transcripción",
@@ -452,7 +460,8 @@
         "ai_prompt_tuning_description": "Adapta sus prompts de persona para funcionar mejor en el LLM activo (Gemini, OpenRouter, Groq).",
         "speaker_filter_description": "Controla cuándo Wingman provee sugerencias según quién habla.",
         "panel_layout_description": "Controla dónde aparece el panel de Wingman durante las llamadas y qué muestra.",
-        "call_summary_description": "Obtenga un resumen generado por IA con elementos de acción y momentos clave después de cada llamada."
+        "call_summary_description": "Obtenga un resumen generado por IA con elementos de acción y momentos clave después de cada llamada.",
+        "tuning_mode_hint": "Auto aplica ajustes específicos del modelo en tiempo de ejecución sin modificar sus prompts guardados."
       },
       "personas": {
         "personas_title": "Personas",
@@ -483,7 +492,8 @@
         "presets_title": "Preajustes",
         "new_preset_button": "+ Nuevo preajuste",
         "settings_description": "Configure cómo múltiples personas trabajan juntos cuando hay más de uno activo.",
-        "presets_description": "Guarde combinaciones de personas para activación rápida. Los preajustes no incluyen credenciales."
+        "presets_description": "Guarde combinaciones de personas para activación rápida. Los preajustes no incluyen credenciales.",
+        "leader_hint": "La experiencia del líder del Conclave guía el resumen post-llamada. Elija qué persona debe moldear la perspectiva del resumen."
       },
       "langbuilder": {
         "connection_title": "Conexión LangBuilder",
@@ -495,7 +505,9 @@
         "connection_description": "Conéctese a su instancia LangBuilder para ejecutar flujos personalizados desde la superposición.",
         "flows_description": "Flujos de su instancia LangBuilder, actualizados en Probar conexión.",
         "url_placeholder": "https://langflow.empresa.com",
-        "api_key_placeholder": "Ingrese su clave API de LangBuilder"
+        "api_key_placeholder": "Ingrese su clave API de LangBuilder",
+        "url_hint": "URL base de su instancia LangBuilder",
+        "api_key_hint": "Token x-api-key de su configuración LangBuilder"
       },
       "websearch": {
         "provider_title": "Proveedor de búsqueda web",

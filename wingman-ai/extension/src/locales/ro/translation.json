@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-placeholders-2026-05-06",
+    "revision": "plan-5-hints-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -425,7 +425,15 @@
         "groq_placeholder": "Introduceți cheia API Groq",
         "hume_api_placeholder": "Introduceți cheia API Hume",
         "hume_secret_placeholder": "Introduceți cheia secretă Hume",
-        "drive_folder_placeholder": "Transcrieri Wingman"
+        "drive_folder_placeholder": "Transcrieri Wingman",
+        "deepgram_hint": "Folosit pentru transcrierea vocală în timp real",
+        "provider_hint": "Gemini folosește cheia direct. OpenRouter vă permite să alegeți dintre mai multe modele. Groq oferă IA open-source ultra rapidă.",
+        "gemini_hint": "Folosit pentru sugestii și răspunsuri generate de IA",
+        "openrouter_hint": "Folosit pentru sugestii și răspunsuri IA prin OpenRouter",
+        "model_choice_hint": "Alegeți ce model IA să folosiți pentru sugestii și rezumate",
+        "groq_hint": "Inferență ultra rapidă pe modele open-source — nivel gratuit la console.groq.com",
+        "folder_hint": "Folderul va fi creat în rădăcina Drive dacă nu există",
+        "active_personas_hint": "Fiecare personaj activ evaluează transcrierile independent. Limitați la 4 pentru a păstra latența scăzută."
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilitate transcriere",
@@ -455,7 +463,8 @@
         "ai_prompt_tuning_description": "Adaptează prompturile personajelor pentru a funcționa optim pe LLM-ul activ (Gemini, OpenRouter, Groq).",
         "speaker_filter_description": "Controlează când Wingman oferă sugestii în funcție de cine vorbește.",
         "panel_layout_description": "Controlează unde apare panoul Wingman în timpul apelurilor și ce afișează.",
-        "call_summary_description": "Obțineți un rezumat generat de IA cu elemente de acțiune și momente cheie după fiecare apel."
+        "call_summary_description": "Obțineți un rezumat generat de IA cu elemente de acțiune și momente cheie după fiecare apel.",
+        "tuning_mode_hint": "Auto aplică ajustări specifice modelului la rulare fără a modifica prompturile salvate."
       },
       "personas": {
         "personas_title": "Personaje",
@@ -486,7 +495,8 @@
         "presets_title": "Presetări",
         "new_preset_button": "+ Presetare nouă",
         "settings_description": "Configurați cum colaborează mai multe personaje când mai mult de unul este activ.",
-        "presets_description": "Salvați combinații de personaje pentru activare rapidă. Presetările nu includ credențiale."
+        "presets_description": "Salvați combinații de personaje pentru activare rapidă. Presetările nu includ credențiale.",
+        "leader_hint": "Expertiza liderului Conclave ghidează rezumatul post-apel. Alegeți ce personaj ar trebui să modeleze perspectiva rezumatului."
       },
       "langbuilder": {
         "connection_title": "Conexiune LangBuilder",
@@ -498,7 +508,9 @@
         "connection_description": "Conectați-vă la instanța LangBuilder pentru a executa fluxuri personalizate din suprapunere.",
         "flows_description": "Fluxuri din instanța LangBuilder, reîmprospătate la Testare conexiune.",
         "url_placeholder": "https://langflow.companie.com",
-        "api_key_placeholder": "Introduceți cheia API LangBuilder"
+        "api_key_placeholder": "Introduceți cheia API LangBuilder",
+        "url_hint": "URL de bază al instanței LangBuilder",
+        "api_key_hint": "Token x-api-key din setările LangBuilder"
       },
       "websearch": {
         "provider_title": "Furnizor căutare web",

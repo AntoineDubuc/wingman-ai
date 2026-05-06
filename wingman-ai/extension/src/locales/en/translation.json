@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-placeholders-2026-05-06",
+    "revision": "plan-5-hints-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -422,7 +422,15 @@
         "groq_placeholder": "Enter your Groq API key",
         "hume_api_placeholder": "Enter your Hume API key",
         "hume_secret_placeholder": "Enter your Hume Secret key",
-        "drive_folder_placeholder": "Wingman Transcripts"
+        "drive_folder_placeholder": "Wingman Transcripts",
+        "deepgram_hint": "Used for real-time speech-to-text transcription",
+        "provider_hint": "Gemini uses your key directly. OpenRouter lets you choose from multiple models. Groq offers ultra-fast open-source AI.",
+        "gemini_hint": "Used for AI-powered suggestions and responses",
+        "openrouter_hint": "Used for AI-powered suggestions and responses via OpenRouter",
+        "model_choice_hint": "Choose which AI model to use for suggestions and summaries",
+        "groq_hint": "Ultra-fast inference on open-source models — free tier at console.groq.com",
+        "folder_hint": "Folder will be created in your Drive root if it doesn't exist",
+        "active_personas_hint": "Each active persona evaluates transcripts independently. Limit to 4 to keep latency low."
       },
       "calls": {
         "transcription_sensitivity_title": "Transcription Sensitivity",
@@ -452,7 +460,8 @@
         "ai_prompt_tuning_description": "Adapts your persona prompts to work best on the active LLM (Gemini, OpenRouter, Groq).",
         "speaker_filter_description": "Control when Wingman provides suggestions based on who is speaking.",
         "panel_layout_description": "Controls where the Wingman panel appears during calls and what it shows.",
-        "call_summary_description": "Get an AI-generated summary with action items and key moments after each call."
+        "call_summary_description": "Get an AI-generated summary with action items and key moments after each call.",
+        "tuning_mode_hint": "Auto applies model-specific adjustments at runtime without modifying your saved prompts."
       },
       "personas": {
         "personas_title": "Personas",
@@ -483,7 +492,8 @@
         "presets_title": "Presets",
         "new_preset_button": "+ New Preset",
         "settings_description": "Configure how multiple personas work together when more than one is active.",
-        "presets_description": "Save persona combinations for quick activation. Presets do not include credentials."
+        "presets_description": "Save persona combinations for quick activation. Presets do not include credentials.",
+        "leader_hint": "The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective."
       },
       "langbuilder": {
         "connection_title": "LangBuilder Connection",
@@ -495,7 +505,9 @@
         "connection_description": "Connect to your LangBuilder instance to run custom flows from the overlay.",
         "flows_description": "Flows from your LangBuilder instance, refreshed on Test Connection.",
         "url_placeholder": "https://langflow.company.com",
-        "api_key_placeholder": "Enter your LangBuilder API key"
+        "api_key_placeholder": "Enter your LangBuilder API key",
+        "url_hint": "Base URL of your LangBuilder instance",
+        "api_key_hint": "x-api-key token from your LangBuilder settings"
       },
       "websearch": {
         "provider_title": "Web Search Provider",

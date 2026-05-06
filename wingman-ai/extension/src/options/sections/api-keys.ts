@@ -495,30 +495,44 @@ export class ApiKeysSection {
     const secretKey = this.humeSecretKeyInput?.value?.trim() || '';
 
     if (!apiKey || !secretKey) {
-      this.updateHumeStatus('Enter both API Key and Secret Key', 'error');
+      this.updateHumeStatus(
+        this.ctx.t?.('options.toasts.api_key_required', { provider: 'Hume' })
+          ?? 'Enter both API Key and Secret Key',
+        'error',
+      );
       return;
     }
 
     if (this.humeTestBtn) {
       this.humeTestBtn.disabled = true;
-      this.humeTestBtn.textContent = 'Testing...';
+      this.humeTestBtn.textContent = this.ctx.t?.('options.html.langbuilder.testing') ?? 'Testing...';
     }
 
     try {
       const result = await HumeClient.testCredentials(apiKey, secretKey);
 
       if (result.valid) {
-        this.updateHumeStatus('✓ Valid', 'success');
+        this.updateHumeStatus(
+          this.ctx.t?.('options.setup.api_keys.test_pass') ?? '✓ Valid',
+          'success',
+        );
       } else {
-        this.updateHumeStatus(result.error || 'Invalid credentials', 'error');
+        // Plan 10 FR-017: localized primary + raw error in monospace
+        const localized = this.ctx.t?.('errors.hume.api_failure') ?? 'Emotion detection unavailable.';
+        this.updateHumeStatus(localized, 'error');
+        this.ctx.showToast(localized, 'error', result.error ?? undefined);
       }
     } catch (error) {
-      this.updateHumeStatus('Network error', 'error');
+      // Plan 10 FR-017: localized primary + raw network error
+      const raw = error instanceof Error ? error.message : String(error);
+      const localized = this.ctx.t?.('errors.hume.disconnected') ?? 'Emotion detection disconnected.';
+      this.updateHumeStatus(localized, 'error');
+      this.ctx.showToast(localized, 'error', raw);
       console.error('Hume test error:', error);
     } finally {
       if (this.humeTestBtn) {
         this.humeTestBtn.disabled = false;
-        this.humeTestBtn.textContent = 'Test Hume';
+        this.humeTestBtn.textContent = this.ctx.t?.('options.html.setup.test_hume_button') ?? 'Test Hume';
       }
     }
   }

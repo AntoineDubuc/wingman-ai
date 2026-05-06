@@ -11,6 +11,7 @@
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
 import { addLanguageInstruction } from '../shared/language-injection';
 import { getActiveLocale } from '../background/sw-locale';
+import { recordLlmResponse } from '../shared/language-compliance';
 import type { CollectedTranscript } from './transcript-collector';
 import {
   type CallSummary,
@@ -527,6 +528,9 @@ export class GeminiClient {
         console.debug(`[GeminiClient] [${persona.name}] Empty response from LLM`);
         return null;
       }
+
+      // Plan 11 FR-031: record compliance for the per-persona suggestion path.
+      void recordLlmResponse(responseText, getActiveLocale());
 
       // Check if LLM chose to stay silent
       if (responseText === '---' || responseText === '-') {
@@ -1166,6 +1170,9 @@ export class GeminiClient {
         return null;
       }
 
+      // Plan 11 FR-031: record compliance for the call-summary generation path.
+      void recordLlmResponse(rawText, getActiveLocale());
+
       // Parse JSON response — strip markdown fencing for OpenRouter models
       let parsed: unknown;
       try {
@@ -1289,6 +1296,9 @@ export class GeminiClient {
           console.warn('[GeminiClient] KB answer: empty response text');
           continue;
         }
+
+        // Plan 11 FR-031: record compliance for the KB answer path.
+        void recordLlmResponse(text, getActiveLocale());
 
         // Check for NO_DATA sentinel
         if (text.trim() === 'NO_DATA' || text.trim().startsWith('NO_DATA')) {

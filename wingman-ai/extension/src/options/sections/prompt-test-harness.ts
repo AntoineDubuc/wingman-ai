@@ -41,6 +41,12 @@ export interface TestHarnessOptions {
   onSave?: () => void;
   onEditFix?: () => void;
   onRestore?: () => void;
+  /** Plan 5: localized translation function from OptionsContext. */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function tr(key: string, opts2?: Record<string, unknown>): string | null {
+  return options?.t?.(key, opts2) ?? null;
 }
 
 // === STATE ===
@@ -173,17 +179,18 @@ function renderTitle(): void {
     const hasError = results.some(r => r.status === 'error');
 
     if (hasError && passed < total) {
-      title.textContent = 'Prompt Tester — Interrupted';
+      title.textContent = tr('options.prompt_modals.test_harness.title_interrupted') ?? 'Prompt Tester — Interrupted';
     } else if (allPass) {
-      title.textContent = 'Test Results';
+      title.textContent = tr('options.prompt_modals.test_harness.title_results_all_pass') ?? 'Test Results';
     } else {
-      title.textContent = `Test Results — ${passed}/${total} pass`;
+      title.textContent = tr('options.prompt_modals.test_harness.title_results_partial', { passed, total })
+        ?? `Test Results — ${passed}/${total} pass`;
     }
   } else {
     const versionSuffix = options.versionNumber ? ` — v${options.versionNumber}` : '';
     title.textContent = activeTab === 'kb'
-      ? `KB Validation${versionSuffix}`
-      : `Prompt Tester${versionSuffix}`;
+      ? (tr('options.prompt_modals.test_harness.title_kb_validation', { versionSuffix }) ?? `KB Validation${versionSuffix}`)
+      : (tr('options.prompt_modals.test_harness.title_default', { versionSuffix }) ?? `Prompt Tester${versionSuffix}`);
   }
 }
 
@@ -205,9 +212,9 @@ function renderBody(): void {
   const tabBar = document.createElement('div');
   tabBar.className = 'test-tabs';
   const tabs: { id: TestHarnessTab; label: string }[] = [
-    { id: 'sample', label: 'Sample Qs' },
-    { id: 'custom', label: 'Custom Q' },
-    { id: 'kb', label: 'KB + Query' },
+    { id: 'sample', label: tr('options.prompt_modals.test_harness.tab_sample_qs') ?? 'Sample Qs' },
+    { id: 'custom', label: tr('options.prompt_modals.test_harness.tab_custom_q') ?? 'Custom Q' },
+    { id: 'kb', label: tr('options.prompt_modals.test_harness.tab_kb_query') ?? 'KB + Query' },
   ];
   for (const tab of tabs) {
     const btn = document.createElement('button');
@@ -245,14 +252,14 @@ function renderSampleTab(container: HTMLElement): void {
     const hint = document.createElement('p');
     hint.className = 'test-empty-hint';
     hint.textContent = isGeneratingQuestions
-      ? 'Generating sample questions from your prompt...'
-      : 'No sample questions yet.';
+      ? (tr('options.prompt_modals.test_harness.empty_generating') ?? 'Generating sample questions from your prompt...')
+      : (tr('options.prompt_modals.test_harness.empty_no_questions') ?? 'No sample questions yet.');
     emptyState.appendChild(hint);
 
     if (!isGeneratingQuestions) {
       const genBtn = document.createElement('button');
       genBtn.className = 'btn-primary btn-small';
-      genBtn.textContent = 'Generate Sample Questions';
+      genBtn.textContent = tr('options.prompt_modals.test_harness.btn_generate_sample') ?? 'Generate Sample Questions';
       genBtn.style.marginTop = 'var(--spacing-sm)';
       genBtn.addEventListener('click', handleGenerateQuestions);
       emptyState.appendChild(genBtn);
@@ -262,10 +269,13 @@ function renderSampleTab(container: HTMLElement): void {
     return;
   }
 
-  // Should Respond group
+  // Should Respond group — Plan 5 NFR-SEC04: createElement instead of innerHTML
   const respondGroup = document.createElement('div');
   respondGroup.className = 'test-question-group';
-  respondGroup.innerHTML = '<div class="test-question-group-label">SHOULD RESPOND</div>';
+  const respondLabel = document.createElement('div');
+  respondLabel.className = 'test-question-group-label';
+  respondLabel.textContent = tr('options.prompt_modals.test_harness.section_should_respond') ?? 'SHOULD RESPOND';
+  respondGroup.appendChild(respondLabel);
   const respondQs: { q: TestQuestion; idx: number }[] = [];
   const silentQs: { q: TestQuestion; idx: number }[] = [];
   sampleQuestions.forEach((q, i) => {
@@ -277,10 +287,13 @@ function renderSampleTab(container: HTMLElement): void {
   }
   container.appendChild(respondGroup);
 
-  // Should Stay Silent group
+  // Should Stay Silent group — Plan 5 NFR-SEC04: createElement instead of innerHTML
   const silentGroup = document.createElement('div');
   silentGroup.className = 'test-question-group';
-  silentGroup.innerHTML = '<div class="test-question-group-label">SHOULD STAY SILENT</div>';
+  const silentLabel = document.createElement('div');
+  silentLabel.className = 'test-question-group-label';
+  silentLabel.textContent = tr('options.prompt_modals.test_harness.section_should_silent') ?? 'SHOULD STAY SILENT';
+  silentGroup.appendChild(silentLabel);
   for (const { q, idx } of silentQs) {
     silentGroup.appendChild(createQuestionCheckbox(q, sampleChecked[idx] ?? true, sampleChecked, idx));
   }
@@ -292,7 +305,11 @@ function renderSampleTab(container: HTMLElement): void {
   const cost = estimateCost(totalQs, isComparison);
   const costBox = document.createElement('div');
   costBox.className = 'test-cost-estimate';
-  costBox.textContent = `${totalQs} questions × 1 model${isComparison ? ' × 2 versions' : ''} = ~$${cost.toFixed(3)}`;
+  costBox.textContent = isComparison
+    ? (tr('options.prompt_modals.test_harness.cost_estimate_comparison', { totalQs, cost: cost.toFixed(3) })
+       ?? `${totalQs} questions × 1 model × 2 versions = ~$${cost.toFixed(3)}`)
+    : (tr('options.prompt_modals.test_harness.cost_estimate', { totalQs, cost: cost.toFixed(3) })
+       ?? `${totalQs} questions × 1 model = ~$${cost.toFixed(3)}`);
   container.appendChild(costBox);
 
   // Comparison version selector
@@ -302,7 +319,7 @@ function renderSampleTab(container: HTMLElement): void {
   const runBtn = document.createElement('button');
   runBtn.className = 'btn-primary test-run-btn';
   const versionLabel = options?.versionNumber ? ` on v${options.versionNumber}` : '';
-  runBtn.textContent = `Run Tests${versionLabel}`;
+  runBtn.textContent = tr('options.prompt_modals.test_harness.btn_run_tests', { versionLabel }) ?? `Run Tests${versionLabel}`;
   if (totalQs === 0) {
     runBtn.disabled = true;
   } else {
@@ -336,20 +353,30 @@ function renderCustomTab(container: HTMLElement): void {
   // Add new question
   const addSection = document.createElement('div');
   addSection.className = 'test-add-question';
+  // Plan 5: localized button/labels via template substitution.
+  // The HTML structure is preserved (controlled CSS hooks); only the user-
+  // visible TEXT is interpolated. NFR-SEC04: text values come from the bundle
+  // (i18next escapeValue:true defends against any embedded markup) — they are
+  // safe to splice into innerHTML.
+  const addLabel = tr('options.prompt_modals.test_harness.add_question_label') ?? 'Add a question';
+  const placeholder = tr('options.prompt_modals.test_harness.placeholder_question') ?? 'Enter a test question...';
+  const radioRespond = tr('options.prompt_modals.test_harness.radio_should_respond') ?? 'Should respond';
+  const radioSilent = tr('options.prompt_modals.test_harness.radio_should_silent') ?? 'Should stay silent';
+  const btnAdd = tr('options.prompt_modals.test_harness.btn_add') ?? '+ Add';
   addSection.innerHTML = `
-    <div class="test-add-label">Add a question</div>
-    <input type="text" class="text-input test-add-input" placeholder="Enter a test question..." id="custom-q-input">
+    <div class="test-add-label">${addLabel}</div>
+    <input type="text" class="text-input test-add-input" placeholder="${placeholder}" id="custom-q-input">
     <div class="test-add-behavior">
       <label class="radio-option">
         <input type="radio" name="custom-q-behavior" value="respond" checked>
-        <span class="radio-label">Should respond</span>
+        <span class="radio-label">${radioRespond}</span>
       </label>
       <label class="radio-option">
         <input type="radio" name="custom-q-behavior" value="silent">
-        <span class="radio-label">Should stay silent</span>
+        <span class="radio-label">${radioSilent}</span>
       </label>
     </div>
-    <button class="btn-primary btn-small" id="custom-q-add-btn">+ Add</button>
+    <button class="btn-primary btn-small" id="custom-q-add-btn">${btnAdd}</button>
   `;
   container.appendChild(addSection);
 
@@ -377,7 +404,11 @@ function renderCustomTab(container: HTMLElement): void {
   const cost = estimateCost(totalQs, isComparison);
   const costBox = document.createElement('div');
   costBox.className = 'test-cost-estimate';
-  costBox.textContent = `${totalQs} questions × 1 model${isComparison ? ' × 2 versions' : ''} = ~$${cost.toFixed(3)}`;
+  costBox.textContent = isComparison
+    ? (tr('options.prompt_modals.test_harness.cost_estimate_comparison', { totalQs, cost: cost.toFixed(3) })
+       ?? `${totalQs} questions × 1 model × 2 versions = ~$${cost.toFixed(3)}`)
+    : (tr('options.prompt_modals.test_harness.cost_estimate', { totalQs, cost: cost.toFixed(3) })
+       ?? `${totalQs} questions × 1 model = ~$${cost.toFixed(3)}`);
   container.appendChild(costBox);
 
   renderComparisonSelector(container);
@@ -385,7 +416,7 @@ function renderCustomTab(container: HTMLElement): void {
   const runBtn = document.createElement('button');
   runBtn.className = 'btn-primary test-run-btn';
   const versionLabel = options?.versionNumber ? ` on v${options.versionNumber}` : '';
-  runBtn.textContent = `Run Tests${versionLabel}`;
+  runBtn.textContent = tr('options.prompt_modals.test_harness.btn_run_tests', { versionLabel }) ?? `Run Tests${versionLabel}`;
   if (totalQs === 0) {
     runBtn.disabled = true;
   } else {
@@ -407,7 +438,11 @@ function renderKBTab(container: HTMLElement): void {
     const docIds = persona?.kbDocumentIds ?? [];
 
     if (docIds.length === 0) {
-      wrapper.innerHTML = '<p class="test-empty-hint">No KB documents linked to this persona. Upload documents in the persona editor to enable KB testing.</p>';
+      const emptyP = document.createElement('p');
+      emptyP.className = 'test-empty-hint';
+      emptyP.textContent = tr('options.prompt_modals.test_harness.kb_empty_state')
+        ?? 'No KB documents linked to this persona. Upload documents in the persona editor to enable KB testing.';
+      wrapper.appendChild(emptyP);
       return;
     }
 
@@ -415,14 +450,19 @@ function renderKBTab(container: HTMLElement): void {
     const allDocs = await kbDatabase.getDocuments();
     const linkedDocs = allDocs.filter(d => docIds.includes(d.id));
 
+    // Plan 5 NFR-SEC04: createElement instead of innerHTML
     const docsHeader = document.createElement('div');
     docsHeader.className = 'test-kb-docs';
-    docsHeader.innerHTML = `<strong>Linked KB Documents (${linkedDocs.length})</strong>`;
+    const docsHeaderStrong = document.createElement('strong');
+    docsHeaderStrong.textContent = tr('options.prompt_modals.test_harness.kb_linked_header', { count: linkedDocs.length })
+      ?? `Linked KB Documents (${linkedDocs.length})`;
+    docsHeader.appendChild(docsHeaderStrong);
     const docList = document.createElement('ul');
     docList.className = 'test-kb-doc-list';
     for (const doc of linkedDocs) {
       const li = document.createElement('li');
-      li.textContent = `${doc.filename} (${doc.chunkCount} chunks)`;
+      li.textContent = tr('options.prompt_modals.test_harness.kb_doc_item', { filename: doc.filename, chunks: doc.chunkCount })
+        ?? `${doc.filename} (${doc.chunkCount} chunks)`;
       docList.appendChild(li);
     }
     docsHeader.appendChild(docList);
@@ -431,9 +471,11 @@ function renderKBTab(container: HTMLElement): void {
     // Query input row
     const queryRow = document.createElement('div');
     queryRow.className = 'test-kb-query-row';
+    const kbSearchPlaceholder = tr('options.prompt_modals.test_harness.placeholder_kb_search') ?? 'Search your KB...';
+    const kbSearchBtnText = tr('options.prompt_modals.test_harness.btn_search') ?? 'Search';
     queryRow.innerHTML = `
-      <input type="text" id="kb-query-input" placeholder="Search your KB..." class="test-input" />
-      <button class="btn-primary btn-small" id="kb-search-btn">Search</button>
+      <input type="text" id="kb-query-input" placeholder="${kbSearchPlaceholder}" class="test-input" />
+      <button class="btn-primary btn-small" id="kb-search-btn">${kbSearchBtnText}</button>
     `;
     wrapper.appendChild(queryRow);
 
@@ -452,18 +494,23 @@ function renderKBTab(container: HTMLElement): void {
 
       isKBSearching = true;
       searchBtn.disabled = true;
-      searchBtn.textContent = 'Searching...';
+      searchBtn.textContent = tr('options.prompt_modals.test_harness.btn_searching') ?? 'Searching...';
       resultsContainer.innerHTML = '';
 
       try {
         kbSearchResults = await searchKB(query, 5, 0.3, docIds);
         renderKBResults(resultsContainer, query);
       } catch (err) {
-        resultsContainer.innerHTML = `<p class="test-error">Search failed: ${err instanceof Error ? err.message : 'Unknown error'}</p>`;
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        const errP = document.createElement('p');
+        errP.className = 'test-error';
+        errP.textContent = tr('options.prompt_modals.test_harness.search_failed', { error: msg })
+          ?? `Search failed: ${msg}`;
+        resultsContainer.replaceChildren(errP);
       } finally {
         isKBSearching = false;
         searchBtn.disabled = false;
-        searchBtn.textContent = 'Search';
+        searchBtn.textContent = tr('options.prompt_modals.test_harness.btn_search') ?? 'Search';
       }
     };
 
@@ -476,22 +523,31 @@ function renderKBTab(container: HTMLElement): void {
     const testSection = document.createElement('div');
     testSection.className = 'test-kb-integration';
 
+    // Plan 5 NFR-SEC04: createElement instead of innerHTML
     const testHeader = document.createElement('div');
     testHeader.className = 'test-kb-docs';
-    testHeader.innerHTML = '<strong>KB Integration Tests</strong>';
+    const testHeaderStrong = document.createElement('strong');
+    testHeaderStrong.textContent = tr('options.prompt_modals.test_harness.kb_section_header') ?? 'KB Integration Tests';
+    testHeader.appendChild(testHeaderStrong);
     testSection.appendChild(testHeader);
 
     const testDesc = document.createElement('p');
     testDesc.className = 'test-empty-hint';
-    testDesc.textContent = 'Auto-generates 3 tests: real citation, impossible knowledge (injected fact), and missing data (should decline).';
+    testDesc.textContent = tr('options.prompt_modals.test_harness.kb_section_description')
+      ?? 'Auto-generates 3 tests: real citation, impossible knowledge (injected fact), and missing data (should decline).';
     testSection.appendChild(testDesc);
 
     // Optional impossible fact input
     const factRow = document.createElement('div');
     factRow.className = 'test-kb-query-row';
+    const impossiblePh = tr('options.prompt_modals.test_harness.placeholder_impossible')
+      ?? 'Custom impossible fact (default: $999/seat Enterprise)';
+    const runKBLabel = isKBTesting
+      ? (tr('options.prompt_modals.test_harness.btn_running') ?? 'Running...')
+      : (tr('options.prompt_modals.test_harness.btn_run_kb_tests') ?? 'Run KB Tests');
     factRow.innerHTML = `
-      <input type="text" id="kb-impossible-fact" placeholder="Custom impossible fact (default: $999/seat Enterprise)" class="test-input" />
-      <button class="btn-primary btn-small" id="kb-run-tests-btn">${isKBTesting ? 'Running...' : 'Run KB Tests'}</button>
+      <input type="text" id="kb-impossible-fact" placeholder="${impossiblePh}" class="test-input" />
+      <button class="btn-primary btn-small" id="kb-run-tests-btn">${runKBLabel}</button>
     `;
     testSection.appendChild(factRow);
 
@@ -512,8 +568,12 @@ function renderKBTab(container: HTMLElement): void {
       if (!options || isKBTesting) return;
       isKBTesting = true;
       runTestsBtn.disabled = true;
-      runTestsBtn.textContent = 'Running...';
-      kbTestContainer.innerHTML = '<p class="test-empty-hint">Running 3 KB tests against the model... this may take 15-30 seconds.</p>';
+      runTestsBtn.textContent = tr('options.prompt_modals.test_harness.btn_running') ?? 'Running...';
+      const loadingP = document.createElement('p');
+      loadingP.className = 'test-empty-hint';
+      loadingP.textContent = tr('options.prompt_modals.test_harness.kb_loading_message')
+        ?? 'Running 3 KB tests against the model... this may take 15-30 seconds.';
+      kbTestContainer.replaceChildren(loadingP);
 
       // Get API key
       const storage = await chrome.storage.local.get(['geminiApiKey', 'llmProvider', 'openrouterApiKey', 'groqApiKey']);
@@ -526,10 +586,14 @@ function renderKBTab(container: HTMLElement): void {
       }
 
       if (!apiKey) {
-        kbTestContainer.innerHTML = '<p class="test-error">No API key configured for the active provider.</p>';
+        const errP = document.createElement('p');
+        errP.className = 'test-error';
+        errP.textContent = tr('options.prompt_modals.test_harness.no_api_key_for_provider')
+          ?? 'No API key configured for the active provider.';
+        kbTestContainer.replaceChildren(errP);
         isKBTesting = false;
         runTestsBtn.disabled = false;
-        runTestsBtn.textContent = 'Run KB Tests';
+        runTestsBtn.textContent = tr('options.prompt_modals.test_harness.btn_run_kb_tests') ?? 'Run KB Tests';
         return;
       }
 
@@ -543,11 +607,16 @@ function renderKBTab(container: HTMLElement): void {
         kbTestContainer.innerHTML = '';
         renderKBTestResults(kbTestContainer);
       } catch (err) {
-        kbTestContainer.innerHTML = `<p class="test-error">KB tests failed: ${err instanceof Error ? err.message : 'Unknown error'}</p>`;
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        const errP = document.createElement('p');
+        errP.className = 'test-error';
+        errP.textContent = tr('options.prompt_modals.test_harness.kb_tests_failed', { error: msg })
+          ?? `KB tests failed: ${msg}`;
+        kbTestContainer.replaceChildren(errP);
       } finally {
         isKBTesting = false;
         runTestsBtn.disabled = false;
-        runTestsBtn.textContent = 'Run KB Tests';
+        runTestsBtn.textContent = tr('options.prompt_modals.test_harness.btn_run_kb_tests') ?? 'Run KB Tests';
       }
     });
   })();
@@ -557,13 +626,19 @@ function renderKBTab(container: HTMLElement): void {
 
 function renderKBResults(container: HTMLElement, query: string): void {
   if (!kbSearchResults || kbSearchResults.length === 0) {
-    container.innerHTML = `<p class="test-empty-hint">No results found for "${query}". Try a different query or check that documents are fully indexed.</p>`;
+    const emptyP = document.createElement('p');
+    emptyP.className = 'test-empty-hint';
+    emptyP.textContent = tr('options.prompt_modals.test_harness.no_results_for_query', { query })
+      ?? `No results found for "${query}". Try a different query or check that documents are fully indexed.`;
+    container.replaceChildren(emptyP);
     return;
   }
 
+  // Plan 5 NFR-SEC04: createElement instead of innerHTML (query is user input)
   const header = document.createElement('div');
   header.className = 'test-kb-results-header';
-  header.innerHTML = `<strong>${kbSearchResults.length} results</strong> for "${query}"`;
+  header.textContent = tr('options.prompt_modals.test_harness.results_header', { count: kbSearchResults.length, query })
+    ?? `${kbSearchResults.length} results for "${query}"`;
   container.appendChild(header);
 
   for (const result of kbSearchResults) {
@@ -591,12 +666,12 @@ function renderKBTestResults(container: HTMLElement): void {
   const total = kbTestResults.length;
   const allPass = passed === total;
 
-  // Summary banner
+  // Summary banner — Plan 5 NFR-SEC04: createElement
   const banner = document.createElement('div');
   banner.className = allPass ? 'test-success-banner' : 'test-fail-banner';
-  banner.innerHTML = allPass
-    ? `<strong>All KB Tests Passed</strong> (${passed}/${total})`
-    : `<strong>KB Tests: ${passed}/${total} passed</strong>`;
+  banner.textContent = allPass
+    ? (tr('options.prompt_modals.test_harness.kb_all_passed', { passed, total }) ?? `All KB Tests Passed (${passed}/${total})`)
+    : (tr('options.prompt_modals.test_harness.kb_partial_passed', { passed, total }) ?? `KB Tests: ${passed}/${total} passed`);
   container.appendChild(banner);
 
   // Individual result cards
@@ -617,12 +692,22 @@ function renderKBTestResults(container: HTMLElement): void {
       card.appendChild(hint);
     }
 
-    // KB metadata
+    // KB metadata — Plan 5: localized labels
     const meta: string[] = [];
-    if (result.kbChunkRetrieved) meta.push('KB chunk retrieved');
-    if (result.similarityScore !== null) meta.push(`Similarity: ${Math.round(result.similarityScore * 100)}%`);
-    if (result.sourceFilename) meta.push(`Source: ${result.sourceFilename}`);
-    if (result.citationCorrect !== null) meta.push(result.citationCorrect ? 'Citation correct' : 'Citation incorrect');
+    if (result.kbChunkRetrieved) meta.push(tr('options.prompt_modals.test_harness.meta_kb_chunk_retrieved') ?? 'KB chunk retrieved');
+    if (result.similarityScore !== null) {
+      const percent = Math.round(result.similarityScore * 100);
+      meta.push(tr('options.prompt_modals.test_harness.meta_similarity', { percent }) ?? `Similarity: ${percent}%`);
+    }
+    if (result.sourceFilename) {
+      meta.push(tr('options.prompt_modals.test_harness.meta_source', { filename: result.sourceFilename })
+        ?? `Source: ${result.sourceFilename}`);
+    }
+    if (result.citationCorrect !== null) {
+      meta.push(result.citationCorrect
+        ? (tr('options.prompt_modals.test_harness.meta_citation_correct') ?? 'Citation correct')
+        : (tr('options.prompt_modals.test_harness.meta_citation_incorrect') ?? 'Citation incorrect'));
+    }
 
     if (meta.length > 0) {
       const metaDiv = document.createElement('div');
@@ -641,9 +726,14 @@ function renderKBTestResults(container: HTMLElement): void {
     // Badge
     const badge = document.createElement('span');
     badge.className = `test-result-badge test-result-badge--${result.status}`;
-    badge.textContent = result.status === 'pass' ? '\u2713 Pass'
-      : result.status === 'fail' ? `\u2717 ${result.failureReason ?? 'Failed'}`
-      : `\u26a0 ${result.errorMessage ?? 'Error'}`;
+    if (result.status === 'pass') {
+      badge.textContent = '\u2713 ' + (tr('options.prompt_modals.test_harness.badge_pass') ?? 'Pass');
+    } else if (result.status === 'fail') {
+      badge.textContent = '\u2717 ' + (result.failureReason ?? 'Failed');
+    } else {
+      const errMsg = result.errorMessage ?? 'Error';
+      badge.textContent = '\u26a0 ' + (tr('options.prompt_modals.test_harness.badge_error', { message: errMsg }) ?? `Error: ${errMsg}`);
+    }
     card.appendChild(badge);
 
     container.appendChild(card);
@@ -665,26 +755,37 @@ function renderResults(container: HTMLElement): void {
   const allPass = passed === total;
   const allFail = passed === 0 && errors === 0;
 
-  // All-pass banner
+  // All-pass banner \u2014 Plan 5 NFR-SEC04: createElement
   if (allPass) {
     const banner = document.createElement('div');
     banner.className = 'test-success-banner';
-    banner.innerHTML = `
-      <div class="test-success-icon">\ud83c\udf89</div>
-      <div class="test-success-title">All Tests Passed</div>
-      <div class="test-success-detail">${total}/${total} questions \u00b7 ${options?.modelId ?? 'Unknown'}</div>
-    `;
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'test-success-icon';
+    iconDiv.textContent = '\u{1F389}';
+    banner.appendChild(iconDiv);
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'test-success-title';
+    titleDiv.textContent = tr('options.prompt_modals.test_harness.success_title') ?? 'All Tests Passed';
+    banner.appendChild(titleDiv);
+    const detailDiv = document.createElement('div');
+    detailDiv.className = 'test-success-detail';
+    detailDiv.textContent = tr('options.prompt_modals.test_harness.success_detail', { total, modelId: options?.modelId ?? 'Unknown' })
+      ?? `${total}/${total} questions \u00b7 ${options?.modelId ?? 'Unknown'}`;
+    banner.appendChild(detailDiv);
     container.appendChild(banner);
   }
 
-  // All-fail banner
+  // All-fail banner \u2014 Plan 5 NFR-SEC04: createElement
   if (allFail) {
     const banner = document.createElement('div');
     banner.className = 'test-fail-banner';
-    banner.innerHTML = `
-      <strong>All tests failed</strong>
-      <p>This prompt may need significant revision. Consider re-running the Setup Assistant with different inputs, or try a different target model.</p>
-    `;
+    const titleStrong = document.createElement('strong');
+    titleStrong.textContent = tr('options.prompt_modals.test_harness.fail_banner_title') ?? 'All tests failed';
+    const bodyP = document.createElement('p');
+    bodyP.textContent = tr('options.prompt_modals.test_harness.fail_banner_body')
+      ?? 'This prompt may need significant revision. Consider re-running the Setup Assistant with different inputs, or try a different target model.';
+    banner.appendChild(titleStrong);
+    banner.appendChild(bodyP);
     container.appendChild(banner);
   }
 
@@ -717,17 +818,20 @@ function renderResults(container: HTMLElement): void {
     const badge = document.createElement('span');
     badge.className = `test-result-badge test-result-badge--${result.status}`;
     if (result.status === 'pass') {
-      badge.textContent = result.question.expectedBehavior === 'silent' ? '\u2713 Silent' : '\u2713 Pass';
+      badge.textContent = '\u2713 ' + (result.question.expectedBehavior === 'silent'
+        ? (tr('options.prompt_modals.test_harness.badge_silent') ?? 'Silent')
+        : (tr('options.prompt_modals.test_harness.badge_pass') ?? 'Pass'));
     } else if (result.status === 'fail' && result.failureReason) {
       const reasons: Record<string, string> = {
-        'wrong-behavior': '\u2717 Wrong behavior',
-        'should-have-responded': '\u2717 Should have responded',
-        'off-topic': '\u2717 Off-topic response',
-        'should-be-silent': '\u2717 Should be silent',
+        'wrong-behavior': tr('options.prompt_modals.test_harness.badge_wrong_behavior') ?? 'Wrong behavior',
+        'should-have-responded': tr('options.prompt_modals.test_harness.badge_should_respond') ?? 'Should have responded',
+        'off-topic': tr('options.prompt_modals.test_harness.badge_off_topic') ?? 'Off-topic response',
+        'should-be-silent': tr('options.prompt_modals.test_harness.badge_should_silent') ?? 'Should be silent',
       };
-      badge.textContent = reasons[result.failureReason] ?? '\u2717 Failed';
+      badge.textContent = '\u2717 ' + (reasons[result.failureReason] ?? 'Failed');
     } else if (result.status === 'error') {
-      badge.textContent = `\u26a0 Error: ${result.errorMessage ?? 'Unknown'}`;
+      const msg = result.errorMessage ?? 'Unknown';
+      badge.textContent = '\u26a0 ' + (tr('options.prompt_modals.test_harness.badge_error', { message: msg }) ?? `Error: ${msg}`);
     }
     card.appendChild(badge);
 
@@ -748,50 +852,62 @@ function renderFooter(): void {
 
   footer.innerHTML = '';
 
+  // Plan 5: localized button labels (i18next escapeValue:true defends against
+  // any embedded markup so safe to splice into innerHTML).
+  const closeT = tr('options.prompt_modals.test_harness.btn_close') ?? 'Close';
+  const editFixT = tr('options.prompt_modals.test_harness.btn_edit_to_fix') ?? 'Edit Prompt to Fix';
+  const retryT = tr('options.prompt_modals.test_harness.btn_retry_failed') ?? 'Retry Failed Tests';
+  const backEditT = tr('options.prompt_modals.test_harness.btn_back_to_edit') ?? 'Back to Edit';
+  const backHistT = tr('options.prompt_modals.test_harness.btn_back_to_history') ?? 'Back to History';
+
   if (comparisonResults) {
-    // Comparison mode footer
     footer.innerHTML = `
-      <button class="btn-secondary" id="test-close-btn">Close</button>
-      <button class="btn-primary" id="test-editfix-btn">Edit Prompt to Fix</button>
+      <button class="btn-secondary" id="test-close-btn">${closeT}</button>
+      <button class="btn-primary" id="test-editfix-btn">${editFixT}</button>
     `;
   } else if (results) {
     const allPass = results.every(r => r.status === 'pass');
     const hasError = results.some(r => r.status === 'error');
+    const vNum = options.versionNumber ?? 1;
+    const saveAsV = tr('options.prompt_modals.test_harness.btn_save_as_v', { version: vNum }) ?? `Save as v${vNum}`;
+    const restoreV = options.versionNumber
+      ? (tr('options.prompt_modals.test_harness.btn_restore_v', { version: options.versionNumber }) ?? `Restore v${options.versionNumber}`)
+      : '';
 
     if (hasError) {
       footer.innerHTML = `
-        <button class="btn-secondary" id="test-close-btn">Close</button>
-        <button class="btn-primary" id="test-retry-btn">Retry Failed Tests</button>
+        <button class="btn-secondary" id="test-close-btn">${closeT}</button>
+        <button class="btn-primary" id="test-retry-btn">${retryT}</button>
       `;
     } else if (allPass && options.context === 'review') {
+      // "Edit More" reuses btn_back_to_edit since both invoke handleClose.
       footer.innerHTML = `
-        <button class="btn-secondary" id="test-edit-btn">Edit More</button>
-        <button class="btn-primary" id="test-save-btn">Save as v${options.versionNumber ?? 1}</button>
+        <button class="btn-secondary" id="test-edit-btn">${backEditT}</button>
+        <button class="btn-primary" id="test-save-btn">${saveAsV}</button>
       `;
     } else {
       switch (options.context) {
         case 'review':
           footer.innerHTML = `
-            <button class="btn-secondary" id="test-back-btn">Back to Edit</button>
-            <button class="btn-primary" id="test-save-btn">Save as v${options.versionNumber ?? 1}</button>
+            <button class="btn-secondary" id="test-back-btn">${backEditT}</button>
+            <button class="btn-primary" id="test-save-btn">${saveAsV}</button>
           `;
           break;
         case 'editor':
           footer.innerHTML = `
-            <button class="btn-secondary" id="test-close-btn">Close</button>
-            <button class="btn-primary" id="test-editfix-btn">Edit Prompt to Fix</button>
+            <button class="btn-secondary" id="test-close-btn">${closeT}</button>
+            <button class="btn-primary" id="test-editfix-btn">${editFixT}</button>
           `;
           break;
         case 'history':
           footer.innerHTML = `
-            <button class="btn-secondary" id="test-back-btn">Back to History</button>
-            ${options.versionNumber ? `<button class="btn-secondary" id="test-restore-btn">Restore v${options.versionNumber}</button>` : ''}
+            <button class="btn-secondary" id="test-back-btn">${backHistT}</button>
+            ${restoreV ? `<button class="btn-secondary" id="test-restore-btn">${restoreV}</button>` : ''}
           `;
           break;
       }
     }
   } else {
-    // Pre-run footer
     footer.innerHTML = '';
   }
 

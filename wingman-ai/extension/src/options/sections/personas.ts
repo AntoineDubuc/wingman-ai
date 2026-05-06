@@ -1391,6 +1391,7 @@ export class PersonaSection {
           resetAssistantState();
         },
         showConfirmModal: this.ctx.showConfirmModal,
+        t: this.ctx.t,
       });
 
       // Wire quick-reply button actions
@@ -1560,6 +1561,7 @@ export class PersonaSection {
           closeReviewModal();
           closeChatModal();
         },
+        t: this.ctx.t,
       });
     } catch (err) {
       console.error('[PersonaEditor] Generation failed:', err);
@@ -1709,6 +1711,7 @@ export class PersonaSection {
         closeTestHarness();
         this.promptTextarea?.focus();
       },
+      t: this.ctx.t,
     });
   }
 
@@ -1744,6 +1747,7 @@ export class PersonaSection {
         closeTestHarness();
         this.promptTextarea?.focus();
       },
+      t: this.ctx.t,
     });
   }
 
@@ -1752,6 +1756,7 @@ export class PersonaSection {
     openVersionHistory({
       personaId: this.editingPersona.id,
       personaName: this.editingPersona.name,
+      t: this.ctx.t,
       onBack: () => {
         closeVersionHistory();
       },
@@ -1776,6 +1781,7 @@ export class PersonaSection {
             closeTestHarness();
             closeVersionHistory();
           },
+          t: this.ctx.t,
         });
       },
       onRestore: async (restoredVersion) => {

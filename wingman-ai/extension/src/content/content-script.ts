@@ -81,6 +81,9 @@ function initOverlay(): void {
   overlay = new AIOverlay(handleOverlayClose);
   // Append to <html> instead of <body> — less likely to be removed by Google Meet's framework
   document.documentElement.appendChild(overlay.container);
+  // Plan 6: load user locale into the overlay (sets shadow-host lang + i18n instance).
+  // Fire-and-forget; the synchronous English default keeps the first paint from blocking.
+  void overlay.initLocale();
 }
 
 /**

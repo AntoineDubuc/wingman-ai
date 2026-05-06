@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-8-personas-2026-05-05",
+    "revision": "plan-6-overlay-actions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -189,13 +189,41 @@
       "minimize": "Minimizar",
       "close": "Cerrar",
       "dock": "Anclar",
-      "undock": "Desanclar"
+      "undock": "Desanclar",
+      "dock_left": "Barra lateral izquierda",
+      "dock_right": "Barra lateral derecha",
+      "suggestions_only": "Sólo sugerencias",
+      "show_full_transcript": "Mostrar transcripción completa"
     },
     "emotion": {
       "label_prefix": "Tono:"
     },
     "cost": {
-      "label": "Costo estimado"
+      "label": "Costo estimado",
+      "minutes_unit": "min",
+      "free_value": "Gratis",
+      "estimate_disclaimer": "Estimación · la factura real puede variar",
+      "free_tier_suffix": "versión gratuita",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} llamada",
+      "calls_unit_other": "{{count}} llamadas"
+    },
+    "summary_card": {
+      "generating": "Generando resumen..."
+    },
+    "actions": {
+      "saved_to_drive": "Guardado en Drive",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "copy_failed": "Falló"
+    },
+    "langbuilder": {
+      "running": "Ejecutando flujo...",
+      "cancelled": "Cancelado",
+      "flow_failed": "Falló la ejecución del flujo",
+      "connection_error": "Error de conexión",
+      "no_flows_hint": "Sin flujos — configurar en Ajustes",
+      "select_flow_placeholder": "Seleccionar un flujo..."
     }
   },
   "summary": {

@@ -61,6 +61,10 @@ import { removeDockMargin } from './overlay/margin-injector';
 import { transcriptBuffer } from './overlay/transcript-buffer';
 import { MeetingView } from './overlay/meeting-view';
 import { AssistantView } from './overlay/assistant-view';
+import { createI18nInstance } from '../shared/i18n-init';
+import type { i18n as I18n } from 'i18next';
+import type { SupportedLocale } from '../shared/i18n-types';
+import { initOverlayI18n } from './content-script-locale';
 
 export class AIOverlay {
   public container: HTMLDivElement;
@@ -130,6 +134,46 @@ export class AIOverlay {
   // MeetingView — subscription-based transcript rendering (Task 4)
   private meetingView: MeetingView | null = null;
   private assistantView: AssistantView | null = null;
+
+  // Plan 6: synchronous English default; upgraded async by initLocale()
+  private i18n: I18n = createI18nInstance('en');
+  private locale: SupportedLocale = 'en';
+
+  /**
+   * Localized string lookup. Synchronous; safe to call from any render method.
+   * Defaults to English until initLocale() resolves and upgrades the i18n instance.
+   */
+  private t(key: string, opts?: Record<string, unknown>): string {
+    return this.i18n.t(key, opts);
+  }
+
+  /**
+   * Format a USD amount in the active locale via Intl.NumberFormat (FR-024).
+   * Replaces the prior `$${value.toFixed(2)}` pattern.
+   */
+  private formatCurrency(amountUsd: number, fractionDigits: 2 | 3 = 2): string {
+    return new Intl.NumberFormat(this.locale, {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amountUsd);
+  }
+
+  /**
+   * Asynchronously upgrades the i18n instance to the user's stored locale.
+   * Called once after construction by content-script.ts. Safe to call multiple
+   * times; idempotent.
+   */
+  async initLocale(): Promise<void> {
+    try {
+      const result = await initOverlayI18n(this.container);
+      this.i18n = result.i18n;
+      this.locale = result.locale;
+    } catch (err) {
+      console.warn('[overlay] initLocale failed, staying on English default:', err);
+    }
+  }
 
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
@@ -599,12 +643,13 @@ export class AIOverlay {
     if (!this.dockToggleBtn) return;
     const docked = this.dockable?.isDocked() ?? false;
     if (docked) {
+      const undockLabel = this.t('overlay.controls.undock');
       this.dockToggleBtn.innerHTML = ICONS.UNDOCK;
-      this.dockToggleBtn.title = 'Undock';
-      this.dockToggleBtn.setAttribute('aria-label', 'Undock');
+      this.dockToggleBtn.title = undockLabel;
+      this.dockToggleBtn.setAttribute('aria-label', undockLabel);
     } else {
       const side = this.dockable?.getLastDockSide() ?? 'dock-right';
-      const label = side === 'dock-left' ? 'Sidebar Left' : 'Sidebar Right';
+      const label = this.t(side === 'dock-left' ? 'overlay.controls.dock_left' : 'overlay.controls.dock_right');
       this.dockToggleBtn.innerHTML = ICONS.DOCK;
       this.dockToggleBtn.title = label;
       this.dockToggleBtn.setAttribute('aria-label', label);
@@ -637,8 +682,11 @@ export class AIOverlay {
     if (this.displayToggleBtn) {
       this.displayToggleBtn.innerHTML = this.suggestionsOnly ? ICONS.FILTER_ACTIVE : ICONS.FILTER;
       this.displayToggleBtn.setAttribute('aria-pressed', String(this.suggestionsOnly));
-      this.displayToggleBtn.title = this.suggestionsOnly ? 'Show full transcript' : 'Suggestions only';
-      this.displayToggleBtn.setAttribute('aria-label', this.suggestionsOnly ? 'Show full transcript' : 'Suggestions only');
+      const toggleLabel = this.t(this.suggestionsOnly
+        ? 'overlay.controls.show_full_transcript'
+        : 'overlay.controls.suggestions_only');
+      this.displayToggleBtn.title = toggleLabel;
+      this.displayToggleBtn.setAttribute('aria-label', toggleLabel);
     }
 
     if (this.suggestionsOnlyChip) {
@@ -739,38 +787,39 @@ export class AIOverlay {
     // Show the ticker on first update
     ticker.style.display = '';
 
-    // Main value
+    // Main value \u2014 Plan 6: locale-aware currency formatting (FR-024)
     const valueEl = ticker.querySelector('.cost-value');
     if (valueEl) {
-      if (data.isFreeTier && data.llmCost === 0) {
-        valueEl.textContent = `~$${data.deepgramCost.toFixed(2)}`;
-      } else {
-        valueEl.textContent = `~$${data.totalCost.toFixed(2)}`;
-      }
+      const headlineCost = (data.isFreeTier && data.llmCost === 0) ? data.deepgramCost : data.totalCost;
+      valueEl.textContent = `~${this.formatCurrency(headlineCost, 2)}`;
     }
 
-    // Tooltip details
+    // Tooltip details \u2014 Plan 6: localized labels
+    const minutesUnit = this.t('overlay.cost.minutes_unit');
+    const sttBrand = this.t('overlay.cost.stt_label');
     const sttLabel = ticker.querySelector('.cost-stt-label');
-    if (sttLabel) sttLabel.textContent = `Deepgram (${Math.round(data.audioMinutes)} min)`;
+    if (sttLabel) sttLabel.textContent = `${sttBrand} (${Math.round(data.audioMinutes)} ${minutesUnit})`;
     const sttValue = ticker.querySelector('.cost-stt-value');
-    if (sttValue) sttValue.textContent = `$${data.deepgramCost.toFixed(3)}`;
+    if (sttValue) sttValue.textContent = this.formatCurrency(data.deepgramCost, 3);
 
     const llmLabel = ticker.querySelector('.cost-llm-label');
     if (llmLabel) {
       llmLabel.textContent = data.isFreeTier
-        ? `${data.providerLabel} (free tier)`
-        : `${data.providerLabel} (${data.suggestionCount} calls)`;
+        ? `${data.providerLabel} (${this.t('overlay.cost.free_tier_suffix')})`
+        : `${data.providerLabel} (${this.t('overlay.cost.calls_unit', { count: data.suggestionCount })})`;
     }
     const llmValue = ticker.querySelector('.cost-llm-value');
     if (llmValue) {
-      llmValue.textContent = data.isFreeTier ? 'Free \u2713' : `$${data.llmCost.toFixed(3)}`;
+      llmValue.textContent = data.isFreeTier
+        ? `${this.t('overlay.cost.free_value')} \u2713`
+        : this.formatCurrency(data.llmCost, 3);
     }
 
     const totalValue = ticker.querySelector('.cost-total-value');
-    if (totalValue) totalValue.textContent = `~$${data.totalCost.toFixed(2)}`;
+    if (totalValue) totalValue.textContent = `~${this.formatCurrency(data.totalCost, 2)}`;
 
     const hint = ticker.querySelector('.cost-hint');
-    if (hint) hint.textContent = 'Estimate \u00b7 actual bill may vary';
+    if (hint) hint.textContent = this.t('overlay.cost.estimate_disclaimer');
   }
 
   /**
@@ -1377,7 +1426,13 @@ export class AIOverlay {
     // Hide timeline, show summary with loading
     this.timelineEl.style.display = 'none';
     summaryEl.style.display = 'block';
-    summaryEl.innerHTML = '<div class="loading-pulse">Generating Summary...</div>';
+    // Plan 6 NFR-SEC04: replace innerHTML with safe DOM construction; localized text.
+    const generatingText = this.t('overlay.summary_card.generating');
+    summaryEl.replaceChildren();
+    const pulseEl = document.createElement('div');
+    pulseEl.className = 'loading-pulse';
+    pulseEl.textContent = generatingText;
+    summaryEl.appendChild(pulseEl);
 
     // Remove any existing footer/toggle
     this.panel.querySelector('.summary-footer')?.remove();
@@ -1385,7 +1440,7 @@ export class AIOverlay {
 
     // Update header
     const title = this.panel.querySelector('.title');
-    if (title) title.textContent = 'Generating Summary...';
+    if (title) title.textContent = generatingText;
     const status = this.panel.querySelector('.status-indicator') as HTMLElement;
     if (status) {
       status.style.background = '#f59e0b';
@@ -1403,7 +1458,7 @@ export class AIOverlay {
 
     // Update header
     const title = this.panel.querySelector('.title');
-    if (title) title.textContent = 'Call Summary';
+    if (title) title.textContent = this.t('summary.headers.call_summary');
     const status = this.panel.querySelector('.status-indicator') as HTMLElement;
     if (status) {
       status.style.background = '#8b5cf6';
@@ -1592,7 +1647,7 @@ export class AIOverlay {
 
     // Update header
     const title = this.panel.querySelector('.title');
-    if (title) title.textContent = 'Call Summary';
+    if (title) title.textContent = this.t('summary.headers.call_summary');
     const status = this.panel.querySelector('.status-indicator') as HTMLElement;
     if (status) {
       status.style.background = '#ea4335';
@@ -1613,7 +1668,7 @@ export class AIOverlay {
     const driveStatus = this.panel.querySelector('.drive-status');
     if (!driveStatus) return;
     if (result.saved) {
-      driveStatus.textContent = 'Saved to Drive';
+      driveStatus.textContent = this.t('overlay.actions.saved_to_drive');
     }
   }
 
@@ -1631,13 +1686,13 @@ export class AIOverlay {
       }
 
       await navigator.clipboard.writeText(text);
-      btn.textContent = 'Copied!';
+      btn.textContent = this.t('overlay.actions.copied');
     } catch {
-      btn.textContent = 'Failed';
+      btn.textContent = this.t('overlay.actions.copy_failed');
     }
 
     setTimeout(() => {
-      btn.textContent = 'Copy';
+      btn.textContent = this.t('overlay.actions.copy');
     }, 2000);
   }
 
@@ -1801,7 +1856,7 @@ export class AIOverlay {
       const opt = document.createElement('option');
       opt.disabled = true;
       opt.selected = true;
-      opt.textContent = 'No flows \u2014 configure in Settings';
+      opt.textContent = this.t('overlay.langbuilder.no_flows_hint');
       this.langBuilderFlowSelect.appendChild(opt);
       return;
     }
@@ -1809,7 +1864,7 @@ export class AIOverlay {
     const placeholder = document.createElement('option');
     placeholder.disabled = true;
     placeholder.selected = true;
-    placeholder.textContent = 'Select a flow...';
+    placeholder.textContent = this.t('overlay.langbuilder.select_flow_placeholder');
     this.langBuilderFlowSelect.appendChild(placeholder);
 
     for (const flow of flows) {
@@ -1903,7 +1958,7 @@ export class AIOverlay {
     if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = false;
 
     // Show loading state
-    this.langBuilderResult.textContent = 'Running flow...';
+    this.langBuilderResult.textContent = this.t('overlay.langbuilder.running');
     this.langBuilderResult.classList.add('loading');
     this.langBuilderResult.classList.remove('lb-result-error');
 
@@ -1919,12 +1974,12 @@ export class AIOverlay {
       if (response?.success) {
         this.langBuilderResult.textContent = response.result || '(empty response)';
       } else {
-        this.langBuilderResult.textContent = response?.error || 'Flow execution failed';
+        this.langBuilderResult.textContent = response?.error || this.t('overlay.langbuilder.flow_failed');
         this.langBuilderResult.classList.add('lb-result-error');
       }
     } catch (err) {
       this.langBuilderResult.classList.remove('loading');
-      this.langBuilderResult.textContent = err instanceof Error ? err.message : 'Connection error';
+      this.langBuilderResult.textContent = err instanceof Error ? err.message : this.t('overlay.langbuilder.connection_error');
       this.langBuilderResult.classList.add('lb-result-error');
     } finally {
       if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = true;
@@ -1944,7 +1999,7 @@ export class AIOverlay {
 
     if (this.langBuilderResult) {
       this.langBuilderResult.classList.remove('loading');
-      this.langBuilderResult.textContent = 'Cancelled';
+      this.langBuilderResult.textContent = this.t('overlay.langbuilder.cancelled');
       this.langBuilderResult.classList.add('lb-result-error');
     }
     if (this.langBuilderCancelBtn) this.langBuilderCancelBtn.disabled = true;

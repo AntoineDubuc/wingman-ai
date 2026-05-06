@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-8-personas-2026-05-05",
+    "revision": "plan-6-overlay-actions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -190,13 +190,42 @@
       "minimize": "Minimizează",
       "close": "Închide",
       "dock": "Andochează",
-      "undock": "Detașează"
+      "undock": "Detașează",
+      "dock_left": "Bară laterală stânga",
+      "dock_right": "Bară laterală dreapta",
+      "suggestions_only": "Doar sugestii",
+      "show_full_transcript": "Afișează transcrierea completă"
     },
     "emotion": {
       "label_prefix": "Ton:"
     },
     "cost": {
-      "label": "Cost estimat"
+      "label": "Cost estimat",
+      "minutes_unit": "min",
+      "free_value": "Gratuit",
+      "estimate_disclaimer": "Estimare · factura reală poate varia",
+      "free_tier_suffix": "versiunea gratuită",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} apel",
+      "calls_unit_few": "{{count}} apeluri",
+      "calls_unit_other": "{{count}} de apeluri"
+    },
+    "summary_card": {
+      "generating": "Se generează rezumatul..."
+    },
+    "actions": {
+      "saved_to_drive": "Salvat în Drive",
+      "copy": "Copiază",
+      "copied": "Copiat!",
+      "copy_failed": "Eșuat"
+    },
+    "langbuilder": {
+      "running": "Se execută fluxul...",
+      "cancelled": "Anulat",
+      "flow_failed": "Execuția fluxului a eșuat",
+      "connection_error": "Eroare de conexiune",
+      "no_flows_hint": "Niciun flux — configurați în Setări",
+      "select_flow_placeholder": "Selectați un flux..."
     }
   },
   "summary": {

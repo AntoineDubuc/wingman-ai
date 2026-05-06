@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-8-personas-2026-05-05",
+    "revision": "plan-6-overlay-actions-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -189,13 +189,41 @@
       "minimize": "Minimize",
       "close": "Close",
       "dock": "Dock",
-      "undock": "Undock"
+      "undock": "Undock",
+      "dock_left": "Sidebar Left",
+      "dock_right": "Sidebar Right",
+      "suggestions_only": "Suggestions only",
+      "show_full_transcript": "Show full transcript"
     },
     "emotion": {
       "label_prefix": "Tone:"
     },
     "cost": {
-      "label": "Estimated Cost"
+      "label": "Estimated Cost",
+      "minutes_unit": "min",
+      "free_value": "Free",
+      "estimate_disclaimer": "Estimate · actual bill may vary",
+      "free_tier_suffix": "free tier",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} call",
+      "calls_unit_other": "{{count}} calls"
+    },
+    "summary_card": {
+      "generating": "Generating Summary..."
+    },
+    "actions": {
+      "saved_to_drive": "Saved to Drive",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copy_failed": "Failed"
+    },
+    "langbuilder": {
+      "running": "Running flow...",
+      "cancelled": "Cancelled",
+      "flow_failed": "Flow execution failed",
+      "connection_error": "Connection error",
+      "no_flows_hint": "No flows — configure in Settings",
+      "select_flow_placeholder": "Select a flow..."
     }
   },
   "summary": {

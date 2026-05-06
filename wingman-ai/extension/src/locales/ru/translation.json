@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-8-personas-2026-05-05",
+    "revision": "plan-6-overlay-actions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -190,13 +190,42 @@
       "minimize": "Свернуть",
       "close": "Закрыть",
       "dock": "Закрепить",
-      "undock": "Открепить"
+      "undock": "Открепить",
+      "dock_left": "Боковая панель слева",
+      "dock_right": "Боковая панель справа",
+      "suggestions_only": "Только подсказки",
+      "show_full_transcript": "Показать полную расшифровку"
     },
     "emotion": {
       "label_prefix": "Тон:"
     },
     "cost": {
-      "label": "Ориентировочная стоимость"
+      "label": "Ориентировочная стоимость",
+      "minutes_unit": "мин",
+      "free_value": "Бесплатно",
+      "estimate_disclaimer": "Оценка · фактический счёт может отличаться",
+      "free_tier_suffix": "бесплатная версия",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} вызов",
+      "calls_unit_few": "{{count}} вызова",
+      "calls_unit_other": "{{count}} вызовов"
+    },
+    "summary_card": {
+      "generating": "Создание сводки..."
+    },
+    "actions": {
+      "saved_to_drive": "Сохранено в Drive",
+      "copy": "Копировать",
+      "copied": "Скопировано!",
+      "copy_failed": "Ошибка"
+    },
+    "langbuilder": {
+      "running": "Выполнение потока...",
+      "cancelled": "Отменено",
+      "flow_failed": "Сбой выполнения потока",
+      "connection_error": "Ошибка соединения",
+      "no_flows_hint": "Нет потоков — настройте в Настройках",
+      "select_flow_placeholder": "Выберите поток..."
     }
   },
   "summary": {

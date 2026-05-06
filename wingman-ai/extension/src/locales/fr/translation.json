@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-8-personas-2026-05-05",
+    "revision": "plan-6-overlay-actions-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -189,13 +189,41 @@
       "minimize": "Réduire",
       "close": "Fermer",
       "dock": "Ancrer",
-      "undock": "Désancrer"
+      "undock": "Désancrer",
+      "dock_left": "Barre latérale à gauche",
+      "dock_right": "Barre latérale à droite",
+      "suggestions_only": "Suggestions seulement",
+      "show_full_transcript": "Afficher la transcription complète"
     },
     "emotion": {
       "label_prefix": "Ton :"
     },
     "cost": {
-      "label": "Coût estimé"
+      "label": "Coût estimé",
+      "minutes_unit": "min",
+      "free_value": "Gratuit",
+      "estimate_disclaimer": "Estimation · facture réelle peut varier",
+      "free_tier_suffix": "version gratuite",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} appel",
+      "calls_unit_other": "{{count}} appels"
+    },
+    "summary_card": {
+      "generating": "Génération du résumé..."
+    },
+    "actions": {
+      "saved_to_drive": "Enregistré dans Drive",
+      "copy": "Copier",
+      "copied": "Copié!",
+      "copy_failed": "Échec"
+    },
+    "langbuilder": {
+      "running": "Exécution du flux...",
+      "cancelled": "Annulé",
+      "flow_failed": "L'exécution du flux a échoué",
+      "connection_error": "Erreur de connexion",
+      "no_flows_hint": "Aucun flux — configurer dans Paramètres",
+      "select_flow_placeholder": "Sélectionner un flux..."
     }
   },
   "summary": {

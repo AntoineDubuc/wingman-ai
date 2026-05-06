@@ -1102,6 +1102,18 @@ body {
   box-shadow: 0 0 0 3px var(--color-primary-ring), var(--shadow-glow);
 }
 
+/* Plan 2: language picker — narrower than the default select since locale
+   names are short. Disabled state gets a 60% opacity + not-allowed cursor. */
+.language-picker-select {
+  max-width: 260px;
+}
+
+.language-picker-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--color-bg-surface);
+}
+
 .radio-group {
   display: flex;
   flex-wrap: wrap;

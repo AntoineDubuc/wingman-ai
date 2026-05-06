@@ -29,11 +29,13 @@ export function renderLanguagePicker(
   container.replaceChildren();
 
   const label = document.createElement('label');
+  label.className = 'input-label';
   label.textContent = i18n.t('options.setup.language_picker_label');
   label.htmlFor = 'language-picker';
 
   const select = document.createElement('select');
   select.id = 'language-picker';
+  select.className = 'select-input language-picker-select';
   select.disabled = sessionActive;
   if (sessionActive) {
     select.title = i18n.t('options.setup.language_locked_tooltip');

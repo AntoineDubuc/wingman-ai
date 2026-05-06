@@ -320,7 +320,7 @@ export class ApiKeysSection {
 
     if (this.testBtn) {
       this.testBtn.disabled = true;
-      this.testBtn.textContent = 'Testing...';
+      this.testBtn.textContent = this.ctx.t?.('options.setup.api_keys.testing') ?? 'Testing...';
     }
 
     const results: string[] = [];
@@ -442,7 +442,7 @@ export class ApiKeysSection {
 
     if (this.testBtn) {
       this.testBtn.disabled = false;
-      this.testBtn.textContent = 'Test Keys';
+      this.testBtn.textContent = this.ctx.t?.('options.setup.api_keys.test_keys') ?? 'Test Keys';
     }
   }
 
@@ -470,16 +470,16 @@ export class ApiKeysSection {
 
     if (deepgramKey && providerKey) {
       statusDot.classList.add('status-configured');
-      statusText.textContent = 'All keys configured';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_all_configured') ?? 'All keys configured';
     } else if (deepgramKey) {
       statusDot.classList.add('status-error');
-      statusText.textContent = `Missing ${providerLabel} key`;
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_missing_provider', { provider: providerLabel }) ?? `Missing ${providerLabel} key`;
     } else if (providerKey) {
       statusDot.classList.add('status-error');
-      statusText.textContent = 'Missing Deepgram key';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_missing_deepgram') ?? 'Missing Deepgram key';
     } else {
       statusDot.classList.add('status-unconfigured');
-      statusText.textContent = 'Keys not configured';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_not_configured') ?? 'Keys not configured';
     }
   }
 

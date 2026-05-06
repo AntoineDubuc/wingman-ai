@@ -7,6 +7,23 @@
   },
   "popup": {
     "title": "Wingman",
+    "subtitle": "Real-Time AI Assistant for Google Meet",
+    "api_keys_label": "API Keys",
+    "session_label": "Session",
+    "controls_hint": {
+      "before": "Configure your API keys in ",
+      "link": "Options",
+      "after": " to get started."
+    },
+    "footer": {
+      "options": "Options",
+      "tutorials": "Tutorials",
+      "support": "Support"
+    },
+    "hydra_tooltip": {
+      "new_label": "New:",
+      "body": "Activate multiple personas for expert-panel mode."
+    },
     "start_session": "Start Session",
     "stop_session": "Stop Session",
     "status": {
@@ -30,13 +47,16 @@
       "inactive": "Inactive"
     },
     "personas": {
+      "section_label": "Active Personas",
       "remove": "Remove",
       "locked_tooltip": "Stop session to change personas",
       "count_active_one": "1 active",
       "count_active_other": "{{count}} active",
       "add_persona": "+ Add persona",
       "add_persona_locked_tooltip": "Stop session to change personas",
-      "preset_locked_tooltip": "Stop session to change presets"
+      "preset_locked_tooltip": "Stop session to change presets",
+      "preset_dropdown_label": "Conclave presets",
+      "max_reached": "Max {{max}} personas reached"
     },
     "errors": {
       "no_api_keys": "API keys missing",
@@ -64,7 +84,13 @@
         "deepgram_label": "Deepgram API Key",
         "test_button": "Test",
         "test_pass": "Connection successful",
-        "test_fail": "Connection failed: {{rawError}}"
+        "test_fail": "Connection failed: {{rawError}}",
+        "testing": "Testing...",
+        "test_keys": "Test Keys",
+        "status_all_configured": "All keys configured",
+        "status_missing_provider": "Missing {{provider}} key",
+        "status_missing_deepgram": "Missing Deepgram key",
+        "status_not_configured": "Keys not configured"
       },
       "save_button": "Save",
       "cancel_button": "Cancel"
@@ -79,6 +105,21 @@
       "default_interviewer": "Default Interviewer",
       "executive_communicator": "Executive Communicator",
       "add_persona_button": "Add Persona",
+      "editor": {
+        "edit_title": "Edit Persona"
+      },
+      "export": {
+        "exporting": "Exporting...",
+        "button": "Export"
+      },
+      "icons": {
+        "quick_picks": "Quick picks"
+      },
+      "kb": {
+        "load_failed": "Failed to load documents.",
+        "searching": "Searching...",
+        "test_button": "Test"
+      },
       "templates": {
         "job_interview_candidate": {
           "name": "Job Interview Candidate",
@@ -129,11 +170,33 @@
     "conclave": {
       "title": "Conclave",
       "description": "Multi-persona group conversation mode.",
-      "enable_label": "Enable Conclave"
+      "enable_label": "Enable Conclave",
+      "no_active_personas": "No active personas"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Personas",
+        "credentials_heading": "Credentials",
+        "permissions_heading": "Host permissions",
+        "errors_heading": "Errors ({{count}})",
+        "will_add": "Will add ({{count}}):",
+        "will_update": "Will update ({{count}}):",
+        "will_skip": "Will skip — you edited them ({{count}}):",
+        "will_request": "Will request:",
+        "will_revoke": "Will revoke:",
+        "will_write_credentials_one": "Will write 1 credential (values hidden).",
+        "will_write_credentials_other": "Will write {{count}} credentials (values hidden).",
+        "will_clear_credentials_one": "Will clear 1 credential.",
+        "will_clear_credentials_other": "Will clear {{count}} credentials.",
+        "langbuilder_host": "LangBuilder will call: {{host}}",
+        "empty": "Nothing to import."
+      }
     },
     "langbuilder": {
       "title": "LangBuilder",
-      "description": "Custom language flow builder."
+      "description": "Custom language flow builder.",
+      "testing": "Testing...",
+      "test_connection": "Test Connection"
     },
     "websearch": {
       "title": "Web Search",
@@ -150,7 +213,8 @@
       "auth_button": "Sign in with Google",
       "signed_in": "Signed in as {{email}}",
       "sign_out": "Sign out",
-      "save_label": "Save summaries to Drive"
+      "save_label": "Save summaries to Drive",
+      "connecting": "Connecting..."
     },
     "upgrade_banner": {
       "title": "Wingman now speaks your language",
@@ -609,12 +673,30 @@
     "controls": {
       "minimize": "Minimize",
       "close": "Close",
+      "hide": "Hide",
       "dock": "Dock",
       "undock": "Undock",
       "dock_left": "Sidebar Left",
       "dock_right": "Sidebar Right",
       "suggestions_only": "Suggestions only",
-      "show_full_transcript": "Show full transcript"
+      "suggestions_only_chip": "Showing suggestions only",
+      "show_full_transcript": "Show full transcript",
+      "font_decrease": "Decrease font size",
+      "font_increase": "Increase font size",
+      "layout_toggle": "Toggle side-by-side",
+      "resize": "Resize"
+    },
+    "header": {
+      "recording": "Recording",
+      "assistant_panel": "Assistant"
+    },
+    "pill_toggle": {
+      "meeting": "Meeting",
+      "assistant": "Assistant"
+    },
+    "nav": {
+      "chat": "Chat",
+      "flows": "Flows"
     },
     "emotion": {
       "label_prefix": "Tone:"
@@ -644,11 +726,16 @@
       "flow_failed": "Flow execution failed",
       "connection_error": "Connection error",
       "no_flows_hint": "No flows — configure in Settings",
-      "select_flow_placeholder": "Select a flow..."
+      "select_flow_placeholder": "Select a flow...",
+      "input_placeholder": "Paste or type input for the flow...",
+      "cancel": "Cancel",
+      "go": "Go",
+      "empty_result": "Run a flow to see results here."
     },
     "kb": {
       "search_aria_label": "Search Knowledge Base",
-      "answer_aria_label": "KB Answer: {{answer}}"
+      "answer_aria_label": "KB Answer: {{answer}}",
+      "input_placeholder": "Ask your Knowledge Base..."
     },
     "empty": {
       "listening": "Listening for conversation...",

@@ -116,7 +116,7 @@ export class DriveSection {
   private async connect(): Promise<void> {
     if (this.connectBtn) {
       this.connectBtn.disabled = true;
-      this.connectBtn.textContent = 'Connecting...';
+      this.connectBtn.textContent = this.ctx.t?.('options.drive.connecting') ?? 'Connecting...';
     }
 
     try {

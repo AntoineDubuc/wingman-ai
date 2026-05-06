@@ -7,6 +7,23 @@
   },
   "popup": {
     "title": "Wingman",
+    "subtitle": "Asistente de IA en tiempo real para Google Meet",
+    "api_keys_label": "Claves API",
+    "session_label": "Sesión",
+    "controls_hint": {
+      "before": "Configure sus claves API en ",
+      "link": "Opciones",
+      "after": " para empezar."
+    },
+    "footer": {
+      "options": "Opciones",
+      "tutorials": "Tutoriales",
+      "support": "Apoyo"
+    },
+    "hydra_tooltip": {
+      "new_label": "Nuevo:",
+      "body": "Active varios personas para el modo panel de expertos."
+    },
     "start_session": "Iniciar sesión",
     "stop_session": "Detener sesión",
     "status": {
@@ -30,13 +47,16 @@
       "inactive": "Inactiva"
     },
     "personas": {
+      "section_label": "Personas activas",
       "remove": "Quitar",
       "locked_tooltip": "Detenga la sesión para cambiar personas",
       "count_active_one": "1 activa",
       "count_active_other": "{{count}} activas",
       "add_persona": "+ Agregar persona",
       "add_persona_locked_tooltip": "Detenga la sesión para cambiar personas",
-      "preset_locked_tooltip": "Detenga la sesión para cambiar preajustes"
+      "preset_locked_tooltip": "Detenga la sesión para cambiar preajustes",
+      "preset_dropdown_label": "Preajustes Conclave",
+      "max_reached": "Máximo {{max}} personas alcanzado"
     },
     "errors": {
       "no_api_keys": "Faltan claves de API",
@@ -64,7 +84,13 @@
         "deepgram_label": "Clave API de Deepgram",
         "test_button": "Probar",
         "test_pass": "Conexión exitosa",
-        "test_fail": "Conexión fallida: {{rawError}}"
+        "test_fail": "Conexión fallida: {{rawError}}",
+        "testing": "Probando...",
+        "test_keys": "Probar claves",
+        "status_all_configured": "Todas las claves configuradas",
+        "status_missing_provider": "Falta la clave de {{provider}}",
+        "status_missing_deepgram": "Falta la clave de Deepgram",
+        "status_not_configured": "Claves no configuradas"
       },
       "save_button": "Guardar",
       "cancel_button": "Cancelar"
@@ -76,6 +102,21 @@
     },
     "personas": {
       "section_title": "Personas",
+      "editor": {
+        "edit_title": "Editar persona"
+      },
+      "export": {
+        "exporting": "Exportando...",
+        "button": "Exportar"
+      },
+      "icons": {
+        "quick_picks": "Selecciones rápidas"
+      },
+      "kb": {
+        "load_failed": "No se pudieron cargar los documentos.",
+        "searching": "Buscando...",
+        "test_button": "Probar"
+      },
       "default_interviewer": "Entrevistador predeterminado",
       "executive_communicator": "Comunicador ejecutivo",
       "add_persona_button": "Agregar persona",
@@ -129,11 +170,33 @@
     "conclave": {
       "title": "Conclave",
       "description": "Modo de conversación grupal multi-personas.",
-      "enable_label": "Activar Conclave"
+      "enable_label": "Activar Conclave",
+      "no_active_personas": "Sin personas activas"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Personas",
+        "credentials_heading": "Credenciales",
+        "permissions_heading": "Permisos de host",
+        "errors_heading": "Errores ({{count}})",
+        "will_add": "Se agregará ({{count}}):",
+        "will_update": "Se actualizará ({{count}}):",
+        "will_skip": "Se omitirá — los editaste ({{count}}):",
+        "will_request": "Se solicitará:",
+        "will_revoke": "Se revocará:",
+        "will_write_credentials_one": "Se escribirá 1 credencial (valores ocultos).",
+        "will_write_credentials_other": "Se escribirán {{count}} credenciales (valores ocultos).",
+        "will_clear_credentials_one": "Se borrará 1 credencial.",
+        "will_clear_credentials_other": "Se borrarán {{count}} credenciales.",
+        "langbuilder_host": "LangBuilder llamará a: {{host}}",
+        "empty": "Nada que importar."
+      }
     },
     "langbuilder": {
       "title": "LangBuilder",
-      "description": "Constructor de flujos de lenguaje personalizados."
+      "description": "Constructor de flujos de lenguaje personalizados.",
+      "testing": "Probando...",
+      "test_connection": "Probar conexión"
     },
     "websearch": {
       "title": "Búsqueda web",
@@ -150,7 +213,8 @@
       "auth_button": "Iniciar sesión con Google",
       "signed_in": "Sesión iniciada como {{email}}",
       "sign_out": "Cerrar sesión",
-      "save_label": "Guardar resúmenes en Drive"
+      "save_label": "Guardar resúmenes en Drive",
+      "connecting": "Conectando..."
     },
     "upgrade_banner": {
       "title": "Wingman ahora habla su idioma",
@@ -609,12 +673,30 @@
     "controls": {
       "minimize": "Minimizar",
       "close": "Cerrar",
+      "hide": "Ocultar",
       "dock": "Anclar",
       "undock": "Desanclar",
       "dock_left": "Barra lateral izquierda",
       "dock_right": "Barra lateral derecha",
       "suggestions_only": "Sólo sugerencias",
-      "show_full_transcript": "Mostrar transcripción completa"
+      "suggestions_only_chip": "Mostrando sólo sugerencias",
+      "show_full_transcript": "Mostrar transcripción completa",
+      "font_decrease": "Reducir el tamaño del texto",
+      "font_increase": "Aumentar el tamaño del texto",
+      "layout_toggle": "Alternar vista lado a lado",
+      "resize": "Redimensionar"
+    },
+    "header": {
+      "recording": "Grabando",
+      "assistant_panel": "Asistente"
+    },
+    "pill_toggle": {
+      "meeting": "Reunión",
+      "assistant": "Asistente"
+    },
+    "nav": {
+      "chat": "Chat",
+      "flows": "Flujos"
     },
     "emotion": {
       "label_prefix": "Tono:"
@@ -644,11 +726,16 @@
       "flow_failed": "Falló la ejecución del flujo",
       "connection_error": "Error de conexión",
       "no_flows_hint": "Sin flujos — configurar en Ajustes",
-      "select_flow_placeholder": "Seleccionar un flujo..."
+      "select_flow_placeholder": "Seleccionar un flujo...",
+      "input_placeholder": "Pegue o escriba la entrada para el flujo...",
+      "cancel": "Cancelar",
+      "go": "Ejecutar",
+      "empty_result": "Ejecute un flujo para ver los resultados aquí."
     },
     "kb": {
       "search_aria_label": "Buscar en la Base de Conocimientos",
-      "answer_aria_label": "Respuesta KB: {{answer}}"
+      "answer_aria_label": "Respuesta KB: {{answer}}",
+      "input_placeholder": "Consulte su Base de Conocimientos..."
     },
     "empty": {
       "listening": "Escuchando la conversación...",

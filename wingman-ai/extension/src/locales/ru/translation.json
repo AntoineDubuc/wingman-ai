@@ -7,6 +7,23 @@
   },
   "popup": {
     "title": "Wingman",
+    "subtitle": "ИИ-ассистент в реальном времени для Google Meet",
+    "api_keys_label": "Ключи API",
+    "session_label": "Сессия",
+    "controls_hint": {
+      "before": "Настройте ключи API в ",
+      "link": "Параметрах",
+      "after": ", чтобы начать."
+    },
+    "footer": {
+      "options": "Параметры",
+      "tutorials": "Обучение",
+      "support": "Поддержка"
+    },
+    "hydra_tooltip": {
+      "new_label": "Новое:",
+      "body": "Активируйте несколько персонажей для режима панели экспертов."
+    },
     "start_session": "Начать сессию",
     "stop_session": "Остановить сессию",
     "status": {
@@ -30,6 +47,7 @@
       "inactive": "Неактивна"
     },
     "personas": {
+      "section_label": "Активные персонажи",
       "remove": "Удалить",
       "locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
       "count_active_one": "1 активный",
@@ -37,7 +55,9 @@
       "count_active_other": "{{count}} активных",
       "add_persona": "+ Добавить персонажа",
       "add_persona_locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
-      "preset_locked_tooltip": "Остановите сессию, чтобы изменить пресеты"
+      "preset_locked_tooltip": "Остановите сессию, чтобы изменить пресеты",
+      "preset_dropdown_label": "Пресеты Конклава",
+      "max_reached": "Достигнут максимум {{max}} персонажей"
     },
     "errors": {
       "no_api_keys": "Отсутствуют ключи API",
@@ -65,7 +85,13 @@
         "deepgram_label": "Ключ API Deepgram",
         "test_button": "Проверить",
         "test_pass": "Соединение успешно",
-        "test_fail": "Соединение не удалось: {{rawError}}"
+        "test_fail": "Соединение не удалось: {{rawError}}",
+        "testing": "Тестирование...",
+        "test_keys": "Проверить ключи",
+        "status_all_configured": "Все ключи настроены",
+        "status_missing_provider": "Отсутствует ключ {{provider}}",
+        "status_missing_deepgram": "Отсутствует ключ Deepgram",
+        "status_not_configured": "Ключи не настроены"
       },
       "save_button": "Сохранить",
       "cancel_button": "Отмена"
@@ -77,6 +103,21 @@
     },
     "personas": {
       "section_title": "Персоны",
+      "editor": {
+        "edit_title": "Изменить персонажа"
+      },
+      "export": {
+        "exporting": "Экспорт...",
+        "button": "Экспорт"
+      },
+      "icons": {
+        "quick_picks": "Быстрый выбор"
+      },
+      "kb": {
+        "load_failed": "Не удалось загрузить документы.",
+        "searching": "Поиск...",
+        "test_button": "Проверить"
+      },
       "default_interviewer": "Интервьюер по умолчанию",
       "executive_communicator": "Коммуникатор руководителя",
       "add_persona_button": "Добавить персону",
@@ -130,11 +171,35 @@
     "conclave": {
       "title": "Конклав",
       "description": "Режим групповой беседы с несколькими персонами.",
-      "enable_label": "Включить Конклав"
+      "enable_label": "Включить Конклав",
+      "no_active_personas": "Нет активных персонажей"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Персонажи",
+        "credentials_heading": "Учётные данные",
+        "permissions_heading": "Разрешения хоста",
+        "errors_heading": "Ошибки ({{count}})",
+        "will_add": "Будет добавлено ({{count}}):",
+        "will_update": "Будет обновлено ({{count}}):",
+        "will_skip": "Будет пропущено — вы их редактировали ({{count}}):",
+        "will_request": "Будет запрошено:",
+        "will_revoke": "Будет отозвано:",
+        "will_write_credentials_one": "Будет записан 1 ключ (значения скрыты).",
+        "will_write_credentials_few": "Будет записано {{count}} ключа (значения скрыты).",
+        "will_write_credentials_other": "Будет записано {{count}} ключей (значения скрыты).",
+        "will_clear_credentials_one": "Будет очищен 1 ключ.",
+        "will_clear_credentials_few": "Будет очищено {{count}} ключа.",
+        "will_clear_credentials_other": "Будет очищено {{count}} ключей.",
+        "langbuilder_host": "LangBuilder обратится к: {{host}}",
+        "empty": "Нечего импортировать."
+      }
     },
     "langbuilder": {
       "title": "LangBuilder",
-      "description": "Конструктор настраиваемых языковых потоков."
+      "description": "Конструктор настраиваемых языковых потоков.",
+      "testing": "Тестирование...",
+      "test_connection": "Проверить соединение"
     },
     "websearch": {
       "title": "Веб-поиск",
@@ -151,7 +216,8 @@
       "auth_button": "Войти через Google",
       "signed_in": "Выполнен вход как {{email}}",
       "sign_out": "Выйти",
-      "save_label": "Сохранять резюме на Drive"
+      "save_label": "Сохранять резюме на Drive",
+      "connecting": "Подключение..."
     },
     "upgrade_banner": {
       "title": "Wingman теперь говорит на вашем языке",
@@ -612,12 +678,30 @@
     "controls": {
       "minimize": "Свернуть",
       "close": "Закрыть",
+      "hide": "Скрыть",
       "dock": "Закрепить",
       "undock": "Открепить",
       "dock_left": "Боковая панель слева",
       "dock_right": "Боковая панель справа",
       "suggestions_only": "Только подсказки",
-      "show_full_transcript": "Показать полную расшифровку"
+      "suggestions_only_chip": "Показываются только подсказки",
+      "show_full_transcript": "Показать полную расшифровку",
+      "font_decrease": "Уменьшить размер текста",
+      "font_increase": "Увеличить размер текста",
+      "layout_toggle": "Переключить вид рядом",
+      "resize": "Изменить размер"
+    },
+    "header": {
+      "recording": "Запись",
+      "assistant_panel": "Ассистент"
+    },
+    "pill_toggle": {
+      "meeting": "Встреча",
+      "assistant": "Ассистент"
+    },
+    "nav": {
+      "chat": "Чат",
+      "flows": "Потоки"
     },
     "emotion": {
       "label_prefix": "Тон:"
@@ -648,11 +732,16 @@
       "flow_failed": "Сбой выполнения потока",
       "connection_error": "Ошибка соединения",
       "no_flows_hint": "Нет потоков — настройте в Настройках",
-      "select_flow_placeholder": "Выберите поток..."
+      "select_flow_placeholder": "Выберите поток...",
+      "input_placeholder": "Вставьте или введите данные для потока...",
+      "cancel": "Отмена",
+      "go": "Запустить",
+      "empty_result": "Запустите поток, чтобы увидеть результаты здесь."
     },
     "kb": {
       "search_aria_label": "Поиск в базе знаний",
-      "answer_aria_label": "Ответ KB: {{answer}}"
+      "answer_aria_label": "Ответ KB: {{answer}}",
+      "input_placeholder": "Запросите вашу базу знаний..."
     },
     "empty": {
       "listening": "Слушаю разговор...",

@@ -107,7 +107,7 @@ export class LangBuilderSection {
 
     if (this.testBtn) {
       this.testBtn.disabled = true;
-      this.testBtn.textContent = 'Testing...';
+      this.testBtn.textContent = this.ctx.t?.('options.langbuilder.testing') ?? 'Testing...';
     }
 
     try {
@@ -136,7 +136,7 @@ export class LangBuilderSection {
     } finally {
       if (this.testBtn) {
         this.testBtn.disabled = false;
-        this.testBtn.textContent = 'Test Connection';
+        this.testBtn.textContent = this.ctx.t?.('options.langbuilder.test_connection') ?? 'Test Connection';
       }
     }
   }

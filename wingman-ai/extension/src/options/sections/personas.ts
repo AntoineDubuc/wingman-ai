@@ -515,7 +515,7 @@ export class PersonaSection {
 
     if (!this.editorEl || !this.nameInput || !this.promptTextarea || !this.editorTitle) return;
 
-    this.editorTitle.textContent = 'Edit Persona';
+    this.editorTitle.textContent = this.ctx.t?.('options.personas.editor.edit_title') ?? 'Edit Persona';
     this.nameInput.value = persona.name;
     this.promptTextarea.value = persona.systemPrompt;
     this.updateCharCount();
@@ -677,7 +677,7 @@ export class PersonaSection {
 
     if (this.exportBtn) {
       this.exportBtn.disabled = true;
-      this.exportBtn.textContent = 'Exporting...';
+      this.exportBtn.textContent = this.ctx.t?.('options.personas.export.exporting') ?? 'Exporting...';
     }
 
     try {
@@ -746,7 +746,7 @@ export class PersonaSection {
     } finally {
       if (this.exportBtn) {
         this.exportBtn.disabled = false;
-        this.exportBtn.textContent = 'Export';
+        this.exportBtn.textContent = this.ctx.t?.('options.personas.export.button') ?? 'Export';
       }
     }
   }
@@ -1008,7 +1008,7 @@ export class PersonaSection {
       if (this.iconLoading) this.iconLoading.hidden = true;
     }
 
-    this.iconGridLabel.textContent = 'Quick picks';
+    this.iconGridLabel.textContent = this.ctx.t?.('options.personas.icons.quick_picks') ?? 'Quick picks';
     this.renderIconGrid(this.quickPickEntries);
   }
 
@@ -1245,7 +1245,7 @@ export class PersonaSection {
       }
       if (this.kbEmpty) {
         this.kbEmpty.style.display = 'block';
-        this.kbEmpty.textContent = 'Failed to load documents.';
+        this.kbEmpty.textContent = this.ctx.t?.('options.personas.kb.load_failed') ?? 'Failed to load documents.';
       }
     }
   }
@@ -1328,7 +1328,7 @@ export class PersonaSection {
 
     if (this.kbTestBtn) {
       this.kbTestBtn.disabled = true;
-      this.kbTestBtn.textContent = 'Searching...';
+      this.kbTestBtn.textContent = this.ctx.t?.('options.personas.kb.searching') ?? 'Searching...';
     }
 
     try {
@@ -1367,7 +1367,7 @@ export class PersonaSection {
     } finally {
       if (this.kbTestBtn) {
         this.kbTestBtn.disabled = false;
-        this.kbTestBtn.textContent = 'Test';
+        this.kbTestBtn.textContent = this.ctx.t?.('options.personas.kb.test_button') ?? 'Test';
       }
     }
   }

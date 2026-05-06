@@ -9,14 +9,14 @@
     <header class="popup-header">
       <img src="../icons/icon-48.png" alt="Logo" class="logo">
       <h1>Wingman</h1>
-      <p class="subtitle">Real-Time AI Assistant for Google Meet</p>
+      <p class="subtitle" data-i18n="popup.subtitle">Real-Time AI Assistant for Google Meet</p>
     </header>
 
     <section class="persona-section" id="persona-section" style="display: none;">
-      <label class="persona-section-label">Active Personas</label>
+      <label class="persona-section-label" data-i18n="popup.personas.section_label">Active Personas</label>
       <div class="persona-chips" id="persona-chips"></div>
       <div class="persona-add-row" id="persona-add-row">
-        <button class="persona-add-btn" id="persona-add-btn">+ Add persona</button>
+        <button class="persona-add-btn" id="persona-add-btn" data-i18n="popup.personas.add_persona">+ Add persona</button>
         <select id="persona-dropdown" class="persona-dropdown" style="display: none;"></select>
       </div>
       <div class="persona-status" id="persona-status"></div>
@@ -24,17 +24,17 @@
 
     <section class="status-section">
       <div class="status-row">
-        <span class="status-label">API Keys</span>
+        <span class="status-label" data-i18n="popup.api_keys_label">API Keys</span>
         <span class="status-indicator" id="api-status">
           <span class="status-dot"></span>
-          <span class="status-text">Not Configured</span>
+          <span class="status-text" data-i18n="popup.api_status.not_configured">Not Configured</span>
         </span>
       </div>
       <div class="status-row">
-        <span class="status-label">Session</span>
+        <span class="status-label" data-i18n="popup.session_label">Session</span>
         <span class="status-indicator" id="session-status">
           <span class="status-dot"></span>
-          <span class="status-text">Inactive</span>
+          <span class="status-text" data-i18n="popup.session_status.inactive">Inactive</span>
         </span>
       </div>
     </section>
@@ -44,21 +44,21 @@
     </section>
 
     <section class="controls-section">
-      <button id="session-btn" class="primary-btn" disabled>
+      <button id="session-btn" class="primary-btn" disabled data-i18n="popup.start_session">
         Start Session
       </button>
       <p class="controls-hint" id="controls-hint">
-        Configure your API keys in <a href="#" id="open-options">Options</a> to get started.
+        <span data-i18n="popup.controls_hint.before">Configure your API keys in </span><a href="#" id="open-options" data-i18n="popup.controls_hint.link">Options</a><span data-i18n="popup.controls_hint.after"> to get started.</span>
       </p>
     </section>
 
     <footer class="popup-footer">
       <span class="version">v1.0.0</span>
       <div class="footer-links">
-        <a href="#" id="open-options-footer" class="footer-link">Options</a>
-        <a href="#" id="open-tutorials" class="footer-link">Tutorials</a>
+        <a href="#" id="open-options-footer" class="footer-link" data-i18n="popup.footer.options">Options</a>
+        <a href="#" id="open-tutorials" class="footer-link" data-i18n="popup.footer.tutorials">Tutorials</a>
         <a href="https://buymeacoffee.com/antoinedubuc" target="_blank" rel="noopener noreferrer" class="coffee-link">
-          <img src="../assets/icons/icon-coffee.png" width="14" height="14" alt="" style="vertical-align: middle;"> Support
+          <img src="../assets/icons/icon-coffee.png" width="14" height="14" alt="" style="vertical-align: middle;"> <span data-i18n="popup.footer.support">Support</span>
         </a>
       </div>
     </footer>

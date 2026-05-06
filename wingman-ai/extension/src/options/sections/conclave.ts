@@ -71,7 +71,8 @@ export class ConclaveSection {
     const activePersonas = this.allPersonas.filter((p) => this.activeIds.includes(p.id));
 
     if (activePersonas.length === 0) {
-      this.leaderSelect.innerHTML = '<option value="">No active personas</option>';
+      const noActiveLabel = this.escapeHtml(this.ctx.t?.('options.conclave.no_active_personas') ?? 'No active personas');
+      this.leaderSelect.innerHTML = `<option value="">${noActiveLabel}</option>`;
       this.leaderSelect.disabled = true;
       return;
     }

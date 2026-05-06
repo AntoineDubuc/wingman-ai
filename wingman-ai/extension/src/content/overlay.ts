@@ -516,6 +516,32 @@ export class AIOverlay {
   }
 
   /**
+   * Walks the panel tree and applies the user's locale to every element
+   * marked with `data-i18n="<key>"`. Supports a space-separated
+   * `data-i18n-attr` list for multi-attribute targets (title + aria-label).
+   * If `data-i18n-attr` is absent, textContent is replaced. Missing keys
+   * leave the static fallback (i18next returns the key itself, which we
+   * detect by equality).
+   */
+  private localizePanel(root: ParentNode): void {
+    const elements = root.querySelectorAll<HTMLElement>('[data-i18n]');
+    for (const el of elements) {
+      const key = el.dataset['i18n'];
+      if (!key) continue;
+      const translated = this.t(key);
+      if (translated === key) continue;
+      const attrSpec = el.dataset['i18nAttr'];
+      if (attrSpec) {
+        for (const attr of attrSpec.split(/\s+/).filter(Boolean)) {
+          el.setAttribute(attr, translated);
+        }
+      } else {
+        el.textContent = translated;
+      }
+    }
+  }
+
+  /**
    * Create the overlay HTML structure
    */
   private createOverlayStructure(): HTMLDivElement {
@@ -526,7 +552,7 @@ export class AIOverlay {
         <div class="status-bar">
           <div class="recording-indicator">
             <span class="recording-dot"></span>
-            <span class="recording-label">Recording</span>
+            <span class="recording-label" data-i18n="overlay.header.recording">Recording</span>
           </div>
           <div class="meeting-timer" aria-live="off">00:00:00</div>
         </div>
@@ -549,67 +575,74 @@ export class AIOverlay {
           </span>
           <div class="controls">
             <div class="font-controls">
-              <button class="font-decrease-btn" title="Decrease font size">A\u2212</button>
-              <button class="font-increase-btn" title="Increase font size">A+</button>
+              <button class="font-decrease-btn" data-i18n="overlay.controls.font_decrease" data-i18n-attr="title">A\u2212</button>
+              <button class="font-increase-btn" data-i18n="overlay.controls.font_increase" data-i18n-attr="title">A+</button>
             </div>
-            <button class="display-toggle-btn" title="Suggestions only" aria-label="Suggestions only" aria-pressed="false">
+            <button class="display-toggle-btn" data-i18n="overlay.controls.suggestions_only" data-i18n-attr="title aria-label" aria-pressed="false">
               ${ICONS.FILTER}
             </button>
-            <button class="dock-toggle-btn" title="Sidebar Right" aria-label="Sidebar Right">
+            <button class="dock-toggle-btn" data-i18n="overlay.controls.dock_right" data-i18n-attr="title aria-label">
               ${ICONS.DOCK}
             </button>
-            <button class="layout-toggle-btn" title="Toggle side-by-side" style="display:none;">
+            <button class="layout-toggle-btn" data-i18n="overlay.controls.layout_toggle" data-i18n-attr="title" style="display:none;">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="8" y="2" width="5" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
             </button>
-            <button class="minimize-btn" title="Minimize">${ICONS.MINIMIZE}</button>
-            <button class="close-btn" title="Hide">${ICONS.CLOSE}</button>
+            <button class="minimize-btn" data-i18n="overlay.controls.minimize" data-i18n-attr="title">${ICONS.MINIMIZE}</button>
+            <button class="close-btn" data-i18n="overlay.controls.hide" data-i18n-attr="title">${ICONS.CLOSE}</button>
           </div>
         </div>
         <div class="pill-toggle" role="tablist">
-          <button class="pill-btn active" data-mode="meeting" role="tab" aria-selected="true">Meeting</button>
-          <button class="pill-btn" data-mode="assistant" role="tab" aria-selected="false">Assistant</button>
+          <button class="pill-btn active" data-mode="meeting" role="tab" aria-selected="true" data-i18n="overlay.pill_toggle.meeting">Meeting</button>
+          <button class="pill-btn" data-mode="assistant" role="tab" aria-selected="false" data-i18n="overlay.pill_toggle.assistant">Assistant</button>
         </div>
       </div>
       <div class="overlay-body">
         <div class="view-container">
           <div class="view meeting-view">
             <div class="overlay-nav" style="display:none;">
-              <button class="nav-chat-btn active" title="Chat">
+              <button class="nav-chat-btn active" data-i18n="overlay.nav.chat" data-i18n-attr="title">
                 <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 3V3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Chat</span>
+                <span data-i18n="overlay.nav.chat">Chat</span>
               </button>
-              <button class="nav-lb-btn" title="Flows">
+              <button class="nav-lb-btn" data-i18n="overlay.nav.flows" data-i18n-attr="title">
                 <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><circle cx="4" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="4" r="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="12" r="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M4 5.5v1a2.5 2.5 0 002.5 2.5h3A2.5 2.5 0 0012 6.5v-1" stroke="currentColor" stroke-width="1.2"/><line x1="8" y1="9" x2="8" y2="10.5" stroke="currentColor" stroke-width="1.2"/></svg>
-                <span>Flows</span>
+                <span data-i18n="overlay.nav.flows">Flows</span>
               </button>
             </div>
             <div class="overlay-content">
-              <div class="suggestions-only-chip" style="display:none;">Showing suggestions only</div>
+              <div class="suggestions-only-chip" style="display:none;" data-i18n="overlay.controls.suggestions_only_chip">Showing suggestions only</div>
               <div class="timeline" role="log" aria-live="polite" aria-relevant="additions">
-                <div class="empty-state">Listening for conversation...</div>
+                <div class="empty-state" data-i18n="overlay.empty.listening">Listening for conversation...</div>
               </div>
               <div class="kb-query-bar">
-                <input class="kb-query-input" type="text" placeholder="Ask your Knowledge Base..." maxlength="500">
+                <input class="kb-query-input" type="text" data-i18n="overlay.kb.input_placeholder" data-i18n-attr="placeholder" placeholder="Ask your Knowledge Base..." maxlength="500">
                 <button class="kb-query-btn">${ICONS.KB_SEARCH}</button>
               </div>
             </div>
             <div class="langbuilder-panel" style="display:none;">
               <select class="lb-flow-select">
-                <option disabled selected>Select a flow...</option>
+                <option disabled selected data-i18n="overlay.langbuilder.select_flow_placeholder">Select a flow...</option>
               </select>
-              <textarea class="lb-textarea" placeholder="Paste or type input for the flow..."></textarea>
+              <textarea class="lb-textarea" data-i18n="overlay.langbuilder.input_placeholder" data-i18n-attr="placeholder" placeholder="Paste or type input for the flow..."></textarea>
               <div class="lb-actions">
-                <button class="lb-cancel-btn" disabled>Cancel</button>
-                <button class="lb-go-btn" disabled>Go</button>
+                <button class="lb-cancel-btn" data-i18n="overlay.langbuilder.cancel" disabled>Cancel</button>
+                <button class="lb-go-btn" data-i18n="overlay.langbuilder.go" disabled>Go</button>
               </div>
-              <div class="lb-result" style="color:var(--overlay-text-muted);">Run a flow to see results here.</div>
+              <div class="lb-result" style="color:var(--overlay-text-muted);" data-i18n="overlay.langbuilder.empty_result">Run a flow to see results here.</div>
             </div>
           </div>
-          <div class="view assistant-view-mount hidden" role="tabpanel" aria-label="Assistant"></div>
+          <div class="view assistant-view-mount hidden" role="tabpanel" data-i18n="overlay.header.assistant_panel" data-i18n-attr="aria-label" aria-label="Assistant"></div>
         </div>
       </div>
-      <div class="resize-handle" title="Resize"></div>
+      <div class="resize-handle" data-i18n="overlay.controls.resize" data-i18n-attr="title" title="Resize"></div>
     `;
+
+    // Walk the static template and apply localized text/attributes.
+    // Pattern matches options-locale.applyI18nAttributes but supports
+    // multi-attribute targets via a space-separated `data-i18n-attr` list
+    // (e.g., `data-i18n-attr="title aria-label"`). When the translation
+    // equals the key (missing key), we leave the static fallback in place.
+    this.localizePanel(panel);
 
     // Store timeline reference
     this.timelineEl = panel.querySelector('.timeline') as HTMLElement;
@@ -831,8 +864,8 @@ export class AIOverlay {
     const emptyState = this.timelineEl.querySelector('.empty-state');
     if (emptyState) {
       emptyState.textContent = this.suggestionsOnly
-        ? 'Waiting for suggestions...'
-        : 'Listening for conversation...';
+        ? this.t('overlay.empty.waiting_suggestions')
+        : this.t('overlay.empty.listening');
     }
   }
 

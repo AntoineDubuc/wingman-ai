@@ -388,19 +388,19 @@ export class SetupImportSection {
     if (mergeResult.log.created.length > 0 || mergeResult.log.overwritten.length > 0 || mergeResult.log.skipped.length > 0) {
       const section = document.createElement('section');
       const heading = document.createElement('h3');
-      heading.textContent = 'Personas';
+      heading.textContent = this.ctx.t?.('options.setup_import.preview.personas_heading') ?? 'Personas';
       section.appendChild(heading);
 
       if (mergeResult.log.created.length > 0) {
-        this.appendBulletList(section, `Will add (${mergeResult.log.created.length}):`, mergeResult.log.created);
+        this.appendBulletList(section, this.ctx.t?.('options.setup_import.preview.will_add', { count: mergeResult.log.created.length }) ?? `Will add (${mergeResult.log.created.length}):`, mergeResult.log.created);
       }
       if (mergeResult.log.overwritten.length > 0) {
-        this.appendBulletList(section, `Will update (${mergeResult.log.overwritten.length}):`, mergeResult.log.overwritten);
+        this.appendBulletList(section, this.ctx.t?.('options.setup_import.preview.will_update', { count: mergeResult.log.overwritten.length }) ?? `Will update (${mergeResult.log.overwritten.length}):`, mergeResult.log.overwritten);
       }
       if (mergeResult.log.skipped.length > 0) {
         this.appendBulletList(
           section,
-          `Will skip — you edited them (${mergeResult.log.skipped.length}):`,
+          this.ctx.t?.('options.setup_import.preview.will_skip', { count: mergeResult.log.skipped.length }) ?? `Will skip — you edited them (${mergeResult.log.skipped.length}):`,
           mergeResult.log.skipped
         );
       }
@@ -412,22 +412,23 @@ export class SetupImportSection {
     if (credsToWriteCount > 0 || credDiff.toClear.length > 0) {
       const section = document.createElement('section');
       const heading = document.createElement('h3');
-      heading.textContent = 'Credentials';
+      heading.textContent = this.ctx.t?.('options.setup_import.preview.credentials_heading') ?? 'Credentials';
       section.appendChild(heading);
 
       if (credsToWriteCount > 0) {
         const p = document.createElement('p');
-        p.textContent = `Will write ${credsToWriteCount} credential${credsToWriteCount === 1 ? '' : 's'} (values hidden).`;
+        p.textContent = this.ctx.t?.('options.setup_import.preview.will_write_credentials', { count: credsToWriteCount }) ?? `Will write ${credsToWriteCount} credential${credsToWriteCount === 1 ? '' : 's'} (values hidden).`;
         section.appendChild(p);
       }
       if (credDiff.toClear.length > 0) {
         const p = document.createElement('p');
-        p.textContent = `Will clear ${credDiff.toClear.length} credential${credDiff.toClear.length === 1 ? '' : 's'}.`;
+        p.textContent = this.ctx.t?.('options.setup_import.preview.will_clear_credentials', { count: credDiff.toClear.length }) ?? `Will clear ${credDiff.toClear.length} credential${credDiff.toClear.length === 1 ? '' : 's'}.`;
         section.appendChild(p);
       }
+      // (i18next pluralization picks _one/_other/_few keys automatically when count is provided)
       if (langbuilderHost) {
         const p = document.createElement('p');
-        p.textContent = `LangBuilder will call: ${langbuilderHost}`;
+        p.textContent = this.ctx.t?.('options.setup_import.preview.langbuilder_host', { host: langbuilderHost }) ?? `LangBuilder will call: ${langbuilderHost}`;
         section.appendChild(p);
       }
       container.appendChild(section);
@@ -437,13 +438,13 @@ export class SetupImportSection {
     if (permDiff.toRequest.length > 0 || permDiff.toRevoke.length > 0) {
       const section = document.createElement('section');
       const heading = document.createElement('h3');
-      heading.textContent = 'Host permissions';
+      heading.textContent = this.ctx.t?.('options.setup_import.preview.permissions_heading') ?? 'Host permissions';
       section.appendChild(heading);
       if (permDiff.toRequest.length > 0) {
-        this.appendBulletList(section, 'Will request:', permDiff.toRequest);
+        this.appendBulletList(section, this.ctx.t?.('options.setup_import.preview.will_request') ?? 'Will request:', permDiff.toRequest);
       }
       if (permDiff.toRevoke.length > 0) {
-        this.appendBulletList(section, 'Will revoke:', permDiff.toRevoke);
+        this.appendBulletList(section, this.ctx.t?.('options.setup_import.preview.will_revoke') ?? 'Will revoke:', permDiff.toRevoke);
       }
       container.appendChild(section);
     }
@@ -453,7 +454,7 @@ export class SetupImportSection {
       const section = document.createElement('section');
       section.className = 'setup-import-preview-errors';
       const heading = document.createElement('h3');
-      heading.textContent = `Errors (${walked.errors.length})`;
+      heading.textContent = this.ctx.t?.('options.setup_import.preview.errors_heading', { count: walked.errors.length }) ?? `Errors (${walked.errors.length})`;
       section.appendChild(heading);
 
       const ul = document.createElement('ul');
@@ -480,7 +481,7 @@ export class SetupImportSection {
     // Empty summary handling
     if (container.children.length === 0) {
       const empty = document.createElement('p');
-      empty.textContent = 'Nothing to import.';
+      empty.textContent = this.ctx.t?.('options.setup_import.preview.empty') ?? 'Nothing to import.';
       container.appendChild(empty);
     }
 

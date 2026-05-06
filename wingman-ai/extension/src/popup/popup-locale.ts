@@ -40,6 +40,26 @@ export function createPopupI18nInstance(locale: SupportedLocale): I18n {
  * @param i18n - Initialized i18next instance for the current locale
  */
 export function renderPopupStrings(i18n: I18n): void {
+  // Walk all elements marked with data-i18n and apply translations.
+  // Supports multi-attribute targets via space-separated `data-i18n-attr`
+  // (e.g., `data-i18n-attr="title aria-label"`). Missing keys leave the
+  // static fallback in place (i18next returns the key on miss).
+  const elements = document.querySelectorAll<HTMLElement>('[data-i18n]');
+  for (const el of elements) {
+    const key = el.dataset['i18n'];
+    if (!key) continue;
+    const translated = i18n.t(key);
+    if (translated === key) continue;
+    const attrSpec = el.dataset['i18nAttr'];
+    if (attrSpec) {
+      for (const attr of attrSpec.split(/\s+/).filter(Boolean)) {
+        el.setAttribute(attr, translated);
+      }
+    } else {
+      el.textContent = translated;
+    }
+  }
+
   const sessionBtn = document.getElementById('session-btn');
   if (sessionBtn) {
     // Render idle/start state by default; updateStatus() in PopupController

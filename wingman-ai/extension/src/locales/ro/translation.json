@@ -7,6 +7,23 @@
   },
   "popup": {
     "title": "Wingman",
+    "subtitle": "Asistent AI în timp real pentru Google Meet",
+    "api_keys_label": "Chei API",
+    "session_label": "Sesiune",
+    "controls_hint": {
+      "before": "Configurați cheile API în ",
+      "link": "Opțiuni",
+      "after": " pentru a începe."
+    },
+    "footer": {
+      "options": "Opțiuni",
+      "tutorials": "Tutoriale",
+      "support": "Sprijin"
+    },
+    "hydra_tooltip": {
+      "new_label": "Nou:",
+      "body": "Activați mai multe personaje pentru modul panel de experți."
+    },
     "start_session": "Începe sesiunea",
     "stop_session": "Oprește sesiunea",
     "status": {
@@ -30,6 +47,7 @@
       "inactive": "Inactivă"
     },
     "personas": {
+      "section_label": "Personaje active",
       "remove": "Elimină",
       "locked_tooltip": "Oprește sesiunea pentru a schimba personajele",
       "count_active_one": "1 activă",
@@ -37,7 +55,9 @@
       "count_active_other": "{{count}} de active",
       "add_persona": "+ Adaugă persona",
       "add_persona_locked_tooltip": "Oprește sesiunea pentru a schimba personajele",
-      "preset_locked_tooltip": "Oprește sesiunea pentru a schimba presetările"
+      "preset_locked_tooltip": "Oprește sesiunea pentru a schimba presetările",
+      "preset_dropdown_label": "Presetări Conclav",
+      "max_reached": "Maxim {{max}} personaje atinse"
     },
     "errors": {
       "no_api_keys": "Lipsesc cheile API",
@@ -65,7 +85,13 @@
         "deepgram_label": "Cheie API Deepgram",
         "test_button": "Testează",
         "test_pass": "Conexiune reușită",
-        "test_fail": "Conexiune eșuată: {{rawError}}"
+        "test_fail": "Conexiune eșuată: {{rawError}}",
+        "testing": "Se testează...",
+        "test_keys": "Testează cheile",
+        "status_all_configured": "Toate cheile sunt configurate",
+        "status_missing_provider": "Lipsește cheia {{provider}}",
+        "status_missing_deepgram": "Lipsește cheia Deepgram",
+        "status_not_configured": "Cheile nu sunt configurate"
       },
       "save_button": "Salvează",
       "cancel_button": "Anulează"
@@ -77,6 +103,21 @@
     },
     "personas": {
       "section_title": "Persoane",
+      "editor": {
+        "edit_title": "Editează persona"
+      },
+      "export": {
+        "exporting": "Se exportă...",
+        "button": "Exportă"
+      },
+      "icons": {
+        "quick_picks": "Selecții rapide"
+      },
+      "kb": {
+        "load_failed": "Nu s-au putut încărca documentele.",
+        "searching": "Se caută...",
+        "test_button": "Testează"
+      },
       "default_interviewer": "Intervievator implicit",
       "executive_communicator": "Comunicator executiv",
       "add_persona_button": "Adaugă persoană",
@@ -130,11 +171,35 @@
     "conclave": {
       "title": "Conclav",
       "description": "Mod conversație de grup multi-persoane.",
-      "enable_label": "Activează Conclav"
+      "enable_label": "Activează Conclav",
+      "no_active_personas": "Nicio persoană activă"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Persoane",
+        "credentials_heading": "Acreditări",
+        "permissions_heading": "Permisiuni de gazdă",
+        "errors_heading": "Erori ({{count}})",
+        "will_add": "Se va adăuga ({{count}}):",
+        "will_update": "Se va actualiza ({{count}}):",
+        "will_skip": "Se va omite — le-ați editat ({{count}}):",
+        "will_request": "Se va solicita:",
+        "will_revoke": "Se va revoca:",
+        "will_write_credentials_one": "Se va scrie 1 acreditare (valori ascunse).",
+        "will_write_credentials_few": "Se vor scrie {{count}} acreditări (valori ascunse).",
+        "will_write_credentials_other": "Se vor scrie {{count}} de acreditări (valori ascunse).",
+        "will_clear_credentials_one": "Se va șterge 1 acreditare.",
+        "will_clear_credentials_few": "Se vor șterge {{count}} acreditări.",
+        "will_clear_credentials_other": "Se vor șterge {{count}} de acreditări.",
+        "langbuilder_host": "LangBuilder va apela: {{host}}",
+        "empty": "Nimic de importat."
+      }
     },
     "langbuilder": {
       "title": "LangBuilder",
-      "description": "Constructor de fluxuri lingvistice personalizate."
+      "description": "Constructor de fluxuri lingvistice personalizate.",
+      "testing": "Se testează...",
+      "test_connection": "Testează conexiunea"
     },
     "websearch": {
       "title": "Căutare web",
@@ -151,7 +216,8 @@
       "auth_button": "Conectează-te cu Google",
       "signed_in": "Conectat ca {{email}}",
       "sign_out": "Deconectează-te",
-      "save_label": "Salvează rezumatele pe Drive"
+      "save_label": "Salvează rezumatele pe Drive",
+      "connecting": "Se conectează..."
     },
     "upgrade_banner": {
       "title": "Wingman vă vorbește limba",
@@ -612,12 +678,30 @@
     "controls": {
       "minimize": "Minimizează",
       "close": "Închide",
+      "hide": "Ascunde",
       "dock": "Andochează",
       "undock": "Detașează",
       "dock_left": "Bară laterală stânga",
       "dock_right": "Bară laterală dreapta",
       "suggestions_only": "Doar sugestii",
-      "show_full_transcript": "Afișează transcrierea completă"
+      "suggestions_only_chip": "Se afișează doar sugestii",
+      "show_full_transcript": "Afișează transcrierea completă",
+      "font_decrease": "Micșorează dimensiunea textului",
+      "font_increase": "Mărește dimensiunea textului",
+      "layout_toggle": "Comută afișarea alăturată",
+      "resize": "Redimensionează"
+    },
+    "header": {
+      "recording": "Se înregistrează",
+      "assistant_panel": "Asistent"
+    },
+    "pill_toggle": {
+      "meeting": "Întâlnire",
+      "assistant": "Asistent"
+    },
+    "nav": {
+      "chat": "Discuție",
+      "flows": "Fluxuri"
     },
     "emotion": {
       "label_prefix": "Ton:"
@@ -648,11 +732,16 @@
       "flow_failed": "Execuția fluxului a eșuat",
       "connection_error": "Eroare de conexiune",
       "no_flows_hint": "Niciun flux — configurați în Setări",
-      "select_flow_placeholder": "Selectați un flux..."
+      "select_flow_placeholder": "Selectați un flux...",
+      "input_placeholder": "Lipiți sau introduceți datele pentru flux...",
+      "cancel": "Anulează",
+      "go": "Lansează",
+      "empty_result": "Lansați un flux pentru a vedea rezultatele aici."
     },
     "kb": {
       "search_aria_label": "Caută în baza de cunoștințe",
-      "answer_aria_label": "Răspuns KB: {{answer}}"
+      "answer_aria_label": "Răspuns KB: {{answer}}",
+      "input_placeholder": "Întrebați baza de cunoștințe..."
     },
     "empty": {
       "listening": "Ascult conversația...",

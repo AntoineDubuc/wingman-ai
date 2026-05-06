@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-descriptions-2026-05-06",
+    "revision": "plan-5-placeholders-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -418,7 +418,14 @@
         "active_personas_title": "Активные персонажи для звонков",
         "active_personas_description": "Выберите, какие персонажи активны во время звонков.",
         "import_setup_folder_description": "Выберите папку с файлом .env и файлами *persona*.json для импорта учётных данных и персонажей одним кликом. Ваши персонажи и правки сохраняются — перезаписываются только неотредактированные стандартные персонажи.",
-        "import_setup_folder_security": "Напоминание о безопасности: ключи API хранятся в открытом виде в вашем профиле Chrome. Не импортируйте учётные данные в общий профиль Chrome."
+        "import_setup_folder_security": "Напоминание о безопасности: ключи API хранятся в открытом виде в вашем профиле Chrome. Не импортируйте учётные данные в общий профиль Chrome.",
+        "deepgram_placeholder": "Введите ваш ключ API Deepgram",
+        "gemini_placeholder": "Введите ваш ключ API Gemini",
+        "openrouter_placeholder": "Введите ваш ключ API OpenRouter",
+        "groq_placeholder": "Введите ваш ключ API Groq",
+        "hume_api_placeholder": "Введите ваш ключ API Hume",
+        "hume_secret_placeholder": "Введите ваш секретный ключ Hume",
+        "drive_folder_placeholder": "Транскрипции Wingman"
       },
       "calls": {
         "transcription_sensitivity_title": "Чувствительность транскрипции",
@@ -489,7 +496,9 @@
         "save_button": "Сохранить",
         "flows_title": "Доступные потоки",
         "connection_description": "Подключитесь к вашему экземпляру LangBuilder для запуска кастомных потоков из оверлея.",
-        "flows_description": "Потоки из вашего экземпляра LangBuilder, обновляемые при Проверке соединения."
+        "flows_description": "Потоки из вашего экземпляра LangBuilder, обновляемые при Проверке соединения.",
+        "url_placeholder": "https://langflow.company.com",
+        "api_key_placeholder": "Введите ваш ключ API LangBuilder"
       },
       "websearch": {
         "provider_title": "Провайдер веб-поиска",
@@ -499,7 +508,8 @@
         "test_button": "Проверить соединение",
         "budget_title": "Дневной лимит запросов",
         "provider_description": "Включите живой веб-поиск во время встреч через Brave Search.",
-        "budget_description": "Ограничьте количество веб-поисков в день для контроля затрат API."
+        "budget_description": "Ограничьте количество веб-поисков в день для контроля затрат API.",
+        "api_key_placeholder": "Введите ваш ключ API Brave Search"
       },
       "support": {
         "support_wingman_title": "Поддержать Wingman",

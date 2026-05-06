@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-descriptions-2026-05-06",
+    "revision": "plan-5-placeholders-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -415,7 +415,14 @@
         "active_personas_title": "Active Personas for Calls",
         "active_personas_description": "Select which personas are active during your calls.",
         "import_setup_folder_description": "Pick a folder containing a .env file and *persona*.json files to import credentials and personas in one click. Your own personas and edits are preserved — only unedited shipped personas are overwritten.",
-        "import_setup_folder_security": "Security reminder: API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile."
+        "import_setup_folder_security": "Security reminder: API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.",
+        "deepgram_placeholder": "Enter your Deepgram API key",
+        "gemini_placeholder": "Enter your Gemini API key",
+        "openrouter_placeholder": "Enter your OpenRouter API key",
+        "groq_placeholder": "Enter your Groq API key",
+        "hume_api_placeholder": "Enter your Hume API key",
+        "hume_secret_placeholder": "Enter your Hume Secret key",
+        "drive_folder_placeholder": "Wingman Transcripts"
       },
       "calls": {
         "transcription_sensitivity_title": "Transcription Sensitivity",
@@ -486,7 +493,9 @@
         "save_button": "Save",
         "flows_title": "Available Flows",
         "connection_description": "Connect to your LangBuilder instance to run custom flows from the overlay.",
-        "flows_description": "Flows from your LangBuilder instance, refreshed on Test Connection."
+        "flows_description": "Flows from your LangBuilder instance, refreshed on Test Connection.",
+        "url_placeholder": "https://langflow.company.com",
+        "api_key_placeholder": "Enter your LangBuilder API key"
       },
       "websearch": {
         "provider_title": "Web Search Provider",
@@ -496,7 +505,8 @@
         "test_button": "Test Connection",
         "budget_title": "Daily Query Budget",
         "provider_description": "Enable live web search during meetings via Brave Search.",
-        "budget_description": "Limit the number of web searches per day to control API costs."
+        "budget_description": "Limit the number of web searches per day to control API costs.",
+        "api_key_placeholder": "Enter your Brave Search API key"
       },
       "support": {
         "support_wingman_title": "Support Wingman",

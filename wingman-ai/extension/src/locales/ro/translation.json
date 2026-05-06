@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-descriptions-2026-05-06",
+    "revision": "plan-5-placeholders-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -418,7 +418,14 @@
         "active_personas_title": "Personaje active pentru apeluri",
         "active_personas_description": "Selectați ce personaje sunt active în timpul apelurilor.",
         "import_setup_folder_description": "Alegeți un folder care conține un fișier .env și fișiere *persona*.json pentru a importa credențiale și personaje într-un singur clic. Personajele și editările dvs. sunt păstrate — doar personajele livrate needitate sunt suprascrise.",
-        "import_setup_folder_security": "Memento de securitate: cheile API sunt stocate în text simplu în profilul Chrome. Nu importați credențiale într-un profil Chrome partajat."
+        "import_setup_folder_security": "Memento de securitate: cheile API sunt stocate în text simplu în profilul Chrome. Nu importați credențiale într-un profil Chrome partajat.",
+        "deepgram_placeholder": "Introduceți cheia API Deepgram",
+        "gemini_placeholder": "Introduceți cheia API Gemini",
+        "openrouter_placeholder": "Introduceți cheia API OpenRouter",
+        "groq_placeholder": "Introduceți cheia API Groq",
+        "hume_api_placeholder": "Introduceți cheia API Hume",
+        "hume_secret_placeholder": "Introduceți cheia secretă Hume",
+        "drive_folder_placeholder": "Transcrieri Wingman"
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilitate transcriere",
@@ -489,7 +496,9 @@
         "save_button": "Salvează",
         "flows_title": "Fluxuri disponibile",
         "connection_description": "Conectați-vă la instanța LangBuilder pentru a executa fluxuri personalizate din suprapunere.",
-        "flows_description": "Fluxuri din instanța LangBuilder, reîmprospătate la Testare conexiune."
+        "flows_description": "Fluxuri din instanța LangBuilder, reîmprospătate la Testare conexiune.",
+        "url_placeholder": "https://langflow.companie.com",
+        "api_key_placeholder": "Introduceți cheia API LangBuilder"
       },
       "websearch": {
         "provider_title": "Furnizor căutare web",
@@ -499,7 +508,8 @@
         "test_button": "Testează conexiunea",
         "budget_title": "Buget zilnic interogări",
         "provider_description": "Activează căutarea web în direct în timpul întâlnirilor prin Brave Search.",
-        "budget_description": "Limitați numărul de căutări web pe zi pentru a controla costurile API."
+        "budget_description": "Limitați numărul de căutări web pe zi pentru a controla costurile API.",
+        "api_key_placeholder": "Introduceți cheia API Brave Search"
       },
       "support": {
         "support_wingman_title": "Sprijină Wingman",

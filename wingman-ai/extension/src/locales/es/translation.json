@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-descriptions-2026-05-06",
+    "revision": "plan-5-placeholders-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -415,7 +415,14 @@
         "active_personas_title": "Personas activos para llamadas",
         "active_personas_description": "Seleccione qué personas están activos durante sus llamadas.",
         "import_setup_folder_description": "Elija una carpeta con un archivo .env y archivos *persona*.json para importar credenciales y personas con un clic. Sus personas y ediciones se preservan — solo se sobrescriben los personas predefinidos sin modificar.",
-        "import_setup_folder_security": "Recordatorio de seguridad: las claves API se almacenan en texto plano en su perfil de Chrome. No importe credenciales en un perfil de Chrome compartido."
+        "import_setup_folder_security": "Recordatorio de seguridad: las claves API se almacenan en texto plano en su perfil de Chrome. No importe credenciales en un perfil de Chrome compartido.",
+        "deepgram_placeholder": "Ingrese su clave API de Deepgram",
+        "gemini_placeholder": "Ingrese su clave API de Gemini",
+        "openrouter_placeholder": "Ingrese su clave API de OpenRouter",
+        "groq_placeholder": "Ingrese su clave API de Groq",
+        "hume_api_placeholder": "Ingrese su clave API de Hume",
+        "hume_secret_placeholder": "Ingrese su clave secreta de Hume",
+        "drive_folder_placeholder": "Transcripciones Wingman"
       },
       "calls": {
         "transcription_sensitivity_title": "Sensibilidad de la transcripción",
@@ -486,7 +493,9 @@
         "save_button": "Guardar",
         "flows_title": "Flujos disponibles",
         "connection_description": "Conéctese a su instancia LangBuilder para ejecutar flujos personalizados desde la superposición.",
-        "flows_description": "Flujos de su instancia LangBuilder, actualizados en Probar conexión."
+        "flows_description": "Flujos de su instancia LangBuilder, actualizados en Probar conexión.",
+        "url_placeholder": "https://langflow.empresa.com",
+        "api_key_placeholder": "Ingrese su clave API de LangBuilder"
       },
       "websearch": {
         "provider_title": "Proveedor de búsqueda web",
@@ -496,7 +505,8 @@
         "test_button": "Probar conexión",
         "budget_title": "Presupuesto diario de consultas",
         "provider_description": "Habilite búsqueda web en vivo durante reuniones via Brave Search.",
-        "budget_description": "Limite el número de búsquedas web por día para controlar costos API."
+        "budget_description": "Limite el número de búsquedas web por día para controlar costos API.",
+        "api_key_placeholder": "Ingrese su clave API de Brave Search"
       },
       "support": {
         "support_wingman_title": "Apoyar a Wingman",

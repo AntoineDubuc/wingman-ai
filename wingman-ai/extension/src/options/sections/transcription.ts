@@ -97,10 +97,18 @@ export class TranscriptionSection {
 
     try {
       await chrome.storage.local.set({ endpointingMs: this.slider.value });
-      this.ctx.showToast(`Pause threshold: ${this.formatMs(Number(this.slider.value))}`, 'success');
+      const value = this.formatMs(Number(this.slider.value));
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.transcription_pause_threshold', { value })
+          ?? `Pause threshold: ${value}`,
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save transcription setting:', error);
-      this.ctx.showToast('Failed to save setting', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save setting',
+        'error',
+      );
     }
   }
 
@@ -109,10 +117,18 @@ export class TranscriptionSection {
 
     try {
       await chrome.storage.local.set({ suggestionCooldownMs: this.cooldownSlider.value });
-      this.ctx.showToast(`Suggestion cooldown: ${this.formatCooldown(Number(this.cooldownSlider.value))}`, 'success');
+      const value = this.formatCooldown(Number(this.cooldownSlider.value));
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.transcription_suggestion_cooldown', { value })
+          ?? `Suggestion cooldown: ${value}`,
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save cooldown setting:', error);
-      this.ctx.showToast('Failed to save setting', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save setting',
+        'error',
+      );
     }
   }
 
@@ -132,10 +148,19 @@ export class TranscriptionSection {
     try {
       await chrome.storage.local.set({ autoSuggestionsEnabled: enabled });
       this.updateCooldownSliderState(enabled);
-      this.ctx.showToast(`Auto-suggestions: ${enabled ? 'On' : 'Off'}`, 'success');
+      const key = enabled
+        ? 'options.toasts.transcription_auto_suggestions_on'
+        : 'options.toasts.transcription_auto_suggestions_off';
+      this.ctx.showToast(
+        this.ctx.t?.(key) ?? `Auto-suggestions: ${enabled ? 'On' : 'Off'}`,
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save auto-suggestions setting:', error);
-      this.ctx.showToast('Failed to save setting', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save setting',
+        'error',
+      );
     }
   }
 
@@ -143,10 +168,17 @@ export class TranscriptionSection {
     try {
       await chrome.storage.local.set({ [PROMPT_TUNING_STORAGE_KEY]: mode });
       const label = mode === 'auto' ? 'Auto' : 'Off';
-      this.ctx.showToast(`Prompt tuning: ${label}`, 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.transcription_prompt_tuning', { label })
+          ?? `Prompt tuning: ${label}`,
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save tuning mode:', error);
-      this.ctx.showToast('Failed to save setting', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save setting',
+        'error',
+      );
     }
   }
 }

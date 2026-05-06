@@ -1,0 +1,994 @@
+{
+  "_meta": {
+    "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "overlay-assistant-2026-05-06",
+    "reviewer_status": "pending-native-review"
+  },
+  "popup": {
+    "title": "Wingman",
+    "subtitle": "Asistente de IA en tiempo real para Google Meet",
+    "api_keys_label": "Claves API",
+    "session_label": "Sesión",
+    "controls_hint": {
+      "before": "Configure sus claves API en ",
+      "link": "Opciones",
+      "after": " para empezar."
+    },
+    "footer": {
+      "options": "Opciones",
+      "tutorials": "Tutoriales",
+      "support": "Apoyo"
+    },
+    "hydra_tooltip": {
+      "new_label": "Nuevo:",
+      "body": "Active varios personas para el modo panel de expertos."
+    },
+    "start_session": "Iniciar sesión",
+    "stop_session": "Detener sesión",
+    "status": {
+      "active": "Sesión activa",
+      "idle": "Listo",
+      "connecting": "Conectando…",
+      "live": "En vivo",
+      "error": "Error",
+      "session_active_other_tab": "Sesión activa en otra pestaña"
+    },
+    "actions": {
+      "open_settings": "Abrir configuración",
+      "open_meet": "Abrir Google Meet"
+    },
+    "api_status": {
+      "configured": "Configurado",
+      "not_configured": "No configurado"
+    },
+    "session_status": {
+      "active": "Activa",
+      "inactive": "Inactiva"
+    },
+    "personas": {
+      "section_label": "Personas activas",
+      "remove": "Quitar",
+      "locked_tooltip": "Detenga la sesión para cambiar personas",
+      "count_active_one": "1 activa",
+      "count_active_other": "{{count}} activas",
+      "add_persona": "+ Agregar persona",
+      "add_persona_locked_tooltip": "Detenga la sesión para cambiar personas",
+      "preset_locked_tooltip": "Detenga la sesión para cambiar preajustes",
+      "preset_dropdown_label": "Preajustes Conclave",
+      "max_reached": "Máximo {{max}} personas alcanzado"
+    },
+    "errors": {
+      "no_api_keys": "Faltan claves de API",
+      "no_meet_tab": "No se encontró ninguna pestaña de Google Meet"
+    }
+  },
+  "options": {
+    "tabs": {
+      "setup": "Configuración",
+      "calls": "Llamadas",
+      "personas": "Personas",
+      "conclave": "Conclave",
+      "langbuilder": "LangBuilder",
+      "websearch": "Búsqueda web",
+      "support": "Soporte"
+    },
+    "setup": {
+      "title": "Configuración",
+      "language_picker_label": "Idioma",
+      "language_locked_tooltip": "Idioma bloqueado durante la sesión activa",
+      "api_keys_title": "Claves API",
+      "api_keys": {
+        "description": "Configure las claves API para los servicios de transcripción e IA.",
+        "gemini_label": "Clave API de Gemini",
+        "deepgram_label": "Clave API de Deepgram",
+        "test_button": "Probar",
+        "test_pass": "Conexión exitosa",
+        "test_fail": "Conexión fallida: {{rawError}}",
+        "testing": "Probando...",
+        "test_keys": "Probar claves",
+        "status_all_configured": "Todas las claves configuradas",
+        "status_missing_provider": "Falta la clave de {{provider}}",
+        "status_missing_deepgram": "Falta la clave de Deepgram",
+        "status_not_configured": "Claves no configuradas"
+      },
+      "save_button": "Guardar",
+      "cancel_button": "Cancelar"
+    },
+    "calls": {
+      "title": "Configuración de llamadas",
+      "retention_label": "Retención de transcripciones",
+      "summary_options_label": "Opciones de resumen"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "editor": {
+        "edit_title": "Editar persona"
+      },
+      "export": {
+        "exporting": "Exportando...",
+        "button": "Exportar"
+      },
+      "icons": {
+        "quick_picks": "Selecciones rápidas"
+      },
+      "kb": {
+        "load_failed": "No se pudieron cargar los documentos.",
+        "searching": "Buscando...",
+        "test_button": "Probar"
+      },
+      "default_interviewer": "Entrevistador predeterminado",
+      "executive_communicator": "Comunicador ejecutivo",
+      "add_persona_button": "Agregar persona",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Candidato a entrevista de trabajo",
+          "description": "Entrenamiento para preguntas de entrevista conductuales y situacionales."
+        },
+        "startup_founder_fundraising": {
+          "name": "Fundador de startup (recaudación de fondos)",
+          "description": "Entrenamiento de presentación para reuniones con inversionistas."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Trabajador independiente (negociación de tarifas)",
+          "description": "Entrenamiento para fijación de tarifas y negociación de alcance con clientes."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Presentador de subvenciones para ONG",
+          "description": "Entrenamiento para presentaciones ante donantes y financiadores."
+        },
+        "patient_advocate": {
+          "name": "Defensor del paciente",
+          "description": "Entrenamiento para citas médicas y decisiones de cuidado."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Inquilino (negociación de contrato de arrendamiento)",
+          "description": "Entrenamiento de renovación de contrato y resolución de disputas para inquilinos."
+        },
+        "parent_iep_meeting": {
+          "name": "Padre o madre (reunión de PEI)",
+          "description": "Entrenamiento para reuniones escolares y defensa en educación especial."
+        },
+        "small_business_loan_seeker": {
+          "name": "Solicitante de préstamo PyME",
+          "description": "Entrenamiento para reuniones con oficiales de crédito bancarios."
+        },
+        "journalist_interviewer": {
+          "name": "Periodista entrevistador",
+          "description": "Entrenamiento de entrevistas con fuentes para reporteros y periodistas."
+        },
+        "esl_professional": {
+          "name": "Profesional de inglés como segunda lengua",
+          "description": "Entrenamiento de inglés de negocios para hablantes no nativos."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Consultor de ventas de soluciones en la nube",
+          "description": "Entrenamiento técnico previo a la venta para acuerdos de plataforma en la nube."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclave",
+      "description": "Modo de conversación grupal multi-personas.",
+      "enable_label": "Activar Conclave",
+      "no_active_personas": "Sin personas activas"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Personas",
+        "credentials_heading": "Credenciales",
+        "permissions_heading": "Permisos de host",
+        "errors_heading": "Errores ({{count}})",
+        "will_add": "Se agregará ({{count}}):",
+        "will_update": "Se actualizará ({{count}}):",
+        "will_skip": "Se omitirá — los editaste ({{count}}):",
+        "will_request": "Se solicitará:",
+        "will_revoke": "Se revocará:",
+        "will_write_credentials_one": "Se escribirá 1 credencial (valores ocultos).",
+        "will_write_credentials_other": "Se escribirán {{count}} credenciales (valores ocultos).",
+        "will_clear_credentials_one": "Se borrará 1 credencial.",
+        "will_clear_credentials_other": "Se borrarán {{count}} credenciales.",
+        "langbuilder_host": "LangBuilder llamará a: {{host}}",
+        "empty": "Nada que importar."
+      }
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Constructor de flujos de lenguaje personalizados.",
+      "testing": "Probando...",
+      "test_connection": "Probar conexión"
+    },
+    "websearch": {
+      "title": "Búsqueda web",
+      "description": "Integración con Brave Search para el contexto del asistente de chat.",
+      "brave_key_label": "Clave API de Brave Search"
+    },
+    "support": {
+      "title": "Soporte",
+      "description": "Documentación e informes de problemas.",
+      "docs_link": "Documentación",
+      "issues_link": "Reportar un problema"
+    },
+    "drive": {
+      "auth_button": "Iniciar sesión con Google",
+      "signed_in": "Sesión iniciada como {{email}}",
+      "sign_out": "Cerrar sesión",
+      "save_label": "Guardar resúmenes en Drive",
+      "connecting": "Conectando..."
+    },
+    "upgrade_banner": {
+      "title": "Wingman ahora habla su idioma",
+      "body": "Su idioma se ha establecido automáticamente según la configuración de su navegador. Puede cambiarlo en cualquier momento en la pestaña Configuración.",
+      "dismiss_button": "Entendido"
+    },
+    "toasts": {
+      "settings_saved": "Configuración guardada",
+      "settings_save_failed": "Error al guardar la configuración",
+      "api_key_required": "Se requiere la clave API de {{provider}}",
+      "permission_required": "Se requiere permiso para conectar a {{provider}}",
+      "permission_request_failed": "Error al solicitar permiso de {{provider}}",
+      "drive_connected": "¡Google Drive conectado!",
+      "drive_disconnected": "Google Drive desconectado",
+      "drive_connect_failed": "Error de conexión",
+      "drive_disconnect_failed": "Error al desconectar",
+      "drive_settings_saved": "Configuración de Drive guardada",
+      "langbuilder_settings_saved": "Configuración de LangBuilder guardada",
+      "langbuilder_url_required": "Ingrese URL y clave API",
+      "langbuilder_test_passed_one": "¡Conectado! 1 flujo encontrado",
+      "langbuilder_test_passed_other": "¡Conectado! {{count}} flujos encontrados",
+      "langbuilder_test_failed": "Prueba falló: {{rawError}}",
+      "langbuilder_permission_required": "Se requiere permiso para conectar a este servidor",
+      "langbuilder_invalid_url": "Formato de URL inválido",
+      "active_personas_max": "Máximo {{count}} personas activas",
+      "active_personas_min": "Al menos un persona debe estar activo",
+      "transcription_pause_threshold": "Umbral de pausa: {{value}}",
+      "transcription_suggestion_cooldown": "Tiempo entre sugerencias: {{value}}",
+      "transcription_auto_suggestions_on": "Sugerencias automáticas: Activadas",
+      "transcription_auto_suggestions_off": "Sugerencias automáticas: Desactivadas",
+      "transcription_prompt_tuning": "Ajuste del prompt: {{label}}",
+      "conclave_leader_updated": "Líder del Conclave actualizado",
+      "conclave_preset_activated": "Preajuste activado",
+      "conclave_preset_activated_with_missing_one": "Activado (1 persona eliminado omitido)",
+      "conclave_preset_activated_with_missing_other": "Activado ({{count}} personas eliminados omitidos)",
+      "conclave_preset_deleted": "Preajuste eliminado",
+      "conclave_preset_created": "Preajuste creado",
+      "conclave_preset_updated": "Preajuste actualizado",
+      "conclave_preset_name_required": "Ingrese un nombre",
+      "conclave_preset_select_persona": "Seleccione al menos un persona",
+      "conclave_delete_modal_title": "Eliminar preajuste",
+      "conclave_delete_modal_body": "¿Está seguro de eliminar \"{{name}}\"?",
+      "persona_name_required": "El nombre del persona es obligatorio",
+      "persona_prompt_too_short": "El prompt debe tener al menos {{min}} caracteres",
+      "persona_prompt_too_long": "El prompt no puede exceder {{max}} caracteres",
+      "persona_saved_with_version": "Prompt guardado como v{{version}} ({{model}})",
+      "persona_saved": "Persona guardado",
+      "persona_deleted": "Persona eliminado",
+      "persona_duplicated": "Persona duplicado",
+      "persona_exported": "Persona exportado",
+      "persona_export_failed": "Error de exportación",
+      "persona_only_one_cannot_delete": "No puede eliminar su único persona",
+      "persona_kb_doc_deleted": "{{filename}} eliminado",
+      "persona_kb_doc_delete_failed": "Error al eliminar el documento",
+      "persona_kb_test_query_required": "Ingrese una consulta de prueba",
+      "persona_kb_test_failed": "Consulta de prueba falló. Verifique su clave API.",
+      "persona_kb_gemini_required": "Clave Gemini API requerida para Base de Conocimientos (embeddings usan Gemini)",
+      "persona_kb_processing_in_progress": "Procesamiento en curso. Por favor espere.",
+      "persona_import_invalid_json": "Archivo JSON inválido",
+      "persona_import_not_valid": "Archivo persona Wingman no válido ({{reason}})",
+      "persona_import_kb_gemini_required": "Clave Gemini API requerida para procesar documentos KB",
+      "persona_import_with_kb_failures": "Persona importado ({{count}} doc(s) KB falló)",
+      "persona_import_success": "Persona importado con éxito",
+      "persona_import_failed": "Error al importar archivo persona",
+      "persona_kb_file_processed": "Documento agregado a la Base de Conocimientos",
+      "persona_kb_file_failed": "Error al procesar archivo",
+      "setup_call_in_progress_import": "Detenga la llamada actual antes de importar.",
+      "setup_no_files": "No se seleccionaron archivos",
+      "setup_import_cancelled": "Importación cancelada",
+      "setup_duplicate_persona_names": "Nombres de personas duplicados — importación cancelada.",
+      "setup_call_started_during_import": "Llamada iniciada durante la importación. Cancelada.",
+      "setup_import_failed": "Importación falló — vea la consola del service worker",
+      "setup_import_modal_title": "Importar carpeta de configuración",
+      "setup_folder_empty": "La carpeta está vacía (o solo tiene archivos ocultos). Renombre .env a wingman.env e inténtelo de nuevo.",
+      "setup_large_folder_title": "Carpeta grande",
+      "setup_large_folder_body": "Seleccionó {{count}} archivos. Solo se procesarán .env y *persona*.json. ¿Continuar?",
+      "setup_nothing_to_import": "Nada que importar. La carpeta debe contener un archivo .env o *persona*.json.",
+      "setup_already_up_to_date": "Ya actualizado — credenciales y personas coinciden con la carpeta.",
+      "setup_credentials_imported_persona_skipped": "Credenciales importadas. Importación de personas cancelada — llamada en curso.",
+      "setup_imported_summary": "Importados {{personas}} personas, {{credentials}} credenciales"
+    },
+    "prompt_modals": {
+      "chat": {
+        "initial_bot_message": "¿Para qué servirá este persona? Describa el caso de uso y generaré un prompt de sistema optimizado.",
+        "btn_refine": "Refinar...",
+        "btn_generate": "Generar prompts",
+        "btn_cancel": "Cancelar",
+        "btn_generate_v": "Generar v{{version}}",
+        "btn_generating": "Generando...",
+        "btn_close": "Cerrar",
+        "btn_retry": "Reintentar",
+        "btn_back_to_chat": "Volver al chat",
+        "btn_use_asis": "Usar tal cual",
+        "btn_customize": "Personalizar",
+        "template_tag": "Plantilla",
+        "show_full_prompt": "Mostrar prompt completo",
+        "show_less": "Mostrar menos",
+        "discard_modal_title": "¿Descartar conversación?",
+        "discard_modal_body": "Su conversación de descubrimiento se perderá. Puede reiniciar el asistente en cualquier momento."
+      },
+      "version_history": {
+        "title": "Historial de prompts — {{personaName}}",
+        "description": "Cada versión de prompt con resultados de pruebas y costos.",
+        "btn_back": "Volver",
+        "empty_state": "Aún no hay versiones.",
+        "badge_current": "actual",
+        "badge_manual": "edición manual",
+        "badge_assistant": "asistente de configuración",
+        "badge_restored": "restaurado",
+        "badge_template": "desde plantilla",
+        "badge_imported": "importado",
+        "stats_with_tests": "Prueba: {{passed}}/{{total}} pasaron · {{modelId}} · Costo: ${{cost}} · {{date}}",
+        "stats_no_tests": "Sin pruebas aún · {{modelId}} · {{date}}",
+        "btn_diff": "Diff",
+        "btn_test": "Probar",
+        "btn_restore": "Restaurar",
+        "btn_delete": "Eliminar",
+        "diff_header": "Diff: v{{from}}({{fromModel}}) → v{{to}}({{toModel}})",
+        "select_from": "De",
+        "select_to": "A",
+        "btn_close_diff": "Cerrar diff",
+        "restore_confirm": "¿Restaurar v{{version}}? Esto creará una nueva versión con el contenido de v{{version}}.",
+        "delete_confirm": "¿Eliminar v{{version}} ({{summary}})? Esto no se puede deshacer."
+      },
+      "review": {
+        "tab_prompt": "Prompt",
+        "tab_test_questions": "Preguntas de prueba",
+        "generation_badge": "Generación: #{{generationNumber}}",
+        "editing_unsaved": "Editando — cambios sin guardar",
+        "char_count": "{{count}} / {{max}} caracteres",
+        "modified_suffix": " · modificado",
+        "btn_compare_vs": "Comparar con generación #{{previous}}",
+        "label_target_model": "Modelo objetivo",
+        "diff_label_live": "DIFF EN VIVO VS GENERADO",
+        "diff_label_vs_gen": "DIFF VS GENERACIÓN #{{num}}",
+        "empty_no_test_questions": "No se generaron preguntas de prueba.",
+        "group_should_respond": "AUTO-GENERADO — DEBE RESPONDER",
+        "group_should_silent": "AUTO-GENERADO — DEBE GUARDAR SILENCIO",
+        "badge_new": "nuevo",
+        "btn_refine": "Refinar...",
+        "btn_edit": "Editar",
+        "btn_test_dots": "Probar...",
+        "btn_save_all": "Guardar todo (v{{generation}})",
+        "btn_discard_edits": "Descartar cambios",
+        "btn_test_this_version": "Probar esta versión",
+        "btn_show_diff": "Mostrar diff",
+        "btn_hide_diff": "Ocultar diff",
+        "btn_save": "Guardar",
+        "btn_remove_test_qs": "Quitar preguntas de prueba",
+        "btn_test_now": "Probar ahora",
+        "btn_save_prompt_test_qs": "Guardar prompt + preguntas"
+      },
+      "test_harness": {
+        "title_interrupted": "Probador de prompt — Interrumpido",
+        "title_results_all_pass": "Resultados de prueba",
+        "title_results_partial": "Resultados — {{passed}}/{{total}} pasaron",
+        "title_kb_validation": "Validación KB{{versionSuffix}}",
+        "title_default": "Probador de prompt{{versionSuffix}}",
+        "tab_sample_qs": "P. muestra",
+        "tab_custom_q": "P. perso",
+        "tab_kb_query": "KB + Consulta",
+        "empty_generating": "Generando preguntas de muestra desde su prompt...",
+        "empty_no_questions": "Aún no hay preguntas de muestra.",
+        "btn_generate_sample": "Generar preguntas de muestra",
+        "section_should_respond": "DEBE RESPONDER",
+        "section_should_silent": "DEBE GUARDAR SILENCIO",
+        "cost_estimate": "{{totalQs}} preguntas × 1 modelo = ~${{cost}}",
+        "cost_estimate_comparison": "{{totalQs}} preguntas × 1 modelo × 2 versiones = ~${{cost}}",
+        "btn_run_tests": "Ejecutar pruebas{{versionLabel}}",
+        "add_question_label": "Agregar una pregunta",
+        "placeholder_question": "Ingrese una pregunta de prueba...",
+        "radio_should_respond": "Debe responder",
+        "radio_should_silent": "Debe guardar silencio",
+        "btn_add": "+ Agregar",
+        "kb_empty_state": "No hay documentos KB vinculados a este persona. Cargue documentos en el editor de persona para habilitar pruebas KB.",
+        "kb_linked_header": "Documentos KB vinculados ({{count}})",
+        "kb_doc_item": "{{filename}} ({{chunks}} fragmentos)",
+        "placeholder_kb_search": "Buscar en su KB...",
+        "btn_search": "Buscar",
+        "btn_searching": "Buscando...",
+        "search_failed": "Búsqueda falló: {{error}}",
+        "kb_section_header": "Pruebas de integración KB",
+        "kb_section_description": "Auto-genera 3 pruebas: cita real, conocimiento imposible (hecho inyectado) y datos faltantes (debe rechazar).",
+        "placeholder_impossible": "Hecho imposible perso (por defecto: $999/asiento Empresa)",
+        "btn_run_kb_tests": "Ejecutar pruebas KB",
+        "btn_running": "Ejecutando...",
+        "kb_loading_message": "Ejecutando 3 pruebas KB sobre el modelo... puede tardar 15-30 segundos.",
+        "no_api_key_for_provider": "No hay clave API configurada para el proveedor activo.",
+        "kb_tests_failed": "Pruebas KB fallaron: {{error}}",
+        "no_results_for_query": "No se encontraron resultados para \"{{query}}\". Pruebe una consulta diferente o verifique que los documentos estén indexados.",
+        "results_header": "{{count}} resultados para \"{{query}}\"",
+        "kb_all_passed": "Todas las pruebas KB pasaron ({{passed}}/{{total}})",
+        "kb_partial_passed": "Pruebas KB: {{passed}}/{{total}} pasaron",
+        "meta_kb_chunk_retrieved": "Fragmento KB recuperado",
+        "meta_similarity": "Similitud: {{percent}}%",
+        "meta_source": "Fuente: {{filename}}",
+        "meta_citation_correct": "Cita correcta",
+        "meta_citation_incorrect": "Cita incorrecta",
+        "badge_pass": "Pasó",
+        "badge_silent": "Silencioso",
+        "badge_wrong_behavior": "Comportamiento incorrecto",
+        "badge_should_respond": "Debió responder",
+        "badge_off_topic": "Respuesta fuera de tema",
+        "badge_should_silent": "Debió guardar silencio",
+        "badge_error": "Error: {{message}}",
+        "success_title": "Todas las pruebas pasaron",
+        "success_detail": "{{total}}/{{total}} preguntas · {{modelId}}",
+        "fail_banner_title": "Todas las pruebas fallaron",
+        "fail_banner_body": "Este prompt puede necesitar revisión importante. Considere volver a ejecutar el asistente de configuración con entradas diferentes, o pruebe un modelo objetivo diferente.",
+        "btn_close": "Cerrar",
+        "btn_edit_to_fix": "Editar prompt",
+        "btn_retry_failed": "Reintentar pruebas fallidas",
+        "btn_save_as_v": "Guardar como v{{version}}",
+        "btn_back_to_edit": "Volver a edición",
+        "btn_back_to_history": "Volver al historial",
+        "btn_restore_v": "Restaurar v{{version}}",
+        "compare_against_label": "Comparar con:",
+        "compare_none": "Ninguno",
+        "compare_version_option": "v{{version}} — {{summary}}",
+        "comparison_title": "Comparación: {{currentLabel}} vs {{comparedLabel}}",
+        "scorecard_pass": "{{passed}}/{{total}} pasaron",
+        "badge_should_respond_lc": "debe responder",
+        "badge_should_silent_lc": "debe guardar silencio",
+        "loading_running_tests": "Ejecutando pruebas... puede tardar 15-30 segundos.",
+        "no_api_key_setup_hint": "No se encontró clave API para el proveedor activo. Verifique sus claves en la pestaña Configuración."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Configuración de la extensión",
+        "theme_toggle": "Alternar modo oscuro"
+      },
+      "setup": {
+        "import_setup_folder_title": "Importar carpeta de configuración",
+        "choose_folder_button": "Elegir carpeta",
+        "api_keys_description": "Ingrese sus claves API para habilitar transcripción de voz y respuestas IA. Sus claves se almacenan localmente y nunca se envían a nuestros servidores.",
+        "deepgram_label": "Clave API de Deepgram",
+        "gemini_label": "Clave API de Google Gemini",
+        "openrouter_label": "Clave API de OpenRouter",
+        "groq_label": "Clave API de Groq",
+        "hume_label": "Hume AI (Detección de emociones)",
+        "hume_optional": "Opcional",
+        "hume_secret_key_label": "Clave secreta",
+        "test_hume_button": "Probar Hume",
+        "test_keys_button": "Probar claves",
+        "save_keys_button": "Guardar claves",
+        "ai_provider_label": "Proveedor de IA",
+        "model_label": "Modelo",
+        "show_hide_key": "Mostrar/ocultar clave",
+        "get_one_free": "Obtener una gratis",
+        "google_drive_title": "Integración con Google Drive",
+        "google_drive_description": "Guarde automáticamente las transcripciones de reuniones en su Google Drive después de cada llamada.",
+        "autosave_label": "Guardado automático de transcripciones",
+        "connect_button": "Conectar cuenta Google",
+        "disconnect_button": "Desconectar",
+        "folder_name_label": "Nombre de la carpeta",
+        "transcript_format_label": "Formato de transcripción",
+        "format_googledoc": "Google Doc (con formato)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Texto sin formato (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Personas activos para llamadas",
+        "active_personas_description": "Seleccione qué personas están activos durante sus llamadas.",
+        "import_setup_folder_description": "Elija una carpeta con un archivo .env y archivos *persona*.json para importar credenciales y personas con un clic. Sus personas y ediciones se preservan — solo se sobrescriben los personas predefinidos sin modificar.",
+        "import_setup_folder_security": "Recordatorio de seguridad: las claves API se almacenan en texto plano en su perfil de Chrome. No importe credenciales en un perfil de Chrome compartido.",
+        "deepgram_placeholder": "Ingrese su clave API de Deepgram",
+        "gemini_placeholder": "Ingrese su clave API de Gemini",
+        "openrouter_placeholder": "Ingrese su clave API de OpenRouter",
+        "groq_placeholder": "Ingrese su clave API de Groq",
+        "hume_api_placeholder": "Ingrese su clave API de Hume",
+        "hume_secret_placeholder": "Ingrese su clave secreta de Hume",
+        "drive_folder_placeholder": "Transcripciones Wingman",
+        "deepgram_hint": "Usado para transcripción de voz en tiempo real",
+        "provider_hint": "Gemini usa su clave directamente. OpenRouter le permite elegir entre múltiples modelos. Groq ofrece IA open-source ultra rápida.",
+        "gemini_hint": "Usado para sugerencias y respuestas con IA",
+        "openrouter_hint": "Usado para sugerencias y respuestas con IA via OpenRouter",
+        "model_choice_hint": "Elija qué modelo IA usar para sugerencias y resúmenes",
+        "groq_hint": "Inferencia ultra rápida en modelos open-source — versión gratuita en console.groq.com",
+        "folder_hint": "La carpeta se creará en la raíz de su Drive si no existe",
+        "active_personas_hint": "Cada persona activo evalúa las transcripciones independientemente. Limite a 4 para mantener baja latencia.",
+        "hume_api_key_label": "Clave API",
+        "hume_secret_key_label_short": "Clave secreta",
+        "hume_get_keys": "(Obtener claves)",
+        "hume_description": "Muestra las emociones del cliente en tiempo real durante las llamadas. Requiere una cuenta Hume AI en platform.hume.ai. Usado solo cuando las claves están configuradas — la detección de emociones es opt-in.",
+        "status_keys_not_configured": "Claves no configuradas",
+        "autosave_description": "Cuando está activado, las transcripciones se guardan automáticamente en su carpeta Drive al final de cada llamada.",
+        "connected_label": "Conectado",
+        "folder_format_summary": "Formato de carpeta",
+        "folder_format_env_intro": "en el nivel superior con cualquiera de estas claves:",
+        "folder_format_persona_files": "Archivos persona JSON en cualquier lugar de la carpeta (cualquier nombre que contenga \"persona\" y termine en .json)."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Sensibilidad de la transcripción",
+        "pause_threshold_label": "Umbral de pausa",
+        "suggestion_frequency_title": "Frecuencia de sugerencias",
+        "auto_suggestions_label": "Sugerencias automáticas",
+        "cooldown_label": "Tiempo entre sugerencias",
+        "ai_prompt_tuning_title": "Ajuste del prompt IA",
+        "tuning_mode_label": "Modo de ajuste",
+        "tuning_mode_auto": "Auto (recomendado)",
+        "tuning_mode_off": "Desactivado",
+        "speaker_filter_title": "Filtro de hablantes",
+        "speaker_filter_label": "Solo responder a otros hablantes",
+        "panel_layout_title": "Diseño del panel",
+        "panel_position_label": "Posición del panel",
+        "position_floating": "Flotante",
+        "position_dock_left": "Barra lateral izquierda",
+        "position_dock_right": "Barra lateral derecha",
+        "display_mode_label": "Modo de visualización",
+        "display_full": "Transcripción completa + sugerencias",
+        "display_suggestions_only": "Solo sugerencias",
+        "call_summary_title": "Resumen de la llamada",
+        "auto_summary_label": "Generar resumen de llamada automáticamente",
+        "include_key_moments_label": "Incluir momentos clave",
+        "transcription_sensitivity_description": "Controla cuánto espera Wingman a que un hablante haga una pausa antes de tratar su declaración como final.",
+        "suggestion_frequency_description": "Tiempo mínimo entre sugerencias IA. Valores bajos son más responsivos; valores altos reducen el costo LLM.",
+        "ai_prompt_tuning_description": "Adapta sus prompts de persona para funcionar mejor en el LLM activo (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Controla cuándo Wingman provee sugerencias según quién habla.",
+        "panel_layout_description": "Controla dónde aparece el panel de Wingman durante las llamadas y qué muestra.",
+        "call_summary_description": "Obtenga un resumen generado por IA con elementos de acción y momentos clave después de cada llamada.",
+        "tuning_mode_hint": "Auto aplica ajustes específicos del modelo en tiempo de ejecución sin modificar sus prompts guardados.",
+        "pause_threshold_hint": "Cuánto tiempo debe pausar un hablante antes de crear una nueva burbuja de transcripción. Bajo = más responsivo pero puede cortar oraciones; alto = más suave pero añade retraso.",
+        "auto_suggestions_hint": "Desactivado, Wingman no sugiere automáticamente — aún puede activar manualmente.",
+        "cooldown_hint": "Después de cada sugerencia, Wingman espera este tiempo antes de considerar otra.",
+        "speaker_filter_hint": "Cuando activado, Wingman solo proporciona sugerencias cuando hablan otros participantes — nunca sobre su propio audio.",
+        "auto_summary_hint": "Usa una llamada API IA adicional por sesión.",
+        "moments_hint": "Muestra citas notables y señales de compra."
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Importar",
+        "new_button": "+ Nueva persona",
+        "editor_title": "Editar persona",
+        "name_label": "Nombre",
+        "icon_label": "Icono (opcional)",
+        "icon_clear_button": "Borrar",
+        "color_label": "Etiqueta de color",
+        "system_prompt_label": "Prompt del sistema",
+        "prompt_assistant_button": "Asistente de configuración",
+        "test_prompts_button": "Probar prompts",
+        "version_history_button": "Historial de versiones",
+        "kb_label": "Base de conocimientos",
+        "kb_test_label": "Probar base de conocimientos",
+        "kb_test_button": "Probar",
+        "cancel_button": "Cancelar",
+        "export_button": "Exportar",
+        "duplicate_button": "Duplicar",
+        "delete_button": "Eliminar",
+        "save_button": "Guardar",
+        "personas_description": "Empaquete un prompt de sistema con documentos específicos de la Base de Conocimientos. Cada persona da a la IA su propia voz y contexto.",
+        "empty_state": "Cree su primer persona para agrupar un prompt de sistema con documentos KB.",
+        "kb_drop_text": "Suelte archivos aquí o haga clic para explorar",
+        "kb_drop_hint": "PDF, Markdown o Texto (max 10MB)",
+        "kb_processing": "Procesando...",
+        "kb_empty_state": "No hay documentos cargados. Arrastre archivos arriba o haga clic para explorar.",
+        "icon_quick_picks": "Selección rápida",
+        "icon_loading": "Cargando iconos...",
+        "icon_no_results": "No se encontraron iconos. Pruebe otras palabras clave como \"cara\", \"trabajo\", \"animal\".",
+        "icon_selected": "Seleccionado:",
+        "icon_search_placeholder": "Buscar más de 4.000 iconos...",
+        "name_placeholder": "ej. Demo de Seguridad Cloud",
+        "prompt_placeholder": "Ingrese su prompt de sistema...",
+        "kb_test_placeholder": "ej. ¿Qué certificaciones de seguridad tiene?",
+        "char_count_initial": "0 / 10.000 caracteres"
+      },
+      "conclave": {
+        "settings_title": "Configuración del Conclave",
+        "leader_label": "Líder del Conclave",
+        "presets_title": "Preajustes",
+        "new_preset_button": "+ Nuevo preajuste",
+        "settings_description": "Configure cómo múltiples personas trabajan juntos cuando hay más de uno activo.",
+        "presets_description": "Guarde combinaciones de personas para activación rápida. Los preajustes no incluyen credenciales.",
+        "leader_hint": "La experiencia del líder del Conclave guía el resumen post-llamada. Elija qué persona debe moldear la perspectiva del resumen."
+      },
+      "langbuilder": {
+        "connection_title": "Conexión LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Clave API",
+        "test_button": "Probar conexión",
+        "save_button": "Guardar",
+        "flows_title": "Flujos disponibles",
+        "connection_description": "Conéctese a su instancia LangBuilder para ejecutar flujos personalizados desde la superposición.",
+        "flows_description": "Flujos de su instancia LangBuilder, actualizados en Probar conexión.",
+        "url_placeholder": "https://langflow.empresa.com",
+        "api_key_placeholder": "Ingrese su clave API de LangBuilder",
+        "url_hint": "URL base de su instancia LangBuilder",
+        "api_key_hint": "Token x-api-key de su configuración LangBuilder",
+        "status_unconfigured": "No configurado"
+      },
+      "websearch": {
+        "provider_title": "Proveedor de búsqueda web",
+        "provider_label": "Proveedor",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Clave API",
+        "test_button": "Probar conexión",
+        "budget_title": "Presupuesto diario de consultas",
+        "provider_description": "Habilite búsqueda web en vivo durante reuniones via Brave Search.",
+        "budget_description": "Limite el número de búsquedas web por día para controlar costos API.",
+        "api_key_placeholder": "Ingrese su clave API de Brave Search"
+      },
+      "support": {
+        "support_wingman_title": "Apoyar a Wingman",
+        "donate_button": "Cómprame un café",
+        "tutorials_title": "Tutoriales y guías",
+        "view_tutorials_button": "Ver tutoriales",
+        "feature_requests_title": "Solicitudes de funciones y errores",
+        "github_button": "Enviar en GitHub",
+        "langbuilder_title": "Construido con LangBuilder",
+        "learn_more_button": "Aprende más",
+        "connect_title": "Conéctate con el creador",
+        "linkedin_button": "Conectar en LinkedIn",
+        "support_wingman_description": "¿Disfrutando de Wingman? Su apoyo me ayuda a seguir construyendo herramientas gratuitas centradas en la privacidad.",
+        "tutorials_description": "Aprenda cómo aprovechar al máximo Wingman con guías paso a paso.",
+        "feature_requests_description": "¿Tiene una idea para una nueva función? ¿Encontró un error? Abra un issue en GitHub.",
+        "langbuilder_description": "Los flujos IA de Wingman están impulsados por LangBuilder, una plataforma de orquestación open-source.",
+        "connect_intro": "Hola, soy Antoine Dubuc — desarrollador solo detrás de Wingman.",
+        "connect_cta": "Me encantaría saber cómo usa Wingman y qué le gustaría ver a continuación."
+      },
+      "modals": {
+        "reset_title": "¿Restablecer a predeterminado?",
+        "reset_cancel": "Cancelar",
+        "reset_confirm": "Restablecer",
+        "assistant_title": "Asistente de configuración",
+        "send_button": "Enviar",
+        "tester_title": "Probador de prompt"
+      }
+    }
+  },
+  "overlay": {
+    "timer": {
+      "label": "Tiempo de sesión"
+    },
+    "session": {
+      "connecting": "Conectando…",
+      "live": "En vivo",
+      "error": "Error de conexión",
+      "disconnected": "Desconectado"
+    },
+    "transcript": {
+      "live": "En vivo",
+      "paused": "Pausado",
+      "empty_placeholder": "Esperando habla…",
+      "someone_speaking": "Alguien está hablando…"
+    },
+    "suggestion": {
+      "try_again": "Reintentar",
+      "try_again_tooltip": "Regenerar esta sugerencia en su idioma",
+      "after_retry_label": "Regenerada",
+      "thinking": "Pensando…",
+      "no_suggestion": "Escuchando…"
+    },
+    "speaker": {
+      "you": "Usted",
+      "speaker_n": "Interlocutor {{n}}"
+    },
+    "controls": {
+      "minimize": "Minimizar",
+      "close": "Cerrar",
+      "hide": "Ocultar",
+      "dock": "Anclar",
+      "undock": "Desanclar",
+      "dock_left": "Barra lateral izquierda",
+      "dock_right": "Barra lateral derecha",
+      "suggestions_only": "Sólo sugerencias",
+      "suggestions_only_chip": "Mostrando sólo sugerencias",
+      "show_full_transcript": "Mostrar transcripción completa",
+      "font_decrease": "Reducir el tamaño del texto",
+      "font_increase": "Aumentar el tamaño del texto",
+      "layout_toggle": "Alternar vista lado a lado",
+      "resize": "Redimensionar"
+    },
+    "header": {
+      "recording": "Grabando",
+      "assistant_panel": "Asistente"
+    },
+    "pill_toggle": {
+      "meeting": "Reunión",
+      "assistant": "Asistente"
+    },
+    "nav": {
+      "chat": "Chat",
+      "flows": "Flujos"
+    },
+    "emotion": {
+      "label_prefix": "Tono:"
+    },
+    "cost": {
+      "label": "Costo estimado",
+      "minutes_unit": "min",
+      "free_value": "Gratis",
+      "estimate_disclaimer": "Estimación · la factura real puede variar",
+      "free_tier_suffix": "versión gratuita",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} llamada",
+      "calls_unit_other": "{{count}} llamadas"
+    },
+    "summary_card": {
+      "generating": "Generando resumen..."
+    },
+    "actions": {
+      "saved_to_drive": "Guardado en Drive",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "copy_failed": "Falló"
+    },
+    "langbuilder": {
+      "running": "Ejecutando flujo...",
+      "cancelled": "Cancelado",
+      "flow_failed": "Falló la ejecución del flujo",
+      "connection_error": "Error de conexión",
+      "no_flows_hint": "Sin flujos — configurar en Ajustes",
+      "select_flow_placeholder": "Seleccionar un flujo...",
+      "input_placeholder": "Pegue o escriba la entrada para el flujo...",
+      "cancel": "Cancelar",
+      "go": "Ejecutar",
+      "empty_result": "Ejecute un flujo para ver los resultados aquí."
+    },
+    "kb": {
+      "search_aria_label": "Buscar en la Base de Conocimientos",
+      "answer_aria_label": "Respuesta KB: {{answer}}",
+      "input_placeholder": "Consulte su Base de Conocimientos..."
+    },
+    "empty": {
+      "listening": "Escuchando la conversación...",
+      "waiting_suggestions": "Esperando sugerencias...",
+      "unknown_speaker": "Desconocido"
+    },
+    "assistant": {
+      "chat_empty_title": "¿Cómo puedo ayudar?",
+      "chat_empty_subtitle": "Pregunte cualquier cosa. Active las fuentes de contexto arriba para incluir la transcripción de la reunión o la base de conocimientos del persona.",
+      "chat_input_placeholder": "Pregunte cualquier cosa...",
+      "context_transcript": "Transcripción",
+      "context_web_search": "Búsqueda web",
+      "attach_persona_knowledge": "Adjuntar conocimiento del persona",
+      "personas_load_failed": "No se pudieron cargar los personas — recargue la extensión.",
+      "no_personas_configured": "No hay personas configurados.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} más",
+      "suggestion_chip_1": "¿Cuál es el flujo PKCE que Sarah mencionó?",
+      "suggestion_chip_2": "Redacte un correo de seguimiento con elementos de acción",
+      "suggestion_chip_3": "Explique las mejores prácticas de rotación de tokens OAuth 2.0",
+      "suggestion_chip_4": "¿Qué sabe nuestro arquitecto sobre la migración de sesiones?"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Resumen",
+      "action_items": "Acciones a seguir",
+      "key_moments": "Momentos clave",
+      "personas_used": "Personas utilizadas",
+      "session_cost_estimate": "Costo estimado de la sesión",
+      "call_summary": "Resumen de la llamada"
+    },
+    "action_item_owner": {
+      "you": "Usted",
+      "them": "Ellos"
+    },
+    "moment_types": {
+      "signal": "Señal",
+      "objection": "Objeción",
+      "decision": "Decisión",
+      "quote": "Cita"
+    },
+    "cost": {
+      "label": "Costo estimado",
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "versión gratuita",
+      "free": "Gratis",
+      "calls_unit": "{{count}} llamadas",
+      "total": "Total"
+    },
+    "save_to_drive": "Guardar en Drive",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "metadata_labels": {
+      "duration": "Duración",
+      "speakers": "Participantes",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "Resumen no disponible",
+    "personas": {
+      "suggestion_count_one": "1 sugerencia",
+      "suggestion_count_other": "{{count}} sugerencias"
+    }
+  },
+  "speakers": {
+    "you": "Usted",
+    "them": "Ellos",
+    "speaker_n": "Interlocutor {{n}}"
+  },
+  "mic_permission": {
+    "title": "Acceso al micrófono requerido",
+    "body": "Wingman necesita acceso al micrófono para transcribir la reunión.",
+    "grant_button": "Permitir acceso",
+    "cancel_button": "Cancelar",
+    "denied": {
+      "title": "Acceso al micrófono denegado",
+      "body": "Wingman no puede transcribir sin acceso al micrófono."
+    },
+    "recovery": {
+      "title": "Cómo restaurar el acceso",
+      "steps_intro": "Siga estos pasos:",
+      "step_1": "Haga clic en el ícono de candado en la barra de direcciones.",
+      "step_2": "Establezca el permiso del micrófono en «Permitir».",
+      "step_3": "Recargue esta página y vuelva a intentar."
+    }
+  },
+  "errors": {
+    "deepgram_failed": "Reconocimiento de voz no disponible. {{rawError}}",
+    "mic_revoked": "Acceso al micrófono perdido. Restaure el acceso y reintente.",
+    "api_key_missing": "Clave API de {{provider}} no configurada. Agréguela en Configuración.",
+    "generic": "Ocurrió un error. Por favor, vuelva a intentar.",
+    "session_interrupted": "Sesión interrumpida de forma inesperada.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Falló la conexión de transcripción.",
+      "session_dropped": "La sesión de transcripción terminó de forma inesperada.",
+      "language_unavailable": "El reconocimiento de voz para {{language}} no está disponible actualmente."
+    },
+    "gemini": {
+      "api_failure": "Servicio Gemini no disponible.",
+      "rate_limit": "Se alcanzó el límite de Gemini. Por favor, espere un momento.",
+      "quota_exceeded": "Se excedió la cuota diaria de Gemini."
+    },
+    "groq": {
+      "api_failure": "Servicio Groq no disponible."
+    },
+    "drive": {
+      "oauth_failed": "Inicio de sesión de Google Drive fallido. Vuelva a intentar.",
+      "save_failed": "No se pudo guardar en Drive.",
+      "quota_exceeded": "Se excedió la cuota de almacenamiento de Drive.",
+      "network": "Error de red al acceder a Drive."
+    },
+    "hume": {
+      "disconnected": "Detección de emociones desconectada.",
+      "api_failure": "Detección de emociones no disponible."
+    },
+    "brave": {
+      "api_failure": "Búsqueda web no disponible para esta consulta.",
+      "rate_limit": "Se alcanzó el límite de búsqueda web."
+    },
+    "langbuilder": {
+      "flow_failed": "Falló la ejecución del flujo personalizado.",
+      "api_failure": "LangBuilder no disponible."
+    },
+    "deepgram_key_missing": "Clave API de Deepgram no configurada. Vaya a Opciones para añadir su clave.",
+    "deepgram_connect_failed": "Error al conectar con Deepgram. Verifique su clave API.",
+    "no_active_meet_tab": "No se encontró ninguna pestaña activa de Google Meet",
+    "no_query_text": "No se proporcionó texto de consulta.",
+    "kb_gemini_required": "Clave API de Gemini requerida para búsqueda en Base de Conocimientos. Configure en Ajustes.",
+    "kb_no_results": "No se encontró información relevante en su Base de Conocimientos para este tema.",
+    "kb_answer_failed": "No se pudo generar la respuesta. Verifique sus claves API.",
+    "network": "Error de red. Verifique su conexión.",
+    "langbuilder_not_configured": "LangBuilder no configurado"
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Conexión perdida",
+      "body": "Se perdió la conexión con el servicio de transcripción.",
+      "reconnecting": "Reconectando…",
+      "reconnected": "Reconectado"
+    },
+    "mic_revoked": {
+      "title": "Acceso al micrófono perdido",
+      "body": "El acceso al micrófono se revocó durante esta sesión.",
+      "recovery_action": "Restaurar acceso"
+    },
+    "partial_service": {
+      "title": "Algunos servicios degradados",
+      "services_degraded": "{{services}} no disponible(s); la transcripción continúa."
+    },
+    "actions": {
+      "dismiss": "Descartar",
+      "retry": "Reintentar"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} sugerencia",
+    "suggestion_other": "{{count}} sugerencias",
+    "minute_one": "{{count}} minuto",
+    "minute_other": "{{count}} minutos",
+    "second_one": "{{count}} segundo",
+    "second_other": "{{count}} segundos",
+    "action_item_one": "{{count}} acción a seguir",
+    "action_item_other": "{{count}} acciones a seguir",
+    "persona_one": "{{count}} persona",
+    "persona_other": "{{count}} personas",
+    "character_one": "{{count}} carácter",
+    "character_other": "{{count}} caracteres"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Abrir superposición de Wingman",
+      "close": "Cerrar superposición de Wingman",
+      "minimize": "Minimizar superposición de Wingman"
+    },
+    "popup": {
+      "start_session": "Iniciar sesión de Wingman",
+      "stop_session": "Detener sesión de Wingman"
+    },
+    "options": {
+      "tab": "Pestaña {{tab}}",
+      "section": "Sección {{section}}",
+      "picker": "Selector de idioma"
+    },
+    "banner": {
+      "close": "Cerrar banner",
+      "retry": "Reintentar"
+    }
+  },
+  "tutorials": {
+    "english_only_banner": "El contenido de los tutoriales está disponible actualmente solo en inglés. Estamos trabajando en traducciones para una versión futura."
+  },
+  "common": {
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "dismiss": "Descartar",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Candidato a entrevista de trabajo",
+        "description": "Coaching de entrevista en tiempo real con sugerencias de estructura y marco STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Fundador de startup (recaudación de fondos)",
+        "description": "Refinamiento del pitch para inversores y apoyo en llamadas de recaudación."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Freelancer (negociación de tarifa)",
+        "description": "Tácticas de negociación de tarifa y encuadre de términos contractuales."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Solicitante de subvención sin fines de lucro",
+        "description": "Refinamiento del pitch de subvención y apoyo a preguntas de los donantes."
+      },
+      "patient_advocate": {
+        "name": "Defensor de paciente",
+        "description": "Defensa en cita médica y navegación del plan de atención."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Inquilino (negociación de contrato)",
+        "description": "Tácticas de negociación de contrato de arrendamiento y derechos del inquilino."
+      },
+      "parent_iep_meeting": {
+        "name": "Padre/Madre (reunión IEP)",
+        "description": "Defensa en reunión IEP y encuadre de derechos en educación especial."
+      },
+      "small_business_loan_seeker": {
+        "name": "Solicitante de préstamo para PYME",
+        "description": "Conversación con el oficial de préstamos y encuadre de preguntas crediticias."
+      },
+      "journalist_interviewer": {
+        "name": "Periodista entrevistador",
+        "description": "Preparación de entrevista con fuente y sugerencias de preguntas de seguimiento."
+      },
+      "esl_professional": {
+        "name": "Profesional ESL",
+        "description": "Claridad de comunicación profesional ESL y navegación de expresiones idiomáticas."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Consultor de ventas de soluciones cloud",
+        "description": "Soluciones técnicas pre-venta y apoyo en llamadas de descubrimiento."
+      }
+    }
+  }
+}

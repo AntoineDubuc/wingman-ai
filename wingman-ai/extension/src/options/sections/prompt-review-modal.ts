@@ -23,6 +23,12 @@ export interface ReviewModalOptions {
   onTest?: (promptText: string, modelId: string, testQuestions: GeneratedTestQuestion[]) => void;
   onRefine?: () => void;
   onClose?: () => void;
+  /** Plan 5: localized translation function from OptionsContext. */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function tr(key: string, opts2?: Record<string, unknown>): string | null {
+  return opts?.t?.(key, opts2) ?? null;
 }
 
 type ReviewState = 'review' | 'edit' | 'edit-diff';
@@ -169,12 +175,12 @@ function buildTabBar(): HTMLElement {
 
   const promptTab = document.createElement('button');
   promptTab.className = `prompt-tab${activeTab === 'prompt' ? ' prompt-tab--active' : ''}`;
-  promptTab.textContent = 'Prompt';
+  promptTab.textContent = tr('options.prompt_modals.review.tab_prompt') ?? 'Prompt';
   promptTab.dataset['tab'] = 'prompt';
 
   const testTab = document.createElement('button');
   testTab.className = `prompt-tab${activeTab === 'test-questions' ? ' prompt-tab--active' : ''}`;
-  testTab.textContent = 'Test Questions';
+  testTab.textContent = tr('options.prompt_modals.review.tab_test_questions') ?? 'Test Questions';
   testTab.dataset['tab'] = 'test-questions';
 
   // Badge for test question count
@@ -199,11 +205,20 @@ function buildPromptTab(): HTMLElement {
   // Model selector row
   section.appendChild(buildModelSelectorRow());
 
-  // Version badge
+  // Version badge — Plan 5 NFR-SEC04: createElement + textContent (was innerHTML)
   if (opts) {
     const versionRow = document.createElement('div');
     versionRow.className = 'version-badge';
-    versionRow.innerHTML = `Generation: <strong>#${opts.generationNumber}</strong>`;
+    const localized = tr('options.prompt_modals.review.generation_badge', { generationNumber: opts.generationNumber });
+    if (localized) {
+      versionRow.textContent = localized;
+    } else {
+      // English fallback uses the original "Generation: #N" structure with strong on number
+      versionRow.appendChild(document.createTextNode('Generation: '));
+      const strong = document.createElement('strong');
+      strong.textContent = `#${opts.generationNumber}`;
+      versionRow.appendChild(strong);
+    }
     section.appendChild(versionRow);
   }
 
@@ -215,11 +230,16 @@ function buildPromptTab(): HTMLElement {
     section.appendChild(notice);
   }
 
-  // Editing indicator
+  // Editing indicator — Plan 5 NFR-SEC04: createElement instead of innerHTML
   if (currentState === 'edit' || currentState === 'edit-diff') {
     const indicator = document.createElement('div');
     indicator.className = 'editing-indicator';
-    indicator.innerHTML = '<span class="editing-dot"></span> Editing — unsaved changes';
+    const dot = document.createElement('span');
+    dot.className = 'editing-dot';
+    indicator.appendChild(dot);
+    indicator.appendChild(document.createTextNode(
+      ' ' + (tr('options.prompt_modals.review.editing_unsaved') ?? 'Editing — unsaved changes')
+    ));
     section.appendChild(indicator);
   }
 
@@ -242,9 +262,12 @@ function buildPromptTab(): HTMLElement {
   charCount.className = 'char-count';
   charCount.id = 'review-char-count';
   const count = displayedPrompt.length;
-  let charText = `${count.toLocaleString()} / ${MAX_CHARS.toLocaleString()} chars`;
+  let charText = tr('options.prompt_modals.review.char_count', {
+    count: count.toLocaleString(),
+    max: MAX_CHARS.toLocaleString(),
+  }) ?? `${count.toLocaleString()} / ${MAX_CHARS.toLocaleString()} chars`;
   if (currentState === 'edit' || currentState === 'edit-diff') {
-    charText += ' \u00B7 modified';
+    charText += tr('options.prompt_modals.review.modified_suffix') ?? ' \u00B7 modified';
   }
   charCount.textContent = charText;
   if (count > MAX_CHARS) charCount.classList.add('error');
@@ -261,7 +284,8 @@ function buildPromptTab(): HTMLElement {
     const compareBtn = document.createElement('button');
     compareBtn.className = 'btn-secondary btn-small';
     compareBtn.id = 'review-compare-prev-btn';
-    compareBtn.textContent = `Compare vs generation #${opts.generationNumber - 1}`;
+    compareBtn.textContent = tr('options.prompt_modals.review.btn_compare_vs', { previous: opts.generationNumber - 1 })
+      ?? `Compare vs generation #${opts.generationNumber - 1}`;
     compareBtn.style.marginTop = 'var(--spacing-sm)';
     section.appendChild(compareBtn);
   }
@@ -275,7 +299,7 @@ function buildModelSelectorRow(): HTMLElement {
 
   const label = document.createElement('label');
   label.className = 'input-label';
-  label.textContent = 'Target Model';
+  label.textContent = tr('options.prompt_modals.review.label_target_model') ?? 'Target Model';
   label.htmlFor = 'review-model-select';
 
   const select = document.createElement('select');
@@ -337,7 +361,7 @@ function buildDiffPanel(): HTMLElement {
 
   const diffLabel = document.createElement('div');
   diffLabel.className = 'diff-panel-label';
-  diffLabel.textContent = 'LIVE DIFF VS GENERATED';
+  diffLabel.textContent = tr('options.prompt_modals.review.diff_label_live') ?? 'LIVE DIFF VS GENERATED';
   panel.appendChild(diffLabel);
 
   const diff = generateDiff(basePrompt, displayedPrompt);
@@ -358,7 +382,8 @@ function buildPreviousGenDiffPanel(previousPrompt: string): HTMLElement {
   const genNum = opts ? opts.generationNumber - 1 : 0;
   const diffLabel = document.createElement('div');
   diffLabel.className = 'diff-panel-label';
-  diffLabel.textContent = `DIFF VS GENERATION #${genNum}`;
+  diffLabel.textContent = tr('options.prompt_modals.review.diff_label_vs_gen', { num: genNum })
+    ?? `DIFF VS GENERATION #${genNum}`;
   panel.appendChild(diffLabel);
 
   const diff = generateDiff(previousPrompt, displayedPrompt);
@@ -407,7 +432,7 @@ function buildTestQuestionsTab(): HTMLElement {
   if (!opts || opts.testQuestions.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'prompt-review-empty';
-    empty.textContent = 'No test questions generated.';
+    empty.textContent = tr('options.prompt_modals.review.empty_no_test_questions') ?? 'No test questions generated.';
     section.appendChild(empty);
     return section;
   }
@@ -416,11 +441,17 @@ function buildTestQuestionsTab(): HTMLElement {
   const silentQs = opts.testQuestions.filter(q => q.expectedBehavior === 'silent');
 
   if (respondQs.length > 0) {
-    section.appendChild(buildQuestionGroup('AUTO-GENERATED — SHOULD RESPOND', respondQs, 0));
+    section.appendChild(buildQuestionGroup(
+      tr('options.prompt_modals.review.group_should_respond') ?? 'AUTO-GENERATED — SHOULD RESPOND',
+      respondQs, 0,
+    ));
   }
 
   if (silentQs.length > 0) {
-    section.appendChild(buildQuestionGroup('AUTO-GENERATED — SHOULD STAY SILENT', silentQs, respondQs.length));
+    section.appendChild(buildQuestionGroup(
+      tr('options.prompt_modals.review.group_should_silent') ?? 'AUTO-GENERATED — SHOULD STAY SILENT',
+      silentQs, respondQs.length,
+    ));
   }
 
   return section;
@@ -459,7 +490,7 @@ function buildQuestionGroup(
 
     const badge = document.createElement('span');
     badge.className = 'test-question-badge';
-    badge.textContent = 'new';
+    badge.textContent = tr('options.prompt_modals.review.badge_new') ?? 'new';
 
     item.appendChild(checkbox);
     item.appendChild(textSpan);
@@ -503,22 +534,23 @@ function buildReviewFooter(): DocumentFragment {
   const refineBtn = document.createElement('button');
   refineBtn.className = 'btn-secondary btn-small';
   refineBtn.id = 'review-refine-btn';
-  refineBtn.textContent = 'Refine...';
+  refineBtn.textContent = tr('options.prompt_modals.review.btn_refine') ?? 'Refine...';
 
   const editBtn = document.createElement('button');
   editBtn.className = 'btn-secondary btn-small';
   editBtn.id = 'review-edit-btn';
-  editBtn.textContent = 'Edit';
+  editBtn.textContent = tr('options.prompt_modals.review.btn_edit') ?? 'Edit';
 
   const testBtn = document.createElement('button');
   testBtn.className = 'btn-secondary btn-small';
   testBtn.id = 'review-test-btn';
-  testBtn.textContent = 'Test...';
+  testBtn.textContent = tr('options.prompt_modals.review.btn_test_dots') ?? 'Test...';
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn-primary btn-small';
   saveBtn.id = 'review-save-btn';
-  saveBtn.textContent = `Save All (v${genNum})`;
+  saveBtn.textContent = tr('options.prompt_modals.review.btn_save_all', { generation: genNum })
+    ?? `Save All (v${genNum})`;
 
   frag.appendChild(refineBtn);
   frag.appendChild(editBtn);
@@ -533,17 +565,17 @@ function buildEditFooter(): DocumentFragment {
   const discardBtn = document.createElement('button');
   discardBtn.className = 'btn-secondary btn-small';
   discardBtn.id = 'review-discard-btn';
-  discardBtn.textContent = 'Discard edits';
+  discardBtn.textContent = tr('options.prompt_modals.review.btn_discard_edits') ?? 'Discard edits';
 
   const testBtn = document.createElement('button');
   testBtn.className = 'btn-secondary btn-small';
   testBtn.id = 'review-test-edited-btn';
-  testBtn.textContent = 'Test this version';
+  testBtn.textContent = tr('options.prompt_modals.review.btn_test_this_version') ?? 'Test this version';
 
   const diffBtn = document.createElement('button');
   diffBtn.className = 'btn-secondary btn-small';
   diffBtn.id = 'review-show-diff-btn';
-  diffBtn.textContent = 'Show diff';
+  diffBtn.textContent = tr('options.prompt_modals.review.btn_show_diff') ?? 'Show diff';
 
   frag.appendChild(discardBtn);
   frag.appendChild(testBtn);
@@ -557,17 +589,17 @@ function buildEditDiffFooter(): DocumentFragment {
   const hideDiffBtn = document.createElement('button');
   hideDiffBtn.className = 'btn-secondary btn-small';
   hideDiffBtn.id = 'review-hide-diff-btn';
-  hideDiffBtn.textContent = 'Hide diff';
+  hideDiffBtn.textContent = tr('options.prompt_modals.review.btn_hide_diff') ?? 'Hide diff';
 
   const testBtn = document.createElement('button');
   testBtn.className = 'btn-secondary btn-small';
   testBtn.id = 'review-test-edited-btn';
-  testBtn.textContent = 'Test this version';
+  testBtn.textContent = tr('options.prompt_modals.review.btn_test_this_version') ?? 'Test this version';
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn-primary btn-small';
   saveBtn.id = 'review-save-edited-btn';
-  saveBtn.textContent = 'Save';
+  saveBtn.textContent = tr('options.prompt_modals.review.btn_save') ?? 'Save';
 
   frag.appendChild(hideDiffBtn);
   frag.appendChild(testBtn);
@@ -581,17 +613,17 @@ function buildTestQuestionsFooter(): DocumentFragment {
   const removeBtn = document.createElement('button');
   removeBtn.className = 'btn-secondary btn-small';
   removeBtn.id = 'review-remove-qs-btn';
-  removeBtn.textContent = 'Remove test Qs';
+  removeBtn.textContent = tr('options.prompt_modals.review.btn_remove_test_qs') ?? 'Remove test Qs';
 
   const testNowBtn = document.createElement('button');
   testNowBtn.className = 'btn-secondary btn-small';
   testNowBtn.id = 'review-test-now-btn';
-  testNowBtn.textContent = 'Test now';
+  testNowBtn.textContent = tr('options.prompt_modals.review.btn_test_now') ?? 'Test now';
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'btn-primary btn-small';
   saveBtn.id = 'review-save-with-qs-btn';
-  saveBtn.textContent = 'Save prompt + test Qs';
+  saveBtn.textContent = tr('options.prompt_modals.review.btn_save_prompt_test_qs') ?? 'Save prompt + test Qs';
 
   frag.appendChild(removeBtn);
   frag.appendChild(testNowBtn);

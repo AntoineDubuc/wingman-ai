@@ -1,0 +1,5 @@
+{
+  "_comment": "Simulates storage state of a user who installed before the localization feature shipped. No installTimestamp or upgradeAcknowledged keys. getState() must return UPGRADE_PENDING.",
+  "apiKey": "test-api-key-redacted",
+  "groqApiKey": "test-groq-key-redacted"
+}

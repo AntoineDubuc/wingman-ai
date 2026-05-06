@@ -5,11 +5,16 @@
  * eliminating the need for a backend server. Users provide their own API key.
  */
 
+import { LOCALE_DEEPGRAM_MODEL } from '../shared/i18n-types';
+import { getActiveLocale } from '../background/sw-locale';
+
 // Deepgram WebSocket endpoint
 const DEEPGRAM_WS_BASE = 'wss://api.deepgram.com/v1/listen';
 
-// Connection parameters — stereo multichannel for dual-capture
-const DEEPGRAM_PARAMS = {
+// Connection parameters — stereo multichannel for dual-capture.
+// Typed as Record<string, string> so model/language/endpointing can be
+// mutated at connect() time (locale-driven routing per ADR-007).
+const DEEPGRAM_PARAMS: Record<string, string> = {
   model: 'nova-3',
   language: 'en',
   punctuate: 'true',
@@ -49,10 +54,17 @@ export type TranscriptCallback = (transcript: Transcript) => void;
 /**
  * DeepgramClient class - manages WebSocket connection to Deepgram
  */
+export type ConnectionStatus = 'lost' | 'reconnecting' | 'reconnected' | 'restored';
+export type ConnectionStatusCallback = (state: ConnectionStatus) => void;
+
 export class DeepgramClient {
   private socket: WebSocket | null = null;
   private isConnected = false;
   private onTranscriptCallback: TranscriptCallback | null = null;
+  // Plan 10 FR-018: connection-status callback fires on unexpected
+  // disconnects and successful reconnects so the SW can broadcast banner
+  // updates to the content script.
+  private onConnectionStatusCallback: ConnectionStatusCallback | null = null;
 
   // Reconnection settings
   private reconnectAttempts = 0;
@@ -80,6 +92,11 @@ export class DeepgramClient {
   /**
    * Set the callback for transcript events
    */
+  /** Plan 10 FR-018: register a callback for connection status changes. */
+  setConnectionStatusCallback(callback: ConnectionStatusCallback): void {
+    this.onConnectionStatusCallback = callback;
+  }
+
   setTranscriptCallback(callback: TranscriptCallback): void {
     this.onTranscriptCallback = callback;
   }
@@ -119,6 +136,12 @@ export class DeepgramClient {
       DEEPGRAM_PARAMS.endpointing = endpointingMs;
       this.activeEndpointingMs = Number(endpointingMs) || 700;
       console.debug(`[DeepgramClient] Endpointing: ${endpointingMs}ms`);
+
+      // Apply locale-based STT model and language routing (ADR-007).
+      // Read locale at connect() time so live preference changes are picked up.
+      const locale = getActiveLocale();
+      DEEPGRAM_PARAMS.model = LOCALE_DEEPGRAM_MODEL[locale];
+      DEEPGRAM_PARAMS.language = locale;
     } catch (error) {
       console.error('[DeepgramClient] Failed to get API key:', error);
       return false;
@@ -141,9 +164,14 @@ export class DeepgramClient {
 
         this.socket.onopen = () => {
           console.debug('[DeepgramClient] Connected');
+          const wasReconnect = this.reconnectAttempts > 0;
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
+          // Plan 10 FR-018: notify on successful reconnect
+          if (wasReconnect) {
+            this.onConnectionStatusCallback?.('reconnected');
+          }
           resolve(true);
         };
 
@@ -161,6 +189,8 @@ export class DeepgramClient {
 
           // Attempt reconnection if not intentionally closed
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            // Plan 10 FR-018: notify on unexpected drop
+            this.onConnectionStatusCallback?.(this.reconnectAttempts === 0 ? 'lost' : 'reconnecting');
             this.scheduleReconnect();
           }
         };

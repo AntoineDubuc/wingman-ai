@@ -10,6 +10,8 @@ const inputs: Record<string, string> = {
   popup: resolve(__dirname, 'src/popup/popup.ts'),
   offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
   tutorials: resolve(__dirname, 'src/tutorials/index.html'),
+  // F3-T4: mic-permission locale companion — Vite-processed TS so ES module imports work
+  'mic-permission-locale': resolve(__dirname, 'src/mic-permission-locale.ts'),
 };
 
 if (process.env.NODE_ENV !== 'production') {

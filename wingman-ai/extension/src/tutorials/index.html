@@ -283,6 +283,22 @@
       font-size: 0.8rem;
     }
 
+    .locale-notice-banner {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    [data-theme="dark"] .locale-notice-banner {
+      background: #3d2e00;
+      color: #ffd666;
+      border-color: #7a6100;
+    }
+
     /* Responsive */
     @media (max-width: 640px) {
       .options-header {
@@ -337,6 +353,8 @@
   </header>
 
   <main>
+    <!-- OQ-02: English-only notice for non-English locales, injected by tutorials.ts -->
+    <div id="english-only-banner" class="locale-notice-banner" style="display:none" role="note" aria-live="polite"></div>
     <div class="section-title">Getting Started</div>
     <div class="tutorials-grid">
 

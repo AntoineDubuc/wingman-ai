@@ -1,0 +1,155 @@
+/**
+ * Tests for installation-state.ts — InstallationStateService
+ *
+ * Covers all 6 acceptance criteria for the state machine:
+ * 1. getState() returns UPGRADE_PENDING when installTimestamp absent
+ * 2. getState() returns UPGRADE_PENDING when installTimestamp present but upgradeAcknowledged absent
+ * 3. getState() returns STEADY_STATE when both present and upgradeAcknowledged=true
+ * 4. recordInstall() sets installTimestamp to a number
+ * 5. recordInstall() is idempotent — second call does not change timestamp
+ * 6. acknowledgeUpgrade() sets upgradeAcknowledged=true
+ *
+ * Also tests v1-storage-snapshot fixture (pre-localization user → UPGRADE_PENDING).
+ *
+ * Task F4-T1
+ */
+
+import { describe, it, expect, vi } from 'vitest';
+import { installationStateService } from '../src/services/installation-state';
+import v1StorageSnapshot from './fixtures/v1-storage-snapshot.json';
+
+describe('InstallationStateService — getState()', () => {
+  it('AC1: returns UPGRADE_PENDING when storage is empty (no installTimestamp)', async () => {
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
+
+  it('AC2: returns UPGRADE_PENDING when installTimestamp is present but upgradeAcknowledged is absent', async () => {
+    await chrome.storage.local.set({ installTimestamp: Date.now() });
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
+
+  it('AC3: returns STEADY_STATE when installTimestamp present and upgradeAcknowledged=true', async () => {
+    await chrome.storage.local.set({ installTimestamp: Date.now(), upgradeAcknowledged: true });
+    const state = await installationStateService.getState();
+    expect(state).toBe('STEADY_STATE');
+  });
+
+  it('returns UPGRADE_PENDING when installTimestamp present and upgradeAcknowledged=false', async () => {
+    await chrome.storage.local.set({ installTimestamp: Date.now(), upgradeAcknowledged: false });
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
+});
+
+describe('InstallationStateService — recordInstall()', () => {
+  it('AC4: sets installTimestamp to a number in local storage', async () => {
+    const before = Date.now();
+    await installationStateService.recordInstall();
+    const after = Date.now();
+
+    const result = await chrome.storage.local.get('installTimestamp');
+    expect(typeof result.installTimestamp).toBe('number');
+    expect(result.installTimestamp as number).toBeGreaterThanOrEqual(before);
+    expect(result.installTimestamp as number).toBeLessThanOrEqual(after);
+  });
+
+  it('AC5: is idempotent — second call does not overwrite existing timestamp', async () => {
+    await installationStateService.recordInstall();
+    const result1 = await chrome.storage.local.get('installTimestamp');
+    const firstTimestamp = result1.installTimestamp;
+
+    // Small delay to ensure Date.now() would differ if re-written
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    await installationStateService.recordInstall();
+    const result2 = await chrome.storage.local.get('installTimestamp');
+    expect(result2.installTimestamp).toBe(firstTimestamp);
+  });
+});
+
+describe('InstallationStateService — acknowledgeUpgrade()', () => {
+  it('AC6: sets upgradeAcknowledged to true in local storage', async () => {
+    await installationStateService.acknowledgeUpgrade();
+    const result = await chrome.storage.local.get('upgradeAcknowledged');
+    expect(result.upgradeAcknowledged).toBe(true);
+  });
+
+  it('transitions state to STEADY_STATE after recordInstall + acknowledgeUpgrade', async () => {
+    await installationStateService.recordInstall();
+    await installationStateService.acknowledgeUpgrade();
+    const state = await installationStateService.getState();
+    expect(state).toBe('STEADY_STATE');
+  });
+});
+
+describe('InstallationStateService — v1 storage fixture (pre-localization user)', () => {
+  it('returns UPGRADE_PENDING for a user who installed before localization shipped', async () => {
+    // Populate storage with the v1 snapshot (has apiKey/groqApiKey but no installTimestamp/upgradeAcknowledged)
+    const snapshotEntries = v1StorageSnapshot as Record<string, string>;
+    const storableEntries: Record<string, string> = {};
+    for (const [key, value] of Object.entries(snapshotEntries)) {
+      if (!key.startsWith('_')) {
+        storableEntries[key] = value;
+      }
+    }
+    await chrome.storage.local.set(storableEntries);
+
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
+});
+
+describe('InstallationStateService — FRESH_INSTALL branch (Plan 1 Task 4)', () => {
+  it("AC-FI-1: returns FRESH_INSTALL after recordInstall('install') without acknowledge", async () => {
+    await installationStateService.recordInstall('install');
+    const state = await installationStateService.getState();
+    expect(state).toBe('FRESH_INSTALL');
+  });
+
+  it("AC-FI-2: returns UPGRADE_PENDING after recordInstall('update') without acknowledge", async () => {
+    await installationStateService.recordInstall('update');
+    const state = await installationStateService.getState();
+    expect(state).toBe('UPGRADE_PENDING');
+  });
+
+  it('AC-FI-3: recordInstall stores both installTimestamp and installReason atomically (single chrome.storage.local.set call)', async () => {
+    // Spy on chrome.storage.local.set to capture call count and payload shape
+    const setSpy = vi.spyOn(chrome.storage.local, 'set');
+
+    await installationStateService.recordInstall('install');
+
+    // Atomic write: exactly one set() call with BOTH fields in the same payload
+    expect(setSpy).toHaveBeenCalledTimes(1);
+    const payload = setSpy.mock.calls[0]![0] as Record<string, unknown>;
+    expect(payload).toHaveProperty('installTimestamp');
+    expect(payload).toHaveProperty('installReason', 'install');
+    expect(typeof payload.installTimestamp).toBe('number');
+
+    setSpy.mockRestore();
+  });
+
+  it('AC-FI-4: recordInstall is idempotent on installReason — second call with different reason does not overwrite', async () => {
+    // First call records 'install' with timestamp T1
+    await installationStateService.recordInstall('install');
+    const r1 = await chrome.storage.local.get(['installTimestamp', 'installReason']);
+    const t1 = r1.installTimestamp;
+    expect(r1.installReason).toBe('install');
+
+    // Small delay to ensure Date.now() would differ if re-written
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    // Second call with a DIFFERENT reason must be a no-op on both fields
+    await installationStateService.recordInstall('update');
+    const r2 = await chrome.storage.local.get(['installTimestamp', 'installReason']);
+
+    // Neither field overwritten — first call wins
+    expect(r2.installTimestamp).toBe(t1);
+    expect(r2.installReason).toBe('install');
+
+    // State remains FRESH_INSTALL (would be UPGRADE_PENDING if reason had been overwritten)
+    const state = await installationStateService.getState();
+    expect(state).toBe('FRESH_INSTALL');
+  });
+});

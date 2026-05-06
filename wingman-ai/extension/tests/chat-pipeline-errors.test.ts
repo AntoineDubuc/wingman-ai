@@ -124,7 +124,8 @@ describe('Cost tracking + error handling — Task 5', () => {
 
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
-    expect(errorCall[0].text).toContain('API key is invalid or missing');
+    // Plan 10: classifyError now returns localized text from errors.api_key_missing
+    expect(errorCall[0].text).toContain('API key not configured');
     expect(mockAddLLMUsage).not.toHaveBeenCalled();
   });
 
@@ -145,7 +146,8 @@ describe('Cost tracking + error handling — Task 5', () => {
 
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
-    expect(errorCall[0].text).toContain('Rate limit reached');
+    // Plan 10: classifyError now returns localized text from errors.gemini.rate_limit
+    expect(errorCall[0].text).toContain('rate limit reached');
   });
 
   // -------------------------------------------------------------------------
@@ -165,7 +167,8 @@ describe('Cost tracking + error handling — Task 5', () => {
 
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
-    expect(errorCall[0].text).toContain('temporarily unavailable');
+    // Plan 10: classifyError now returns localized text from errors.gemini.api_failure
+    expect(errorCall[0].text).toContain('service unavailable');
   });
 
   // -------------------------------------------------------------------------
@@ -192,7 +195,8 @@ describe('Cost tracking + error handling — Task 5', () => {
     const errorCall = calls.find((c: any) => c[0].streaming === false);
     // Should contain both partial text and warning
     expect(errorCall[0].text).toContain('Partial response');
-    expect(errorCall[0].text).toContain('connection was interrupted');
+    // Plan 10: localized text — errors.session_interrupted = "Session interrupted unexpectedly."
+    expect(errorCall[0].text).toContain('Session interrupted');
     expect(mockAddLLMUsage).not.toHaveBeenCalled();
   });
 
@@ -220,7 +224,8 @@ describe('Cost tracking + error handling — Task 5', () => {
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
     expect(errorCall[0].text).toContain('started');
-    expect(errorCall[0].text).toContain('connection was interrupted');
+    // Plan 10: localized — errors.session_interrupted = "Session interrupted unexpectedly."
+    expect(errorCall[0].text).toContain('Session interrupted');
   });
 
   // -------------------------------------------------------------------------
@@ -267,7 +272,8 @@ describe('Cost tracking + error handling — Task 5', () => {
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
     expect(errorCall[0].text).toContain('Something went wrong');
-    expect(errorCall[0].text).toContain('console');
+    // Plan 10: localized errors.generic doesn't include "console" — that hint
+    // moved to the console.error log only. The user-visible message is generic.
 
     errorSpy.mockRestore();
   });
@@ -322,7 +328,8 @@ describe('Cost tracking + error handling — Task 5', () => {
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCalls = calls.filter((c: any) => c[0].streaming === false);
     expect(errorCalls[0][0].text).toContain('API key');
-    expect(errorCalls[1][0].text).toContain('Rate limit');
+    // Plan 10: localized — errors.gemini.rate_limit = "Gemini rate limit reached..."
+    expect(errorCalls[1][0].text).toContain('rate limit');
   });
 
   // -------------------------------------------------------------------------
@@ -342,7 +349,8 @@ describe('Cost tracking + error handling — Task 5', () => {
 
     const calls = fakeView.renderAssistantMessage.mock.calls;
     const errorCall = calls.find((c: any) => c[0].streaming === false);
-    expect(errorCall[0].text).toContain("couldn't prepare your question");
+    // Plan 10: assembler errors now use the generic localized fallback
+    expect(errorCall[0].text).toContain('Something went wrong');
     expect(mockAddLLMUsage).not.toHaveBeenCalled();
   });
 });

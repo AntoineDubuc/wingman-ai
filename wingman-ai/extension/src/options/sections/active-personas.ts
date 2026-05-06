@@ -90,7 +90,11 @@ export class ActivePersonasSection {
     if (checked) {
       // Adding persona
       if (this.activeIds.length >= MAX_ACTIVE_PERSONAS) {
-        this.ctx.showToast(`Maximum ${MAX_ACTIVE_PERSONAS} personas can be active`, 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.active_personas_max', { count: MAX_ACTIVE_PERSONAS })
+            ?? `Maximum ${MAX_ACTIVE_PERSONAS} personas can be active`,
+          'error',
+        );
         this.render(); // Re-render to reset checkbox state
         return;
       }
@@ -100,7 +104,10 @@ export class ActivePersonasSection {
     } else {
       // Removing persona
       if (this.activeIds.length <= 1) {
-        this.ctx.showToast('At least one persona must be active', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.active_personas_min') ?? 'At least one persona must be active',
+          'error',
+        );
         this.render();
         return;
       }
@@ -112,7 +119,10 @@ export class ActivePersonasSection {
       this.render();
     } catch (error) {
       console.error('Failed to save active personas:', error);
-      this.ctx.showToast('Failed to save active personas', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save active personas',
+        'error',
+      );
     }
   }
 

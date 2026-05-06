@@ -16,6 +16,8 @@ import {
   type ConclavePreset,
 } from '../shared/persona';
 import { getIconUrl } from '../shared/persona-icons';
+import { initPopupI18n, handlePopupStorageChange, renderPopupStrings } from './popup-locale';
+import type { i18n as I18n } from 'i18next';
 
 class PopupController {
   private elements: {
@@ -43,6 +45,10 @@ class PopupController {
   private presetDropdownOpen = false;
   private hydraTooltipShown = false;
   private dropdownCloseTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Plan 4: i18n is set by init() before any UI render runs.
+  // The !-non-null assertion is safe because every method that reads i18n is
+  // reachable only via init() or after.
+  private i18n!: I18n;
 
   constructor() {
     this.elements = {
@@ -65,6 +71,10 @@ class PopupController {
   }
 
   private async init(): Promise<void> {
+    // Plan 4 FR-004: initialize i18n FIRST so all subsequent UI renders use translated strings.
+    const i18nResult = await initPopupI18n();
+    this.i18n = i18nResult.i18n;
+
     await this.loadTheme();
     await this.checkHydraTooltip();
     await this.checkApiKeys();
@@ -72,6 +82,26 @@ class PopupController {
     await this.loadPersonas();
     this.attachEventListeners();
     this.startStatusPolling();
+    this.registerLocaleChangeListener();
+  }
+
+  // Plan 4 FR-004: cross-context locale change listener (popup honors FR-006 session lock).
+  private registerLocaleChangeListener(): void {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      void handlePopupStorageChange(
+        changes,
+        areaName,
+        this.i18n,
+        this.isSessionActive,
+        (i18n) => {
+          this.i18n = i18n;
+          renderPopupStrings(i18n);
+          // Re-run state-dependent renders so the new locale takes effect immediately.
+          void this.updateStatus();
+          void this.checkApiKeys();
+        },
+      );
+    });
   }
 
   private async loadTheme(): Promise<void> {
@@ -117,11 +147,11 @@ class PopupController {
 
     if (this.hasApiKeys) {
       apiDot.className = 'status-dot connected';
-      apiText.textContent = 'Configured';
+      apiText.textContent = this.i18n.t('popup.api_status.configured');
       this.elements.controlsHint.style.display = 'none';
     } else {
       apiDot.className = 'status-dot';
-      apiText.textContent = 'Not Configured';
+      apiText.textContent = this.i18n.t('popup.api_status.not_configured');
       this.elements.controlsHint.style.display = 'block';
     }
 
@@ -138,15 +168,17 @@ class PopupController {
 
     if (response?.isSessionActive || response?.isCapturing) {
       sessionDot.className = 'status-dot connected';
-      sessionText.textContent = 'Active';
+      sessionText.textContent = this.i18n.t('popup.session_status.active');
       this.isSessionActive = true;
     } else {
       sessionDot.className = 'status-dot';
-      sessionText.textContent = 'Inactive';
+      sessionText.textContent = this.i18n.t('popup.session_status.inactive');
       this.isSessionActive = false;
     }
 
-    this.elements.sessionBtn.textContent = this.isSessionActive ? 'Stop Session' : 'Start Session';
+    this.elements.sessionBtn.textContent = this.isSessionActive
+      ? this.i18n.t('popup.stop_session')
+      : this.i18n.t('popup.start_session');
     this.elements.sessionBtn.classList.toggle('active', this.isSessionActive);
     this.elements.sessionBtn.disabled = !this.isSessionActive && !this.hasApiKeys;
 
@@ -311,10 +343,12 @@ class PopupController {
       })
       .join('');
 
+    const presetLockedTitle = this.escapeHtml(this.i18n.t('popup.personas.preset_locked_tooltip'));
+    const presetDropdownLabel = this.escapeHtml(this.i18n.t('popup.personas.preset_dropdown_label'));
     presetsContainer.innerHTML = `
       <div class="preset-dropdown-wrapper">
-        <button class="preset-dropdown-trigger${this.isSessionActive ? ' disabled' : ''}" id="preset-trigger"${this.isSessionActive ? ' disabled title="Stop session to change presets"' : ''}>
-          <span class="preset-dropdown-label">Conclave presets</span>
+        <button class="preset-dropdown-trigger${this.isSessionActive ? ' disabled' : ''}" id="preset-trigger"${this.isSessionActive ? ` disabled title="${presetLockedTitle}"` : ''}>
+          <span class="preset-dropdown-label">${presetDropdownLabel}</span>
           <svg class="preset-dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
         <div class="preset-dropdown-menu" id="preset-menu" style="display: none;">
@@ -409,10 +443,11 @@ class PopupController {
     for (const persona of activePersonas) {
       const chip = document.createElement('div');
       chip.className = 'persona-chip';
+      const removeTitle = this.escapeHtml(this.i18n.t(this.isSessionActive ? 'popup.personas.locked_tooltip' : 'popup.personas.remove'));
       chip.innerHTML = `
         ${this.personaIndicator(persona, 14, 'persona-chip-dot')}
         <span class="persona-chip-name">${this.escapeHtml(persona.name)}</span>
-        <button class="persona-chip-remove" data-id="${persona.id}" title="${this.isSessionActive ? 'Stop session to change personas' : 'Remove'}"${this.isSessionActive || activePersonas.length <= 1 ? ' disabled' : ''}>×</button>
+        <button class="persona-chip-remove" data-id="${persona.id}" title="${removeTitle}"${this.isSessionActive || activePersonas.length <= 1 ? ' disabled' : ''}>×</button>
       `;
 
       const removeBtn = chip.querySelector('.persona-chip-remove') as HTMLButtonElement;
@@ -426,13 +461,16 @@ class PopupController {
     const hasInactive = this.allPersonas.length > this.activeIds.length;
 
     if (atMax) {
-      this.elements.personaAddRow.innerHTML = '<div class="persona-max-message">Max 4 personas reached</div>';
+      const maxMessage = this.escapeHtml(this.i18n.t('popup.personas.max_reached', { max: MAX_ACTIVE_PERSONAS }));
+      this.elements.personaAddRow.innerHTML = `<div class="persona-max-message">${maxMessage}</div>`;
     } else if (!hasInactive) {
       this.elements.personaAddRow.style.display = 'none';
     } else {
       this.elements.personaAddRow.style.display = 'block';
+      const addLockedTitle = this.escapeHtml(this.i18n.t('popup.personas.add_persona_locked_tooltip'));
+      const addLabel = this.escapeHtml(this.i18n.t('popup.personas.add_persona'));
       this.elements.personaAddRow.innerHTML = `
-        <button class="persona-add-btn" id="persona-add-btn"${this.isSessionActive ? ' disabled title="Stop session to change personas"' : ''}>+ Add persona</button>
+        <button class="persona-add-btn" id="persona-add-btn"${this.isSessionActive ? ` disabled title="${addLockedTitle}"` : ''}>${addLabel}</button>
         <div class="persona-dropdown" id="persona-dropdown" style="display: none;"></div>
       `;
       // Re-bind references
@@ -441,9 +479,9 @@ class PopupController {
       this.elements.personaAddBtn.addEventListener('click', () => this.toggleDropdown());
     }
 
-    // Status text
+    // Status text — uses pluralized translation (one/other)
     const count = this.activeIds.length;
-    this.elements.personaStatus.textContent = `${count} active`;
+    this.elements.personaStatus.textContent = this.i18n.t('popup.personas.count_active', { count });
   }
 
   private toggleDropdown(): void {
@@ -532,9 +570,11 @@ class PopupController {
 
       const tooltip = document.createElement('div');
       tooltip.className = 'hydra-tooltip';
+      const hydraNewLabel = this.escapeHtml(this.i18n.t('popup.hydra_tooltip.new_label'));
+      const hydraBody = this.escapeHtml(this.i18n.t('popup.hydra_tooltip.body'));
       tooltip.innerHTML = `
         <div style="position: absolute; bottom: calc(100% + 8px); left: 0; right: 0; background: var(--color-text); color: var(--color-bg); padding: 8px 12px; border-radius: 6px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 200;">
-          <strong>New:</strong> Activate multiple personas for expert-panel mode.
+          <strong>${hydraNewLabel}</strong> ${hydraBody}
           <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid var(--color-text);"></div>
         </div>
       `;

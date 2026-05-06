@@ -41,6 +41,12 @@ export interface ChatModalOptions {
   onGenerate?: (params: unknown) => void;
   onClose?: () => void;
   showConfirmModal?: (title: string, message: string, onConfirm: () => void) => void;
+  /** Plan 5: localized translation function from OptionsContext. */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function tr(key: string, opts?: Record<string, unknown>): string | null {
+  return modalOptions?.t?.(key, opts) ?? null;
 }
 
 // === STATE ===
@@ -118,7 +124,8 @@ export function openChatModal(options: ChatModalOptions): void {
   // Add initial bot message
   addMessage({
     role: 'bot',
-    content: 'What will this persona help you with? Describe the use case, and I\'ll generate an optimized system prompt.',
+    content: tr('options.prompt_modals.chat.initial_bot_message')
+      ?? "What will this persona help you with? Describe the use case, and I'll generate an optimized system prompt.",
   });
 
   renderFooter('discovery');
@@ -192,9 +199,11 @@ export function renderFooter(state: ChatFooterState, context?: { versionNumber?:
 
   switch (state) {
     case 'discovery': {
+      const refine = tr('options.prompt_modals.chat.btn_refine') ?? 'Refine...';
+      const generate = tr('options.prompt_modals.chat.btn_generate') ?? 'Generate Prompts';
       footer.innerHTML = `
-        <button class="btn-secondary btn-small" id="chat-refine-btn">Refine...</button>
-        <button class="btn-primary" id="chat-generate-btn">Generate Prompts</button>
+        <button class="btn-secondary btn-small" id="chat-refine-btn">${refine}</button>
+        <button class="btn-primary" id="chat-generate-btn">${generate}</button>
       `;
       document.getElementById('chat-generate-btn')?.addEventListener('click', () => {
         modalOptions?.onGenerate?.(null);
@@ -206,9 +215,11 @@ export function renderFooter(state: ChatFooterState, context?: { versionNumber?:
     }
     case 'reenter': {
       const vNum = context?.versionNumber ?? '?';
+      const cancel = tr('options.prompt_modals.chat.btn_cancel') ?? 'Cancel';
+      const generateV = tr('options.prompt_modals.chat.btn_generate_v', { version: vNum }) ?? `Generate v${vNum}`;
       footer.innerHTML = `
-        <button class="btn-secondary" id="chat-cancel-btn">Cancel</button>
-        <button class="btn-primary" id="chat-generate-btn">Generate v${vNum}</button>
+        <button class="btn-secondary" id="chat-cancel-btn">${cancel}</button>
+        <button class="btn-primary" id="chat-generate-btn">${generateV}</button>
       `;
       document.getElementById('chat-generate-btn')?.addEventListener('click', () => {
         modalOptions?.onGenerate?.(null);
@@ -217,17 +228,20 @@ export function renderFooter(state: ChatFooterState, context?: { versionNumber?:
       break;
     }
     case 'generating': {
+      const generating = tr('options.prompt_modals.chat.btn_generating') ?? 'Generating...';
       footer.innerHTML = `
         <button class="btn-primary" disabled>
-          <span class="spinner-inline"></span> Generating...
+          <span class="spinner-inline"></span> ${generating}
         </button>
       `;
       break;
     }
     case 'error': {
+      const close = tr('options.prompt_modals.chat.btn_close') ?? 'Close';
+      const retry = tr('options.prompt_modals.chat.btn_retry') ?? 'Retry';
       footer.innerHTML = `
-        <button class="btn-secondary" id="chat-close-btn">Close</button>
-        <button class="btn-primary" id="chat-retry-btn">Retry</button>
+        <button class="btn-secondary" id="chat-close-btn">${close}</button>
+        <button class="btn-primary" id="chat-retry-btn">${retry}</button>
       `;
       document.getElementById('chat-close-btn')?.addEventListener('click', handleClose);
       document.getElementById('chat-retry-btn')?.addEventListener('click', () => {
@@ -236,10 +250,13 @@ export function renderFooter(state: ChatFooterState, context?: { versionNumber?:
       break;
     }
     case 'template': {
+      const back = tr('options.prompt_modals.chat.btn_back_to_chat') ?? 'Back to Chat';
+      const useAsis = tr('options.prompt_modals.chat.btn_use_asis') ?? 'Use as-is';
+      const customize = tr('options.prompt_modals.chat.btn_customize') ?? 'Customize this';
       footer.innerHTML = `
-        <button class="btn-secondary" id="chat-back-btn">Back to Chat</button>
-        <button class="btn-secondary" id="chat-use-asis-btn">Use as-is</button>
-        <button class="btn-primary" id="chat-customize-btn">Customize this</button>
+        <button class="btn-secondary" id="chat-back-btn">${back}</button>
+        <button class="btn-secondary" id="chat-use-asis-btn">${useAsis}</button>
+        <button class="btn-primary" id="chat-customize-btn">${customize}</button>
       `;
       document.getElementById('chat-back-btn')?.addEventListener('click', () => {
         onTemplateActionCallback?.('back');
@@ -285,7 +302,17 @@ export function showTemplatePreview(templateName: string, promptText: string): v
 
   const header = document.createElement('div');
   header.className = 'chat-template-preview-header';
-  header.innerHTML = `<strong>${templateName}</strong> <span class="chat-template-preview-tag">Template</span>`;
+  // Plan 5 NFR-SEC04: build via createElement+textContent (templateName is
+  // user-controlled persona-template label) instead of innerHTML interpolation.
+  const templateLabel = tr('options.prompt_modals.chat.template_tag') ?? 'Template';
+  const nameStrong = document.createElement('strong');
+  nameStrong.textContent = templateName;
+  const tagSpan = document.createElement('span');
+  tagSpan.className = 'chat-template-preview-tag';
+  tagSpan.textContent = templateLabel;
+  header.appendChild(nameStrong);
+  header.appendChild(document.createTextNode(' '));
+  header.appendChild(tagSpan);
 
   const content = document.createElement('div');
   content.className = 'chat-template-preview-content';
@@ -299,12 +326,14 @@ export function showTemplatePreview(templateName: string, promptText: string): v
   if (isLong) {
     const expandBtn = document.createElement('button');
     expandBtn.className = 'chat-template-expand-btn';
-    expandBtn.textContent = 'Show full prompt';
+    const showFullText = tr('options.prompt_modals.chat.show_full_prompt') ?? 'Show full prompt';
+    const showLessText = tr('options.prompt_modals.chat.show_less') ?? 'Show less';
+    expandBtn.textContent = showFullText;
     let expanded = false;
     expandBtn.addEventListener('click', () => {
       expanded = !expanded;
       content.textContent = expanded ? promptText : promptText.slice(0, 500) + '...';
-      expandBtn.textContent = expanded ? 'Show less' : 'Show full prompt';
+      expandBtn.textContent = expanded ? showLessText : showFullText;
     });
     previewDiv.appendChild(expandBtn);
   }
@@ -466,8 +495,9 @@ function handleClose(): void {
 
   if (hasConversation && modalOptions?.showConfirmModal) {
     modalOptions.showConfirmModal(
-      'Discard conversation?',
-      'Your discovery conversation will be lost. You can restart the assistant anytime.',
+      tr('options.prompt_modals.chat.discard_modal_title') ?? 'Discard conversation?',
+      tr('options.prompt_modals.chat.discard_modal_body')
+        ?? 'Your discovery conversation will be lost. You can restart the assistant anytime.',
       () => {
         closeChatModal();
         onClose?.();

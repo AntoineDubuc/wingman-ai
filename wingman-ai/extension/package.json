@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
-    "build": "tsc && vite build",
-    "build:prod": "tsc && vite build --mode production",
+    "prepare": "cd ../.. && husky",
+    "build": "npx tsx scripts/sanitize-locale-files.ts && npx tsx scripts/check-i18n-keys.ts && tsc && vite build",
+    "build:prod": "npx tsx scripts/sanitize-locale-files.ts && npx tsx scripts/check-i18n-keys.ts && tsc && vite build --mode production",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,html}\"",
@@ -15,7 +16,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "clean": "rm -rf dist"
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:update": "playwright test --config=playwright.config.ts --update-snapshots",
+    "clean": "rm -rf dist",
+    "unicode-check": "npx tsx scripts/sanitize-locale-files.ts",
+    "precommit": "npx tsx scripts/sanitize-locale-files.ts"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
@@ -28,6 +33,7 @@
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.2",
     "mock-socket": "^9.3.1",
     "playwright": "^1.58.1",
@@ -40,6 +46,7 @@
     "vitest-websocket-mock": "^0.5.0"
   },
   "dependencies": {
+    "i18next": "^23.16.8",
     "idb": "^8.0.3",
     "marked": "^17.0.1",
     "pdfjs-dist": "^5.4.530",

@@ -118,7 +118,10 @@ export class WebSearchSection {
       await chrome.storage.local.set({ [STORAGE_KEY_WEB_SEARCH_API_KEY]: key });
     } catch (error) {
       console.error('Failed to save web search API key:', error);
-      this.ctx.showToast('Failed to save API key', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save API key',
+        'error',
+      );
     }
   }
 
@@ -131,7 +134,10 @@ export class WebSearchSection {
       this.updateUsageDisplay(result[STORAGE_KEY_WEB_SEARCH_COUNTER] as DailyCounter | undefined, cap);
     } catch (error) {
       console.error('Failed to save daily cap:', error);
-      this.ctx.showToast('Failed to save daily cap', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save daily cap',
+        'error',
+      );
     }
   }
 
@@ -139,25 +145,35 @@ export class WebSearchSection {
     const apiKey = this.apiKeyInput?.value?.trim() || '';
 
     if (!apiKey) {
-      this.showTestStatus('API key required', 'error');
+      this.showTestStatus(
+        this.ctx.t?.('options.toasts.api_key_required', { provider: 'Brave' }) ?? 'API key required',
+        'error',
+      );
       return;
     }
 
     if (this.testBtn) {
       this.testBtn.disabled = true;
-      this.testBtn.textContent = 'Testing...';
+      this.testBtn.textContent = this.ctx.t?.('options.html.langbuilder.testing') ?? 'Testing...';
     }
 
     try {
       const results = await webSearchTestCall(apiKey, 'wingman test');
-      this.showTestStatus(`Connected — ${results.length} results`, 'success');
+      this.showTestStatus(
+        this.ctx.t?.('options.setup.api_keys.test_pass') ?? `Connected — ${results.length} results`,
+        'success',
+      );
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      this.showTestStatus(msg, 'error');
+      // Plan 10 FR-017: localized primary + raw provider error in monospace.
+      const raw = error instanceof Error ? error.message : 'Unknown error';
+      const localized = this.ctx.t?.('errors.brave.api_failure') ?? 'Web search unavailable for this query.';
+      this.showTestStatus(localized, 'error');
+      // Also surface the raw error via the global toast for users who miss the inline status.
+      this.ctx.showToast(localized, 'error', raw);
     } finally {
       if (this.testBtn) {
         this.testBtn.disabled = false;
-        this.testBtn.textContent = 'Test Connection';
+        this.testBtn.textContent = this.ctx.t?.('options.html.websearch.test_button') ?? 'Test Connection';
       }
     }
   }

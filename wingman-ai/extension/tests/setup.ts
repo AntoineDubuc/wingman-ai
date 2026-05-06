@@ -33,6 +33,7 @@ const chromeMock = {
     getURL: fakeBrowser.runtime.getURL,
     sendMessage: vi.fn(),
     onMessage: fakeBrowser.runtime.onMessage,
+    onInstalled: fakeBrowser.runtime.onInstalled,
     openOptionsPage: vi.fn(),
   },
   permissions: {
@@ -54,6 +55,48 @@ const chromeMock = {
     create: vi.fn(),
     query: vi.fn().mockResolvedValue([]),
     sendMessage: vi.fn(),
+    onRemoved: {
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      hasListener: vi.fn().mockReturnValue(false),
+    },
+    onUpdated: {
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      hasListener: vi.fn().mockReturnValue(false),
+    },
+  },
+  alarms: {
+    create: vi.fn(),
+    clear: vi.fn(),
+    clearAll: vi.fn(),
+    get: vi.fn(),
+    getAll: vi.fn().mockResolvedValue([]),
+    onAlarm: {
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      hasListener: vi.fn().mockReturnValue(false),
+    },
+  },
+  offscreen: {
+    createDocument: vi.fn().mockResolvedValue(undefined),
+    closeDocument: vi.fn().mockResolvedValue(undefined),
+    hasDocument: vi.fn().mockResolvedValue(false),
+    Reason: { USER_MEDIA: 'USER_MEDIA', AUDIO_PLAYBACK: 'AUDIO_PLAYBACK' },
+  },
+  windows: {
+    create: vi.fn().mockResolvedValue({ id: 1 }),
+    remove: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue(undefined),
+    getCurrent: vi.fn().mockResolvedValue({ id: 1 }),
+    onRemoved: {
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+    },
+  },
+  scripting: {
+    insertCSS: vi.fn().mockResolvedValue(undefined),
+    executeScript: vi.fn().mockResolvedValue([]),
   },
 };
 

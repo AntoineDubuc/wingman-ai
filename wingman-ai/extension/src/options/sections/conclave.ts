@@ -71,7 +71,8 @@ export class ConclaveSection {
     const activePersonas = this.allPersonas.filter((p) => this.activeIds.includes(p.id));
 
     if (activePersonas.length === 0) {
-      this.leaderSelect.innerHTML = '<option value="">No active personas</option>';
+      const noActiveLabel = this.escapeHtml(this.ctx.t?.('options.conclave.no_active_personas') ?? 'No active personas');
+      this.leaderSelect.innerHTML = `<option value="">${noActiveLabel}</option>`;
       this.leaderSelect.disabled = true;
       return;
     }
@@ -94,10 +95,16 @@ export class ConclaveSection {
     try {
       await setConclaveLeaderId(newLeaderId);
       this.leaderId = newLeaderId;
-      this.ctx.showToast('Conclave leader updated', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.conclave_leader_updated') ?? 'Conclave leader updated',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to set conclave leader:', error);
-      this.ctx.showToast('Failed to update leader', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to update leader',
+        'error',
+      );
     }
   }
 
@@ -159,11 +166,21 @@ export class ConclaveSection {
     try {
       const result = await activatePreset(id);
       if (result.missingIds.length > 0) {
-        this.ctx.showToast(`Activated (${result.missingIds.length} deleted persona(s) skipped)`, 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.conclave_preset_activated_with_missing', { count: result.missingIds.length })
+            ?? `Activated (${result.missingIds.length} deleted persona(s) skipped)`,
+          'success',
+        );
       } else {
-        this.ctx.showToast('Preset activated', 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.conclave_preset_activated') ?? 'Preset activated',
+          'success',
+        );
       }
     } catch (error) {
+      // Pre-existing error.message strings from setActivePresetId() are NOT
+      // localized here — they originate in shared/persona.ts and may include
+      // dynamic content (preset IDs, etc.). Keep raw for debuggability.
       const msg = error instanceof Error ? error.message : 'Failed to activate preset';
       this.ctx.showToast(msg, 'error');
     }
@@ -174,16 +191,23 @@ export class ConclaveSection {
     if (!preset) return;
 
     this.ctx.showConfirmModal(
-      'Delete Preset',
-      `Are you sure you want to delete "${preset.name}"?`,
+      this.ctx.t?.('options.toasts.conclave_delete_modal_title') ?? 'Delete Preset',
+      this.ctx.t?.('options.toasts.conclave_delete_modal_body', { name: preset.name })
+        ?? `Are you sure you want to delete "${preset.name}"?`,
       async () => {
         try {
           await deleteConclavePreset(id);
           this.presets = this.presets.filter((p) => p.id !== id);
           this.renderPresets();
-          this.ctx.showToast('Preset deleted', 'success');
+          this.ctx.showToast(
+            this.ctx.t?.('options.toasts.conclave_preset_deleted') ?? 'Preset deleted',
+            'success',
+          );
         } catch (error) {
-          this.ctx.showToast('Failed to delete preset', 'error');
+          this.ctx.showToast(
+            this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to delete preset',
+            'error',
+          );
         }
       }
     );
@@ -261,11 +285,17 @@ export class ConclaveSection {
         .map((c) => (c as HTMLInputElement).value);
 
       if (!name) {
-        this.ctx.showToast('Please enter a name', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.conclave_preset_name_required') ?? 'Please enter a name',
+          'error',
+        );
         return;
       }
       if (selectedIds.length === 0) {
-        this.ctx.showToast('Please select at least one persona', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.conclave_preset_select_persona') ?? 'Please select at least one persona',
+          'error',
+        );
         return;
       }
 
@@ -277,8 +307,15 @@ export class ConclaveSection {
         await saveConclavePreset(preset);
         modal.remove();
         await this.load();
-        this.ctx.showToast(existing ? 'Preset updated' : 'Preset created', 'success');
+        this.ctx.showToast(
+          this.ctx.t?.(existing
+            ? 'options.toasts.conclave_preset_updated'
+            : 'options.toasts.conclave_preset_created'
+          ) ?? (existing ? 'Preset updated' : 'Preset created'),
+          'success',
+        );
       } catch (error) {
+        // Raw error.message preserved for debuggability (may include preset IDs).
         const msg = error instanceof Error ? error.message : 'Failed to save preset';
         this.ctx.showToast(msg, 'error');
       }

@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-keys-2026-05-06",
+    "revision": "plan-6-kb-aria-2026-05-06",
     "reviewer_status": "canonical-english-source"
   },
   "popup": {
@@ -571,6 +571,10 @@
       "connection_error": "Connection error",
       "no_flows_hint": "No flows — configure in Settings",
       "select_flow_placeholder": "Select a flow..."
+    },
+    "kb": {
+      "search_aria_label": "Search Knowledge Base",
+      "answer_aria_label": "KB Answer: {{answer}}"
     }
   },
   "summary": {

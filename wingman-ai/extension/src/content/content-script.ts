@@ -218,6 +218,20 @@ try {
         }
         break;
 
+      // Plan 10 FR-018: connection-lost banner triggered by SW when the
+      // Deepgram websocket drops/reconnects.
+      case 'connection_status':
+        if (overlay && message.state) {
+          if (message.state === 'lost' || message.state === 'reconnecting') {
+            overlay.showConnectionLostBanner(message.state);
+          } else if (message.state === 'reconnected') {
+            overlay.showConnectionLostBanner('reconnected');
+          } else if (message.state === 'restored') {
+            overlay.hideConnectionLostBanner();
+          }
+        }
+        break;
+
       default:
         // Ignore messages not meant for content script (e.g., AUDIO_CHUNK, CAPTURE_STATUS)
         break;

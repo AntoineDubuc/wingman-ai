@@ -175,6 +175,50 @@ export class AIOverlay {
     }
   }
 
+  /**
+   * Plan 10 FR-018: Connection-lost banner. Shows a non-blocking banner above
+   * the main panel announcing that the transcription connection has dropped.
+   * Idempotent — safe to call repeatedly with the same status.
+   */
+  showConnectionLostBanner(state: 'lost' | 'reconnecting' | 'reconnected'): void {
+    const existingBanner = this.shadow.querySelector('.connection-lost-banner') as HTMLElement | null;
+    if (state === 'reconnected') {
+      // Briefly show "Reconnected" then auto-hide after 2s.
+      if (existingBanner) {
+        existingBanner.textContent = this.t('banners.connection_lost.reconnected');
+        existingBanner.classList.remove('reconnecting');
+        existingBanner.classList.add('reconnected');
+        setTimeout(() => existingBanner.remove(), 2000);
+      }
+      return;
+    }
+    const text = state === 'reconnecting'
+      ? this.t('banners.connection_lost.reconnecting')
+      : this.t('banners.connection_lost.body');
+    if (existingBanner) {
+      existingBanner.textContent = text;
+      existingBanner.classList.toggle('reconnecting', state === 'reconnecting');
+      return;
+    }
+    // Create new banner. Style is injected via overlay.css; CSS class names
+    // match the existing banner conventions so it inherits theme colors.
+    const banner = document.createElement('div');
+    banner.className = `connection-lost-banner${state === 'reconnecting' ? ' reconnecting' : ''}`;
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    banner.style.cssText =
+      'position:absolute;top:8px;left:50%;transform:translateX(-50%);' +
+      'background:#ef4444;color:#fff;padding:8px 16px;border-radius:6px;' +
+      'font-size:13px;font-weight:500;z-index:10;pointer-events:none;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+    banner.textContent = text;
+    this.panel.appendChild(banner);
+  }
+
+  hideConnectionLostBanner(): void {
+    this.shadow.querySelector('.connection-lost-banner')?.remove();
+  }
+
   constructor(onClose?: () => void) {
     this.onCloseCallback = onClose;
     this.container = document.createElement('div');
@@ -1158,7 +1202,7 @@ export class AIOverlay {
       kbIcon.innerHTML = ICONS.KB_SEARCH;
       kbIcon.setAttribute('tabindex', '0');
       kbIcon.setAttribute('role', 'button');
-      kbIcon.setAttribute('aria-label', 'Search Knowledge Base');
+      kbIcon.setAttribute('aria-label', this.t('overlay.kb.search_aria_label'));
       kbIcon.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.kbQueryInFlight) return;
@@ -1186,7 +1230,7 @@ export class AIOverlay {
       const bubble = document.createElement('div');
       bubble.className = 'bubble kb-answer';
       bubble.setAttribute('role', 'article');
-      bubble.setAttribute('aria-label', `KB Answer: ${entry.kbAnswer || ''}`);
+      bubble.setAttribute('aria-label', this.t('overlay.kb.answer_aria_label', { answer: entry.kbAnswer || '' }));
       bubble.style.animation = 'wingmanIn 250ms ease-out forwards';
 
       // Query text (italic)

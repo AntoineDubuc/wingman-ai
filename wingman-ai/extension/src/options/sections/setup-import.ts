@@ -344,7 +344,10 @@ export class SetupImportSection {
   private async isSessionActive(): Promise<boolean> {
     try {
       const response = await chrome.runtime.sendMessage({ type: 'GET_STATUS' });
-      return response?.isActive === true;
+      // Plan 2 Thread-2 contradiction-3 fix: SW reply uses isSessionActive,
+      // not isActive. Prior code read the wrong field and never observed the
+      // active-session state.
+      return response?.isSessionActive === true;
     } catch {
       return false;
     }

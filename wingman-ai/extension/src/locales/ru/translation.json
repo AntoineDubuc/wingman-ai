@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-keys-2026-05-06",
+    "revision": "plan-6-kb-aria-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -575,6 +575,10 @@
       "connection_error": "Ошибка соединения",
       "no_flows_hint": "Нет потоков — настройте в Настройках",
       "select_flow_placeholder": "Выберите поток..."
+    },
+    "kb": {
+      "search_aria_label": "Поиск в базе знаний",
+      "answer_aria_label": "Ответ KB: {{answer}}"
     }
   },
   "summary": {

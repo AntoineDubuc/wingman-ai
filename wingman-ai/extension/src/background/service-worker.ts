@@ -451,6 +451,14 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       handleTranscript(transcript);
     });
 
+    // Plan 10 FR-018: broadcast connection-status changes to the active tab so
+    // the overlay can show/hide the connection-lost banner.
+    deepgramClient.setConnectionStatusCallback((state) => {
+      if (activeTabId !== null) {
+        chrome.tabs.sendMessage(activeTabId, { type: 'connection_status', state }).catch(() => {});
+      }
+    });
+
     // Step 4: Connect to Deepgram
     const connected = await deepgramClient.connect();
     if (!connected) {

@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-keys-2026-05-06",
+    "revision": "plan-6-kb-aria-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -571,6 +571,10 @@
       "connection_error": "Erreur de connexion",
       "no_flows_hint": "Aucun flux — configurer dans Paramètres",
       "select_flow_placeholder": "Sélectionner un flux..."
+    },
+    "kb": {
+      "search_aria_label": "Rechercher dans la base de connaissances",
+      "answer_aria_label": "Réponse KB: {{answer}}"
     }
   },
   "summary": {

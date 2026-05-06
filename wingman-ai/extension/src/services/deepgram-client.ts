@@ -54,10 +54,17 @@ export type TranscriptCallback = (transcript: Transcript) => void;
 /**
  * DeepgramClient class - manages WebSocket connection to Deepgram
  */
+export type ConnectionStatus = 'lost' | 'reconnecting' | 'reconnected' | 'restored';
+export type ConnectionStatusCallback = (state: ConnectionStatus) => void;
+
 export class DeepgramClient {
   private socket: WebSocket | null = null;
   private isConnected = false;
   private onTranscriptCallback: TranscriptCallback | null = null;
+  // Plan 10 FR-018: connection-status callback fires on unexpected
+  // disconnects and successful reconnects so the SW can broadcast banner
+  // updates to the content script.
+  private onConnectionStatusCallback: ConnectionStatusCallback | null = null;
 
   // Reconnection settings
   private reconnectAttempts = 0;
@@ -85,6 +92,11 @@ export class DeepgramClient {
   /**
    * Set the callback for transcript events
    */
+  /** Plan 10 FR-018: register a callback for connection status changes. */
+  setConnectionStatusCallback(callback: ConnectionStatusCallback): void {
+    this.onConnectionStatusCallback = callback;
+  }
+
   setTranscriptCallback(callback: TranscriptCallback): void {
     this.onTranscriptCallback = callback;
   }
@@ -152,9 +164,14 @@ export class DeepgramClient {
 
         this.socket.onopen = () => {
           console.debug('[DeepgramClient] Connected');
+          const wasReconnect = this.reconnectAttempts > 0;
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
+          // Plan 10 FR-018: notify on successful reconnect
+          if (wasReconnect) {
+            this.onConnectionStatusCallback?.('reconnected');
+          }
           resolve(true);
         };
 
@@ -172,6 +189,8 @@ export class DeepgramClient {
 
           // Attempt reconnection if not intentionally closed
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            // Plan 10 FR-018: notify on unexpected drop
+            this.onConnectionStatusCallback?.(this.reconnectAttempts === 0 ? 'lost' : 'reconnecting');
             this.scheduleReconnect();
           }
         };

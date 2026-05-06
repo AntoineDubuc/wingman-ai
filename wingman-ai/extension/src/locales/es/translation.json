@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 2 — neutral Latin American Spanish per Diego persona, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-keys-2026-05-06",
+    "revision": "plan-6-kb-aria-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -571,6 +571,10 @@
       "connection_error": "Error de conexión",
       "no_flows_hint": "Sin flujos — configurar en Ajustes",
       "select_flow_placeholder": "Seleccionar un flujo..."
+    },
+    "kb": {
+      "search_aria_label": "Buscar en la Base de Conocimientos",
+      "answer_aria_label": "Respuesta KB: {{answer}}"
     }
   },
   "summary": {

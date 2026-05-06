@@ -2,7 +2,7 @@
   "_meta": {
     "generator": "Direct authorship by Claude (Plan 3 Task 3 — Romanian, comma-below diacritics ș/ț, 3-form CLDR plurals, 2026-05-05)",
     "generated_at": "2026-05-05",
-    "revision": "plan-5-html-keys-2026-05-06",
+    "revision": "plan-6-kb-aria-2026-05-06",
     "reviewer_status": "pending-native-review"
   },
   "popup": {
@@ -575,6 +575,10 @@
       "connection_error": "Eroare de conexiune",
       "no_flows_hint": "Niciun flux — configurați în Setări",
       "select_flow_placeholder": "Selectați un flux..."
+    },
+    "kb": {
+      "search_aria_label": "Caută în baza de cunoștințe",
+      "answer_aria_label": "Răspuns KB: {{answer}}"
     }
   },
   "summary": {

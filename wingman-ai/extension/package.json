@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:update": "playwright test --config=playwright.config.ts --update-snapshots",
     "clean": "rm -rf dist",
     "unicode-check": "npx tsx scripts/sanitize-locale-files.ts",
     "precommit": "npx tsx scripts/sanitize-locale-files.ts"

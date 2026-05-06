@@ -19,6 +19,12 @@ export interface VersionHistoryOptions {
   onTest?: (version: PromptVersion) => void;
   onDiff?: (fromVersion: PromptVersion, toVersion: PromptVersion) => void;
   onRestore?: (restoredVersion: PromptVersion) => void;
+  /** Plan 5: localized translation function from OptionsContext. */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function tr(key: string, opts?: Record<string, unknown>): string | null {
+  return options?.t?.(key, opts) ?? null;
 }
 
 // === STATE ===
@@ -92,16 +98,27 @@ function renderPanel(): void {
 
   panel.innerHTML = '';
 
-  // Header
+  // Header — Plan 5 NFR-SEC04: build via createElement+textContent
+  // (personaName is user-controlled). Localized via options.t.
   const header = document.createElement('div');
   header.className = 'version-history-header';
-  header.innerHTML = `
-    <div>
-      <h2 class="form-section-title">Prompt History — ${escapeHtml(options.personaName)}</h2>
-      <p class="form-section-description">Every prompt version with test results and costs.</p>
-    </div>
-    <button class="btn-secondary btn-small" id="version-back-btn">Back</button>
-  `;
+  const headerInner = document.createElement('div');
+  const titleEl = document.createElement('h2');
+  titleEl.className = 'form-section-title';
+  titleEl.textContent = tr('options.prompt_modals.version_history.title', { personaName: options.personaName })
+    ?? `Prompt History — ${options.personaName}`;
+  const descEl = document.createElement('p');
+  descEl.className = 'form-section-description';
+  descEl.textContent = tr('options.prompt_modals.version_history.description')
+    ?? 'Every prompt version with test results and costs.';
+  headerInner.appendChild(titleEl);
+  headerInner.appendChild(descEl);
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn-secondary btn-small';
+  backBtn.id = 'version-back-btn';
+  backBtn.textContent = tr('options.prompt_modals.version_history.btn_back') ?? 'Back';
+  header.appendChild(headerInner);
+  header.appendChild(backBtn);
   panel.appendChild(header);
 
   header.querySelector('#version-back-btn')?.addEventListener('click', () => {
@@ -119,7 +136,7 @@ function renderPanel(): void {
   if (versions.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'version-empty';
-    empty.textContent = 'No versions yet.';
+    empty.textContent = tr('options.prompt_modals.version_history.empty_state') ?? 'No versions yet.';
     panel.appendChild(empty);
     return;
   }
@@ -149,19 +166,19 @@ function renderPanel(): void {
     if (isCurrent) {
       const badge = document.createElement('span');
       badge.className = 'version-badge version-badge--current';
-      badge.textContent = 'current';
+      badge.textContent = tr('options.prompt_modals.version_history.badge_current') ?? 'current';
       labelRow.appendChild(badge);
     }
 
-    // Source badge
+    // Source badge — Plan 5: localized
     const sourceBadge = document.createElement('span');
     sourceBadge.className = `version-badge version-badge--${version.source}`;
     switch (version.source) {
-      case 'manual': sourceBadge.textContent = 'manual edit'; break;
-      case 'assistant': sourceBadge.textContent = 'setup assistant'; break;
-      case 'restored': sourceBadge.textContent = `restored`; break;
-      case 'template': sourceBadge.textContent = 'from template'; break;
-      case 'imported': sourceBadge.textContent = 'imported'; break;
+      case 'manual': sourceBadge.textContent = tr('options.prompt_modals.version_history.badge_manual') ?? 'manual edit'; break;
+      case 'assistant': sourceBadge.textContent = tr('options.prompt_modals.version_history.badge_assistant') ?? 'setup assistant'; break;
+      case 'restored': sourceBadge.textContent = tr('options.prompt_modals.version_history.badge_restored') ?? 'restored'; break;
+      case 'template': sourceBadge.textContent = tr('options.prompt_modals.version_history.badge_template') ?? 'from template'; break;
+      case 'imported': sourceBadge.textContent = tr('options.prompt_modals.version_history.badge_imported') ?? 'imported'; break;
     }
     labelRow.appendChild(sourceBadge);
     meta.appendChild(labelRow);
@@ -197,14 +214,14 @@ function renderPanel(): void {
     // Diff button (always)
     const diffBtn = document.createElement('button');
     diffBtn.className = 'btn-secondary btn-small';
-    diffBtn.textContent = 'Diff';
+    diffBtn.textContent = tr('options.prompt_modals.version_history.btn_diff') ?? 'Diff';
     diffBtn.addEventListener('click', () => handleDiff(version));
     actions.appendChild(diffBtn);
 
     // Test button (always)
     const testBtn = document.createElement('button');
     testBtn.className = 'btn-secondary btn-small';
-    testBtn.textContent = 'Test';
+    testBtn.textContent = tr('options.prompt_modals.version_history.btn_test') ?? 'Test';
     testBtn.addEventListener('click', () => options?.onTest?.(version));
     actions.appendChild(testBtn);
 
@@ -212,14 +229,14 @@ function renderPanel(): void {
       // Restore button
       const restoreBtn = document.createElement('button');
       restoreBtn.className = 'btn-secondary btn-small';
-      restoreBtn.textContent = 'Restore';
+      restoreBtn.textContent = tr('options.prompt_modals.version_history.btn_restore') ?? 'Restore';
       restoreBtn.addEventListener('click', () => handleRestore(version));
       actions.appendChild(restoreBtn);
 
       // Delete button
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'btn-secondary btn-small version-delete-btn';
-      deleteBtn.textContent = 'Delete';
+      deleteBtn.textContent = tr('options.prompt_modals.version_history.btn_delete') ?? 'Delete';
       deleteBtn.addEventListener('click', () => handleDelete(version));
       actions.appendChild(deleteBtn);
     }
@@ -244,14 +261,21 @@ function renderDiffView(container: HTMLElement): void {
   diffHeader.className = 'version-diff-header';
   const fromModel = diffView.from.targetModel ? ` (${diffView.from.targetModel.split('/').pop()})` : '';
   const toModel = diffView.to.targetModel ? ` (${diffView.to.targetModel.split('/').pop()})` : '';
-  diffHeader.textContent = `Diff: v${diffView.from.version}${fromModel} → v${diffView.to.version}${toModel}`;
+  diffHeader.textContent = tr('options.prompt_modals.version_history.diff_header', {
+    from: diffView.from.version,
+    fromModel,
+    to: diffView.to.version,
+    toModel,
+  }) ?? `Diff: v${diffView.from.version}${fromModel} → v${diffView.to.version}${toModel}`;
   diffSection.appendChild(diffHeader);
 
   // Version selectors
   const selectors = document.createElement('div');
   selectors.className = 'version-diff-selectors';
 
-  const fromSelect = createVersionSelect('From', diffView.from.version, (v) => {
+  const fromSelect = createVersionSelect(
+    tr('options.prompt_modals.version_history.select_from') ?? 'From',
+    diffView.from.version, (v) => {
     if (diffView) {
       const newFrom = versions.find(ver => ver.version === v);
       if (newFrom) {
@@ -265,7 +289,9 @@ function renderDiffView(container: HTMLElement): void {
   arrow.className = 'version-diff-arrow';
   arrow.textContent = '\u2192';
 
-  const toSelect = createVersionSelect('To', diffView.to.version, (v) => {
+  const toSelect = createVersionSelect(
+    tr('options.prompt_modals.version_history.select_to') ?? 'To',
+    diffView.to.version, (v) => {
     if (diffView) {
       const newTo = versions.find(ver => ver.version === v);
       if (newTo) {
@@ -298,7 +324,7 @@ function renderDiffView(container: HTMLElement): void {
   // Close diff button
   const closeBtn = document.createElement('button');
   closeBtn.className = 'btn-secondary btn-small';
-  closeBtn.textContent = 'Close Diff';
+  closeBtn.textContent = tr('options.prompt_modals.version_history.btn_close_diff') ?? 'Close Diff';
   closeBtn.addEventListener('click', () => {
     diffView = null;
     renderPanel();
@@ -363,7 +389,9 @@ async function handleRestore(version: PromptVersion): Promise<void> {
   if (!options) return;
 
   // Simple confirmation
-  if (!confirm(`Restore v${version.version}? This will create a new version with v${version.version}'s content.`)) {
+  const restorePrompt = tr('options.prompt_modals.version_history.restore_confirm', { version: version.version })
+    ?? `Restore v${version.version}? This will create a new version with v${version.version}'s content.`;
+  if (!confirm(restorePrompt)) {
     return;
   }
 
@@ -383,7 +411,11 @@ async function handleRestore(version: PromptVersion): Promise<void> {
 async function handleDelete(version: PromptVersion): Promise<void> {
   if (!options) return;
 
-  if (!confirm(`Delete v${version.version} (${version.summary})? This cannot be undone.`)) {
+  const deletePrompt = tr('options.prompt_modals.version_history.delete_confirm', {
+    version: version.version,
+    summary: version.summary,
+  }) ?? `Delete v${version.version} (${version.summary})? This cannot be undone.`;
+  if (!confirm(deletePrompt)) {
     return;
   }
 
@@ -405,8 +437,6 @@ function formatDate(timestamp: number): string {
   });
 }
 
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+// Plan 5: escapeHtml removed — no longer needed after innerHTML→createElement
+// migration in renderPanel(). All user-controlled strings now flow through
+// .textContent which is safe by default.

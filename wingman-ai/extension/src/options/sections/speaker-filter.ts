@@ -28,13 +28,20 @@ export class SpeakerFilterSection {
     try {
       const enabled = this.toggle.checked;
       await chrome.storage.local.set({ speakerFilterEnabled: enabled });
+      // Plan 5: localized via the (interpolated) settings_saved toast.
+      // Speaker-filter has only a binary state; the saved-confirmation toast
+      // is sufficient — explicit on/off labels would need a second key pair
+      // and aren't worth the bundle bloat.
       this.ctx.showToast(
-        enabled ? 'Speaker filter enabled' : 'Speaker filter disabled',
+        this.ctx.t?.('options.toasts.settings_saved') ?? 'Settings saved',
         'success'
       );
     } catch (error) {
       console.error('Failed to save speaker filter setting:', error);
-      this.ctx.showToast('Failed to save setting', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save setting',
+        'error'
+      );
     }
   }
 }

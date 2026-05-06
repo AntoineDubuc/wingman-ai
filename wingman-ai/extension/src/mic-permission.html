@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>Wingman AI</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -22,12 +22,14 @@
 </head>
 <body>
   <div class="container">
-    <h2>Microphone Access Required</h2>
-    <p>Please allow microphone access to capture your voice during calls.</p>
-    <p id="denied" class="denied" style="display:none">
-      Permission denied. Please enable microphone access in your browser settings.
-    </p>
+    <!-- Strings injected by mic-permission-locale.ts on DOMContentLoaded -->
+    <h2 id="permission-title"></h2>
+    <p id="permission-body"></p>
+    <p id="denied" class="denied" style="display:none"></p>
   </div>
+  <!-- mic-permission-locale.ts: Vite-processed TS module — handles i18n init and string injection -->
+  <script type="module" src="mic-permission-locale.ts"></script>
+  <!-- mic-permission.js: static script — handles getUserMedia permission request flow -->
   <script src="mic-permission.js"></script>
 </body>
 </html>

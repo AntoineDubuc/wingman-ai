@@ -1,8 +1,23 @@
 const TOAST_DURATION_MS = 3000;
 
 export interface OptionsContext {
-  showToast(message: string, type: 'success' | 'error'): void;
+  /**
+   * Plan 10 FR-017: optional 3rd param `rawError` displays the raw provider
+   * error in monospace below the localized primary message. Used by error
+   * paths that bubble third-party error text up to the user (Drive,
+   * LangBuilder, etc.). Backward compatible — existing call sites that pass
+   * only (message, type) continue to work.
+   */
+  showToast(message: string, type: 'success' | 'error', rawError?: string): void;
   showConfirmModal(title: string, message: string, onConfirm: () => void): void;
+  /**
+   * Plan 10 / Plan 5: localized translation function for section-level
+   * toast and modal text. Sections receive this from OptionsController.init().
+   * Optional for backward compat with sections not yet refactored — those
+   * sections will still pass English literals to showToast and they'll
+   * render verbatim until they migrate to ctx.t().
+   */
+  t?: (key: string, opts?: Record<string, unknown>) => string;
   /**
    * Show a confirm modal with a pre-built DOM node body (for rich content).
    * Unlike `showConfirmModal`, which uses `textContent = message`, this
@@ -29,24 +44,38 @@ export class ToastManager {
     this.messageEl = document.getElementById('toast-message');
   }
 
-  show = (message: string, type: 'success' | 'error'): void => {
+  show = (message: string, type: 'success' | 'error', rawError?: string): void => {
     if (!this.el || !this.iconEl || !this.messageEl) return;
 
     if (this.timeout !== null) {
       window.clearTimeout(this.timeout);
     }
 
-    this.messageEl.textContent = message;
+    // Plan 10 FR-017: structured error display \u2014 primary message in normal
+    // typography + optional raw provider error in monospace below.
+    this.messageEl.replaceChildren();
+    const primary = document.createElement('div');
+    primary.textContent = message;
+    this.messageEl.appendChild(primary);
+    if (rawError && type === 'error') {
+      const raw = document.createElement('code');
+      raw.style.cssText = 'display:block;margin-top:4px;font-size:11px;opacity:0.75;font-family:ui-monospace,monospace;word-break:break-word;';
+      raw.textContent = rawError;
+      this.messageEl.appendChild(raw);
+    }
     this.iconEl.textContent = type === 'success' ? '\u2713' : '\u2715';
 
     this.el.classList.remove('success', 'error');
     this.el.classList.add(type);
     this.el.classList.add('visible');
 
+    // Errors with raw payloads stay visible longer (5s vs 3s) so users have
+    // time to read the technical details if they want.
+    const duration = (rawError && type === 'error') ? 5000 : TOAST_DURATION_MS;
     this.timeout = window.setTimeout(() => {
       this.el?.classList.remove('visible');
       this.timeout = null;
-    }, TOAST_DURATION_MS);
+    }, duration);
   };
 }
 

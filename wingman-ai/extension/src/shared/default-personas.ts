@@ -11,6 +11,12 @@ const COLORS = [
 ] as const;
 
 export interface PersonaTemplate {
+  /**
+   * Stable identifier for i18n bundle lookup (Plan 8 FR-023).
+   * Maps to `personas.templates.{templateId}.{name,description}` in locale bundles.
+   */
+  templateId: string;
+  /** Canonical English name. UI consumers should prefer i18n.t for display. */
   name: string;
   color: string;
   systemPrompt: string;
@@ -18,6 +24,7 @@ export interface PersonaTemplate {
 
 export const DEFAULT_PERSONA_TEMPLATES: PersonaTemplate[] = [
   {
+    templateId: 'job_interview_candidate',
     name: 'Job Interview Candidate',
     color: COLORS[0]!,
     systemPrompt: `# Job Interview Candidate -- System Prompt
@@ -99,6 +106,7 @@ When KB content is available:
 - Never coach on illegal or discriminatory interview questions beyond advising the candidate they can decline to answer`,
   },
   {
+    templateId: 'startup_founder_fundraising',
     name: 'Startup Founder (Fundraising)',
     color: COLORS[1]!,
     systemPrompt: `# Startup Founder Fundraising -- System Prompt
@@ -197,6 +205,7 @@ When KB content is available:
 - Never coach on pricing or valuation negotiation in real time -- that requires offline strategy`,
   },
   {
+    templateId: 'freelancer_rate_negotiation',
     name: 'Freelancer (Rate Negotiation)',
     color: COLORS[2]!,
     systemPrompt: `# Freelancer Negotiating Rates -- System Prompt
@@ -295,6 +304,7 @@ When KB content is available:
 - Never suggest working for free or at a discount to "prove value" -- the portfolio and references speak for themselves`,
   },
   {
+    templateId: 'nonprofit_grant_pitcher',
     name: 'Nonprofit Grant Pitcher',
     color: COLORS[3]!,
     systemPrompt: `# Nonprofit Grant Pitcher - System Prompt
@@ -370,6 +380,7 @@ You are a real-time AI coach for a nonprofit executive director or development o
 - Respond with "---" if the conversation is flowing well and no coaching is needed`,
   },
   {
+    templateId: 'patient_advocate',
     name: 'Patient Advocate',
     color: COLORS[4]!,
     systemPrompt: `# Patient Advocate - System Prompt
@@ -454,6 +465,7 @@ You are a real-time AI coach for someone navigating a medical appointment, insur
 - Respond with "---" if the conversation is flowing well and the user is handling it effectively`,
   },
   {
+    templateId: 'tenant_lease_negotiation',
     name: 'Tenant (Lease Negotiation)',
     color: COLORS[5]!,
     systemPrompt: `# Tenant Negotiating Lease - System Prompt
@@ -537,6 +549,7 @@ You are a real-time AI coach for a renter who is on a call with their landlord, 
 - Respond with "---" if the conversation is going well and no intervention is needed`,
   },
   {
+    templateId: 'parent_iep_meeting',
     name: 'Parent (IEP Meeting)',
     color: COLORS[6]!,
     systemPrompt: `# Parent IEP Meeting — System Prompt
@@ -607,6 +620,7 @@ You are an advocate coach — not an attorney and not a therapist. You help the 
 - If the moment calls for emotional support rather than strategy, a brief encouraging note is appropriate: "You're doing great — this is exactly the right question to ask."`,
   },
   {
+    templateId: 'small_business_loan_seeker',
     name: 'Small Business Loan Seeker',
     color: COLORS[7]!,
     systemPrompt: `# Small Business Loan Seeker — System Prompt
@@ -687,6 +701,7 @@ You are a financial strategy coach — not a financial advisor, not an accountan
 - Prioritize suggestions that demonstrate the owner's financial literacy and preparedness.`,
   },
   {
+    templateId: 'journalist_interviewer',
     name: 'Journalist Interviewer',
     color: COLORS[0]!,
     systemPrompt: `# Journalist Interviewer — System Prompt
@@ -766,6 +781,7 @@ You are an editorial strategy coach — not a co-interviewer and not a fact-chec
 - When referencing editorial protocols, name them specifically so the journalist can cite them if needed.`,
   },
   {
+    templateId: 'esl_professional',
     name: 'ESL Professional',
     color: COLORS[1]!,
     systemPrompt: `# ESL Professional — System Prompt
@@ -836,6 +852,7 @@ If the conversation is flowing smoothly and the user appears to be communicating
 - "'Boil the ocean' means trying to do too much at once. They are suggesting a more focused approach. You could agree by saying: 'That makes sense — let's prioritize the top three items.'"`,
   },
   {
+    templateId: 'cloud_solutions_sales_consultant',
     name: 'Cloud Solutions Sales Consultant',
     color: COLORS[2]!,
     systemPrompt: `# Cloud Solutions Sales Consultant — System Prompt

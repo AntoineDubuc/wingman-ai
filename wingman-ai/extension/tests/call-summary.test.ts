@@ -116,7 +116,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
   };
 
   it('omits Personas Used section when no personas', () => {
-    const md = formatSummaryAsMarkdown(baseSummary);
+    const md = formatSummaryAsMarkdown(baseSummary, 'en');
     expect(md).not.toContain('### Personas Used');
   });
 
@@ -132,7 +132,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('### Personas Used');
     expect(md).toContain('- Sales Pro — 4 suggestions');
     expect(md).toContain('- Tech Advisor — 2 suggestions');
@@ -149,7 +149,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('- Single Persona — 1 suggestion');
   });
 
@@ -164,7 +164,7 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).toContain('### Personas Used');
     expect(md).toContain('Solo Expert — 5 suggestions');
   });
@@ -180,7 +180,87 @@ describe('formatSummaryAsMarkdown - Personas Used', () => {
       },
     };
 
-    const md = formatSummaryAsMarkdown(summary);
+    const md = formatSummaryAsMarkdown(summary, 'en');
     expect(md).not.toContain('### Personas Used');
+  });
+});
+
+describe('formatSummaryAsMarkdown - locale-aware date formatting', () => {
+  // Fixed date fixture so locale assertions are deterministic.
+  const FIXED_GENERATED_AT = '2026-05-05T12:00:00Z';
+  const fixedDate = new Date(FIXED_GENERATED_AT);
+
+  const baseSummary: CallSummary = {
+    summary: ['Discussed product features.'],
+    actionItems: [],
+    keyMoments: [],
+    metadata: {
+      generatedAt: FIXED_GENERATED_AT,
+      durationMinutes: 10,
+      speakerCount: 2,
+      transcriptCount: 20,
+    },
+  };
+
+  it('formats date in fr locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('fr', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'fr');
+    // Plan 7: header text is now localized — "Résumé de l'appel" in fr
+    expect(md).toContain(`## Résumé de l'appel — ${expected}`);
+  });
+
+  it('formats date in en locale correctly', () => {
+    const md = formatSummaryAsMarkdown(baseSummary, 'en');
+    // English short month name must appear (e.g., "May") — this is the
+    // semantic check from the plan AC: month is rendered in English.
+    expect(md).toMatch(/## Call Summary — .*\bMay\b.*2026/);
+  });
+
+  it('formats date in es locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('es', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'es');
+    // Plan 7: header text is now localized
+    expect(md).toContain(`## Resumen de la llamada — ${expected}`);
+  });
+
+  it('formats date in ro locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('ro', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'ro');
+    // Plan 7: header text is now localized
+    expect(md).toContain(`## Rezumatul apelului — ${expected}`);
+  });
+
+  it('formats date in ru locale correctly', () => {
+    const expected = fixedDate.toLocaleDateString('ru', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const md = formatSummaryAsMarkdown(baseSummary, 'ru');
+    // Plan 7: header text is now localized — "Сводка по звонку" in ru
+    expect(md).toContain(`## Сводка по звонку — ${expected}`);
+    // Russian May abbreviation must appear ("мая" = of May, genitive case).
+    expect(md).toMatch(/мая/);
+  });
+
+  it('falls back to en when locale is undefined', () => {
+    const mdUndefined = formatSummaryAsMarkdown(baseSummary, undefined);
+    const mdEn = formatSummaryAsMarkdown(baseSummary, 'en');
+    // Undefined locale produces same output as 'en' (NFR-R01 fallback).
+    expect(mdUndefined).toBe(mdEn);
+    // Output never leaks the literal string 'undefined'.
+    expect(mdUndefined).not.toContain('undefined');
   });
 });

@@ -233,18 +233,29 @@ export class PersonaSection {
 
     const name = this.nameInput.value.trim();
     if (!name) {
-      this.ctx.showToast('Persona name is required', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_name_required') ?? 'Persona name is required',
+        'error',
+      );
       return;
     }
 
     const prompt = this.promptTextarea.value.trim();
     if (prompt.length < MIN_PROMPT_LENGTH) {
-      this.ctx.showToast(`Prompt must be at least ${MIN_PROMPT_LENGTH} characters`, 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_prompt_too_short', { min: MIN_PROMPT_LENGTH })
+          ?? `Prompt must be at least ${MIN_PROMPT_LENGTH} characters`,
+        'error',
+      );
       this.promptTextarea.classList.add('error');
       return;
     }
     if (prompt.length > MAX_PROMPT_LENGTH) {
-      this.ctx.showToast(`Prompt cannot exceed ${MAX_PROMPT_LENGTH.toLocaleString()} characters`, 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_prompt_too_long', { max: MAX_PROMPT_LENGTH.toLocaleString() })
+          ?? `Prompt cannot exceed ${MAX_PROMPT_LENGTH.toLocaleString()} characters`,
+        'error',
+      );
       this.promptTextarea.classList.add('error');
       return;
     }
@@ -304,10 +315,17 @@ export class PersonaSection {
       const latestVersion = this.editingPersona.promptVersions!.length;
       const latest = this.editingPersona.promptVersions![latestVersion - 1];
       const modelLabel = latest?.targetModel?.split('/').pop() ?? 'manual edit';
-      this.ctx.showToast(`Prompt saved as v${latestVersion} (${modelLabel})`, 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_saved_with_version', { version: latestVersion, model: modelLabel })
+          ?? `Prompt saved as v${latestVersion} (${modelLabel})`,
+        'success',
+      );
       await this.updateVersionBadge();
     } else {
-      this.ctx.showToast('Persona saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_saved') ?? 'Persona saved',
+        'success',
+      );
     }
     this.renderList();
     this.notifyPersonasChanged();
@@ -497,7 +515,7 @@ export class PersonaSection {
 
     if (!this.editorEl || !this.nameInput || !this.promptTextarea || !this.editorTitle) return;
 
-    this.editorTitle.textContent = 'Edit Persona';
+    this.editorTitle.textContent = this.ctx.t?.('options.personas.editor.edit_title') ?? 'Edit Persona';
     this.nameInput.value = persona.name;
     this.promptTextarea.value = persona.systemPrompt;
     this.updateCharCount();
@@ -612,7 +630,10 @@ export class PersonaSection {
     this.isDirty = false;
     this.editingPersona = null;
     if (this.editorEl) this.editorEl.hidden = true;
-    this.ctx.showToast('Persona deleted', 'success');
+    this.ctx.showToast(
+      this.ctx.t?.('options.toasts.persona_deleted') ?? 'Persona deleted',
+      'success',
+    );
     this.renderList();
     this.notifyPersonasChanged();
   }
@@ -639,7 +660,10 @@ export class PersonaSection {
     this.personas.push(copy);
     await savePersonas(this.personas);
     this.isDirty = false;
-    this.ctx.showToast('Persona duplicated', 'success');
+    this.ctx.showToast(
+      this.ctx.t?.('options.toasts.persona_duplicated') ?? 'Persona duplicated',
+      'success',
+    );
     this.notifyPersonasChanged();
     // Skip the explicit renderList() call here — openEditor() now calls
     // renderList() so we'd otherwise rebuild the DOM twice in a row.
@@ -653,7 +677,7 @@ export class PersonaSection {
 
     if (this.exportBtn) {
       this.exportBtn.disabled = true;
-      this.exportBtn.textContent = 'Exporting...';
+      this.exportBtn.textContent = this.ctx.t?.('options.personas.export.exporting') ?? 'Exporting...';
     }
 
     try {
@@ -709,14 +733,20 @@ export class PersonaSection {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      this.ctx.showToast('Persona exported', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_exported') ?? 'Persona exported',
+        'success',
+      );
     } catch (error) {
       console.error('[Persona] Export failed:', error);
-      this.ctx.showToast('Export failed', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_export_failed') ?? 'Export failed',
+        'error',
+      );
     } finally {
       if (this.exportBtn) {
         this.exportBtn.disabled = false;
-        this.exportBtn.textContent = 'Export';
+        this.exportBtn.textContent = this.ctx.t?.('options.personas.export.button') ?? 'Export';
       }
     }
   }
@@ -739,7 +769,10 @@ export class PersonaSection {
 
     // Block deleting last persona
     if (this.personas.length <= 1) {
-      this.ctx.showToast('Cannot delete your only persona', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_only_one_cannot_delete') ?? 'Cannot delete your only persona',
+        'error',
+      );
       return;
     }
 
@@ -772,7 +805,10 @@ export class PersonaSection {
           key === '__proto__' || key === 'prototype' ? undefined : value
         );
       } catch {
-        this.ctx.showToast('Invalid JSON file', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.persona_import_invalid_json') ?? 'Invalid JSON file',
+          'error',
+        );
         return;
       }
 
@@ -782,7 +818,11 @@ export class PersonaSection {
       // and validated KB documents.
       const validation = validatePersonaImportEnvelope(data);
       if (!validation.valid) {
-        this.ctx.showToast(`Not a valid Wingman persona file (${validation.reason})`, 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.persona_import_not_valid', { reason: validation.reason })
+            ?? `Not a valid Wingman persona file (${validation.reason})`,
+          'error',
+        );
         return;
       }
       const imported = validation.persona;
@@ -791,7 +831,11 @@ export class PersonaSection {
       if (imported.kbDocuments && imported.kbDocuments.length > 0) {
         const storage = await chrome.storage.local.get(['geminiApiKey']);
         if (!storage.geminiApiKey) {
-          this.ctx.showToast('Gemini API key required to process KB documents', 'error');
+          this.ctx.showToast(
+            this.ctx.t?.('options.toasts.persona_import_kb_gemini_required')
+              ?? 'Gemini API key required to process KB documents',
+            'error',
+          );
           return;
         }
       }
@@ -857,13 +901,23 @@ export class PersonaSection {
 
       const skipped = (imported.kbDocuments?.length ?? 0) - kbDocIds.length;
       if (skipped > 0) {
-        this.ctx.showToast(`Persona imported (${skipped} KB doc(s) failed)`, 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.persona_import_with_kb_failures', { count: skipped })
+            ?? `Persona imported (${skipped} KB doc(s) failed)`,
+          'success',
+        );
       } else {
-        this.ctx.showToast('Persona imported successfully', 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.persona_import_success') ?? 'Persona imported successfully',
+          'success',
+        );
       }
     } catch (error) {
       console.error('[Persona] Import failed:', error);
-      this.ctx.showToast('Failed to import persona file', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_import_failed') ?? 'Failed to import persona file',
+        'error',
+      );
       if (this.importProgress) this.importProgress.hidden = true;
     }
   }
@@ -954,7 +1008,7 @@ export class PersonaSection {
       if (this.iconLoading) this.iconLoading.hidden = true;
     }
 
-    this.iconGridLabel.textContent = 'Quick picks';
+    this.iconGridLabel.textContent = this.ctx.t?.('options.personas.icons.quick_picks') ?? 'Quick picks';
     this.renderIconGrid(this.quickPickEntries);
   }
 
@@ -1060,14 +1114,21 @@ export class PersonaSection {
   /** Handle file drop or selection — process sequentially */
   private async handleKBFiles(files: File[]): Promise<void> {
     if (isIngesting()) {
-      this.ctx.showToast('Processing in progress. Please wait.', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_processing_in_progress') ?? 'Processing in progress. Please wait.',
+        'error',
+      );
       return;
     }
 
     // KB embeddings always use Gemini — require the key regardless of active provider
     const storage = await chrome.storage.local.get(['geminiApiKey']);
     if (!storage.geminiApiKey) {
-      this.ctx.showToast('Gemini API key required for Knowledge Base (embeddings use Gemini)', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_gemini_required')
+          ?? 'Gemini API key required for Knowledge Base (embeddings use Gemini)',
+        'error',
+      );
       return;
     }
 
@@ -1111,7 +1172,10 @@ export class PersonaSection {
         'success'
       );
     } else {
-      this.ctx.showToast(result.error ?? 'Failed to process file', 'error');
+      this.ctx.showToast(
+        result.error ?? this.ctx.t?.('options.toasts.persona_kb_file_failed') ?? 'Failed to process file',
+        'error',
+      );
     }
 
     await this.renderPersonaDocList();
@@ -1181,7 +1245,7 @@ export class PersonaSection {
       }
       if (this.kbEmpty) {
         this.kbEmpty.style.display = 'block';
-        this.kbEmpty.textContent = 'Failed to load documents.';
+        this.kbEmpty.textContent = this.ctx.t?.('options.personas.kb.load_failed') ?? 'Failed to load documents.';
       }
     }
   }
@@ -1206,12 +1270,19 @@ export class PersonaSection {
       }
       await savePersonas(this.personas);
 
-      this.ctx.showToast(`Deleted ${filename}`, 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_doc_deleted', { filename })
+          ?? `Deleted ${filename}`,
+        'success',
+      );
       await this.renderPersonaDocList();
       this.renderList();
     } catch (error) {
       console.error('[Persona] Failed to delete KB doc:', error);
-      this.ctx.showToast('Failed to delete document', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_doc_delete_failed') ?? 'Failed to delete document',
+        'error',
+      );
     }
   }
 
@@ -1248,13 +1319,16 @@ export class PersonaSection {
 
     const query = this.kbTestInput?.value?.trim();
     if (!query) {
-      this.ctx.showToast('Enter a test query', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_test_query_required') ?? 'Enter a test query',
+        'error',
+      );
       return;
     }
 
     if (this.kbTestBtn) {
       this.kbTestBtn.disabled = true;
-      this.kbTestBtn.textContent = 'Searching...';
+      this.kbTestBtn.textContent = this.ctx.t?.('options.personas.kb.searching') ?? 'Searching...';
     }
 
     try {
@@ -1286,11 +1360,14 @@ export class PersonaSection {
       }
     } catch (error) {
       console.error('[Persona] KB test query failed:', error);
-      this.ctx.showToast('Test query failed. Check your API key.', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.persona_kb_test_failed') ?? 'Test query failed. Check your API key.',
+        'error',
+      );
     } finally {
       if (this.kbTestBtn) {
         this.kbTestBtn.disabled = false;
-        this.kbTestBtn.textContent = 'Test';
+        this.kbTestBtn.textContent = this.ctx.t?.('options.personas.kb.test_button') ?? 'Test';
       }
     }
   }
@@ -1314,6 +1391,7 @@ export class PersonaSection {
           resetAssistantState();
         },
         showConfirmModal: this.ctx.showConfirmModal,
+        t: this.ctx.t,
       });
 
       // Wire quick-reply button actions
@@ -1483,6 +1561,7 @@ export class PersonaSection {
           closeReviewModal();
           closeChatModal();
         },
+        t: this.ctx.t,
       });
     } catch (err) {
       console.error('[PersonaEditor] Generation failed:', err);
@@ -1632,6 +1711,7 @@ export class PersonaSection {
         closeTestHarness();
         this.promptTextarea?.focus();
       },
+      t: this.ctx.t,
     });
   }
 
@@ -1667,6 +1747,7 @@ export class PersonaSection {
         closeTestHarness();
         this.promptTextarea?.focus();
       },
+      t: this.ctx.t,
     });
   }
 
@@ -1675,6 +1756,7 @@ export class PersonaSection {
     openVersionHistory({
       personaId: this.editingPersona.id,
       personaName: this.editingPersona.name,
+      t: this.ctx.t,
       onBack: () => {
         closeVersionHistory();
       },
@@ -1699,6 +1781,7 @@ export class PersonaSection {
             closeTestHarness();
             closeVersionHistory();
           },
+          t: this.ctx.t,
         });
       },
       onRestore: async (restoredVersion) => {

@@ -182,13 +182,19 @@ export class ApiKeysSection {
 
       const granted = await chrome.permissions.request({ origins: [OPENROUTER_ORIGIN] });
       if (!granted) {
-        this.ctx.showToast('Permission required to connect to OpenRouter', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.permission_required', { provider: 'OpenRouter' }) ?? 'Permission required to connect to OpenRouter',
+          'error',
+        );
         return false;
       }
       return true;
     } catch (error) {
       console.error('Permission request failed:', error);
-      this.ctx.showToast('Failed to request OpenRouter permission', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.permission_request_failed', { provider: 'OpenRouter' }) ?? 'Failed to request OpenRouter permission',
+        'error',
+      );
       return false;
     }
   }
@@ -200,13 +206,19 @@ export class ApiKeysSection {
 
       const granted = await chrome.permissions.request({ origins: [GROQ_ORIGIN] });
       if (!granted) {
-        this.ctx.showToast('Permission required to connect to Groq', 'error');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.permission_required', { provider: 'Groq' }) ?? 'Permission required to connect to Groq',
+          'error',
+        );
         return false;
       }
       return true;
     } catch (error) {
       console.error('Permission request failed:', error);
-      this.ctx.showToast('Failed to request Groq permission', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.permission_request_failed', { provider: 'Groq' }) ?? 'Failed to request Groq permission',
+        'error',
+      );
       return false;
     }
   }
@@ -221,23 +233,26 @@ export class ApiKeysSection {
     const humeApiKey = this.humeApiKeyInput?.value?.trim() || '';
     const humeSecretKey = this.humeSecretKeyInput?.value?.trim() || '';
 
+    const apiKeyRequired = (provider: string): string =>
+      this.ctx.t?.('options.toasts.api_key_required', { provider }) ?? `${provider} API key is required`;
+
     if (!deepgramKey) {
-      this.ctx.showToast('Deepgram API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Deepgram'), 'error');
       return;
     }
 
     if (this.provider === 'gemini' && !geminiKey) {
-      this.ctx.showToast('Gemini API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Gemini'), 'error');
       return;
     }
 
     if (this.provider === 'openrouter' && !openrouterKey) {
-      this.ctx.showToast('OpenRouter API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('OpenRouter'), 'error');
       return;
     }
 
     if (this.provider === 'groq' && !groqKey) {
-      this.ctx.showToast('Groq API key is required', 'error');
+      this.ctx.showToast(apiKeyRequired('Groq'), 'error');
       return;
     }
 
@@ -270,10 +285,16 @@ export class ApiKeysSection {
         llmProvider: this.provider,
       });
       this.updateStatus();
-      this.ctx.showToast('Settings saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_saved') ?? 'Settings saved',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error',
+      );
     }
   }
 
@@ -299,7 +320,7 @@ export class ApiKeysSection {
 
     if (this.testBtn) {
       this.testBtn.disabled = true;
-      this.testBtn.textContent = 'Testing...';
+      this.testBtn.textContent = this.ctx.t?.('options.setup.api_keys.testing') ?? 'Testing...';
     }
 
     const results: string[] = [];
@@ -421,7 +442,7 @@ export class ApiKeysSection {
 
     if (this.testBtn) {
       this.testBtn.disabled = false;
-      this.testBtn.textContent = 'Test Keys';
+      this.testBtn.textContent = this.ctx.t?.('options.setup.api_keys.test_keys') ?? 'Test Keys';
     }
   }
 
@@ -449,16 +470,16 @@ export class ApiKeysSection {
 
     if (deepgramKey && providerKey) {
       statusDot.classList.add('status-configured');
-      statusText.textContent = 'All keys configured';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_all_configured') ?? 'All keys configured';
     } else if (deepgramKey) {
       statusDot.classList.add('status-error');
-      statusText.textContent = `Missing ${providerLabel} key`;
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_missing_provider', { provider: providerLabel }) ?? `Missing ${providerLabel} key`;
     } else if (providerKey) {
       statusDot.classList.add('status-error');
-      statusText.textContent = 'Missing Deepgram key';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_missing_deepgram') ?? 'Missing Deepgram key';
     } else {
       statusDot.classList.add('status-unconfigured');
-      statusText.textContent = 'Keys not configured';
+      statusText.textContent = this.ctx.t?.('options.setup.api_keys.status_not_configured') ?? 'Keys not configured';
     }
   }
 
@@ -474,30 +495,44 @@ export class ApiKeysSection {
     const secretKey = this.humeSecretKeyInput?.value?.trim() || '';
 
     if (!apiKey || !secretKey) {
-      this.updateHumeStatus('Enter both API Key and Secret Key', 'error');
+      this.updateHumeStatus(
+        this.ctx.t?.('options.toasts.api_key_required', { provider: 'Hume' })
+          ?? 'Enter both API Key and Secret Key',
+        'error',
+      );
       return;
     }
 
     if (this.humeTestBtn) {
       this.humeTestBtn.disabled = true;
-      this.humeTestBtn.textContent = 'Testing...';
+      this.humeTestBtn.textContent = this.ctx.t?.('options.html.langbuilder.testing') ?? 'Testing...';
     }
 
     try {
       const result = await HumeClient.testCredentials(apiKey, secretKey);
 
       if (result.valid) {
-        this.updateHumeStatus('✓ Valid', 'success');
+        this.updateHumeStatus(
+          this.ctx.t?.('options.setup.api_keys.test_pass') ?? '✓ Valid',
+          'success',
+        );
       } else {
-        this.updateHumeStatus(result.error || 'Invalid credentials', 'error');
+        // Plan 10 FR-017: localized primary + raw error in monospace
+        const localized = this.ctx.t?.('errors.hume.api_failure') ?? 'Emotion detection unavailable.';
+        this.updateHumeStatus(localized, 'error');
+        this.ctx.showToast(localized, 'error', result.error ?? undefined);
       }
     } catch (error) {
-      this.updateHumeStatus('Network error', 'error');
+      // Plan 10 FR-017: localized primary + raw network error
+      const raw = error instanceof Error ? error.message : String(error);
+      const localized = this.ctx.t?.('errors.hume.disconnected') ?? 'Emotion detection disconnected.';
+      this.updateHumeStatus(localized, 'error');
+      this.ctx.showToast(localized, 'error', raw);
       console.error('Hume test error:', error);
     } finally {
       if (this.humeTestBtn) {
         this.humeTestBtn.disabled = false;
-        this.humeTestBtn.textContent = 'Test Hume';
+        this.humeTestBtn.textContent = this.ctx.t?.('options.html.setup.test_hume_button') ?? 'Test Hume';
       }
     }
   }

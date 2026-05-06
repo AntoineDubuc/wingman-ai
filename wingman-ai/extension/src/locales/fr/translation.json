@@ -1,0 +1,994 @@
+{
+  "_meta": {
+    "generator": "Direct authorship by Claude (Plan 3 Task 2 — Quebec French register per Sophie persona, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "overlay-assistant-2026-05-06",
+    "reviewer_status": "pending-native-review"
+  },
+  "popup": {
+    "title": "Wingman",
+    "subtitle": "Assistant IA en temps réel pour Google Meet",
+    "api_keys_label": "Clés API",
+    "session_label": "Session",
+    "controls_hint": {
+      "before": "Configurez vos clés API dans ",
+      "link": "Options",
+      "after": " pour commencer."
+    },
+    "footer": {
+      "options": "Options",
+      "tutorials": "Tutoriels",
+      "support": "Soutien"
+    },
+    "hydra_tooltip": {
+      "new_label": "Nouveau :",
+      "body": "Activez plusieurs personas pour le mode panel d'experts."
+    },
+    "start_session": "Démarrer la session",
+    "stop_session": "Arrêter la session",
+    "status": {
+      "active": "Session active",
+      "idle": "Prêt",
+      "connecting": "Connexion…",
+      "live": "En direct",
+      "error": "Erreur",
+      "session_active_other_tab": "Session active dans un autre onglet"
+    },
+    "actions": {
+      "open_settings": "Ouvrir les paramètres",
+      "open_meet": "Ouvrir Google Meet"
+    },
+    "api_status": {
+      "configured": "Configuré",
+      "not_configured": "Non configuré"
+    },
+    "session_status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "personas": {
+      "section_label": "Personas actives",
+      "remove": "Retirer",
+      "locked_tooltip": "Arrêtez la session pour modifier les personas",
+      "count_active_one": "1 active",
+      "count_active_other": "{{count}} actives",
+      "add_persona": "+ Ajouter une persona",
+      "add_persona_locked_tooltip": "Arrêtez la session pour modifier les personas",
+      "preset_locked_tooltip": "Arrêtez la session pour modifier les préréglages",
+      "preset_dropdown_label": "Préréglages Conclave",
+      "max_reached": "Maximum {{max}} personas atteint"
+    },
+    "errors": {
+      "no_api_keys": "Clés d'API manquantes",
+      "no_meet_tab": "Aucun onglet Google Meet trouvé"
+    }
+  },
+  "options": {
+    "tabs": {
+      "setup": "Configuration",
+      "calls": "Appels",
+      "personas": "Personas",
+      "conclave": "Conclave",
+      "langbuilder": "LangBuilder",
+      "websearch": "Recherche Web",
+      "support": "Soutien"
+    },
+    "setup": {
+      "title": "Paramètres",
+      "language_picker_label": "Langue",
+      "language_locked_tooltip": "Langue verrouillée pendant la session active",
+      "api_keys_title": "Clés API",
+      "api_keys": {
+        "description": "Configurez les clés API pour la transcription et les services d'IA.",
+        "gemini_label": "Clé API Gemini",
+        "deepgram_label": "Clé API Deepgram",
+        "test_button": "Tester",
+        "test_pass": "Connexion réussie",
+        "test_fail": "Échec de la connexion : {{rawError}}",
+        "testing": "Test en cours...",
+        "test_keys": "Tester les clés",
+        "status_all_configured": "Toutes les clés sont configurées",
+        "status_missing_provider": "Clé {{provider}} manquante",
+        "status_missing_deepgram": "Clé Deepgram manquante",
+        "status_not_configured": "Clés non configurées"
+      },
+      "save_button": "Enregistrer",
+      "cancel_button": "Annuler"
+    },
+    "calls": {
+      "title": "Paramètres d'appel",
+      "retention_label": "Conservation des transcriptions",
+      "summary_options_label": "Options de résumé"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "editor": {
+        "edit_title": "Modifier la persona"
+      },
+      "export": {
+        "exporting": "Exportation...",
+        "button": "Exporter"
+      },
+      "icons": {
+        "quick_picks": "Choix rapides"
+      },
+      "kb": {
+        "load_failed": "Échec du chargement des documents.",
+        "searching": "Recherche...",
+        "test_button": "Tester"
+      },
+      "default_interviewer": "Intervieweur par défaut",
+      "executive_communicator": "Communicateur exécutif",
+      "add_persona_button": "Ajouter un persona",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Candidat à un entretien d'embauche",
+          "description": "Coaching pour les questions d'entretien comportementales et situationnelles."
+        },
+        "startup_founder_fundraising": {
+          "name": "Fondateur de startup (levée de fonds)",
+          "description": "Coaching de présentation pour rencontres avec des investisseurs."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Travailleur autonome (négociation de tarifs)",
+          "description": "Coaching pour la fixation de tarifs et la négociation de mandats."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Demandeur de subventions OBNL",
+          "description": "Coaching pour les présentations devant bailleurs de fonds."
+        },
+        "patient_advocate": {
+          "name": "Défenseur du patient",
+          "description": "Coaching pour rendez-vous médicaux et décisions de soins."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Locataire (négociation de bail)",
+          "description": "Coaching de renouvellement de bail et de résolution de litiges pour locataires."
+        },
+        "parent_iep_meeting": {
+          "name": "Parent (réunion de plan d'intervention)",
+          "description": "Coaching pour réunions scolaires et défense en éducation spécialisée."
+        },
+        "small_business_loan_seeker": {
+          "name": "Demandeur de prêt PME",
+          "description": "Coaching pour rencontres avec agents de prêt bancaires."
+        },
+        "journalist_interviewer": {
+          "name": "Journaliste intervieweur",
+          "description": "Coaching d'entrevue de sources pour reporters et journalistes."
+        },
+        "esl_professional": {
+          "name": "Professionnel anglais langue seconde",
+          "description": "Coaching d'anglais des affaires pour locuteurs non natifs."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Consultant vente solutions infonuagiques",
+          "description": "Coaching avant-vente technique pour ententes plateforme infonuagique."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclave",
+      "description": "Mode conversation de groupe multi-personas.",
+      "enable_label": "Activer Conclave",
+      "no_active_personas": "Aucune persona active"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Personas",
+        "credentials_heading": "Identifiants",
+        "permissions_heading": "Autorisations d'hôte",
+        "errors_heading": "Erreurs ({{count}})",
+        "will_add": "Sera ajouté ({{count}}) :",
+        "will_update": "Sera mis à jour ({{count}}) :",
+        "will_skip": "Sera ignoré — vous les avez modifiés ({{count}}) :",
+        "will_request": "Sera demandé :",
+        "will_revoke": "Sera révoqué :",
+        "will_write_credentials_one": "1 identifiant sera écrit (valeurs masquées).",
+        "will_write_credentials_other": "{{count}} identifiants seront écrits (valeurs masquées).",
+        "will_clear_credentials_one": "1 identifiant sera effacé.",
+        "will_clear_credentials_other": "{{count}} identifiants seront effacés.",
+        "langbuilder_host": "LangBuilder appellera : {{host}}",
+        "empty": "Rien à importer."
+      }
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Constructeur de flux linguistiques personnalisés.",
+      "testing": "Test en cours...",
+      "test_connection": "Tester la connexion"
+    },
+    "websearch": {
+      "title": "Recherche Web",
+      "description": "Intégration Brave Search pour le contexte de l'assistant de clavardage.",
+      "brave_key_label": "Clé API Brave Search"
+    },
+    "support": {
+      "title": "Soutien",
+      "description": "Documentation et signalement de problèmes.",
+      "docs_link": "Documentation",
+      "issues_link": "Signaler un problème"
+    },
+    "drive": {
+      "auth_button": "Se connecter avec Google",
+      "signed_in": "Connecté en tant que {{email}}",
+      "sign_out": "Se déconnecter",
+      "save_label": "Enregistrer les résumés sur Drive",
+      "connecting": "Connexion en cours..."
+    },
+    "upgrade_banner": {
+      "title": "Wingman parle votre langue",
+      "body": "Votre langue a été automatiquement définie selon les paramètres de votre navigateur. Vous pouvez la modifier en tout temps dans l'onglet Configuration.",
+      "dismiss_button": "Compris"
+    },
+    "toasts": {
+      "settings_saved": "Paramètres enregistrés",
+      "settings_save_failed": "Échec de l'enregistrement des paramètres",
+      "api_key_required": "La clé d'API {{provider}} est requise",
+      "permission_required": "Autorisation requise pour se connecter à {{provider}}",
+      "permission_request_failed": "Échec de la demande d'autorisation {{provider}}",
+      "drive_connected": "Google Drive connecté!",
+      "drive_disconnected": "Google Drive déconnecté",
+      "drive_connect_failed": "Échec de la connexion",
+      "drive_disconnect_failed": "Échec de la déconnexion",
+      "drive_settings_saved": "Paramètres Drive enregistrés",
+      "langbuilder_settings_saved": "Paramètres LangBuilder enregistrés",
+      "langbuilder_url_required": "Veuillez saisir l'URL et la clé d'API",
+      "langbuilder_test_passed_one": "Connecté! 1 flux trouvé",
+      "langbuilder_test_passed_other": "Connecté! {{count}} flux trouvés",
+      "langbuilder_test_failed": "Test échoué: {{rawError}}",
+      "langbuilder_permission_required": "Autorisation requise pour se connecter à ce serveur",
+      "langbuilder_invalid_url": "Format d'URL invalide",
+      "active_personas_max": "Maximum {{count}} personas actifs",
+      "active_personas_min": "Au moins un persona doit être actif",
+      "transcription_pause_threshold": "Seuil de pause: {{value}}",
+      "transcription_suggestion_cooldown": "Délai entre suggestions: {{value}}",
+      "transcription_auto_suggestions_on": "Suggestions auto: Activées",
+      "transcription_auto_suggestions_off": "Suggestions auto: Désactivées",
+      "transcription_prompt_tuning": "Réglage du prompt: {{label}}",
+      "conclave_leader_updated": "Leader du Conclave mis à jour",
+      "conclave_preset_activated": "Préréglage activé",
+      "conclave_preset_activated_with_missing_one": "Activé (1 persona supprimé ignoré)",
+      "conclave_preset_activated_with_missing_other": "Activé ({{count}} personas supprimés ignorés)",
+      "conclave_preset_deleted": "Préréglage supprimé",
+      "conclave_preset_created": "Préréglage créé",
+      "conclave_preset_updated": "Préréglage mis à jour",
+      "conclave_preset_name_required": "Veuillez saisir un nom",
+      "conclave_preset_select_persona": "Veuillez sélectionner au moins un persona",
+      "conclave_delete_modal_title": "Supprimer le préréglage",
+      "conclave_delete_modal_body": "Êtes-vous sûr de vouloir supprimer « {{name}} »?",
+      "persona_name_required": "Le nom du persona est requis",
+      "persona_prompt_too_short": "L'invite doit contenir au moins {{min}} caractères",
+      "persona_prompt_too_long": "L'invite ne peut pas dépasser {{max}} caractères",
+      "persona_saved_with_version": "Invite enregistrée comme v{{version}} ({{model}})",
+      "persona_saved": "Persona enregistré",
+      "persona_deleted": "Persona supprimé",
+      "persona_duplicated": "Persona dupliqué",
+      "persona_exported": "Persona exporté",
+      "persona_export_failed": "Échec de l'exportation",
+      "persona_only_one_cannot_delete": "Impossible de supprimer votre seul persona",
+      "persona_kb_doc_deleted": "{{filename}} supprimé",
+      "persona_kb_doc_delete_failed": "Échec de la suppression du document",
+      "persona_kb_test_query_required": "Entrez une requête de test",
+      "persona_kb_test_failed": "Requête de test échouée. Vérifiez votre clé API.",
+      "persona_kb_gemini_required": "La clé d'API Gemini est requise pour la base de connaissances (les embeddings utilisent Gemini)",
+      "persona_kb_processing_in_progress": "Traitement en cours. Veuillez patienter.",
+      "persona_import_invalid_json": "Fichier JSON invalide",
+      "persona_import_not_valid": "Fichier persona Wingman non valide ({{reason}})",
+      "persona_import_kb_gemini_required": "La clé d'API Gemini est requise pour traiter les documents KB",
+      "persona_import_with_kb_failures": "Persona importé ({{count}} doc(s) KB échoué(s))",
+      "persona_import_success": "Persona importé avec succès",
+      "persona_import_failed": "Échec de l'importation du fichier persona",
+      "persona_kb_file_processed": "Document ajouté à la base de connaissances",
+      "persona_kb_file_failed": "Échec du traitement du fichier",
+      "setup_call_in_progress_import": "Arrêtez l'appel en cours avant l'importation.",
+      "setup_no_files": "Aucun fichier sélectionné",
+      "setup_import_cancelled": "Importation annulée",
+      "setup_duplicate_persona_names": "Noms de personas en double — importation annulée.",
+      "setup_call_started_during_import": "Appel démarré pendant l'importation. Annulé.",
+      "setup_import_failed": "Importation échouée — voir la console du service worker",
+      "setup_import_modal_title": "Importer un dossier de configuration",
+      "setup_folder_empty": "Dossier vide (ou ne contient que des fichiers cachés). Renommez .env en wingman.env et réessayez.",
+      "setup_large_folder_title": "Dossier volumineux",
+      "setup_large_folder_body": "Vous avez sélectionné {{count}} fichiers. Seuls .env et *persona*.json seront traités. Continuer?",
+      "setup_nothing_to_import": "Rien à importer. Le dossier doit contenir un fichier .env ou *persona*.json.",
+      "setup_already_up_to_date": "Déjà à jour — les identifiants et personas correspondent au dossier.",
+      "setup_credentials_imported_persona_skipped": "Identifiants importés. Importation des personas annulée — appel en cours.",
+      "setup_imported_summary": "Importé {{personas}} personas, {{credentials}} identifiants"
+    },
+    "prompt_modals": {
+      "chat": {
+        "initial_bot_message": "À quoi servira ce persona? Décrivez le cas d'usage et je générerai un prompt système optimisé.",
+        "btn_refine": "Affiner...",
+        "btn_generate": "Générer les prompts",
+        "btn_cancel": "Annuler",
+        "btn_generate_v": "Générer v{{version}}",
+        "btn_generating": "Génération...",
+        "btn_close": "Fermer",
+        "btn_retry": "Réessayer",
+        "btn_back_to_chat": "Retour au chat",
+        "btn_use_asis": "Utiliser tel quel",
+        "btn_customize": "Personnaliser",
+        "template_tag": "Modèle",
+        "show_full_prompt": "Afficher le prompt complet",
+        "show_less": "Réduire",
+        "discard_modal_title": "Abandonner la conversation?",
+        "discard_modal_body": "Votre conversation de découverte sera perdue. Vous pouvez relancer l'assistant à tout moment."
+      },
+      "version_history": {
+        "title": "Historique des prompts — {{personaName}}",
+        "description": "Chaque version de prompt avec résultats de tests et coûts.",
+        "btn_back": "Retour",
+        "empty_state": "Aucune version encore.",
+        "badge_current": "actuelle",
+        "badge_manual": "édition manuelle",
+        "badge_assistant": "assistant de configuration",
+        "badge_restored": "restaurée",
+        "badge_template": "depuis modèle",
+        "badge_imported": "importée",
+        "stats_with_tests": "Test: {{passed}}/{{total}} réussis · {{modelId}} · Coût: ${{cost}} · {{date}}",
+        "stats_no_tests": "Aucun test · {{modelId}} · {{date}}",
+        "btn_diff": "Diff",
+        "btn_test": "Tester",
+        "btn_restore": "Restaurer",
+        "btn_delete": "Supprimer",
+        "diff_header": "Diff: v{{from}}({{fromModel}}) → v{{to}}({{toModel}})",
+        "select_from": "De",
+        "select_to": "À",
+        "btn_close_diff": "Fermer le diff",
+        "restore_confirm": "Restaurer v{{version}}? Cela créera une nouvelle version avec le contenu de v{{version}}.",
+        "delete_confirm": "Supprimer v{{version}} ({{summary}})? Cette action est irréversible."
+      },
+      "review": {
+        "tab_prompt": "Prompt",
+        "tab_test_questions": "Questions de test",
+        "generation_badge": "Génération: #{{generationNumber}}",
+        "editing_unsaved": "Édition — modifications non enregistrées",
+        "char_count": "{{count}} / {{max}} caractères",
+        "modified_suffix": " · modifié",
+        "btn_compare_vs": "Comparer avec génération #{{previous}}",
+        "label_target_model": "Modèle cible",
+        "diff_label_live": "DIFF EN DIRECT VS GÉNÉRÉ",
+        "diff_label_vs_gen": "DIFF VS GÉNÉRATION #{{num}}",
+        "empty_no_test_questions": "Aucune question de test générée.",
+        "group_should_respond": "AUTO-GÉNÉRÉ — DOIT RÉPONDRE",
+        "group_should_silent": "AUTO-GÉNÉRÉ — DOIT SE TAIRE",
+        "badge_new": "nouveau",
+        "btn_refine": "Affiner...",
+        "btn_edit": "Modifier",
+        "btn_test_dots": "Tester...",
+        "btn_save_all": "Tout enregistrer (v{{generation}})",
+        "btn_discard_edits": "Annuler les modifications",
+        "btn_test_this_version": "Tester cette version",
+        "btn_show_diff": "Afficher le diff",
+        "btn_hide_diff": "Masquer le diff",
+        "btn_save": "Enregistrer",
+        "btn_remove_test_qs": "Retirer questions test",
+        "btn_test_now": "Tester maintenant",
+        "btn_save_prompt_test_qs": "Enregistrer prompt + questions test"
+      },
+      "test_harness": {
+        "title_interrupted": "Testeur de prompt — Interrompu",
+        "title_results_all_pass": "Résultats des tests",
+        "title_results_partial": "Résultats — {{passed}}/{{total}} réussis",
+        "title_kb_validation": "Validation KB{{versionSuffix}}",
+        "title_default": "Testeur de prompt{{versionSuffix}}",
+        "tab_sample_qs": "Q. exemples",
+        "tab_custom_q": "Q. perso",
+        "tab_kb_query": "KB + Requête",
+        "empty_generating": "Génération de questions exemples à partir de votre prompt...",
+        "empty_no_questions": "Aucune question exemple encore.",
+        "btn_generate_sample": "Générer des questions exemples",
+        "section_should_respond": "DOIT RÉPONDRE",
+        "section_should_silent": "DOIT SE TAIRE",
+        "cost_estimate": "{{totalQs}} questions × 1 modèle = ~${{cost}}",
+        "cost_estimate_comparison": "{{totalQs}} questions × 1 modèle × 2 versions = ~${{cost}}",
+        "btn_run_tests": "Lancer tests{{versionLabel}}",
+        "add_question_label": "Ajouter une question",
+        "placeholder_question": "Entrez une question de test...",
+        "radio_should_respond": "Doit répondre",
+        "radio_should_silent": "Doit se taire",
+        "btn_add": "+ Ajouter",
+        "kb_empty_state": "Aucun document KB lié à ce persona. Téléversez des documents dans le panneau persona pour activer le test KB.",
+        "kb_linked_header": "Documents KB liés ({{count}})",
+        "kb_doc_item": "{{filename}} ({{chunks}} fragments)",
+        "placeholder_kb_search": "Rechercher dans votre KB...",
+        "btn_search": "Rechercher",
+        "btn_searching": "Recherche...",
+        "search_failed": "Échec de la recherche: {{error}}",
+        "kb_section_header": "Tests d'intégration KB",
+        "kb_section_description": "Génère automatiquement 3 tests: citation réelle, connaissance impossible (fait injecté) et données manquantes (doit refuser).",
+        "placeholder_impossible": "Fait impossible perso (par défaut: 999$/siège Entreprise)",
+        "btn_run_kb_tests": "Lancer tests KB",
+        "btn_running": "En cours...",
+        "kb_loading_message": "Exécution de 3 tests KB sur le modèle... cela peut prendre 15-30 secondes.",
+        "no_api_key_for_provider": "Aucune clé d'API configurée pour le fournisseur actif.",
+        "kb_tests_failed": "Échec des tests KB: {{error}}",
+        "no_results_for_query": "Aucun résultat pour « {{query}} ». Essayez une requête différente ou vérifiez que les documents sont indexés.",
+        "results_header": "{{count}} résultats pour « {{query}} »",
+        "kb_all_passed": "Tous les tests KB réussis ({{passed}}/{{total}})",
+        "kb_partial_passed": "Tests KB: {{passed}}/{{total}} réussis",
+        "meta_kb_chunk_retrieved": "Fragment KB récupéré",
+        "meta_similarity": "Similarité: {{percent}}%",
+        "meta_source": "Source: {{filename}}",
+        "meta_citation_correct": "Citation correcte",
+        "meta_citation_incorrect": "Citation incorrecte",
+        "badge_pass": "Réussi",
+        "badge_silent": "Silencieux",
+        "badge_wrong_behavior": "Mauvais comportement",
+        "badge_should_respond": "Aurait dû répondre",
+        "badge_off_topic": "Réponse hors-sujet",
+        "badge_should_silent": "Aurait dû se taire",
+        "badge_error": "Erreur: {{message}}",
+        "success_title": "Tous les tests réussis",
+        "success_detail": "{{total}}/{{total}} questions · {{modelId}}",
+        "fail_banner_title": "Tous les tests ont échoué",
+        "fail_banner_body": "Ce prompt peut nécessiter une révision importante. Relancez l'assistant de configuration ou essayez un modèle cible différent.",
+        "btn_close": "Fermer",
+        "btn_edit_to_fix": "Modifier le prompt",
+        "btn_retry_failed": "Réessayer les tests échoués",
+        "btn_save_as_v": "Enregistrer comme v{{version}}",
+        "btn_back_to_edit": "Retour à édition",
+        "btn_back_to_history": "Retour à l'historique",
+        "btn_restore_v": "Restaurer v{{version}}",
+        "compare_against_label": "Comparer avec:",
+        "compare_none": "Aucun",
+        "compare_version_option": "v{{version}} — {{summary}}",
+        "comparison_title": "Comparaison: {{currentLabel}} vs {{comparedLabel}}",
+        "scorecard_pass": "{{passed}}/{{total}} réussis",
+        "badge_should_respond_lc": "doit répondre",
+        "badge_should_silent_lc": "doit se taire",
+        "loading_running_tests": "Exécution des tests... cela peut prendre 15-30 secondes.",
+        "no_api_key_setup_hint": "Aucune clé d'API trouvée pour le fournisseur actif. Vérifiez vos clés dans l'onglet Configuration."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Paramètres de l'extension",
+        "theme_toggle": "Basculer le mode sombre"
+      },
+      "setup": {
+        "import_setup_folder_title": "Importer un dossier de configuration",
+        "choose_folder_button": "Choisir un dossier",
+        "api_keys_description": "Saisissez vos clés d'API pour activer la transcription vocale et les réponses IA. Vos clés sont stockées localement et ne sont jamais envoyées à nos serveurs.",
+        "deepgram_label": "Clé d'API Deepgram",
+        "gemini_label": "Clé d'API Google Gemini",
+        "openrouter_label": "Clé d'API OpenRouter",
+        "groq_label": "Clé d'API Groq",
+        "hume_label": "Hume AI (détection des émotions)",
+        "hume_optional": "Facultatif",
+        "hume_secret_key_label": "Clé secrète",
+        "test_hume_button": "Tester Hume",
+        "test_keys_button": "Tester les clés",
+        "save_keys_button": "Enregistrer les clés",
+        "ai_provider_label": "Fournisseur d'IA",
+        "model_label": "Modèle",
+        "show_hide_key": "Afficher/masquer la clé",
+        "get_one_free": "En obtenir une gratuitement",
+        "google_drive_title": "Intégration Google Drive",
+        "google_drive_description": "Enregistrez automatiquement les transcriptions de réunion sur votre Google Drive après chaque appel.",
+        "autosave_label": "Enregistrement auto des transcriptions",
+        "connect_button": "Connecter le compte Google",
+        "disconnect_button": "Déconnecter",
+        "folder_name_label": "Nom du dossier",
+        "transcript_format_label": "Format de la transcription",
+        "format_googledoc": "Google Doc (formaté)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Texte brut (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Personas actifs pour les appels",
+        "active_personas_description": "Sélectionnez les personas actifs pendant vos appels.",
+        "import_setup_folder_description": "Choisissez un dossier contenant un fichier .env et des fichiers *persona*.json pour importer identifiants et personas en un clic. Vos propres personas et modifications sont préservés — seuls les personas livrés non modifiés sont écrasés.",
+        "import_setup_folder_security": "Rappel de sécurité : les clés d'API sont stockées en clair dans votre profil Chrome. N'importez pas de clés dans un profil Chrome partagé.",
+        "deepgram_placeholder": "Saisissez votre clé d'API Deepgram",
+        "gemini_placeholder": "Saisissez votre clé d'API Gemini",
+        "openrouter_placeholder": "Saisissez votre clé d'API OpenRouter",
+        "groq_placeholder": "Saisissez votre clé d'API Groq",
+        "hume_api_placeholder": "Saisissez votre clé d'API Hume",
+        "hume_secret_placeholder": "Saisissez votre clé secrète Hume",
+        "drive_folder_placeholder": "Transcriptions Wingman",
+        "deepgram_hint": "Utilisé pour la transcription vocale en temps réel",
+        "provider_hint": "Gemini utilise votre clé directement. OpenRouter permet de choisir parmi plusieurs modèles. Groq offre une IA open-source ultra rapide.",
+        "gemini_hint": "Utilisé pour les suggestions et réponses propulsées par IA",
+        "openrouter_hint": "Utilisé pour les suggestions et réponses propulsées par IA via OpenRouter",
+        "model_choice_hint": "Choisissez le modèle IA à utiliser pour les suggestions et résumés",
+        "groq_hint": "Inférence ultra rapide sur modèles open-source — version gratuite à console.groq.com",
+        "folder_hint": "Le dossier sera créé à la racine de votre Drive s'il n'existe pas",
+        "active_personas_hint": "Chaque persona actif évalue les transcriptions indépendamment. Limitez-vous à 4 pour garder la latence basse.",
+        "hume_api_key_label": "Clé d'API",
+        "hume_secret_key_label_short": "Clé secrète",
+        "hume_get_keys": "(Obtenir les clés)",
+        "hume_description": "Affiche les émotions du client en temps réel pendant les appels. Nécessite un compte Hume AI sur platform.hume.ai. Utilisé uniquement lorsque les clés sont configurées — la détection des émotions est facultative.",
+        "status_keys_not_configured": "Clés non configurées",
+        "autosave_description": "Lorsqu'activé, les transcriptions sont automatiquement enregistrées dans votre dossier Drive à la fin de chaque appel.",
+        "connected_label": "Connecté",
+        "folder_format_summary": "Format du dossier",
+        "folder_format_env_intro": "au niveau supérieur avec n'importe laquelle de ces clés:",
+        "folder_format_persona_files": "Fichiers persona JSON n'importe où dans le dossier (tout nom contenant « persona » et se terminant par .json)."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Sensibilité de la transcription",
+        "pause_threshold_label": "Seuil de pause",
+        "suggestion_frequency_title": "Fréquence des suggestions",
+        "auto_suggestions_label": "Suggestions automatiques",
+        "cooldown_label": "Délai entre suggestions",
+        "ai_prompt_tuning_title": "Réglage du prompt IA",
+        "tuning_mode_label": "Mode de réglage",
+        "tuning_mode_auto": "Auto (recommandé)",
+        "tuning_mode_off": "Désactivé",
+        "speaker_filter_title": "Filtre des locuteurs",
+        "speaker_filter_label": "Répondre uniquement aux autres locuteurs",
+        "panel_layout_title": "Disposition du panneau",
+        "panel_position_label": "Position du panneau",
+        "position_floating": "Flottant",
+        "position_dock_left": "Barre latérale à gauche",
+        "position_dock_right": "Barre latérale à droite",
+        "display_mode_label": "Mode d'affichage",
+        "display_full": "Transcription complète + suggestions",
+        "display_suggestions_only": "Suggestions seulement",
+        "call_summary_title": "Résumé de l'appel",
+        "auto_summary_label": "Générer auto le résumé d'appel",
+        "include_key_moments_label": "Inclure les moments clés",
+        "transcription_sensitivity_description": "Contrôle combien de temps Wingman attend avant de considérer la parole d'un locuteur comme finale.",
+        "suggestion_frequency_description": "Délai minimum entre les suggestions IA. Des valeurs basses sont plus réactives; les valeurs élevées réduisent le coût LLM.",
+        "ai_prompt_tuning_description": "Adapte vos prompts de persona pour fonctionner au mieux sur le LLM actif (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Contrôle quand Wingman fournit des suggestions selon qui parle.",
+        "panel_layout_description": "Contrôle où le panneau Wingman apparaît pendant les appels et ce qu'il affiche.",
+        "call_summary_description": "Obtenez un résumé généré par IA avec actions à entreprendre et moments clés après chaque appel.",
+        "tuning_mode_hint": "Auto applique des ajustements spécifiques au modèle à l'exécution sans modifier vos prompts enregistrés.",
+        "pause_threshold_hint": "Combien de temps un locuteur doit faire une pause avant qu'une nouvelle bulle de transcription soit créée. Plus bas = plus réactif mais peut couper les phrases; plus haut = plus fluide mais ajoute du délai.",
+        "auto_suggestions_hint": "Désactivé, Wingman ne suggère pas automatiquement — vous pouvez déclencher manuellement.",
+        "cooldown_hint": "Après chaque suggestion, Wingman attend ce délai avant d'en considérer une autre.",
+        "speaker_filter_hint": "Lorsque activé, Wingman fournit des suggestions uniquement quand d'autres participants parlent — jamais sur votre propre audio.",
+        "auto_summary_hint": "Utilise un appel d'API IA supplémentaire par session.",
+        "moments_hint": "Met en évidence les citations notables et les signaux d'achat."
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Importer",
+        "new_button": "+ Nouveau persona",
+        "editor_title": "Modifier le persona",
+        "name_label": "Nom",
+        "icon_label": "Icône (facultatif)",
+        "icon_clear_button": "Effacer",
+        "color_label": "Étiquette de couleur",
+        "system_prompt_label": "Prompt système",
+        "prompt_assistant_button": "Assistant de configuration",
+        "test_prompts_button": "Tester les prompts",
+        "version_history_button": "Historique des versions",
+        "kb_label": "Base de connaissances",
+        "kb_test_label": "Tester la base de connaissances",
+        "kb_test_button": "Tester",
+        "cancel_button": "Annuler",
+        "export_button": "Exporter",
+        "duplicate_button": "Dupliquer",
+        "delete_button": "Supprimer",
+        "save_button": "Enregistrer",
+        "personas_description": "Regroupez un prompt système avec des documents de la base de connaissances. Chaque persona donne à l'IA sa voix et son contexte.",
+        "empty_state": "Créez votre premier persona pour regrouper un prompt système avec des documents KB.",
+        "kb_drop_text": "Déposez les fichiers ici ou cliquez pour parcourir",
+        "kb_drop_hint": "PDF, Markdown ou texte (max 10 Mo)",
+        "kb_processing": "Traitement...",
+        "kb_empty_state": "Aucun document téléchargé. Glissez des fichiers ci-dessus ou cliquez pour parcourir.",
+        "icon_quick_picks": "Choix rapides",
+        "icon_loading": "Chargement des icônes...",
+        "icon_no_results": "Aucune icône trouvée. Essayez d'autres mots-clés comme « visage », « travail », « animal ».",
+        "icon_selected": "Sélectionné:",
+        "icon_search_placeholder": "Rechercher 4 000+ icônes...",
+        "name_placeholder": "ex. Démo Sécurité Cloud",
+        "prompt_placeholder": "Saisissez votre prompt système...",
+        "kb_test_placeholder": "ex. Quelles certifications de sécurité avez-vous?",
+        "char_count_initial": "0 / 10 000 caractères"
+      },
+      "conclave": {
+        "settings_title": "Paramètres du Conclave",
+        "leader_label": "Leader du Conclave",
+        "presets_title": "Préréglages",
+        "new_preset_button": "+ Nouveau préréglage",
+        "settings_description": "Configurez comment plusieurs personas travaillent ensemble quand plus d'un est actif.",
+        "presets_description": "Enregistrez des combinaisons de personas pour activation rapide. Les préréglages n'incluent pas d'identifiants.",
+        "leader_hint": "L'expertise du leader du Conclave guide le résumé post-appel. Choisissez quel persona devrait façonner la perspective du résumé."
+      },
+      "langbuilder": {
+        "connection_title": "Connexion LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Clé d'API",
+        "test_button": "Tester la connexion",
+        "save_button": "Enregistrer",
+        "flows_title": "Flux disponibles",
+        "connection_description": "Connectez-vous à votre instance LangBuilder pour exécuter des flux personnalisés depuis la superposition.",
+        "flows_description": "Flux de votre instance LangBuilder, rafraîchis lors du test de connexion.",
+        "url_placeholder": "https://langflow.entreprise.com",
+        "api_key_placeholder": "Saisissez votre clé d'API LangBuilder",
+        "url_hint": "URL de base de votre instance LangBuilder",
+        "api_key_hint": "Jeton x-api-key issu de vos paramètres LangBuilder",
+        "status_unconfigured": "Non configuré"
+      },
+      "websearch": {
+        "provider_title": "Fournisseur de recherche web",
+        "provider_label": "Fournisseur",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Clé d'API",
+        "test_button": "Tester la connexion",
+        "budget_title": "Budget quotidien de requêtes",
+        "provider_description": "Activez la recherche web en direct pendant les réunions via Brave Search.",
+        "budget_description": "Limitez le nombre de recherches web par jour pour contrôler les coûts API.",
+        "api_key_placeholder": "Saisissez votre clé d'API Brave Search"
+      },
+      "support": {
+        "support_wingman_title": "Soutenir Wingman",
+        "donate_button": "Offrez-moi un café",
+        "tutorials_title": "Tutoriels et guides",
+        "view_tutorials_button": "Voir les tutoriels",
+        "feature_requests_title": "Demandes de fonctionnalités et bogues",
+        "github_button": "Soumettre sur GitHub",
+        "langbuilder_title": "Conçu avec LangBuilder",
+        "learn_more_button": "En savoir plus",
+        "connect_title": "Connectez-vous au créateur",
+        "linkedin_button": "Se connecter sur LinkedIn",
+        "support_wingman_description": "Vous aimez Wingman? Votre soutien m'aide à continuer de créer des outils gratuits axés sur la confidentialité.",
+        "tutorials_description": "Apprenez à tirer le meilleur parti de Wingman avec des guides étape par étape.",
+        "feature_requests_description": "Une idée de fonctionnalité? Un bug trouvé? Ouvrez un ticket sur GitHub.",
+        "langbuilder_description": "Les flux IA de Wingman sont propulsés par LangBuilder, une plateforme d'orchestration open-source.",
+        "connect_intro": "Bonjour, je suis Antoine Dubuc — développeur solo derrière Wingman.",
+        "connect_cta": "J'aimerais savoir comment vous utilisez Wingman et ce que vous aimeriez voir ensuite."
+      },
+      "modals": {
+        "reset_title": "Réinitialiser par défaut?",
+        "reset_cancel": "Annuler",
+        "reset_confirm": "Réinitialiser",
+        "assistant_title": "Assistant de configuration",
+        "send_button": "Envoyer",
+        "tester_title": "Testeur de prompt"
+      }
+    }
+  },
+  "overlay": {
+    "timer": {
+      "label": "Durée de la session"
+    },
+    "session": {
+      "connecting": "Connexion…",
+      "live": "En direct",
+      "error": "Erreur de connexion",
+      "disconnected": "Déconnecté"
+    },
+    "transcript": {
+      "live": "En direct",
+      "paused": "En pause",
+      "empty_placeholder": "En attente de paroles…",
+      "someone_speaking": "Quelqu'un parle…"
+    },
+    "suggestion": {
+      "try_again": "Réessayer",
+      "try_again_tooltip": "Régénérer cette suggestion dans votre langue",
+      "after_retry_label": "Régénérée",
+      "thinking": "Réflexion…",
+      "no_suggestion": "À l'écoute…"
+    },
+    "speaker": {
+      "you": "Vous",
+      "speaker_n": "Interlocuteur {{n}}"
+    },
+    "controls": {
+      "minimize": "Réduire",
+      "close": "Fermer",
+      "hide": "Masquer",
+      "dock": "Ancrer",
+      "undock": "Désancrer",
+      "dock_left": "Barre latérale à gauche",
+      "dock_right": "Barre latérale à droite",
+      "suggestions_only": "Suggestions seulement",
+      "suggestions_only_chip": "Affichage des suggestions seulement",
+      "show_full_transcript": "Afficher la transcription complète",
+      "font_decrease": "Diminuer la taille du texte",
+      "font_increase": "Augmenter la taille du texte",
+      "layout_toggle": "Basculer en mode côte à côte",
+      "resize": "Redimensionner"
+    },
+    "header": {
+      "recording": "Enregistrement",
+      "assistant_panel": "Assistant"
+    },
+    "pill_toggle": {
+      "meeting": "Réunion",
+      "assistant": "Assistant"
+    },
+    "nav": {
+      "chat": "Discussion",
+      "flows": "Flux"
+    },
+    "emotion": {
+      "label_prefix": "Ton :"
+    },
+    "cost": {
+      "label": "Coût estimé",
+      "minutes_unit": "min",
+      "free_value": "Gratuit",
+      "estimate_disclaimer": "Estimation · facture réelle peut varier",
+      "free_tier_suffix": "version gratuite",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} appel",
+      "calls_unit_other": "{{count}} appels"
+    },
+    "summary_card": {
+      "generating": "Génération du résumé..."
+    },
+    "actions": {
+      "saved_to_drive": "Enregistré dans Drive",
+      "copy": "Copier",
+      "copied": "Copié!",
+      "copy_failed": "Échec"
+    },
+    "langbuilder": {
+      "running": "Exécution du flux...",
+      "cancelled": "Annulé",
+      "flow_failed": "L'exécution du flux a échoué",
+      "connection_error": "Erreur de connexion",
+      "no_flows_hint": "Aucun flux — configurer dans Paramètres",
+      "select_flow_placeholder": "Sélectionner un flux...",
+      "input_placeholder": "Collez ou tapez l'entrée pour le flux...",
+      "cancel": "Annuler",
+      "go": "Lancer",
+      "empty_result": "Lancez un flux pour voir les résultats ici."
+    },
+    "kb": {
+      "search_aria_label": "Rechercher dans la base de connaissances",
+      "answer_aria_label": "Réponse KB: {{answer}}",
+      "input_placeholder": "Interrogez votre base de connaissances..."
+    },
+    "empty": {
+      "listening": "En écoute de la conversation...",
+      "waiting_suggestions": "En attente de suggestions...",
+      "unknown_speaker": "Inconnu"
+    },
+    "assistant": {
+      "chat_empty_title": "Comment puis-je aider?",
+      "chat_empty_subtitle": "Demandez n'importe quoi. Activez les sources de contexte ci-dessus pour inclure la transcription de la réunion ou la base de connaissances des personas.",
+      "chat_input_placeholder": "Demandez n'importe quoi...",
+      "context_transcript": "Transcription",
+      "context_web_search": "Recherche web",
+      "attach_persona_knowledge": "Joindre la base de connaissances du persona",
+      "personas_load_failed": "Impossible de charger les personas — rechargez l'extension.",
+      "no_personas_configured": "Aucun persona configuré.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} de plus",
+      "suggestion_chip_1": "Qu'est-ce que le flux PKCE mentionné par Sarah?",
+      "suggestion_chip_2": "Rédigez un courriel de suivi avec les actions à entreprendre",
+      "suggestion_chip_3": "Expliquez les bonnes pratiques de rotation des jetons OAuth 2.0",
+      "suggestion_chip_4": "Que sait notre architecte de la migration de session?"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Résumé",
+      "action_items": "Actions à suivre",
+      "key_moments": "Moments clés",
+      "personas_used": "Personas utilisés",
+      "session_cost_estimate": "Coût estimé de la session",
+      "call_summary": "Résumé de l'appel"
+    },
+    "action_item_owner": {
+      "you": "Vous",
+      "them": "Eux"
+    },
+    "moment_types": {
+      "signal": "Signal",
+      "objection": "Objection",
+      "decision": "Décision",
+      "quote": "Citation"
+    },
+    "cost": {
+      "label": "Coût estimé",
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "version gratuite",
+      "free": "Gratuit",
+      "calls_unit": "{{count}} appels",
+      "total": "Total"
+    },
+    "save_to_drive": "Enregistrer sur Drive",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "metadata_labels": {
+      "duration": "Durée",
+      "speakers": "Locuteurs",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "Aucun résumé disponible",
+    "personas": {
+      "suggestion_count_one": "1 suggestion",
+      "suggestion_count_other": "{{count}} suggestions"
+    }
+  },
+  "speakers": {
+    "you": "Vous",
+    "them": "Eux",
+    "speaker_n": "Interlocuteur {{n}}"
+  },
+  "mic_permission": {
+    "title": "Accès au microphone requis",
+    "body": "Wingman a besoin d'accéder à votre microphone pour transcrire la rencontre.",
+    "grant_button": "Autoriser l'accès",
+    "cancel_button": "Annuler",
+    "denied": {
+      "title": "Accès au microphone refusé",
+      "body": "Wingman ne peut pas transcrire sans accès au microphone."
+    },
+    "recovery": {
+      "title": "Comment rétablir l'accès",
+      "steps_intro": "Suivez ces étapes :",
+      "step_1": "Cliquez sur l'icône de cadenas dans la barre d'adresse.",
+      "step_2": "Réglez la permission du microphone à « Autoriser ».",
+      "step_3": "Rechargez cette page et réessayez."
+    }
+  },
+  "errors": {
+    "deepgram_failed": "Reconnaissance vocale indisponible. {{rawError}}",
+    "mic_revoked": "Accès au microphone perdu. Veuillez rétablir l'accès et réessayer.",
+    "api_key_missing": "Clé API {{provider}} non configurée. Veuillez l'ajouter dans les paramètres.",
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "session_interrupted": "Session interrompue de manière inattendue.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Échec de la connexion de transcription.",
+      "session_dropped": "La session de transcription s'est terminée de façon inattendue.",
+      "language_unavailable": "La reconnaissance vocale en {{language}} est actuellement indisponible."
+    },
+    "gemini": {
+      "api_failure": "Service Gemini indisponible.",
+      "rate_limit": "Limite d'appel Gemini atteinte. Veuillez patienter un moment.",
+      "quota_exceeded": "Quota quotidien Gemini dépassé."
+    },
+    "groq": {
+      "api_failure": "Service Groq indisponible."
+    },
+    "drive": {
+      "oauth_failed": "Échec de la connexion Google Drive. Veuillez réessayer.",
+      "save_failed": "Impossible d'enregistrer sur Drive.",
+      "quota_exceeded": "Quota de stockage Drive dépassé.",
+      "network": "Erreur réseau lors de l'accès à Drive."
+    },
+    "hume": {
+      "disconnected": "Détection des émotions déconnectée.",
+      "api_failure": "Détection des émotions indisponible."
+    },
+    "brave": {
+      "api_failure": "Recherche Web indisponible pour cette requête.",
+      "rate_limit": "Limite d'appel de recherche Web atteinte."
+    },
+    "langbuilder": {
+      "flow_failed": "Échec de l'exécution du flux personnalisé.",
+      "api_failure": "LangBuilder indisponible."
+    },
+    "deepgram_key_missing": "Clé d'API Deepgram non configurée. Ouvrez Options pour ajouter votre clé.",
+    "deepgram_connect_failed": "Échec de la connexion à Deepgram. Vérifiez votre clé d'API.",
+    "no_active_meet_tab": "Aucun onglet Google Meet actif trouvé",
+    "no_query_text": "Aucun texte de requête fourni.",
+    "kb_gemini_required": "Clé d'API Gemini requise pour la recherche dans la base de connaissances. Configurez dans Paramètres.",
+    "kb_no_results": "Aucune information pertinente trouvée dans votre base de connaissances pour ce sujet.",
+    "kb_answer_failed": "Impossible de générer une réponse. Vérifiez vos clés d'API.",
+    "network": "Erreur réseau. Vérifiez votre connexion.",
+    "langbuilder_not_configured": "LangBuilder non configuré"
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Connexion perdue",
+      "body": "Connexion au service de transcription perdue.",
+      "reconnecting": "Reconnexion…",
+      "reconnected": "Reconnecté"
+    },
+    "mic_revoked": {
+      "title": "Accès au microphone perdu",
+      "body": "L'accès au microphone a été révoqué pendant cette session.",
+      "recovery_action": "Rétablir l'accès"
+    },
+    "partial_service": {
+      "title": "Certains services dégradés",
+      "services_degraded": "{{services}} indisponible(s); la transcription continue."
+    },
+    "actions": {
+      "dismiss": "Ignorer",
+      "retry": "Réessayer"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} suggestion",
+    "suggestion_other": "{{count}} suggestions",
+    "minute_one": "{{count}} minute",
+    "minute_other": "{{count}} minutes",
+    "second_one": "{{count}} seconde",
+    "second_other": "{{count}} secondes",
+    "action_item_one": "{{count}} action à suivre",
+    "action_item_other": "{{count}} actions à suivre",
+    "persona_one": "{{count}} persona",
+    "persona_other": "{{count}} personas",
+    "character_one": "{{count}} caractère",
+    "character_other": "{{count}} caractères"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Ouvrir la superposition Wingman",
+      "close": "Fermer la superposition Wingman",
+      "minimize": "Réduire la superposition Wingman"
+    },
+    "popup": {
+      "start_session": "Démarrer la session Wingman",
+      "stop_session": "Arrêter la session Wingman"
+    },
+    "options": {
+      "tab": "Onglet {{tab}}",
+      "section": "Section {{section}}",
+      "picker": "Sélecteur de langue"
+    },
+    "banner": {
+      "close": "Fermer la bannière",
+      "retry": "Réessayer"
+    }
+  },
+  "tutorials": {
+    "english_only_banner": "Le contenu des tutoriels est actuellement disponible uniquement en anglais. Nous travaillons à des traductions pour une version future."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "retry": "Réessayer",
+    "dismiss": "Ignorer",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Candidat à un entretien d'embauche",
+        "description": "Coaching d'entrevue en temps réel avec suggestions de structure et cadre STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Fondateur de startup (collecte de fonds)",
+        "description": "Affinage de pitch d'investisseur et soutien aux appels de financement."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Travailleur autonome (négociation de tarif)",
+        "description": "Tactiques de négociation de tarif et cadrage des termes contractuels."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Demandeur de subvention OBNL",
+        "description": "Affinage du pitch de subvention et soutien aux questions des bailleurs de fonds."
+      },
+      "patient_advocate": {
+        "name": "Défenseur de patient",
+        "description": "Plaidoyer pour rendez-vous médical et navigation du plan de soins."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Locataire (négociation de bail)",
+        "description": "Tactiques de négociation de bail et cadrage des droits du locataire."
+      },
+      "parent_iep_meeting": {
+        "name": "Parent (réunion de PEI)",
+        "description": "Plaidoyer en réunion de PEI et cadrage des droits en éducation spécialisée."
+      },
+      "small_business_loan_seeker": {
+        "name": "Demandeur de prêt PME",
+        "description": "Conversation avec l'agent de prêt et cadrage des questions de crédit."
+      },
+      "journalist_interviewer": {
+        "name": "Journaliste intervieweur",
+        "description": "Préparation d'entrevue avec source et suggestions de questions de suivi."
+      },
+      "esl_professional": {
+        "name": "Professionnel anglophone seconde langue",
+        "description": "Clarté de communication professionnelle ESL et navigation des expressions idiomatiques."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Conseiller en vente de solutions infonuagiques",
+        "description": "Solutions techniques avant-vente et soutien aux appels de découverte."
+      }
+    }
+  }
+}

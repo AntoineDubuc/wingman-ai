@@ -1,0 +1,994 @@
+{
+  "_meta": {
+    "generator": "Manual canonical (Plan 3 Task 1 expansion 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "overlay-assistant-2026-05-06",
+    "reviewer_status": "canonical-english-source"
+  },
+  "popup": {
+    "title": "Wingman",
+    "subtitle": "Real-Time AI Assistant for Google Meet",
+    "api_keys_label": "API Keys",
+    "session_label": "Session",
+    "controls_hint": {
+      "before": "Configure your API keys in ",
+      "link": "Options",
+      "after": " to get started."
+    },
+    "footer": {
+      "options": "Options",
+      "tutorials": "Tutorials",
+      "support": "Support"
+    },
+    "hydra_tooltip": {
+      "new_label": "New:",
+      "body": "Activate multiple personas for expert-panel mode."
+    },
+    "start_session": "Start Session",
+    "stop_session": "Stop Session",
+    "status": {
+      "active": "Session Active",
+      "idle": "Ready",
+      "connecting": "Connecting…",
+      "live": "Live",
+      "error": "Error",
+      "session_active_other_tab": "Session active in another tab"
+    },
+    "actions": {
+      "open_settings": "Open Settings",
+      "open_meet": "Open Google Meet"
+    },
+    "api_status": {
+      "configured": "Configured",
+      "not_configured": "Not Configured"
+    },
+    "session_status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "personas": {
+      "section_label": "Active Personas",
+      "remove": "Remove",
+      "locked_tooltip": "Stop session to change personas",
+      "count_active_one": "1 active",
+      "count_active_other": "{{count}} active",
+      "add_persona": "+ Add persona",
+      "add_persona_locked_tooltip": "Stop session to change personas",
+      "preset_locked_tooltip": "Stop session to change presets",
+      "preset_dropdown_label": "Conclave presets",
+      "max_reached": "Max {{max}} personas reached"
+    },
+    "errors": {
+      "no_api_keys": "API keys missing",
+      "no_meet_tab": "No Google Meet tab found"
+    }
+  },
+  "options": {
+    "tabs": {
+      "setup": "Setup",
+      "calls": "Calls",
+      "personas": "Personas",
+      "conclave": "Conclave",
+      "langbuilder": "LangBuilder",
+      "websearch": "Web Search",
+      "support": "Support"
+    },
+    "setup": {
+      "title": "Settings",
+      "language_picker_label": "Language",
+      "language_locked_tooltip": "Language locked during active session",
+      "api_keys_title": "API Keys",
+      "api_keys": {
+        "description": "Configure API keys for transcription and AI services.",
+        "gemini_label": "Gemini API Key",
+        "deepgram_label": "Deepgram API Key",
+        "test_button": "Test",
+        "test_pass": "Connection successful",
+        "test_fail": "Connection failed: {{rawError}}",
+        "testing": "Testing...",
+        "test_keys": "Test Keys",
+        "status_all_configured": "All keys configured",
+        "status_missing_provider": "Missing {{provider}} key",
+        "status_missing_deepgram": "Missing Deepgram key",
+        "status_not_configured": "Keys not configured"
+      },
+      "save_button": "Save",
+      "cancel_button": "Cancel"
+    },
+    "calls": {
+      "title": "Call Settings",
+      "retention_label": "Transcript Retention",
+      "summary_options_label": "Summary Options"
+    },
+    "personas": {
+      "section_title": "Personas",
+      "default_interviewer": "Default Interviewer",
+      "executive_communicator": "Executive Communicator",
+      "add_persona_button": "Add Persona",
+      "editor": {
+        "edit_title": "Edit Persona"
+      },
+      "export": {
+        "exporting": "Exporting...",
+        "button": "Export"
+      },
+      "icons": {
+        "quick_picks": "Quick picks"
+      },
+      "kb": {
+        "load_failed": "Failed to load documents.",
+        "searching": "Searching...",
+        "test_button": "Test"
+      },
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Job Interview Candidate",
+          "description": "Coaching for behavioral and situational interview questions."
+        },
+        "startup_founder_fundraising": {
+          "name": "Startup Founder (Fundraising)",
+          "description": "Pitch coaching for VC and angel investor meetings."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Freelancer (Rate Negotiation)",
+          "description": "Rate-setting and scope-negotiation coaching for client calls."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Nonprofit Grant Pitcher",
+          "description": "Funder-facing coaching for grant program presentations."
+        },
+        "patient_advocate": {
+          "name": "Patient Advocate",
+          "description": "Coaching for medical appointments and care decisions."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Tenant (Lease Negotiation)",
+          "description": "Lease-renewal and dispute-resolution coaching for tenants."
+        },
+        "parent_iep_meeting": {
+          "name": "Parent (IEP Meeting)",
+          "description": "Coaching for school IEP meetings and special-education advocacy."
+        },
+        "small_business_loan_seeker": {
+          "name": "Small Business Loan Seeker",
+          "description": "Coaching for SBA and bank loan officer meetings."
+        },
+        "journalist_interviewer": {
+          "name": "Journalist Interviewer",
+          "description": "Source-interview coaching for reporters and journalists."
+        },
+        "esl_professional": {
+          "name": "ESL Professional",
+          "description": "English-language coaching for non-native business speakers."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Cloud Solutions Sales Consultant",
+          "description": "Technical pre-sales coaching for cloud platform deals."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Conclave",
+      "description": "Multi-persona group conversation mode.",
+      "enable_label": "Enable Conclave",
+      "no_active_personas": "No active personas"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Personas",
+        "credentials_heading": "Credentials",
+        "permissions_heading": "Host permissions",
+        "errors_heading": "Errors ({{count}})",
+        "will_add": "Will add ({{count}}):",
+        "will_update": "Will update ({{count}}):",
+        "will_skip": "Will skip — you edited them ({{count}}):",
+        "will_request": "Will request:",
+        "will_revoke": "Will revoke:",
+        "will_write_credentials_one": "Will write 1 credential (values hidden).",
+        "will_write_credentials_other": "Will write {{count}} credentials (values hidden).",
+        "will_clear_credentials_one": "Will clear 1 credential.",
+        "will_clear_credentials_other": "Will clear {{count}} credentials.",
+        "langbuilder_host": "LangBuilder will call: {{host}}",
+        "empty": "Nothing to import."
+      }
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Custom language flow builder.",
+      "testing": "Testing...",
+      "test_connection": "Test Connection"
+    },
+    "websearch": {
+      "title": "Web Search",
+      "description": "Brave Search integration for chat assistant context.",
+      "brave_key_label": "Brave Search API Key"
+    },
+    "support": {
+      "title": "Support",
+      "description": "Documentation and issue reporting.",
+      "docs_link": "Documentation",
+      "issues_link": "Report an Issue"
+    },
+    "drive": {
+      "auth_button": "Sign in with Google",
+      "signed_in": "Signed in as {{email}}",
+      "sign_out": "Sign out",
+      "save_label": "Save summaries to Drive",
+      "connecting": "Connecting..."
+    },
+    "upgrade_banner": {
+      "title": "Wingman now speaks your language",
+      "body": "Your language has been automatically set based on your browser settings. You can change it anytime in the Setup tab.",
+      "dismiss_button": "Got it"
+    },
+    "toasts": {
+      "settings_saved": "Settings saved",
+      "settings_save_failed": "Failed to save settings",
+      "api_key_required": "{{provider}} API key is required",
+      "permission_required": "Permission required to connect to {{provider}}",
+      "permission_request_failed": "Failed to request {{provider}} permission",
+      "drive_connected": "Google Drive connected!",
+      "drive_disconnected": "Google Drive disconnected",
+      "drive_connect_failed": "Failed to connect",
+      "drive_disconnect_failed": "Failed to disconnect",
+      "drive_settings_saved": "Drive settings saved",
+      "langbuilder_settings_saved": "LangBuilder settings saved",
+      "langbuilder_url_required": "Please enter both URL and API key",
+      "langbuilder_test_passed_one": "Connected! Found 1 flow",
+      "langbuilder_test_passed_other": "Connected! Found {{count}} flows",
+      "langbuilder_test_failed": "Test failed: {{rawError}}",
+      "langbuilder_permission_required": "Permission required to connect to this server",
+      "langbuilder_invalid_url": "Invalid URL format",
+      "active_personas_max": "Maximum {{count}} personas can be active",
+      "active_personas_min": "At least one persona must be active",
+      "transcription_pause_threshold": "Pause threshold: {{value}}",
+      "transcription_suggestion_cooldown": "Suggestion cooldown: {{value}}",
+      "transcription_auto_suggestions_on": "Auto-suggestions: On",
+      "transcription_auto_suggestions_off": "Auto-suggestions: Off",
+      "transcription_prompt_tuning": "Prompt tuning: {{label}}",
+      "conclave_leader_updated": "Conclave leader updated",
+      "conclave_preset_activated": "Preset activated",
+      "conclave_preset_activated_with_missing_one": "Activated (1 deleted persona skipped)",
+      "conclave_preset_activated_with_missing_other": "Activated ({{count}} deleted personas skipped)",
+      "conclave_preset_deleted": "Preset deleted",
+      "conclave_preset_created": "Preset created",
+      "conclave_preset_updated": "Preset updated",
+      "conclave_preset_name_required": "Please enter a name",
+      "conclave_preset_select_persona": "Please select at least one persona",
+      "conclave_delete_modal_title": "Delete Preset",
+      "conclave_delete_modal_body": "Are you sure you want to delete \"{{name}}\"?",
+      "persona_name_required": "Persona name is required",
+      "persona_prompt_too_short": "Prompt must be at least {{min}} characters",
+      "persona_prompt_too_long": "Prompt cannot exceed {{max}} characters",
+      "persona_saved_with_version": "Prompt saved as v{{version}} ({{model}})",
+      "persona_saved": "Persona saved",
+      "persona_deleted": "Persona deleted",
+      "persona_duplicated": "Persona duplicated",
+      "persona_exported": "Persona exported",
+      "persona_export_failed": "Export failed",
+      "persona_only_one_cannot_delete": "Cannot delete your only persona",
+      "persona_kb_doc_deleted": "Deleted {{filename}}",
+      "persona_kb_doc_delete_failed": "Failed to delete document",
+      "persona_kb_test_query_required": "Enter a test query",
+      "persona_kb_test_failed": "Test query failed. Check your API key.",
+      "persona_kb_gemini_required": "Gemini API key required for Knowledge Base (embeddings use Gemini)",
+      "persona_kb_processing_in_progress": "Processing in progress. Please wait.",
+      "persona_import_invalid_json": "Invalid JSON file",
+      "persona_import_not_valid": "Not a valid Wingman persona file ({{reason}})",
+      "persona_import_kb_gemini_required": "Gemini API key required to process KB documents",
+      "persona_import_with_kb_failures": "Persona imported ({{count}} KB doc(s) failed)",
+      "persona_import_success": "Persona imported successfully",
+      "persona_import_failed": "Failed to import persona file",
+      "persona_kb_file_processed": "Document added to Knowledge Base",
+      "persona_kb_file_failed": "Failed to process file",
+      "setup_call_in_progress_import": "Stop the current call before importing.",
+      "setup_no_files": "No files selected",
+      "setup_import_cancelled": "Import cancelled",
+      "setup_duplicate_persona_names": "Duplicate persona names — import aborted.",
+      "setup_call_started_during_import": "Call started during import. Cancelled.",
+      "setup_import_failed": "Import failed — see service worker console",
+      "setup_import_modal_title": "Import setup folder",
+      "setup_folder_empty": "Folder is empty (or only hidden files). Rename .env to wingman.env and try again.",
+      "setup_large_folder_title": "Large folder",
+      "setup_large_folder_body": "You selected {{count}} files. Only .env and *persona*.json files will be processed. Continue?",
+      "setup_nothing_to_import": "Nothing to import. Folder must contain a .env or *persona*.json file.",
+      "setup_already_up_to_date": "Already up to date — credentials and personas match the folder.",
+      "setup_credentials_imported_persona_skipped": "Credentials imported. Persona import cancelled — call in progress.",
+      "setup_imported_summary": "Imported {{personas}} personas, {{credentials}} credentials"
+    },
+    "prompt_modals": {
+      "chat": {
+        "initial_bot_message": "What will this persona help you with? Describe the use case, and I'll generate an optimized system prompt.",
+        "btn_refine": "Refine...",
+        "btn_generate": "Generate Prompts",
+        "btn_cancel": "Cancel",
+        "btn_generate_v": "Generate v{{version}}",
+        "btn_generating": "Generating...",
+        "btn_close": "Close",
+        "btn_retry": "Retry",
+        "btn_back_to_chat": "Back to Chat",
+        "btn_use_asis": "Use as-is",
+        "btn_customize": "Customize this",
+        "template_tag": "Template",
+        "show_full_prompt": "Show full prompt",
+        "show_less": "Show less",
+        "discard_modal_title": "Discard conversation?",
+        "discard_modal_body": "Your discovery conversation will be lost. You can restart the assistant anytime."
+      },
+      "version_history": {
+        "title": "Prompt History — {{personaName}}",
+        "description": "Every prompt version with test results and costs.",
+        "btn_back": "Back",
+        "empty_state": "No versions yet.",
+        "badge_current": "current",
+        "badge_manual": "manual edit",
+        "badge_assistant": "setup assistant",
+        "badge_restored": "restored",
+        "badge_template": "from template",
+        "badge_imported": "imported",
+        "stats_with_tests": "Test: {{passed}}/{{total}} pass · {{modelId}} · Cost: ${{cost}} · {{date}}",
+        "stats_no_tests": "No tests yet · {{modelId}} · {{date}}",
+        "btn_diff": "Diff",
+        "btn_test": "Test",
+        "btn_restore": "Restore",
+        "btn_delete": "Delete",
+        "diff_header": "Diff: v{{from}}({{fromModel}}) → v{{to}}({{toModel}})",
+        "select_from": "From",
+        "select_to": "To",
+        "btn_close_diff": "Close Diff",
+        "restore_confirm": "Restore v{{version}}? This will create a new version with v{{version}}'s content.",
+        "delete_confirm": "Delete v{{version}} ({{summary}})? This cannot be undone."
+      },
+      "review": {
+        "tab_prompt": "Prompt",
+        "tab_test_questions": "Test Questions",
+        "generation_badge": "Generation: #{{generationNumber}}",
+        "editing_unsaved": "Editing — unsaved changes",
+        "char_count": "{{count}} / {{max}} chars",
+        "modified_suffix": " · modified",
+        "btn_compare_vs": "Compare vs generation #{{previous}}",
+        "label_target_model": "Target Model",
+        "diff_label_live": "LIVE DIFF VS GENERATED",
+        "diff_label_vs_gen": "DIFF VS GENERATION #{{num}}",
+        "empty_no_test_questions": "No test questions generated.",
+        "group_should_respond": "AUTO-GENERATED — SHOULD RESPOND",
+        "group_should_silent": "AUTO-GENERATED — SHOULD STAY SILENT",
+        "badge_new": "new",
+        "btn_refine": "Refine...",
+        "btn_edit": "Edit",
+        "btn_test_dots": "Test...",
+        "btn_save_all": "Save All (v{{generation}})",
+        "btn_discard_edits": "Discard edits",
+        "btn_test_this_version": "Test this version",
+        "btn_show_diff": "Show diff",
+        "btn_hide_diff": "Hide diff",
+        "btn_save": "Save",
+        "btn_remove_test_qs": "Remove test Qs",
+        "btn_test_now": "Test now",
+        "btn_save_prompt_test_qs": "Save prompt + test Qs"
+      },
+      "test_harness": {
+        "title_interrupted": "Prompt Tester — Interrupted",
+        "title_results_all_pass": "Test Results",
+        "title_results_partial": "Test Results — {{passed}}/{{total}} pass",
+        "title_kb_validation": "KB Validation{{versionSuffix}}",
+        "title_default": "Prompt Tester{{versionSuffix}}",
+        "tab_sample_qs": "Sample Qs",
+        "tab_custom_q": "Custom Q",
+        "tab_kb_query": "KB + Query",
+        "empty_generating": "Generating sample questions from your prompt...",
+        "empty_no_questions": "No sample questions yet.",
+        "btn_generate_sample": "Generate Sample Questions",
+        "section_should_respond": "SHOULD RESPOND",
+        "section_should_silent": "SHOULD STAY SILENT",
+        "cost_estimate": "{{totalQs}} questions × 1 model = ~${{cost}}",
+        "cost_estimate_comparison": "{{totalQs}} questions × 1 model × 2 versions = ~${{cost}}",
+        "btn_run_tests": "Run Tests{{versionLabel}}",
+        "add_question_label": "Add a question",
+        "placeholder_question": "Enter a test question...",
+        "radio_should_respond": "Should respond",
+        "radio_should_silent": "Should stay silent",
+        "btn_add": "+ Add",
+        "kb_empty_state": "No KB documents linked to this persona. Upload documents in the persona editor to enable KB testing.",
+        "kb_linked_header": "Linked KB Documents ({{count}})",
+        "kb_doc_item": "{{filename}} ({{chunks}} chunks)",
+        "placeholder_kb_search": "Search your KB...",
+        "btn_search": "Search",
+        "btn_searching": "Searching...",
+        "search_failed": "Search failed: {{error}}",
+        "kb_section_header": "KB Integration Tests",
+        "kb_section_description": "Auto-generates 3 tests: real citation, impossible knowledge (injected fact), and missing data (should decline).",
+        "placeholder_impossible": "Custom impossible fact (default: $999/seat Enterprise)",
+        "btn_run_kb_tests": "Run KB Tests",
+        "btn_running": "Running...",
+        "kb_loading_message": "Running 3 KB tests against the model... this may take 15-30 seconds.",
+        "no_api_key_for_provider": "No API key configured for the active provider.",
+        "kb_tests_failed": "KB tests failed: {{error}}",
+        "no_results_for_query": "No results found for \"{{query}}\". Try a different query or check that documents are fully indexed.",
+        "results_header": "{{count}} results for \"{{query}}\"",
+        "kb_all_passed": "All KB Tests Passed ({{passed}}/{{total}})",
+        "kb_partial_passed": "KB Tests: {{passed}}/{{total}} passed",
+        "meta_kb_chunk_retrieved": "KB chunk retrieved",
+        "meta_similarity": "Similarity: {{percent}}%",
+        "meta_source": "Source: {{filename}}",
+        "meta_citation_correct": "Citation correct",
+        "meta_citation_incorrect": "Citation incorrect",
+        "badge_pass": "Pass",
+        "badge_silent": "Silent",
+        "badge_wrong_behavior": "Wrong behavior",
+        "badge_should_respond": "Should have responded",
+        "badge_off_topic": "Off-topic response",
+        "badge_should_silent": "Should be silent",
+        "badge_error": "Error: {{message}}",
+        "success_title": "All Tests Passed",
+        "success_detail": "{{total}}/{{total}} questions · {{modelId}}",
+        "fail_banner_title": "All tests failed",
+        "fail_banner_body": "This prompt may need significant revision. Consider re-running the Setup Assistant with different inputs, or try a different target model.",
+        "btn_close": "Close",
+        "btn_edit_to_fix": "Edit Prompt to Fix",
+        "btn_retry_failed": "Retry Failed Tests",
+        "btn_save_as_v": "Save as v{{version}}",
+        "btn_back_to_edit": "Back to Edit",
+        "btn_back_to_history": "Back to History",
+        "btn_restore_v": "Restore v{{version}}",
+        "compare_against_label": "Compare against:",
+        "compare_none": "None",
+        "compare_version_option": "v{{version}} — {{summary}}",
+        "comparison_title": "Comparison: {{currentLabel}} vs {{comparedLabel}}",
+        "scorecard_pass": "{{passed}}/{{total}} pass",
+        "badge_should_respond_lc": "should respond",
+        "badge_should_silent_lc": "should stay silent",
+        "loading_running_tests": "Running tests... this may take 15-30 seconds.",
+        "no_api_key_setup_hint": "No API key found for the active provider. Check your API keys in the Setup tab."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Extension Settings",
+        "theme_toggle": "Toggle dark mode"
+      },
+      "setup": {
+        "import_setup_folder_title": "Import Setup Folder",
+        "choose_folder_button": "Choose Folder",
+        "api_keys_description": "Enter your API keys to enable speech-to-text and AI responses. Your keys are stored locally and never sent to our servers.",
+        "deepgram_label": "Deepgram API Key",
+        "gemini_label": "Google Gemini API Key",
+        "openrouter_label": "OpenRouter API Key",
+        "groq_label": "Groq API Key",
+        "hume_label": "Hume AI (Emotion Detection)",
+        "hume_optional": "Optional",
+        "hume_secret_key_label": "Secret Key",
+        "test_hume_button": "Test Hume",
+        "test_keys_button": "Test Keys",
+        "save_keys_button": "Save Keys",
+        "ai_provider_label": "AI Provider",
+        "model_label": "Model",
+        "show_hide_key": "Show/hide key",
+        "get_one_free": "Get one free",
+        "google_drive_title": "Google Drive Integration",
+        "google_drive_description": "Automatically save meeting transcripts to your Google Drive after each call.",
+        "autosave_label": "Auto-save transcripts",
+        "connect_button": "Connect Google Account",
+        "disconnect_button": "Disconnect",
+        "folder_name_label": "Folder Name",
+        "transcript_format_label": "Transcript Format",
+        "format_googledoc": "Google Doc (formatted)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Plain Text (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Active Personas for Calls",
+        "active_personas_description": "Select which personas are active during your calls.",
+        "import_setup_folder_description": "Pick a folder containing a .env file and *persona*.json files to import credentials and personas in one click. Your own personas and edits are preserved — only unedited shipped personas are overwritten.",
+        "import_setup_folder_security": "Security reminder: API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.",
+        "deepgram_placeholder": "Enter your Deepgram API key",
+        "gemini_placeholder": "Enter your Gemini API key",
+        "openrouter_placeholder": "Enter your OpenRouter API key",
+        "groq_placeholder": "Enter your Groq API key",
+        "hume_api_placeholder": "Enter your Hume API key",
+        "hume_secret_placeholder": "Enter your Hume Secret key",
+        "drive_folder_placeholder": "Wingman Transcripts",
+        "deepgram_hint": "Used for real-time speech-to-text transcription",
+        "provider_hint": "Gemini uses your key directly. OpenRouter lets you choose from multiple models. Groq offers ultra-fast open-source AI.",
+        "gemini_hint": "Used for AI-powered suggestions and responses",
+        "openrouter_hint": "Used for AI-powered suggestions and responses via OpenRouter",
+        "model_choice_hint": "Choose which AI model to use for suggestions and summaries",
+        "groq_hint": "Ultra-fast inference on open-source models — free tier at console.groq.com",
+        "folder_hint": "Folder will be created in your Drive root if it doesn't exist",
+        "active_personas_hint": "Each active persona evaluates transcripts independently. Limit to 4 to keep latency low.",
+        "hume_api_key_label": "API Key",
+        "hume_secret_key_label_short": "Secret Key",
+        "hume_get_keys": "(Get keys)",
+        "hume_description": "Show real-time customer emotion during calls. Requires a Hume AI account at platform.hume.ai. Used only when keys are configured — emotion detection is opt-in.",
+        "status_keys_not_configured": "Keys not configured",
+        "autosave_description": "When enabled, transcripts will be automatically saved to your Drive folder after each call ends.",
+        "connected_label": "Connected",
+        "folder_format_summary": "Folder format",
+        "folder_format_env_intro": "at the top level with any of these keys:",
+        "folder_format_persona_files": "Persona JSON files anywhere in the folder (any filename containing \"persona\" and ending in .json)."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Transcription Sensitivity",
+        "pause_threshold_label": "Pause threshold",
+        "suggestion_frequency_title": "Suggestion Frequency",
+        "auto_suggestions_label": "Auto-suggestions",
+        "cooldown_label": "Cooldown",
+        "ai_prompt_tuning_title": "AI Prompt Tuning",
+        "tuning_mode_label": "Tuning Mode",
+        "tuning_mode_auto": "Auto (recommended)",
+        "tuning_mode_off": "Off",
+        "speaker_filter_title": "Speaker Filter",
+        "speaker_filter_label": "Only respond to other speakers",
+        "panel_layout_title": "Panel Layout",
+        "panel_position_label": "Panel Position",
+        "position_floating": "Floating",
+        "position_dock_left": "Sidebar Left",
+        "position_dock_right": "Sidebar Right",
+        "display_mode_label": "Display Mode",
+        "display_full": "Full transcript + suggestions",
+        "display_suggestions_only": "Suggestions only",
+        "call_summary_title": "Call Summary",
+        "auto_summary_label": "Auto-generate call summary",
+        "include_key_moments_label": "Include key moments",
+        "transcription_sensitivity_description": "Controls how long Wingman waits for a speaker to pause before treating their utterance as final.",
+        "suggestion_frequency_description": "Minimum time between AI suggestions. Lower values are more responsive; higher values reduce LLM cost.",
+        "ai_prompt_tuning_description": "Adapts your persona prompts to work best on the active LLM (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Control when Wingman provides suggestions based on who is speaking.",
+        "panel_layout_description": "Controls where the Wingman panel appears during calls and what it shows.",
+        "call_summary_description": "Get an AI-generated summary with action items and key moments after each call.",
+        "tuning_mode_hint": "Auto applies model-specific adjustments at runtime without modifying your saved prompts.",
+        "pause_threshold_hint": "How long a speaker must pause before a new transcript bubble is created. Lower = more responsive but may split sentences; higher = smoother but adds delay.",
+        "auto_suggestions_hint": "When off, Wingman won't suggest automatically — you can still trigger manually.",
+        "cooldown_hint": "After each suggestion, Wingman waits this long before considering another one.",
+        "speaker_filter_hint": "When enabled, Wingman will only provide suggestions when other participants speak — never on your own audio.",
+        "auto_summary_hint": "Uses one additional AI API call per session.",
+        "moments_hint": "Surfaces notable quotes and buying signals."
+      },
+      "personas": {
+        "personas_title": "Personas",
+        "import_button": "Import",
+        "new_button": "+ New Persona",
+        "editor_title": "Edit Persona",
+        "name_label": "Name",
+        "icon_label": "Icon (optional)",
+        "icon_clear_button": "Clear",
+        "color_label": "Color tag",
+        "system_prompt_label": "System Prompt",
+        "prompt_assistant_button": "Prompt Setup Assistant",
+        "test_prompts_button": "Test Current Prompts",
+        "version_history_button": "Version History",
+        "kb_label": "Knowledge Base",
+        "kb_test_label": "Test Knowledge Base",
+        "kb_test_button": "Test",
+        "cancel_button": "Cancel",
+        "export_button": "Export",
+        "duplicate_button": "Duplicate",
+        "delete_button": "Delete",
+        "save_button": "Save",
+        "personas_description": "Bundle a system prompt with specific Knowledge Base documents. Each persona gives the AI its own voice and context.",
+        "empty_state": "Create your first persona to bundle a system prompt with KB documents.",
+        "kb_drop_text": "Drop files here or click to browse",
+        "kb_drop_hint": "PDF, Markdown, or Text (max 10MB)",
+        "kb_processing": "Processing...",
+        "kb_empty_state": "No documents uploaded yet. Drag files above or click to browse.",
+        "icon_quick_picks": "Quick picks",
+        "icon_loading": "Loading icons...",
+        "icon_no_results": "No icons found. Try different keywords like \"face\", \"work\", \"animal\".",
+        "icon_selected": "Selected:",
+        "icon_search_placeholder": "Search 4,000+ icons...",
+        "name_placeholder": "e.g. Cloud Security Demo",
+        "prompt_placeholder": "Enter your system prompt...",
+        "kb_test_placeholder": "e.g. What security certifications do you have?",
+        "char_count_initial": "0 / 10,000 chars"
+      },
+      "conclave": {
+        "settings_title": "Conclave Settings",
+        "leader_label": "Conclave Leader",
+        "presets_title": "Presets",
+        "new_preset_button": "+ New Preset",
+        "settings_description": "Configure how multiple personas work together when more than one is active.",
+        "presets_description": "Save persona combinations for quick activation. Presets do not include credentials.",
+        "leader_hint": "The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective."
+      },
+      "langbuilder": {
+        "connection_title": "LangBuilder Connection",
+        "url_label": "LangBuilder URL",
+        "api_key_label": "API Key",
+        "test_button": "Test Connection",
+        "save_button": "Save",
+        "flows_title": "Available Flows",
+        "connection_description": "Connect to your LangBuilder instance to run custom flows from the overlay.",
+        "flows_description": "Flows from your LangBuilder instance, refreshed on Test Connection.",
+        "url_placeholder": "https://langflow.company.com",
+        "api_key_placeholder": "Enter your LangBuilder API key",
+        "url_hint": "Base URL of your LangBuilder instance",
+        "api_key_hint": "x-api-key token from your LangBuilder settings",
+        "status_unconfigured": "Not configured"
+      },
+      "websearch": {
+        "provider_title": "Web Search Provider",
+        "provider_label": "Provider",
+        "provider_brave": "Brave Search",
+        "api_key_label": "API Key",
+        "test_button": "Test Connection",
+        "budget_title": "Daily Query Budget",
+        "provider_description": "Enable live web search during meetings via Brave Search.",
+        "budget_description": "Limit the number of web searches per day to control API costs.",
+        "api_key_placeholder": "Enter your Brave Search API key"
+      },
+      "support": {
+        "support_wingman_title": "Support Wingman",
+        "donate_button": "Buy Me a Coffee",
+        "tutorials_title": "Tutorials & Guides",
+        "view_tutorials_button": "View Tutorials",
+        "feature_requests_title": "Feature Requests & Bug Reports",
+        "github_button": "Submit on GitHub",
+        "langbuilder_title": "Built with LangBuilder",
+        "learn_more_button": "Learn More",
+        "connect_title": "Connect with the Creator",
+        "linkedin_button": "Connect on LinkedIn",
+        "support_wingman_description": "Enjoying Wingman? Your support helps me keep building free, privacy-first tools.",
+        "tutorials_description": "Learn how to get the most out of Wingman with step-by-step guides.",
+        "feature_requests_description": "Have an idea for a new feature? Found a bug? Open an issue on GitHub.",
+        "langbuilder_description": "Wingman's AI workflows are powered by LangBuilder, an open-source orchestration platform.",
+        "connect_intro": "Hi, I'm Antoine Dubuc — solo developer behind Wingman.",
+        "connect_cta": "I'd love to hear how you're using Wingman and what you'd like to see next."
+      },
+      "modals": {
+        "reset_title": "Reset to Default?",
+        "reset_cancel": "Cancel",
+        "reset_confirm": "Reset",
+        "assistant_title": "Prompt Setup Assistant",
+        "send_button": "Send",
+        "tester_title": "Prompt Tester"
+      }
+    }
+  },
+  "overlay": {
+    "timer": {
+      "label": "Session Time"
+    },
+    "session": {
+      "connecting": "Connecting…",
+      "live": "Live",
+      "error": "Connection error",
+      "disconnected": "Disconnected"
+    },
+    "transcript": {
+      "live": "Live",
+      "paused": "Paused",
+      "empty_placeholder": "Waiting for speech…",
+      "someone_speaking": "Someone is speaking…"
+    },
+    "suggestion": {
+      "try_again": "Try Again",
+      "try_again_tooltip": "Regenerate this suggestion in your language",
+      "after_retry_label": "Regenerated",
+      "thinking": "Thinking…",
+      "no_suggestion": "Listening…"
+    },
+    "speaker": {
+      "you": "You",
+      "speaker_n": "Speaker {{n}}"
+    },
+    "controls": {
+      "minimize": "Minimize",
+      "close": "Close",
+      "hide": "Hide",
+      "dock": "Dock",
+      "undock": "Undock",
+      "dock_left": "Sidebar Left",
+      "dock_right": "Sidebar Right",
+      "suggestions_only": "Suggestions only",
+      "suggestions_only_chip": "Showing suggestions only",
+      "show_full_transcript": "Show full transcript",
+      "font_decrease": "Decrease font size",
+      "font_increase": "Increase font size",
+      "layout_toggle": "Toggle side-by-side",
+      "resize": "Resize"
+    },
+    "header": {
+      "recording": "Recording",
+      "assistant_panel": "Assistant"
+    },
+    "pill_toggle": {
+      "meeting": "Meeting",
+      "assistant": "Assistant"
+    },
+    "nav": {
+      "chat": "Chat",
+      "flows": "Flows"
+    },
+    "emotion": {
+      "label_prefix": "Tone:"
+    },
+    "cost": {
+      "label": "Estimated Cost",
+      "minutes_unit": "min",
+      "free_value": "Free",
+      "estimate_disclaimer": "Estimate · actual bill may vary",
+      "free_tier_suffix": "free tier",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} call",
+      "calls_unit_other": "{{count}} calls"
+    },
+    "summary_card": {
+      "generating": "Generating Summary..."
+    },
+    "actions": {
+      "saved_to_drive": "Saved to Drive",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "copy_failed": "Failed"
+    },
+    "langbuilder": {
+      "running": "Running flow...",
+      "cancelled": "Cancelled",
+      "flow_failed": "Flow execution failed",
+      "connection_error": "Connection error",
+      "no_flows_hint": "No flows — configure in Settings",
+      "select_flow_placeholder": "Select a flow...",
+      "input_placeholder": "Paste or type input for the flow...",
+      "cancel": "Cancel",
+      "go": "Go",
+      "empty_result": "Run a flow to see results here."
+    },
+    "kb": {
+      "search_aria_label": "Search Knowledge Base",
+      "answer_aria_label": "KB Answer: {{answer}}",
+      "input_placeholder": "Ask your Knowledge Base..."
+    },
+    "empty": {
+      "listening": "Listening for conversation...",
+      "waiting_suggestions": "Waiting for suggestions...",
+      "unknown_speaker": "Unknown"
+    },
+    "assistant": {
+      "chat_empty_title": "How can I help?",
+      "chat_empty_subtitle": "Ask me anything. Toggle context sources above to include meeting transcript or persona knowledge.",
+      "chat_input_placeholder": "Ask anything...",
+      "context_transcript": "Transcript",
+      "context_web_search": "Web Search",
+      "attach_persona_knowledge": "Attach persona knowledge",
+      "personas_load_failed": "Could not load personas — reload the extension.",
+      "no_personas_configured": "No personas configured.",
+      "personas_btn_count": "Personas ({{count}})",
+      "personas_btn_unknown": "Personas (?)",
+      "sources_more": "+{{count}} more",
+      "suggestion_chip_1": "What is the PKCE flow Sarah mentioned?",
+      "suggestion_chip_2": "Draft a follow-up email with action items",
+      "suggestion_chip_3": "Explain OAuth 2.0 token rotation best practices",
+      "suggestion_chip_4": "What does our Architect know about session migration?"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Summary",
+      "action_items": "Action Items",
+      "key_moments": "Key Moments",
+      "personas_used": "Personas Used",
+      "session_cost_estimate": "Session Cost Estimate",
+      "call_summary": "Call Summary"
+    },
+    "action_item_owner": {
+      "you": "You",
+      "them": "Them"
+    },
+    "moment_types": {
+      "signal": "Signal",
+      "objection": "Objection",
+      "decision": "Decision",
+      "quote": "Quote"
+    },
+    "cost": {
+      "label": "Estimated cost",
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "min",
+      "free_tier_suffix": "free tier",
+      "free": "Free",
+      "calls_unit": "{{count}} calls",
+      "total": "Total"
+    },
+    "save_to_drive": "Save to Drive",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "metadata_labels": {
+      "duration": "Duration",
+      "speakers": "Speakers",
+      "minutes_unit": "min"
+    },
+    "empty_summary": "No summary available",
+    "personas": {
+      "suggestion_count_one": "1 suggestion",
+      "suggestion_count_other": "{{count}} suggestions"
+    }
+  },
+  "speakers": {
+    "you": "You",
+    "them": "Them",
+    "speaker_n": "Speaker {{n}}"
+  },
+  "mic_permission": {
+    "title": "Microphone Access Required",
+    "body": "Wingman needs access to your microphone to transcribe the meeting.",
+    "grant_button": "Allow Access",
+    "cancel_button": "Cancel",
+    "denied": {
+      "title": "Microphone Access Denied",
+      "body": "Wingman cannot transcribe without microphone access."
+    },
+    "recovery": {
+      "title": "How to Restore Access",
+      "steps_intro": "Follow these steps:",
+      "step_1": "Click the lock icon in the address bar.",
+      "step_2": "Set Microphone permission to \"Allow\".",
+      "step_3": "Reload this page and try again."
+    }
+  },
+  "errors": {
+    "deepgram_failed": "Speech recognition unavailable. {{rawError}}",
+    "mic_revoked": "Microphone access lost. Please restore access and retry.",
+    "api_key_missing": "{{provider}} API key not configured. Please add it in Settings.",
+    "generic": "Something went wrong. Please try again.",
+    "session_interrupted": "Session interrupted unexpectedly.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Transcription connection failed.",
+      "session_dropped": "Transcription session ended unexpectedly.",
+      "language_unavailable": "Speech recognition for {{language}} is currently unavailable."
+    },
+    "gemini": {
+      "api_failure": "Gemini service unavailable.",
+      "rate_limit": "Gemini rate limit reached. Please wait a moment.",
+      "quota_exceeded": "Gemini daily quota exceeded."
+    },
+    "groq": {
+      "api_failure": "Groq service unavailable."
+    },
+    "drive": {
+      "oauth_failed": "Google Drive sign-in failed. Please try again.",
+      "save_failed": "Could not save to Drive.",
+      "quota_exceeded": "Drive storage quota exceeded.",
+      "network": "Network error reaching Drive."
+    },
+    "hume": {
+      "disconnected": "Emotion detection disconnected.",
+      "api_failure": "Emotion detection unavailable."
+    },
+    "brave": {
+      "api_failure": "Web search unavailable for this query.",
+      "rate_limit": "Web search rate limit reached."
+    },
+    "langbuilder": {
+      "flow_failed": "Custom flow failed to execute.",
+      "api_failure": "LangBuilder unavailable."
+    },
+    "deepgram_key_missing": "Deepgram API key not configured. Go to Options to add your key.",
+    "deepgram_connect_failed": "Failed to connect to Deepgram. Check your API key.",
+    "no_active_meet_tab": "No active Google Meet tab found",
+    "no_query_text": "No query text provided.",
+    "kb_gemini_required": "Gemini API key required for Knowledge Base search. Configure in Settings.",
+    "kb_no_results": "No relevant information found in your Knowledge Base for this topic.",
+    "kb_answer_failed": "Could not generate answer. Check your API keys.",
+    "network": "Network error. Check your connection.",
+    "langbuilder_not_configured": "LangBuilder not configured"
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Connection Lost",
+      "body": "Lost connection to transcription service.",
+      "reconnecting": "Reconnecting…",
+      "reconnected": "Reconnected"
+    },
+    "mic_revoked": {
+      "title": "Microphone Access Lost",
+      "body": "Microphone access was revoked during this session.",
+      "recovery_action": "Restore Access"
+    },
+    "partial_service": {
+      "title": "Some services degraded",
+      "services_degraded": "{{services}} unavailable; transcription continues."
+    },
+    "actions": {
+      "dismiss": "Dismiss",
+      "retry": "Retry"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} suggestion",
+    "suggestion_other": "{{count}} suggestions",
+    "minute_one": "{{count}} minute",
+    "minute_other": "{{count}} minutes",
+    "second_one": "{{count}} second",
+    "second_other": "{{count}} seconds",
+    "action_item_one": "{{count}} action item",
+    "action_item_other": "{{count}} action items",
+    "persona_one": "{{count}} persona",
+    "persona_other": "{{count}} personas",
+    "character_one": "{{count}} character",
+    "character_other": "{{count}} characters"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Open Wingman overlay",
+      "close": "Close Wingman overlay",
+      "minimize": "Minimize Wingman overlay"
+    },
+    "popup": {
+      "start_session": "Start Wingman session",
+      "stop_session": "Stop Wingman session"
+    },
+    "options": {
+      "tab": "{{tab}} tab",
+      "section": "{{section}} section",
+      "picker": "Language picker"
+    },
+    "banner": {
+      "close": "Close banner",
+      "retry": "Retry"
+    }
+  },
+  "tutorials": {
+    "english_only_banner": "Tutorial content is currently available in English only. We're working on translations for a future release."
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Retry",
+    "dismiss": "Dismiss",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Job Interview Candidate",
+        "description": "Real-time interview coaching with structure suggestions and STAR framing."
+      },
+      "startup_founder_fundraising": {
+        "name": "Startup Founder (Fundraising)",
+        "description": "Investor pitch refinement and fundraising-call support."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Freelancer (Rate Negotiation)",
+        "description": "Rate negotiation tactics and contract-term framing."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Nonprofit Grant Pitcher",
+        "description": "Grant pitch refinement and funder Q&A support."
+      },
+      "patient_advocate": {
+        "name": "Patient Advocate",
+        "description": "Medical appointment advocacy and care-plan navigation."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Tenant (Lease Negotiation)",
+        "description": "Lease negotiation tactics and tenant-rights framing."
+      },
+      "parent_iep_meeting": {
+        "name": "Parent (IEP Meeting)",
+        "description": "IEP meeting advocacy and special-education-rights framing."
+      },
+      "small_business_loan_seeker": {
+        "name": "Small Business Loan Seeker",
+        "description": "Loan-officer conversation and credit-question framing."
+      },
+      "journalist_interviewer": {
+        "name": "Journalist Interviewer",
+        "description": "Source interview prep and follow-up question suggestions."
+      },
+      "esl_professional": {
+        "name": "ESL Professional",
+        "description": "ESL professional communication clarity and idiom navigation."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Cloud Solutions Sales Consultant",
+        "description": "Pre-sales technical solutions and discovery-call support."
+      }
+    }
+  }
+}

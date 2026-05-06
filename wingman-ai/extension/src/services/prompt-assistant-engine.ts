@@ -7,6 +7,8 @@
  */
 
 import { DEFAULT_PERSONA_TEMPLATES } from '../shared/default-personas';
+import { addLanguageInstruction } from '../shared/language-injection';
+import { getActiveLocale } from '../background/sw-locale';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DISCOVERY_MODEL = 'gemini-2.5-flash';
@@ -126,13 +128,15 @@ export async function sendMessage(userText: string): Promise<string> {
     parts: [{ text: turn.text }],
   }));
 
+  const localizedMetaPrompt = addLanguageInstruction(DISCOVERY_META_PROMPT, getActiveLocale());
+
   const response = await fetch(
     `${GEMINI_API_BASE}/${DISCOVERY_MODEL}:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: DISCOVERY_META_PROMPT }] },
+        systemInstruction: { parts: [{ text: localizedMetaPrompt }] },
         contents,
         generationConfig: {
           temperature: DISCOVERY_TEMPERATURE,
@@ -203,7 +207,9 @@ export async function generatePrompt(
   const apiKey = await getGeminiKey();
   if (!apiKey) throw new Error('Gemini API key not configured');
 
-  const generationPrompt = buildGenerationPrompt(params, kbDocNames, conversationHistory);
+  const baseGenerationPrompt = buildGenerationPrompt(params, kbDocNames, conversationHistory);
+  // Plan 11 FR-011: localize the generated prompt to the user's active locale.
+  const generationPrompt = addLanguageInstruction(baseGenerationPrompt, getActiveLocale());
 
   const response = await fetch(
     `${GEMINI_API_BASE}/${DISCOVERY_MODEL}:generateContent?key=${apiKey}`,
@@ -260,7 +266,7 @@ export async function generateTestQuestionsFromPrompt(
   const apiKey = await getGeminiKey();
   if (!apiKey) throw new Error('Gemini API key not configured');
 
-  const instruction = [
+  const baseInstruction = [
     'Given this system prompt, generate 6 test questions to validate it.',
     'Generate 3 questions where the AI SHOULD respond (relevant to the prompt\'s domain),',
     'and 3 questions where the AI SHOULD stay silent (off-topic or casual conversation).',
@@ -276,6 +282,8 @@ export async function generateTestQuestionsFromPrompt(
     '  {"text": "...", "expectedBehavior": "silent"}',
     ']}',
   ].join('\n');
+  // Plan 11 FR-011: localize test question text to the user's active locale.
+  const instruction = addLanguageInstruction(baseInstruction, getActiveLocale());
 
   const response = await fetch(
     `${GEMINI_API_BASE}/${DISCOVERY_MODEL}:generateContent?key=${apiKey}`,

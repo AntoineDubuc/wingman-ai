@@ -1,0 +1,1007 @@
+{
+  "_meta": {
+    "generator": "Direct authorship by Claude (Plan 3 Task 4 — Russian, Cyrillic, CLDR 3-form plurals one/few/other, 2026-05-05)",
+    "generated_at": "2026-05-05",
+    "revision": "overlay-assistant-2026-05-06",
+    "reviewer_status": "pending-native-review"
+  },
+  "popup": {
+    "title": "Wingman",
+    "subtitle": "ИИ-ассистент в реальном времени для Google Meet",
+    "api_keys_label": "Ключи API",
+    "session_label": "Сессия",
+    "controls_hint": {
+      "before": "Настройте ключи API в ",
+      "link": "Параметрах",
+      "after": ", чтобы начать."
+    },
+    "footer": {
+      "options": "Параметры",
+      "tutorials": "Обучение",
+      "support": "Поддержка"
+    },
+    "hydra_tooltip": {
+      "new_label": "Новое:",
+      "body": "Активируйте несколько персонажей для режима панели экспертов."
+    },
+    "start_session": "Начать сессию",
+    "stop_session": "Остановить сессию",
+    "status": {
+      "active": "Сессия активна",
+      "idle": "Готов",
+      "connecting": "Подключение…",
+      "live": "В эфире",
+      "error": "Ошибка",
+      "session_active_other_tab": "Сессия активна на другой вкладке"
+    },
+    "actions": {
+      "open_settings": "Открыть настройки",
+      "open_meet": "Открыть Google Meet"
+    },
+    "api_status": {
+      "configured": "Настроено",
+      "not_configured": "Не настроено"
+    },
+    "session_status": {
+      "active": "Активна",
+      "inactive": "Неактивна"
+    },
+    "personas": {
+      "section_label": "Активные персонажи",
+      "remove": "Удалить",
+      "locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
+      "count_active_one": "1 активный",
+      "count_active_few": "{{count}} активных",
+      "count_active_other": "{{count}} активных",
+      "add_persona": "+ Добавить персонажа",
+      "add_persona_locked_tooltip": "Остановите сессию, чтобы изменить персонажей",
+      "preset_locked_tooltip": "Остановите сессию, чтобы изменить пресеты",
+      "preset_dropdown_label": "Пресеты Конклава",
+      "max_reached": "Достигнут максимум {{max}} персонажей"
+    },
+    "errors": {
+      "no_api_keys": "Отсутствуют ключи API",
+      "no_meet_tab": "Вкладка Google Meet не найдена"
+    }
+  },
+  "options": {
+    "tabs": {
+      "setup": "Настройка",
+      "calls": "Звонки",
+      "personas": "Персоны",
+      "conclave": "Конклав",
+      "langbuilder": "LangBuilder",
+      "websearch": "Веб-поиск",
+      "support": "Поддержка"
+    },
+    "setup": {
+      "title": "Настройки",
+      "language_picker_label": "Язык",
+      "language_locked_tooltip": "Язык заблокирован во время активной сессии",
+      "api_keys_title": "Ключи API",
+      "api_keys": {
+        "description": "Настройте ключи API для транскрипции и сервисов искусственного интеллекта.",
+        "gemini_label": "Ключ API Gemini",
+        "deepgram_label": "Ключ API Deepgram",
+        "test_button": "Проверить",
+        "test_pass": "Соединение успешно",
+        "test_fail": "Соединение не удалось: {{rawError}}",
+        "testing": "Тестирование...",
+        "test_keys": "Проверить ключи",
+        "status_all_configured": "Все ключи настроены",
+        "status_missing_provider": "Отсутствует ключ {{provider}}",
+        "status_missing_deepgram": "Отсутствует ключ Deepgram",
+        "status_not_configured": "Ключи не настроены"
+      },
+      "save_button": "Сохранить",
+      "cancel_button": "Отмена"
+    },
+    "calls": {
+      "title": "Настройки звонков",
+      "retention_label": "Хранение транскрипций",
+      "summary_options_label": "Параметры резюме"
+    },
+    "personas": {
+      "section_title": "Персоны",
+      "editor": {
+        "edit_title": "Изменить персонажа"
+      },
+      "export": {
+        "exporting": "Экспорт...",
+        "button": "Экспорт"
+      },
+      "icons": {
+        "quick_picks": "Быстрый выбор"
+      },
+      "kb": {
+        "load_failed": "Не удалось загрузить документы.",
+        "searching": "Поиск...",
+        "test_button": "Проверить"
+      },
+      "default_interviewer": "Интервьюер по умолчанию",
+      "executive_communicator": "Коммуникатор руководителя",
+      "add_persona_button": "Добавить персону",
+      "templates": {
+        "job_interview_candidate": {
+          "name": "Кандидат на собеседование",
+          "description": "Тренировка для поведенческих и ситуационных вопросов на собеседовании."
+        },
+        "startup_founder_fundraising": {
+          "name": "Основатель стартапа (привлечение инвестиций)",
+          "description": "Тренировка презентаций для встреч с венчурными инвесторами и бизнес-ангелами."
+        },
+        "freelancer_rate_negotiation": {
+          "name": "Фрилансер (переговоры о ставках)",
+          "description": "Тренировка установления ставок и согласования объёма работ с клиентами."
+        },
+        "nonprofit_grant_pitcher": {
+          "name": "Соискатель грантов для НКО",
+          "description": "Тренировка презентаций перед грантодателями и фондами."
+        },
+        "patient_advocate": {
+          "name": "Защитник интересов пациента",
+          "description": "Тренировка для медицинских приёмов и решений о лечении."
+        },
+        "tenant_lease_negotiation": {
+          "name": "Арендатор (переговоры о найме)",
+          "description": "Тренировка продления договора и разрешения споров для арендаторов."
+        },
+        "parent_iep_meeting": {
+          "name": "Родитель (встреча по индивидуальному плану обучения)",
+          "description": "Тренировка для школьных встреч и защиты в специальном образовании."
+        },
+        "small_business_loan_seeker": {
+          "name": "Соискатель кредита для малого бизнеса",
+          "description": "Тренировка для встреч с банковскими кредитными специалистами."
+        },
+        "journalist_interviewer": {
+          "name": "Журналист-интервьюер",
+          "description": "Тренировка интервью с источниками для репортёров и журналистов."
+        },
+        "esl_professional": {
+          "name": "Специалист по английскому как иностранному",
+          "description": "Тренировка делового английского для неносителей языка."
+        },
+        "cloud_solutions_sales_consultant": {
+          "name": "Консультант по продажам облачных решений",
+          "description": "Техническая предпродажная тренировка для сделок по облачным платформам."
+        }
+      }
+    },
+    "conclave": {
+      "title": "Конклав",
+      "description": "Режим групповой беседы с несколькими персонами.",
+      "enable_label": "Включить Конклав",
+      "no_active_personas": "Нет активных персонажей"
+    },
+    "setup_import": {
+      "preview": {
+        "personas_heading": "Персонажи",
+        "credentials_heading": "Учётные данные",
+        "permissions_heading": "Разрешения хоста",
+        "errors_heading": "Ошибки ({{count}})",
+        "will_add": "Будет добавлено ({{count}}):",
+        "will_update": "Будет обновлено ({{count}}):",
+        "will_skip": "Будет пропущено — вы их редактировали ({{count}}):",
+        "will_request": "Будет запрошено:",
+        "will_revoke": "Будет отозвано:",
+        "will_write_credentials_one": "Будет записан 1 ключ (значения скрыты).",
+        "will_write_credentials_few": "Будет записано {{count}} ключа (значения скрыты).",
+        "will_write_credentials_other": "Будет записано {{count}} ключей (значения скрыты).",
+        "will_clear_credentials_one": "Будет очищен 1 ключ.",
+        "will_clear_credentials_few": "Будет очищено {{count}} ключа.",
+        "will_clear_credentials_other": "Будет очищено {{count}} ключей.",
+        "langbuilder_host": "LangBuilder обратится к: {{host}}",
+        "empty": "Нечего импортировать."
+      }
+    },
+    "langbuilder": {
+      "title": "LangBuilder",
+      "description": "Конструктор настраиваемых языковых потоков.",
+      "testing": "Тестирование...",
+      "test_connection": "Проверить соединение"
+    },
+    "websearch": {
+      "title": "Веб-поиск",
+      "description": "Интеграция Brave Search для контекста чат-ассистента.",
+      "brave_key_label": "Ключ API Brave Search"
+    },
+    "support": {
+      "title": "Поддержка",
+      "description": "Документация и сообщения о проблемах.",
+      "docs_link": "Документация",
+      "issues_link": "Сообщить о проблеме"
+    },
+    "drive": {
+      "auth_button": "Войти через Google",
+      "signed_in": "Выполнен вход как {{email}}",
+      "sign_out": "Выйти",
+      "save_label": "Сохранять резюме на Drive",
+      "connecting": "Подключение..."
+    },
+    "upgrade_banner": {
+      "title": "Wingman теперь говорит на вашем языке",
+      "body": "Ваш язык был автоматически установлен в соответствии с настройками браузера. Вы можете изменить его в любой момент на вкладке «Настройка».",
+      "dismiss_button": "Понятно"
+    },
+    "toasts": {
+      "settings_saved": "Настройки сохранены",
+      "settings_save_failed": "Ошибка при сохранении настроек",
+      "api_key_required": "Требуется ключ API {{provider}}",
+      "permission_required": "Требуется разрешение для подключения к {{provider}}",
+      "permission_request_failed": "Ошибка запроса разрешения {{provider}}",
+      "drive_connected": "Google Drive подключён!",
+      "drive_disconnected": "Google Drive отключён",
+      "drive_connect_failed": "Ошибка подключения",
+      "drive_disconnect_failed": "Ошибка отключения",
+      "drive_settings_saved": "Настройки Drive сохранены",
+      "langbuilder_settings_saved": "Настройки LangBuilder сохранены",
+      "langbuilder_url_required": "Введите URL и ключ API",
+      "langbuilder_test_passed_one": "Подключено! Найден 1 поток",
+      "langbuilder_test_passed_few": "Подключено! Найдено {{count}} потока",
+      "langbuilder_test_passed_other": "Подключено! Найдено {{count}} потоков",
+      "langbuilder_test_failed": "Сбой проверки: {{rawError}}",
+      "langbuilder_permission_required": "Требуется разрешение для подключения к этому серверу",
+      "langbuilder_invalid_url": "Неверный формат URL",
+      "active_personas_max": "Максимум {{count}} активных персонажей",
+      "active_personas_min": "Хотя бы один персонаж должен быть активным",
+      "transcription_pause_threshold": "Порог паузы: {{value}}",
+      "transcription_suggestion_cooldown": "Интервал подсказок: {{value}}",
+      "transcription_auto_suggestions_on": "Автоподсказки: Вкл",
+      "transcription_auto_suggestions_off": "Автоподсказки: Выкл",
+      "transcription_prompt_tuning": "Настройка промпта: {{label}}",
+      "conclave_leader_updated": "Лидер Conclave обновлён",
+      "conclave_preset_activated": "Пресет активирован",
+      "conclave_preset_activated_with_missing_one": "Активировано (1 удалённый персонаж пропущен)",
+      "conclave_preset_activated_with_missing_few": "Активировано ({{count}} удалённых персонажа пропущено)",
+      "conclave_preset_activated_with_missing_other": "Активировано ({{count}} удалённых персонажей пропущено)",
+      "conclave_preset_deleted": "Пресет удалён",
+      "conclave_preset_created": "Пресет создан",
+      "conclave_preset_updated": "Пресет обновлён",
+      "conclave_preset_name_required": "Введите имя",
+      "conclave_preset_select_persona": "Выберите хотя бы одного персонажа",
+      "conclave_delete_modal_title": "Удалить пресет",
+      "conclave_delete_modal_body": "Вы уверены, что хотите удалить «{{name}}»?",
+      "persona_name_required": "Требуется имя персонажа",
+      "persona_prompt_too_short": "Промпт должен содержать не менее {{min}} символов",
+      "persona_prompt_too_long": "Промпт не может превышать {{max}} символов",
+      "persona_saved_with_version": "Промпт сохранён как v{{version}} ({{model}})",
+      "persona_saved": "Персонаж сохранён",
+      "persona_deleted": "Персонаж удалён",
+      "persona_duplicated": "Персонаж дублирован",
+      "persona_exported": "Персонаж экспортирован",
+      "persona_export_failed": "Сбой экспорта",
+      "persona_only_one_cannot_delete": "Нельзя удалить единственного персонажа",
+      "persona_kb_doc_deleted": "{{filename}} удалён",
+      "persona_kb_doc_delete_failed": "Ошибка удаления документа",
+      "persona_kb_test_query_required": "Введите тестовый запрос",
+      "persona_kb_test_failed": "Сбой тестового запроса. Проверьте ключ API.",
+      "persona_kb_gemini_required": "Требуется ключ Gemini API для базы знаний (эмбеддинги используют Gemini)",
+      "persona_kb_processing_in_progress": "Идёт обработка. Подождите.",
+      "persona_import_invalid_json": "Неверный JSON-файл",
+      "persona_import_not_valid": "Неверный файл персонажа Wingman ({{reason}})",
+      "persona_import_kb_gemini_required": "Требуется ключ Gemini API для обработки документов KB",
+      "persona_import_with_kb_failures": "Персонаж импортирован ({{count}} док(ов) KB не удался)",
+      "persona_import_success": "Персонаж успешно импортирован",
+      "persona_import_failed": "Ошибка импорта файла персонажа",
+      "persona_kb_file_processed": "Документ добавлен в базу знаний",
+      "persona_kb_file_failed": "Ошибка обработки файла",
+      "setup_call_in_progress_import": "Остановите текущий звонок перед импортом.",
+      "setup_no_files": "Файлы не выбраны",
+      "setup_import_cancelled": "Импорт отменён",
+      "setup_duplicate_persona_names": "Дублирующиеся имена персонажей — импорт прерван.",
+      "setup_call_started_during_import": "Звонок начат во время импорта. Отменено.",
+      "setup_import_failed": "Сбой импорта — см. консоль service worker",
+      "setup_import_modal_title": "Импорт папки конфигурации",
+      "setup_folder_empty": "Папка пуста (или содержит только скрытые файлы). Переименуйте .env в wingman.env и попробуйте снова.",
+      "setup_large_folder_title": "Большая папка",
+      "setup_large_folder_body": "Вы выбрали {{count}} файлов. Будут обработаны только .env и *persona*.json. Продолжить?",
+      "setup_nothing_to_import": "Нечего импортировать. Папка должна содержать файл .env или *persona*.json.",
+      "setup_already_up_to_date": "Уже актуально — учётные данные и персонажи соответствуют папке.",
+      "setup_credentials_imported_persona_skipped": "Учётные данные импортированы. Импорт персонажей отменён — звонок в процессе.",
+      "setup_imported_summary": "Импортировано {{personas}} персонажей, {{credentials}} учётных данных"
+    },
+    "prompt_modals": {
+      "chat": {
+        "initial_bot_message": "Для чего будет использоваться этот персонаж? Опишите сценарий, и я создам оптимизированный системный промпт.",
+        "btn_refine": "Уточнить...",
+        "btn_generate": "Создать промпты",
+        "btn_cancel": "Отмена",
+        "btn_generate_v": "Создать v{{version}}",
+        "btn_generating": "Создание...",
+        "btn_close": "Закрыть",
+        "btn_retry": "Повторить",
+        "btn_back_to_chat": "Назад к чату",
+        "btn_use_asis": "Использовать как есть",
+        "btn_customize": "Настроить",
+        "template_tag": "Шаблон",
+        "show_full_prompt": "Показать полный промпт",
+        "show_less": "Показать меньше",
+        "discard_modal_title": "Отменить разговор?",
+        "discard_modal_body": "Ваш разговор для исследования будет потерян. Вы можете перезапустить ассистента в любое время."
+      },
+      "version_history": {
+        "title": "История промптов — {{personaName}}",
+        "description": "Каждая версия промпта с результатами тестов и затратами.",
+        "btn_back": "Назад",
+        "empty_state": "Версий пока нет.",
+        "badge_current": "текущая",
+        "badge_manual": "ручное редактирование",
+        "badge_assistant": "ассистент настройки",
+        "badge_restored": "восстановлена",
+        "badge_template": "из шаблона",
+        "badge_imported": "импортирована",
+        "stats_with_tests": "Тест: {{passed}}/{{total}} прошли · {{modelId}} · Цена: ${{cost}} · {{date}}",
+        "stats_no_tests": "Тестов пока нет · {{modelId}} · {{date}}",
+        "btn_diff": "Diff",
+        "btn_test": "Тест",
+        "btn_restore": "Восстановить",
+        "btn_delete": "Удалить",
+        "diff_header": "Diff: v{{from}}({{fromModel}}) → v{{to}}({{toModel}})",
+        "select_from": "Из",
+        "select_to": "В",
+        "btn_close_diff": "Закрыть diff",
+        "restore_confirm": "Восстановить v{{version}}? Это создаст новую версию с содержимым v{{version}}.",
+        "delete_confirm": "Удалить v{{version}} ({{summary}})? Это нельзя отменить."
+      },
+      "review": {
+        "tab_prompt": "Промпт",
+        "tab_test_questions": "Тестовые вопросы",
+        "generation_badge": "Генерация: #{{generationNumber}}",
+        "editing_unsaved": "Редактирование — несохранённые изменения",
+        "char_count": "{{count}} / {{max}} символов",
+        "modified_suffix": " · изменено",
+        "btn_compare_vs": "Сравнить с генерацией #{{previous}}",
+        "label_target_model": "Целевая модель",
+        "diff_label_live": "ДИФФ В РЕАЛЬНОМ ВРЕМЕНИ ПРОТИВ СГЕНЕРИРОВАННОГО",
+        "diff_label_vs_gen": "ДИФФ ПРОТИВ ГЕНЕРАЦИИ #{{num}}",
+        "empty_no_test_questions": "Тестовых вопросов не сгенерировано.",
+        "group_should_respond": "АВТО-СОЗДАНО — ДОЛЖЕН ОТВЕТИТЬ",
+        "group_should_silent": "АВТО-СОЗДАНО — ДОЛЖЕН МОЛЧАТЬ",
+        "badge_new": "новый",
+        "btn_refine": "Уточнить...",
+        "btn_edit": "Редактировать",
+        "btn_test_dots": "Тест...",
+        "btn_save_all": "Сохранить всё (v{{generation}})",
+        "btn_discard_edits": "Отменить изменения",
+        "btn_test_this_version": "Тестировать эту версию",
+        "btn_show_diff": "Показать diff",
+        "btn_hide_diff": "Скрыть diff",
+        "btn_save": "Сохранить",
+        "btn_remove_test_qs": "Удалить тестовые вопросы",
+        "btn_test_now": "Тестировать сейчас",
+        "btn_save_prompt_test_qs": "Сохранить промпт + вопросы"
+      },
+      "test_harness": {
+        "title_interrupted": "Тестер промпта — Прервано",
+        "title_results_all_pass": "Результаты тестов",
+        "title_results_partial": "Результаты — {{passed}}/{{total}} прошли",
+        "title_kb_validation": "Проверка KB{{versionSuffix}}",
+        "title_default": "Тестер промпта{{versionSuffix}}",
+        "tab_sample_qs": "Прим. в.",
+        "tab_custom_q": "Свой в.",
+        "tab_kb_query": "KB + Запрос",
+        "empty_generating": "Создание примерных вопросов из вашего промпта...",
+        "empty_no_questions": "Примерных вопросов пока нет.",
+        "btn_generate_sample": "Создать примерные вопросы",
+        "section_should_respond": "ДОЛЖЕН ОТВЕТИТЬ",
+        "section_should_silent": "ДОЛЖЕН МОЛЧАТЬ",
+        "cost_estimate": "{{totalQs}} вопросов × 1 модель = ~${{cost}}",
+        "cost_estimate_comparison": "{{totalQs}} вопросов × 1 модель × 2 версии = ~${{cost}}",
+        "btn_run_tests": "Запустить тесты{{versionLabel}}",
+        "add_question_label": "Добавить вопрос",
+        "placeholder_question": "Введите тестовый вопрос...",
+        "radio_should_respond": "Должен ответить",
+        "radio_should_silent": "Должен молчать",
+        "btn_add": "+ Добавить",
+        "kb_empty_state": "Нет документов KB, привязанных к этому персонажу. Загрузите документы в редакторе персонажа, чтобы включить тестирование KB.",
+        "kb_linked_header": "Привязанные документы KB ({{count}})",
+        "kb_doc_item": "{{filename}} ({{chunks}} фрагментов)",
+        "placeholder_kb_search": "Поиск в вашей KB...",
+        "btn_search": "Поиск",
+        "btn_searching": "Поиск...",
+        "search_failed": "Сбой поиска: {{error}}",
+        "kb_section_header": "Интеграционные тесты KB",
+        "kb_section_description": "Авто-создаёт 3 теста: реальная цитата, невозможное знание (внедрённый факт) и недостающие данные (должен отказать).",
+        "placeholder_impossible": "Свой невозможный факт (по умолчанию: $999/место Enterprise)",
+        "btn_run_kb_tests": "Запустить тесты KB",
+        "btn_running": "Выполняется...",
+        "kb_loading_message": "Выполнение 3 тестов KB на модели... может занять 15-30 секунд.",
+        "no_api_key_for_provider": "Нет ключа API для активного провайдера.",
+        "kb_tests_failed": "Сбой тестов KB: {{error}}",
+        "no_results_for_query": "Нет результатов для «{{query}}». Попробуйте другой запрос или проверьте, что документы проиндексированы.",
+        "results_header": "{{count}} результатов для «{{query}}»",
+        "kb_all_passed": "Все тесты KB прошли ({{passed}}/{{total}})",
+        "kb_partial_passed": "Тесты KB: {{passed}}/{{total}} прошли",
+        "meta_kb_chunk_retrieved": "Фрагмент KB получен",
+        "meta_similarity": "Сходство: {{percent}}%",
+        "meta_source": "Источник: {{filename}}",
+        "meta_citation_correct": "Цитата верна",
+        "meta_citation_incorrect": "Цитата неверна",
+        "badge_pass": "Прошёл",
+        "badge_silent": "Молчал",
+        "badge_wrong_behavior": "Неправильное поведение",
+        "badge_should_respond": "Должен был ответить",
+        "badge_off_topic": "Ответ не по теме",
+        "badge_should_silent": "Должен был молчать",
+        "badge_error": "Ошибка: {{message}}",
+        "success_title": "Все тесты прошли",
+        "success_detail": "{{total}}/{{total}} вопросов · {{modelId}}",
+        "fail_banner_title": "Все тесты провалены",
+        "fail_banner_body": "Этот промпт может потребовать значительной доработки. Рассмотрите перезапуск ассистента настройки с другими данными или попробуйте другую целевую модель.",
+        "btn_close": "Закрыть",
+        "btn_edit_to_fix": "Редактировать промпт",
+        "btn_retry_failed": "Повторить проваленные тесты",
+        "btn_save_as_v": "Сохранить как v{{version}}",
+        "btn_back_to_edit": "Назад к редактированию",
+        "btn_back_to_history": "Назад к истории",
+        "btn_restore_v": "Восстановить v{{version}}",
+        "compare_against_label": "Сравнить с:",
+        "compare_none": "Нет",
+        "compare_version_option": "v{{version}} — {{summary}}",
+        "comparison_title": "Сравнение: {{currentLabel}} vs {{comparedLabel}}",
+        "scorecard_pass": "{{passed}}/{{total}} прошли",
+        "badge_should_respond_lc": "должен ответить",
+        "badge_should_silent_lc": "должен молчать",
+        "loading_running_tests": "Выполнение тестов... может занять 15-30 секунд.",
+        "no_api_key_setup_hint": "Не найден ключ API для активного провайдера. Проверьте свои ключи API на вкладке Настройка."
+      }
+    },
+    "html": {
+      "header": {
+        "subtitle": "Настройки расширения",
+        "theme_toggle": "Переключить тёмный режим"
+      },
+      "setup": {
+        "import_setup_folder_title": "Импорт папки конфигурации",
+        "choose_folder_button": "Выбрать папку",
+        "api_keys_description": "Введите ваши ключи API, чтобы включить речевую транскрипцию и ответы AI. Ключи хранятся локально и никогда не отправляются на наши серверы.",
+        "deepgram_label": "Ключ API Deepgram",
+        "gemini_label": "Ключ API Google Gemini",
+        "openrouter_label": "Ключ API OpenRouter",
+        "groq_label": "Ключ API Groq",
+        "hume_label": "Hume AI (распознавание эмоций)",
+        "hume_optional": "Опционально",
+        "hume_secret_key_label": "Секретный ключ",
+        "test_hume_button": "Тест Hume",
+        "test_keys_button": "Тест ключей",
+        "save_keys_button": "Сохранить ключи",
+        "ai_provider_label": "Провайдер ИИ",
+        "model_label": "Модель",
+        "show_hide_key": "Показать/скрыть ключ",
+        "get_one_free": "Получить бесплатно",
+        "google_drive_title": "Интеграция с Google Drive",
+        "google_drive_description": "Автоматически сохраняет транскрипции встреч на ваш Google Drive после каждого звонка.",
+        "autosave_label": "Автосохранение транскрипций",
+        "connect_button": "Подключить аккаунт Google",
+        "disconnect_button": "Отключить",
+        "folder_name_label": "Имя папки",
+        "transcript_format_label": "Формат транскрипции",
+        "format_googledoc": "Google Doc (отформатировано)",
+        "format_markdown": "Markdown (.md)",
+        "format_plaintext": "Простой текст (.txt)",
+        "format_json": "JSON (.json)",
+        "active_personas_title": "Активные персонажи для звонков",
+        "active_personas_description": "Выберите, какие персонажи активны во время звонков.",
+        "import_setup_folder_description": "Выберите папку с файлом .env и файлами *persona*.json для импорта учётных данных и персонажей одним кликом. Ваши персонажи и правки сохраняются — перезаписываются только неотредактированные стандартные персонажи.",
+        "import_setup_folder_security": "Напоминание о безопасности: ключи API хранятся в открытом виде в вашем профиле Chrome. Не импортируйте учётные данные в общий профиль Chrome.",
+        "deepgram_placeholder": "Введите ваш ключ API Deepgram",
+        "gemini_placeholder": "Введите ваш ключ API Gemini",
+        "openrouter_placeholder": "Введите ваш ключ API OpenRouter",
+        "groq_placeholder": "Введите ваш ключ API Groq",
+        "hume_api_placeholder": "Введите ваш ключ API Hume",
+        "hume_secret_placeholder": "Введите ваш секретный ключ Hume",
+        "drive_folder_placeholder": "Транскрипции Wingman",
+        "deepgram_hint": "Используется для речевой транскрипции в реальном времени",
+        "provider_hint": "Gemini использует ваш ключ напрямую. OpenRouter позволяет выбирать из множества моделей. Groq предлагает сверхбыстрый ИИ с открытым кодом.",
+        "gemini_hint": "Используется для подсказок и ответов на основе ИИ",
+        "openrouter_hint": "Используется для подсказок и ответов на основе ИИ через OpenRouter",
+        "model_choice_hint": "Выберите модель ИИ для подсказок и сводок",
+        "groq_hint": "Сверхбыстрый инференс на open-source моделях — бесплатный уровень на console.groq.com",
+        "folder_hint": "Папка будет создана в корне Drive, если её нет",
+        "active_personas_hint": "Каждый активный персонаж оценивает транскрипции независимо. Ограничьте 4 для низкой задержки.",
+        "hume_api_key_label": "Ключ API",
+        "hume_secret_key_label_short": "Секретный ключ",
+        "hume_get_keys": "(Получить ключи)",
+        "hume_description": "Показывает эмоции клиента в реальном времени во время звонков. Требуется аккаунт Hume AI на platform.hume.ai. Используется только когда ключи настроены — распознавание эмоций является опциональным.",
+        "status_keys_not_configured": "Ключи не настроены",
+        "autosave_description": "Когда включено, транскрипции автоматически сохраняются в вашу папку Drive после окончания каждого звонка.",
+        "connected_label": "Подключено",
+        "folder_format_summary": "Формат папки",
+        "folder_format_env_intro": "на верхнем уровне с любым из этих ключей:",
+        "folder_format_persona_files": "Файлы персонажей JSON в любом месте папки (любое имя, содержащее \"persona\" и заканчивающееся на .json)."
+      },
+      "calls": {
+        "transcription_sensitivity_title": "Чувствительность транскрипции",
+        "pause_threshold_label": "Порог паузы",
+        "suggestion_frequency_title": "Частота подсказок",
+        "auto_suggestions_label": "Автоподсказки",
+        "cooldown_label": "Интервал",
+        "ai_prompt_tuning_title": "Настройка ИИ-промпта",
+        "tuning_mode_label": "Режим настройки",
+        "tuning_mode_auto": "Авто (рекомендуется)",
+        "tuning_mode_off": "Выкл",
+        "speaker_filter_title": "Фильтр говорящих",
+        "speaker_filter_label": "Отвечать только другим говорящим",
+        "panel_layout_title": "Расположение панели",
+        "panel_position_label": "Позиция панели",
+        "position_floating": "Плавающая",
+        "position_dock_left": "Боковая панель слева",
+        "position_dock_right": "Боковая панель справа",
+        "display_mode_label": "Режим отображения",
+        "display_full": "Полная расшифровка + подсказки",
+        "display_suggestions_only": "Только подсказки",
+        "call_summary_title": "Сводка звонка",
+        "auto_summary_label": "Авто-генерация сводки звонка",
+        "include_key_moments_label": "Включать ключевые моменты",
+        "transcription_sensitivity_description": "Контролирует, как долго Wingman ждёт паузы говорящего, прежде чем считать его высказывание завершённым.",
+        "suggestion_frequency_description": "Минимальное время между подсказками ИИ. Низкие значения более отзывчивы; высокие снижают затраты LLM.",
+        "ai_prompt_tuning_description": "Адаптирует ваши промпты персонажей для лучшей работы на активном LLM (Gemini, OpenRouter, Groq).",
+        "speaker_filter_description": "Контролирует, когда Wingman даёт подсказки в зависимости от того, кто говорит.",
+        "panel_layout_description": "Контролирует, где появляется панель Wingman во время звонков и что показывает.",
+        "call_summary_description": "Получайте сгенерированную ИИ сводку с пунктами действий и ключевыми моментами после каждого звонка.",
+        "tuning_mode_hint": "Авто применяет специфичные для модели корректировки во время выполнения без изменения сохранённых промптов.",
+        "pause_threshold_hint": "Сколько говорящему нужно паузить перед созданием нового пузыря транскрипции. Ниже = отзывчивее, но может разделять предложения; выше = плавнее, но добавляет задержку.",
+        "auto_suggestions_hint": "Выкл — Wingman не предлагает автоматически — вы можете запустить вручную.",
+        "cooldown_hint": "После каждой подсказки Wingman ждёт этот интервал перед рассмотрением следующей.",
+        "speaker_filter_hint": "Когда включено, Wingman даёт подсказки только когда говорят другие участники — никогда по вашему собственному аудио.",
+        "auto_summary_hint": "Использует один дополнительный вызов API ИИ за сеанс.",
+        "moments_hint": "Выделяет заметные цитаты и сигналы покупки."
+      },
+      "personas": {
+        "personas_title": "Персонажи",
+        "import_button": "Импорт",
+        "new_button": "+ Новый персонаж",
+        "editor_title": "Редактирование персонажа",
+        "name_label": "Имя",
+        "icon_label": "Иконка (опционально)",
+        "icon_clear_button": "Очистить",
+        "color_label": "Цветной ярлык",
+        "system_prompt_label": "Системный промпт",
+        "prompt_assistant_button": "Ассистент настройки",
+        "test_prompts_button": "Тестировать промпты",
+        "version_history_button": "История версий",
+        "kb_label": "База знаний",
+        "kb_test_label": "Тест базы знаний",
+        "kb_test_button": "Тест",
+        "cancel_button": "Отмена",
+        "export_button": "Экспорт",
+        "duplicate_button": "Дублировать",
+        "delete_button": "Удалить",
+        "save_button": "Сохранить",
+        "personas_description": "Объедините системный промпт с конкретными документами Базы знаний. Каждый персонаж даёт ИИ свой голос и контекст.",
+        "empty_state": "Создайте первого персонажа, чтобы объединить системный промпт с документами KB.",
+        "kb_drop_text": "Перетащите файлы или нажмите для выбора",
+        "kb_drop_hint": "PDF, Markdown или текст (макс 10 МБ)",
+        "kb_processing": "Обработка...",
+        "kb_empty_state": "Документы пока не загружены. Перетащите файлы или нажмите для выбора.",
+        "icon_quick_picks": "Быстрый выбор",
+        "icon_loading": "Загрузка иконок...",
+        "icon_no_results": "Иконки не найдены. Попробуйте другие ключевые слова, например \"лицо\", \"работа\", \"животное\".",
+        "icon_selected": "Выбрано:",
+        "icon_search_placeholder": "Поиск 4 000+ иконок...",
+        "name_placeholder": "напр. Демо безопасности облака",
+        "prompt_placeholder": "Введите системный промпт...",
+        "kb_test_placeholder": "напр. Какие сертификаты безопасности у вас есть?",
+        "char_count_initial": "0 / 10 000 символов"
+      },
+      "conclave": {
+        "settings_title": "Настройки Conclave",
+        "leader_label": "Лидер Conclave",
+        "presets_title": "Пресеты",
+        "new_preset_button": "+ Новый пресет",
+        "settings_description": "Настройте, как несколько персонажей работают вместе, когда активен более одного.",
+        "presets_description": "Сохраняйте комбинации персонажей для быстрой активации. Пресеты не включают учётные данные.",
+        "leader_hint": "Экспертиза лидера Conclave направляет пост-звонковую сводку. Выберите, какой персонаж должен формировать перспективу сводки."
+      },
+      "langbuilder": {
+        "connection_title": "Подключение LangBuilder",
+        "url_label": "URL LangBuilder",
+        "api_key_label": "Ключ API",
+        "test_button": "Проверить соединение",
+        "save_button": "Сохранить",
+        "flows_title": "Доступные потоки",
+        "connection_description": "Подключитесь к вашему экземпляру LangBuilder для запуска кастомных потоков из оверлея.",
+        "flows_description": "Потоки из вашего экземпляра LangBuilder, обновляемые при Проверке соединения.",
+        "url_placeholder": "https://langflow.company.com",
+        "api_key_placeholder": "Введите ваш ключ API LangBuilder",
+        "url_hint": "Базовый URL вашего экземпляра LangBuilder",
+        "api_key_hint": "Токен x-api-key из настроек LangBuilder",
+        "status_unconfigured": "Не настроено"
+      },
+      "websearch": {
+        "provider_title": "Провайдер веб-поиска",
+        "provider_label": "Провайдер",
+        "provider_brave": "Brave Search",
+        "api_key_label": "Ключ API",
+        "test_button": "Проверить соединение",
+        "budget_title": "Дневной лимит запросов",
+        "provider_description": "Включите живой веб-поиск во время встреч через Brave Search.",
+        "budget_description": "Ограничьте количество веб-поисков в день для контроля затрат API.",
+        "api_key_placeholder": "Введите ваш ключ API Brave Search"
+      },
+      "support": {
+        "support_wingman_title": "Поддержать Wingman",
+        "donate_button": "Купить мне кофе",
+        "tutorials_title": "Туториалы и руководства",
+        "view_tutorials_button": "Смотреть туториалы",
+        "feature_requests_title": "Запросы функций и баги",
+        "github_button": "Отправить на GitHub",
+        "langbuilder_title": "Построено с LangBuilder",
+        "learn_more_button": "Узнать больше",
+        "connect_title": "Связаться с создателем",
+        "linkedin_button": "Связаться в LinkedIn",
+        "support_wingman_description": "Нравится Wingman? Ваша поддержка помогает мне продолжать создавать бесплатные инструменты с приоритетом приватности.",
+        "tutorials_description": "Узнайте, как извлечь максимум из Wingman с помощью пошаговых руководств.",
+        "feature_requests_description": "Есть идея новой функции? Нашли баг? Откройте issue на GitHub.",
+        "langbuilder_description": "ИИ-рабочие процессы Wingman работают на LangBuilder — открытой платформе оркестрации.",
+        "connect_intro": "Привет, я Антуан Дубук — соло-разработчик Wingman.",
+        "connect_cta": "Мне было бы интересно узнать, как вы используете Wingman и что хотите увидеть дальше."
+      },
+      "modals": {
+        "reset_title": "Сбросить по умолчанию?",
+        "reset_cancel": "Отмена",
+        "reset_confirm": "Сброс",
+        "assistant_title": "Ассистент настройки",
+        "send_button": "Отправить",
+        "tester_title": "Тестер промпта"
+      }
+    }
+  },
+  "overlay": {
+    "timer": {
+      "label": "Время сессии"
+    },
+    "session": {
+      "connecting": "Подключение…",
+      "live": "В эфире",
+      "error": "Ошибка соединения",
+      "disconnected": "Отключено"
+    },
+    "transcript": {
+      "live": "В эфире",
+      "paused": "Приостановлено",
+      "empty_placeholder": "Ожидание речи…",
+      "someone_speaking": "Кто-то говорит…"
+    },
+    "suggestion": {
+      "try_again": "Повторить",
+      "try_again_tooltip": "Сгенерировать это предложение заново на вашем языке",
+      "after_retry_label": "Сгенерировано заново",
+      "thinking": "Размышление…",
+      "no_suggestion": "Слушаю…"
+    },
+    "speaker": {
+      "you": "Вы",
+      "speaker_n": "Говорящий {{n}}"
+    },
+    "controls": {
+      "minimize": "Свернуть",
+      "close": "Закрыть",
+      "hide": "Скрыть",
+      "dock": "Закрепить",
+      "undock": "Открепить",
+      "dock_left": "Боковая панель слева",
+      "dock_right": "Боковая панель справа",
+      "suggestions_only": "Только подсказки",
+      "suggestions_only_chip": "Показываются только подсказки",
+      "show_full_transcript": "Показать полную расшифровку",
+      "font_decrease": "Уменьшить размер текста",
+      "font_increase": "Увеличить размер текста",
+      "layout_toggle": "Переключить вид рядом",
+      "resize": "Изменить размер"
+    },
+    "header": {
+      "recording": "Запись",
+      "assistant_panel": "Ассистент"
+    },
+    "pill_toggle": {
+      "meeting": "Встреча",
+      "assistant": "Ассистент"
+    },
+    "nav": {
+      "chat": "Чат",
+      "flows": "Потоки"
+    },
+    "emotion": {
+      "label_prefix": "Тон:"
+    },
+    "cost": {
+      "label": "Ориентировочная стоимость",
+      "minutes_unit": "мин",
+      "free_value": "Бесплатно",
+      "estimate_disclaimer": "Оценка · фактический счёт может отличаться",
+      "free_tier_suffix": "бесплатная версия",
+      "stt_label": "Deepgram",
+      "calls_unit_one": "{{count}} вызов",
+      "calls_unit_few": "{{count}} вызова",
+      "calls_unit_other": "{{count}} вызовов"
+    },
+    "summary_card": {
+      "generating": "Создание сводки..."
+    },
+    "actions": {
+      "saved_to_drive": "Сохранено в Drive",
+      "copy": "Копировать",
+      "copied": "Скопировано!",
+      "copy_failed": "Ошибка"
+    },
+    "langbuilder": {
+      "running": "Выполнение потока...",
+      "cancelled": "Отменено",
+      "flow_failed": "Сбой выполнения потока",
+      "connection_error": "Ошибка соединения",
+      "no_flows_hint": "Нет потоков — настройте в Настройках",
+      "select_flow_placeholder": "Выберите поток...",
+      "input_placeholder": "Вставьте или введите данные для потока...",
+      "cancel": "Отмена",
+      "go": "Запустить",
+      "empty_result": "Запустите поток, чтобы увидеть результаты здесь."
+    },
+    "kb": {
+      "search_aria_label": "Поиск в базе знаний",
+      "answer_aria_label": "Ответ KB: {{answer}}",
+      "input_placeholder": "Запросите вашу базу знаний..."
+    },
+    "empty": {
+      "listening": "Слушаю разговор...",
+      "waiting_suggestions": "Ожидаю подсказки...",
+      "unknown_speaker": "Неизвестен"
+    },
+    "assistant": {
+      "chat_empty_title": "Чем я могу помочь?",
+      "chat_empty_subtitle": "Спросите что угодно. Включите источники контекста выше, чтобы добавить транскрипт встречи или базу знаний персонажа.",
+      "chat_input_placeholder": "Спросите что угодно...",
+      "context_transcript": "Транскрипция",
+      "context_web_search": "Поиск в сети",
+      "attach_persona_knowledge": "Прикрепить базу знаний персонажа",
+      "personas_load_failed": "Не удалось загрузить персонажей — перезагрузите расширение.",
+      "no_personas_configured": "Персонажи не настроены.",
+      "personas_btn_count": "Персонажи ({{count}})",
+      "personas_btn_unknown": "Персонажи (?)",
+      "sources_more": "+ещё {{count}}",
+      "suggestion_chip_1": "Что такое поток PKCE, о котором упомянула Sarah?",
+      "suggestion_chip_2": "Составьте письмо с последующими действиями",
+      "suggestion_chip_3": "Объясните лучшие практики ротации токенов OAuth 2.0",
+      "suggestion_chip_4": "Что наш архитектор знает о миграции сессий?"
+    }
+  },
+  "summary": {
+    "headers": {
+      "summary": "Резюме",
+      "action_items": "Задачи к выполнению",
+      "key_moments": "Ключевые моменты",
+      "personas_used": "Использованные персоны",
+      "session_cost_estimate": "Ориентировочная стоимость сессии",
+      "call_summary": "Сводка по звонку"
+    },
+    "action_item_owner": {
+      "you": "Вы",
+      "them": "Они"
+    },
+    "moment_types": {
+      "signal": "Сигнал",
+      "objection": "Возражение",
+      "decision": "Решение",
+      "quote": "Цитата"
+    },
+    "cost": {
+      "label": "Ориентировочная стоимость",
+      "format": "{{amount}} USD",
+      "deepgram_stt": "Deepgram STT",
+      "minutes_unit": "мин",
+      "free_tier_suffix": "бесплатная версия",
+      "free": "Бесплатно",
+      "calls_unit": "{{count}} вызовов",
+      "total": "Итого"
+    },
+    "save_to_drive": "Сохранить на Drive",
+    "saving": "Сохранение…",
+    "saved": "Сохранено",
+    "metadata_labels": {
+      "duration": "Длительность",
+      "speakers": "Участники",
+      "minutes_unit": "мин"
+    },
+    "empty_summary": "Сводка недоступна",
+    "personas": {
+      "suggestion_count_one": "1 предложение",
+      "suggestion_count_few": "{{count}} предложения",
+      "suggestion_count_other": "{{count}} предложений"
+    }
+  },
+  "speakers": {
+    "you": "Вы",
+    "them": "Они",
+    "speaker_n": "Говорящий {{n}}"
+  },
+  "mic_permission": {
+    "title": "Требуется доступ к микрофону",
+    "body": "Wingman требуется доступ к микрофону для транскрипции встречи.",
+    "grant_button": "Разрешить доступ",
+    "cancel_button": "Отмена",
+    "denied": {
+      "title": "Доступ к микрофону отклонён",
+      "body": "Wingman не может выполнить транскрипцию без доступа к микрофону."
+    },
+    "recovery": {
+      "title": "Как восстановить доступ",
+      "steps_intro": "Выполните следующие шаги:",
+      "step_1": "Нажмите на значок замка в адресной строке.",
+      "step_2": "Установите разрешение микрофона на «Разрешить».",
+      "step_3": "Перезагрузите эту страницу и повторите попытку."
+    }
+  },
+  "errors": {
+    "deepgram_failed": "Распознавание речи недоступно. {{rawError}}",
+    "mic_revoked": "Доступ к микрофону потерян. Восстановите доступ и повторите попытку.",
+    "api_key_missing": "Ключ API {{provider}} не настроен. Добавьте его в настройках.",
+    "generic": "Что-то пошло не так. Пожалуйста, повторите попытку.",
+    "session_interrupted": "Сессия прервана неожиданно.",
+    "format_template": "{{primaryMessage}} — {{rawError}}",
+    "deepgram": {
+      "websocket_failed": "Не удалось подключиться к транскрипции.",
+      "session_dropped": "Сессия транскрипции завершилась неожиданно.",
+      "language_unavailable": "Распознавание речи для языка {{language}} в данный момент недоступно."
+    },
+    "gemini": {
+      "api_failure": "Сервис Gemini недоступен.",
+      "rate_limit": "Достигнут лимит обращений Gemini. Подождите немного.",
+      "quota_exceeded": "Превышена дневная квота Gemini."
+    },
+    "groq": {
+      "api_failure": "Сервис Groq недоступен."
+    },
+    "drive": {
+      "oauth_failed": "Вход в Google Drive не удался. Попробуйте ещё раз.",
+      "save_failed": "Не удалось сохранить на Drive.",
+      "quota_exceeded": "Превышена квота хранения Drive.",
+      "network": "Сетевая ошибка при обращении к Drive."
+    },
+    "hume": {
+      "disconnected": "Распознавание эмоций отключено.",
+      "api_failure": "Распознавание эмоций недоступно."
+    },
+    "brave": {
+      "api_failure": "Веб-поиск недоступен для этого запроса.",
+      "rate_limit": "Достигнут лимит веб-поиска."
+    },
+    "langbuilder": {
+      "flow_failed": "Не удалось выполнить настраиваемый поток.",
+      "api_failure": "LangBuilder недоступен."
+    },
+    "deepgram_key_missing": "Ключ API Deepgram не настроен. Откройте Настройки, чтобы добавить ключ.",
+    "deepgram_connect_failed": "Не удалось подключиться к Deepgram. Проверьте ключ API.",
+    "no_active_meet_tab": "Активная вкладка Google Meet не найдена",
+    "no_query_text": "Текст запроса не предоставлен.",
+    "kb_gemini_required": "Требуется ключ API Gemini для поиска в Базе знаний. Настройте в Настройках.",
+    "kb_no_results": "Не найдена релевантная информация в Базе знаний по этой теме.",
+    "kb_answer_failed": "Не удалось сгенерировать ответ. Проверьте ваши ключи API.",
+    "network": "Сетевая ошибка. Проверьте соединение.",
+    "langbuilder_not_configured": "LangBuilder не настроен"
+  },
+  "banners": {
+    "connection_lost": {
+      "title": "Соединение потеряно",
+      "body": "Соединение со службой транскрипции потеряно.",
+      "reconnecting": "Переподключение…",
+      "reconnected": "Соединение восстановлено"
+    },
+    "mic_revoked": {
+      "title": "Доступ к микрофону потерян",
+      "body": "Доступ к микрофону был отозван во время этой сессии.",
+      "recovery_action": "Восстановить доступ"
+    },
+    "partial_service": {
+      "title": "Некоторые сервисы работают с ограничениями",
+      "services_degraded": "{{services}} недоступн(ы); транскрипция продолжается."
+    },
+    "actions": {
+      "dismiss": "Закрыть",
+      "retry": "Повторить"
+    }
+  },
+  "plurals": {
+    "suggestion_one": "{{count}} предложение",
+    "suggestion_few": "{{count}} предложения",
+    "suggestion_other": "{{count}} предложений",
+    "minute_one": "{{count}} минута",
+    "minute_few": "{{count}} минуты",
+    "minute_other": "{{count}} минут",
+    "second_one": "{{count}} секунда",
+    "second_few": "{{count}} секунды",
+    "second_other": "{{count}} секунд",
+    "action_item_one": "{{count}} задача к выполнению",
+    "action_item_few": "{{count}} задачи к выполнению",
+    "action_item_other": "{{count}} задач к выполнению",
+    "persona_one": "{{count}} персона",
+    "persona_few": "{{count}} персоны",
+    "persona_other": "{{count}} персон",
+    "character_one": "{{count}} символ",
+    "character_few": "{{count}} символа",
+    "character_other": "{{count}} символов"
+  },
+  "aria": {
+    "overlay": {
+      "open": "Открыть наложение Wingman",
+      "close": "Закрыть наложение Wingman",
+      "minimize": "Свернуть наложение Wingman"
+    },
+    "popup": {
+      "start_session": "Начать сессию Wingman",
+      "stop_session": "Остановить сессию Wingman"
+    },
+    "options": {
+      "tab": "Вкладка {{tab}}",
+      "section": "Раздел {{section}}",
+      "picker": "Выбор языка"
+    },
+    "banner": {
+      "close": "Закрыть баннер",
+      "retry": "Повторить"
+    }
+  },
+  "tutorials": {
+    "english_only_banner": "Содержимое учебных материалов в настоящее время доступно только на английском языке. Мы работаем над переводами для будущей версии."
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "retry": "Повторить",
+    "dismiss": "Закрыть",
+    "language_names": {
+      "en": "English",
+      "fr": "Français",
+      "es": "Español",
+      "ro": "Română",
+      "ru": "Русский"
+    }
+  },
+  "personas": {
+    "templates": {
+      "job_interview_candidate": {
+        "name": "Кандидат на собеседовании",
+        "description": "Коучинг собеседования в реальном времени со структурными подсказками и подходом STAR."
+      },
+      "startup_founder_fundraising": {
+        "name": "Основатель стартапа (привлечение средств)",
+        "description": "Доработка питча для инвесторов и поддержка звонков по сбору средств."
+      },
+      "freelancer_rate_negotiation": {
+        "name": "Фрилансер (переговоры о ставке)",
+        "description": "Тактика переговоров о ставке и оформление условий контракта."
+      },
+      "nonprofit_grant_pitcher": {
+        "name": "Заявитель на грант НКО",
+        "description": "Доработка питча заявки на грант и поддержка вопросов спонсоров."
+      },
+      "patient_advocate": {
+        "name": "Защитник пациента",
+        "description": "Защита на медицинском приёме и навигация по плану лечения."
+      },
+      "tenant_lease_negotiation": {
+        "name": "Арендатор (переговоры по аренде)",
+        "description": "Тактика переговоров по аренде и оформление прав арендатора."
+      },
+      "parent_iep_meeting": {
+        "name": "Родитель (встреча IEP)",
+        "description": "Защита на встрече IEP и оформление прав в специальном образовании."
+      },
+      "small_business_loan_seeker": {
+        "name": "Соискатель кредита для МСП",
+        "description": "Разговор с кредитным офицером и оформление вопросов по кредиту."
+      },
+      "journalist_interviewer": {
+        "name": "Журналист-интервьюер",
+        "description": "Подготовка интервью с источником и подсказки уточняющих вопросов."
+      },
+      "esl_professional": {
+        "name": "ESL профессионал",
+        "description": "Ясность профессиональной коммуникации ESL и навигация по идиомам."
+      },
+      "cloud_solutions_sales_consultant": {
+        "name": "Консультант по продажам облачных решений",
+        "description": "Технические решения до продажи и поддержка звонков по обнаружению."
+      }
+    }
+  }
+}

@@ -6,6 +6,8 @@
  */
 
 import { type CallSummary, formatSummaryAsMarkdown } from './call-summary';
+import { languagePreferenceService } from './language-preference';
+import type { SupportedLocale } from '../shared/i18n-types';
 
 const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD_BASE = 'https://www.googleapis.com/upload/drive/v3';
@@ -180,11 +182,13 @@ class DriveService {
       }
 
       // Generate file content
+      const locale = await languagePreferenceService.getLanguage();
       const formatted = this.formatTranscript(
         transcripts,
         metadata,
         fileFormat,
-        summary ?? null
+        summary ?? null,
+        locale
       );
 
       // Upload file
@@ -438,9 +442,12 @@ class DriveService {
     transcripts: TranscriptData[],
     metadata: SessionMetadata,
     fileFormat: string,
-    summary: CallSummary | null
+    summary: CallSummary | null,
+    locale: SupportedLocale
   ): { filename: string; content: string; mimeType: string; convertToGoogleDoc: boolean } {
-    const dateStr = metadata.startTime.toLocaleDateString('en-US', {
+    // FR-016: filename uses endTime (when the session ended), not startTime.
+    // FR-020: format date in user's active locale, not hard-coded 'en-US'.
+    const dateStr = metadata.endTime.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -453,7 +460,7 @@ class DriveService {
     if (fileFormat === 'googledoc') {
       return {
         filename: baseName,
-        content: this.formatGoogleDoc(transcripts, metadata, summary),
+        content: this.formatGoogleDoc(transcripts, metadata, summary, locale),
         mimeType: 'text/html',
         convertToGoogleDoc: true,
       };
@@ -467,37 +474,38 @@ class DriveService {
     } else if (fileFormat === 'text') {
       return {
         filename: `${baseName}.txt`,
-        content: this.formatText(transcripts, metadata, summary),
+        content: this.formatText(transcripts, metadata, summary, locale),
         mimeType: 'text/plain',
         convertToGoogleDoc: false,
       };
     } else {
       return {
         filename: `${baseName}.md`,
-        content: this.formatMarkdown(transcripts, metadata, summary),
+        content: this.formatMarkdown(transcripts, metadata, summary, locale),
         mimeType: 'text/markdown',
         convertToGoogleDoc: false,
       };
     }
   }
 
-  private formatGoogleDoc(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
-    const dateStr = metadata.startTime.toLocaleDateString('en-US', {
+  private formatGoogleDoc(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null, locale: SupportedLocale = 'en'): string {
+    // FR-020: replace hard-coded 'en-US' with user's active locale.
+    const dateStr = metadata.startTime.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-    const shortDateStr = metadata.startTime.toLocaleDateString('en-US', {
+    const shortDateStr = metadata.startTime.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-    const timeStr = metadata.startTime.toLocaleTimeString('en-US', {
+    const timeStr = metadata.startTime.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
-    const endTimeStr = metadata.endTime.toLocaleTimeString('en-US', {
+    const endTimeStr = metadata.endTime.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -614,18 +622,19 @@ class DriveService {
     return h.join('\n');
   }
 
-  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
-    const dateStr = metadata.startTime.toLocaleDateString('en-US', {
+  private formatMarkdown(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null, locale: SupportedLocale): string {
+    // FR-020: replace hard-coded 'en-US' with user's active locale.
+    const dateStr = metadata.startTime.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-    const timeStr = metadata.startTime.toLocaleTimeString('en-US', {
+    const timeStr = metadata.startTime.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
-    const endTimeStr = metadata.endTime.toLocaleTimeString('en-US', {
+    const endTimeStr = metadata.endTime.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -646,7 +655,7 @@ class DriveService {
 
     // Call summary
     if (summary) {
-      lines.push(formatSummaryAsMarkdown(summary));
+      lines.push(formatSummaryAsMarkdown(summary, locale));
       lines.push('');
     }
 
@@ -690,8 +699,9 @@ class DriveService {
     return lines.join('\n');
   }
 
-  private formatText(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null): string {
-    const dateStr = metadata.startTime.toLocaleDateString('en-US', {
+  private formatText(transcripts: TranscriptData[], metadata: SessionMetadata, summary: CallSummary | null, locale: SupportedLocale = 'en'): string {
+    // FR-020: replace hard-coded 'en-US' with user's active locale.
+    const dateStr = metadata.startTime.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

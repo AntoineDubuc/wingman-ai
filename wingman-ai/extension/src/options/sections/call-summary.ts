@@ -52,12 +52,15 @@ export class CallSummarySection {
       });
 
       this.ctx.showToast(
-        summaryEnabled ? 'Summary settings saved' : 'Call summary disabled',
+        this.ctx.t?.('options.toasts.settings_saved') ?? 'Settings saved',
         'success'
       );
     } catch (error) {
       console.error('Failed to save summary settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error'
+      );
     }
   }
 

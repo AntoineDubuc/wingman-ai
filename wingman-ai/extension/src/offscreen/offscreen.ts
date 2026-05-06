@@ -163,6 +163,17 @@ async function startDualCapture(streamId: string): Promise<void> {
     });
     console.log('[Offscreen] Got microphone stream');
 
+    // Plan 10 FR-029: detect mid-call mic revocation. The 'ended' event
+    // fires when the user revokes microphone permission while the session
+    // is active (browser-driven; not the same as user clicking Stop).
+    const micTrackForEvents = micStream.getAudioTracks()[0];
+    if (micTrackForEvents) {
+      micTrackForEvents.addEventListener('ended', () => {
+        console.warn('[Offscreen] Microphone track ended unexpectedly — likely permission revoked mid-call');
+        chrome.runtime.sendMessage({ type: 'MIC_REVOKED' }).catch(() => {});
+      });
+    }
+
     // 2. Get tab audio stream
     tabStream = await navigator.mediaDevices.getUserMedia({
       audio: {

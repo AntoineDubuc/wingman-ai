@@ -61,18 +61,23 @@
 
       <!-- ==================== SETUP TAB ==================== -->
       <div class="tab-panel active" id="panel-setup" data-panel="setup" role="tabpanel" aria-labelledby="tab-setup">
+        <!-- Language Picker Card (Plan 2 — populated at runtime by renderLanguagePicker) -->
+        <div class="options-card">
+          <div id="language-picker-container"></div>
+        </div>
+
         <!-- Setup Folder Import Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Import Setup Folder</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.setup.import_setup_folder_title">Import Setup Folder</h2>
+          <p class="form-section-description" data-i18n="options.html.setup.import_setup_folder_description">
             Pick a folder containing a <code>.env</code> file and <code>*persona*.json</code> files to import credentials and personas in one click.
             Your own personas and edits are preserved — only unedited shipped personas are overwritten.
           </p>
-          <p class="form-section-description" style="color: #aa6600;">
+          <p class="form-section-description" style="color: #aa6600;" data-i18n="options.html.setup.import_setup_folder_security">
             <strong>Security reminder:</strong> API keys are stored in your Chrome profile in plain text. Do not import credentials in a shared Chrome profile.
           </p>
           <details style="margin-bottom: 12px;">
-            <summary style="cursor: pointer; font-weight: 500;">Folder format</summary>
+            <summary style="cursor: pointer; font-weight: 500;" data-i18n="options.html.setup.folder_format_summary">Folder format</summary>
             <p style="margin-top: 8px;"><strong>.env</strong> at the top level with any of these keys:</p>
             <pre style="background: rgba(0,0,0,0.04); padding: 10px; border-radius: 4px; font-size: 12px;">DEEPGRAM_API_KEY=...
 GEMINI_API_KEY=...
@@ -86,7 +91,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             <p><strong>Persona JSON files</strong> anywhere in the folder (any filename containing "persona" and ending in .json).</p>
           </details>
           <div class="button-row">
-            <button id="setup-import-btn" class="btn-primary" type="button">Choose Folder</button>
+            <button id="setup-import-btn" class="btn-primary" type="button" data-i18n="options.html.setup.choose_folder_button">Choose Folder</button>
             <span id="setup-import-last" style="margin-left: 12px; color: #666; font-size: 13px;"></span>
           </div>
           <input type="file" id="setup-import-input" webkitdirectory multiple hidden>
@@ -94,16 +99,16 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- API Keys Card -->
         <div class="options-card">
-          <h2 class="form-section-title">API Keys</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.setup.api_keys_title">API Keys</h2>
+          <p class="form-section-description" data-i18n="options.html.setup.api_keys_description">
             Enter your API keys to enable speech-to-text and AI responses.
             Your keys are stored locally and never sent to our servers.
           </p>
 
           <div class="api-key-section">
             <label for="deepgram-api-key" class="input-label">
-              Deepgram API Key
-              <a href="https://console.deepgram.com/" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+              <span data-i18n="options.html.setup.deepgram_label">Deepgram API Key</span>
+              <a href="https://console.deepgram.com/" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
             </label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
@@ -111,20 +116,20 @@ LANGBUILDER_FLOW_ID=...</pre>
                   type="password"
                   id="deepgram-api-key"
                   class="text-input api-key-input"
-                  placeholder="Enter your Deepgram API key"
+                  placeholder="Enter your Deepgram API key" data-i18n="options.html.setup.deepgram_placeholder" data-i18n-attr="placeholder"
                   autocomplete="off"
                 >
                 <button type="button" class="toggle-visibility-btn" data-target="deepgram-api-key" title="Show/hide key">
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
-              <p class="input-hint">Used for real-time speech-to-text transcription</p>
+              <p class="input-hint" data-i18n="options.html.setup.deepgram_hint">Used for real-time speech-to-text transcription</p>
             </div>
           </div>
 
           <!-- AI Provider Toggle -->
           <div class="api-key-section">
-            <label class="input-label">AI Provider</label>
+            <label class="input-label" data-i18n="options.html.setup.ai_provider_label">AI Provider</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="llm-provider" value="gemini" checked>
@@ -139,14 +144,14 @@ LANGBUILDER_FLOW_ID=...</pre>
                 <span class="radio-label">Groq</span>
               </label>
             </div>
-            <p class="input-hint" style="margin-top: 6px;">Gemini uses your key directly. OpenRouter lets you choose from multiple models. Groq offers ultra-fast open-source AI.</p>
+            <p class="input-hint" style="margin-top: 6px;" data-i18n="options.html.setup.provider_hint">Gemini uses your key directly. OpenRouter lets you choose from multiple models. Groq offers ultra-fast open-source AI.</p>
           </div>
 
           <!-- Gemini Key (visible when provider=gemini) -->
           <div id="gemini-key-section" class="api-key-section">
             <label for="gemini-api-key" class="input-label">
-              Google Gemini API Key
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+              <span data-i18n="options.html.setup.gemini_label">Google Gemini API Key</span>
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
             </label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
@@ -154,14 +159,14 @@ LANGBUILDER_FLOW_ID=...</pre>
                   type="password"
                   id="gemini-api-key"
                   class="text-input api-key-input"
-                  placeholder="Enter your Gemini API key"
+                  placeholder="Enter your Gemini API key" data-i18n="options.html.setup.gemini_placeholder" data-i18n-attr="placeholder"
                   autocomplete="off"
                 >
                 <button type="button" class="toggle-visibility-btn" data-target="gemini-api-key" title="Show/hide key">
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
-              <p class="input-hint" id="gemini-hint">Used for AI-powered suggestions and responses</p>
+              <p class="input-hint" id="gemini-hint" data-i18n="options.html.setup.gemini_hint">Used for AI-powered suggestions and responses</p>
             </div>
           </div>
 
@@ -169,8 +174,8 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="openrouter-section" style="display: none;">
             <div class="api-key-section">
               <label for="openrouter-api-key" class="input-label">
-                OpenRouter API Key
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one)</a>
+                <span data-i18n="options.html.setup.openrouter_label">OpenRouter API Key</span>
+                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one)</a>
               </label>
               <div class="input-with-hint">
                 <div class="password-input-wrapper">
@@ -178,22 +183,22 @@ LANGBUILDER_FLOW_ID=...</pre>
                     type="password"
                     id="openrouter-api-key"
                     class="text-input api-key-input"
-                    placeholder="Enter your OpenRouter API key"
+                    placeholder="Enter your OpenRouter API key" data-i18n="options.html.setup.openrouter_placeholder" data-i18n-attr="placeholder"
                     autocomplete="off"
                   >
                   <button type="button" class="toggle-visibility-btn" data-target="openrouter-api-key" title="Show/hide key">
                     <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
-                <p class="input-hint">Used for AI-powered suggestions and responses via OpenRouter</p>
+                <p class="input-hint" data-i18n="options.html.setup.openrouter_hint">Used for AI-powered suggestions and responses via OpenRouter</p>
               </div>
             </div>
 
             <div class="api-key-section">
-              <label for="openrouter-model-select" class="input-label">Model</label>
+              <label for="openrouter-model-select" class="input-label" data-i18n="options.html.setup.model_label">Model</label>
               <div class="input-with-hint">
                 <select id="openrouter-model-select" class="select-input"></select>
-                <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
+                <p class="input-hint" data-i18n="options.html.setup.model_choice_hint">Choose which AI model to use for suggestions and summaries</p>
               </div>
             </div>
           </div>
@@ -202,8 +207,8 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="groq-section" style="display: none;">
             <div class="api-key-section">
               <label for="groq-api-key" class="input-label">
-                Groq API Key
-                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+                <span data-i18n="options.html.setup.groq_label">Groq API Key</span>
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
               </label>
               <div class="input-with-hint">
                 <div class="password-input-wrapper">
@@ -211,22 +216,22 @@ LANGBUILDER_FLOW_ID=...</pre>
                     type="password"
                     id="groq-api-key"
                     class="text-input api-key-input"
-                    placeholder="Enter your Groq API key"
+                    placeholder="Enter your Groq API key" data-i18n="options.html.setup.groq_placeholder" data-i18n-attr="placeholder"
                     autocomplete="off"
                   >
                   <button type="button" class="toggle-visibility-btn" data-target="groq-api-key" title="Show/hide key">
                     <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                 </div>
-                <p class="input-hint">Ultra-fast inference on open-source models — free tier at console.groq.com</p>
+                <p class="input-hint" data-i18n="options.html.setup.groq_hint">Ultra-fast inference on open-source models — free tier at console.groq.com</p>
               </div>
             </div>
 
             <div class="api-key-section">
-              <label for="groq-model-select" class="input-label">Model</label>
+              <label for="groq-model-select" class="input-label" data-i18n="options.html.setup.model_label">Model</label>
               <div class="input-with-hint">
                 <select id="groq-model-select" class="select-input"></select>
-                <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
+                <p class="input-hint" data-i18n="options.html.setup.model_choice_hint">Choose which AI model to use for suggestions and summaries</p>
               </div>
             </div>
           </div>
@@ -234,7 +239,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <!-- Hume AI (Emotion Detection) - Optional -->
           <div id="hume-section" class="api-key-section hume-optional-section">
             <div class="section-header-with-badge">
-              <label class="input-label">Hume AI (Emotion Detection)</label>
+              <label class="input-label" data-i18n="options.html.setup.hume_label">Hume AI (Emotion Detection)</label>
               <span class="optional-badge">Optional</span>
             </div>
             <p class="input-hint" style="margin-bottom: 12px;">
@@ -252,7 +257,7 @@ LANGBUILDER_FLOW_ID=...</pre>
                     type="password"
                     id="hume-api-key"
                     class="text-input api-key-input"
-                    placeholder="Enter your Hume API key"
+                    placeholder="Enter your Hume API key" data-i18n="options.html.setup.hume_api_placeholder" data-i18n-attr="placeholder"
                     autocomplete="off"
                   >
                   <button type="button" class="toggle-visibility-btn" data-target="hume-api-key" title="Show/hide key">
@@ -262,13 +267,13 @@ LANGBUILDER_FLOW_ID=...</pre>
               </div>
 
               <div class="api-key-section" style="margin-bottom: 12px;">
-                <label for="hume-secret-key" class="input-label input-label-small">Secret Key</label>
+                <label for="hume-secret-key" class="input-label input-label-small" data-i18n="options.html.setup.hume_secret_key_label_short">Secret Key</label>
                 <div class="password-input-wrapper">
                   <input
                     type="password"
                     id="hume-secret-key"
                     class="text-input api-key-input"
-                    placeholder="Enter your Hume Secret key"
+                    placeholder="Enter your Hume Secret key" data-i18n="options.html.setup.hume_secret_placeholder" data-i18n-attr="placeholder"
                     autocomplete="off"
                   >
                   <button type="button" class="toggle-visibility-btn" data-target="hume-secret-key" title="Show/hide key">
@@ -287,7 +292,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="button-row">
             <div class="api-status" id="api-status">
               <span class="status-dot status-unconfigured"></span>
-              <span class="status-text">Keys not configured</span>
+              <span class="status-text" data-i18n="options.html.setup.status_keys_not_configured">Keys not configured</span>
             </div>
             <div class="button-group">
               <button id="test-keys-btn" class="btn-secondary" type="button">
@@ -302,15 +307,15 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Google Drive Integration Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Google Drive Integration</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.setup.google_drive_title">Google Drive Integration</h2>
+          <p class="form-section-description" data-i18n="options.html.setup.google_drive_description">
             Automatically save meeting transcripts to your Google Drive after each session.
           </p>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <label for="drive-autosave-toggle" class="toggle-label">Auto-save transcripts</label>
-              <p class="toggle-description">
+              <label for="drive-autosave-toggle" class="toggle-label" data-i18n="options.html.setup.autosave_label">Auto-save transcripts</label>
+              <p class="toggle-description" data-i18n="options.html.setup.autosave_description">
                 When enabled, transcripts will be automatically saved to Google Drive when a session ends.
               </p>
             </div>
@@ -332,7 +337,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             <div id="drive-connected" class="drive-status" style="display: none;">
               <div class="drive-account-info">
                 <span class="drive-icon">&#10003;</span>
-                <span id="drive-account-email">Connected</span>
+                <span id="drive-account-email" data-i18n="options.html.setup.connected_label">Connected</span>
               </div>
               <button id="drive-disconnect-btn" class="btn-secondary btn-small" type="button">
                 Disconnect
@@ -341,37 +346,37 @@ LANGBUILDER_FLOW_ID=...</pre>
           </div>
 
           <div class="drive-folder-section">
-            <label for="drive-folder-name" class="input-label">Folder Name</label>
+            <label for="drive-folder-name" class="input-label" data-i18n="options.html.setup.folder_name_label">Folder Name</label>
             <div class="input-with-hint">
               <input
                 type="text"
                 id="drive-folder-name"
                 class="text-input"
                 value="Wingman Transcripts"
-                placeholder="Wingman Transcripts"
+                placeholder="Wingman Transcripts" data-i18n="options.html.setup.drive_folder_placeholder" data-i18n-attr="placeholder"
               >
-              <p class="input-hint">Folder will be created in your Drive root if it doesn't exist</p>
+              <p class="input-hint" data-i18n="options.html.setup.folder_hint">Folder will be created in your Drive root if it doesn't exist</p>
             </div>
           </div>
 
           <div class="drive-format-section">
-            <label class="input-label">Transcript Format</label>
+            <label class="input-label" data-i18n="options.html.setup.transcript_format_label">Transcript Format</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="googledoc" checked>
-                <span class="radio-label">Google Doc (formatted)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_googledoc">Google Doc (formatted)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="markdown">
-                <span class="radio-label">Markdown (.md)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_markdown">Markdown (.md)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="text">
-                <span class="radio-label">Plain Text (.txt)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_plaintext">Plain Text (.txt)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="json">
-                <span class="radio-label">JSON (.json)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_json">JSON (.json)</span>
               </label>
             </div>
           </div>
@@ -379,8 +384,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Active Personas Card (Hydra) -->
         <div class="options-card">
-          <h2 class="form-section-title">Active Personas for Calls</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.setup.active_personas_title">Active Personas for Calls</h2>
+          <p class="form-section-description" data-i18n="options.html.setup.active_personas_description">
             Select which personas are active during your calls. Each active persona contributes suggestions from its own expertise and knowledge base.
           </p>
 
@@ -402,15 +407,15 @@ LANGBUILDER_FLOW_ID=...</pre>
       <div class="tab-panel" id="panel-calls" data-panel="calls" role="tabpanel" aria-labelledby="tab-calls">
         <!-- Transcription Sensitivity Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Transcription Sensitivity</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.transcription_sensitivity_title">Transcription Sensitivity</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.transcription_sensitivity_description">
             Controls how long Wingman waits for a speaker to pause before finalizing a transcript segment.
             Higher values produce fewer, longer bubbles and fewer API calls.
           </p>
 
           <div class="slider-group">
             <div class="slider-header">
-              <label for="endpointing-range" class="toggle-label">Pause threshold</label>
+              <label for="endpointing-range" class="toggle-label" data-i18n="options.html.calls.pause_threshold_label">Pause threshold</label>
               <span id="endpointing-value" class="slider-value">0.7s</span>
             </div>
             <input type="range" id="endpointing-range" class="styled-slider" min="500" max="5000" step="100" value="700">
@@ -418,7 +423,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               <span>0.5s</span>
               <span>5s</span>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.pause_threshold_hint">
               How long a speaker must pause before a new transcript bubble is created. Takes effect next session.
             </p>
           </div>
@@ -426,8 +431,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Suggestion Cooldown Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Suggestion Frequency</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.suggestion_frequency_title">Suggestion Frequency</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.suggestion_frequency_description">
             Minimum time between AI suggestions. Higher values reduce API usage but may miss fast-paced conversation.
           </p>
 
@@ -437,16 +442,16 @@ LANGBUILDER_FLOW_ID=...</pre>
                 <input type="checkbox" id="auto-suggestions-toggle" checked>
                 <span class="toggle-slider"></span>
               </label>
-              <label for="auto-suggestions-toggle" class="toggle-label">Auto-suggestions</label>
+              <label for="auto-suggestions-toggle" class="toggle-label" data-i18n="options.html.calls.auto_suggestions_label">Auto-suggestions</label>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.auto_suggestions_hint">
               When off, Wingman won't suggest automatically. Use the KB search icon or search bar to get answers on demand. Takes effect next session.
             </p>
           </div>
 
           <div class="slider-group" id="cooldown-slider-group">
             <div class="slider-header">
-              <label for="cooldown-range" class="toggle-label">Cooldown</label>
+              <label for="cooldown-range" class="toggle-label" data-i18n="options.html.calls.cooldown_label">Cooldown</label>
               <span id="cooldown-value" class="slider-value">15s</span>
             </div>
             <input type="range" id="cooldown-range" class="styled-slider" min="2000" max="30000" step="1000" value="15000">
@@ -454,7 +459,7 @@ LANGBUILDER_FLOW_ID=...</pre>
               <span>2s</span>
               <span>30s</span>
             </div>
-            <p class="toggle-description">
+            <p class="toggle-description" data-i18n="options.html.calls.cooldown_hint">
               After each suggestion, Wingman waits this long before considering the next one. Takes effect next session.
             </p>
           </div>
@@ -462,39 +467,39 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- AI Tuning Card -->
         <div class="options-card">
-          <h2 class="form-section-title">AI Prompt Tuning</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.ai_prompt_tuning_title">AI Prompt Tuning</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.ai_prompt_tuning_description">
             Adapts your persona prompts to work best with your selected AI model.
             Different models respond better to different prompt structures.
           </p>
 
           <div class="api-key-section">
-            <label class="input-label">Tuning Mode</label>
+            <label class="input-label" data-i18n="options.html.calls.tuning_mode_label">Tuning Mode</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="prompt-tuning-mode" value="auto" checked>
-                <span class="radio-label">Auto (recommended)</span>
+                <span class="radio-label" data-i18n="options.html.calls.tuning_mode_auto">Auto (recommended)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="prompt-tuning-mode" value="off">
-                <span class="radio-label">Off</span>
+                <span class="radio-label" data-i18n="options.html.calls.tuning_mode_off">Off</span>
               </label>
             </div>
-            <p class="input-hint" style="margin-top: 6px;">Auto applies model-specific adjustments at runtime without modifying your saved prompts.</p>
+            <p class="input-hint" style="margin-top: 6px;" data-i18n="options.html.calls.tuning_mode_hint">Auto applies model-specific adjustments at runtime without modifying your saved prompts.</p>
           </div>
         </div>
 
         <!-- Speaker Filter Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Speaker Filter</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.speaker_filter_title">Speaker Filter</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.speaker_filter_description">
             Control when Wingman provides suggestions based on who is speaking.
           </p>
 
           <div class="toggle-row">
             <div class="toggle-info">
-              <label for="speaker-filter-toggle" class="toggle-label">Only respond to other speakers</label>
-              <p class="toggle-description">
+              <label for="speaker-filter-toggle" class="toggle-label" data-i18n="options.html.calls.speaker_filter_label">Only respond to other speakers</label>
+              <p class="toggle-description" data-i18n="options.html.calls.speaker_filter_hint">
                 When enabled, Wingman will only provide suggestions when customers or other participants speak,
                 not when you're talking. Wingman will automatically detect you as the first speaker.
               </p>
@@ -508,38 +513,38 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Panel Layout Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Panel Layout</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.panel_layout_title">Panel Layout</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.panel_layout_description">
             Controls where the Wingman panel appears during calls. Sidebar modes attach the panel to the browser edge.
           </p>
           <div class="form-group">
-            <label for="panel-layout-select" class="input-label">Panel Position</label>
+            <label for="panel-layout-select" class="input-label" data-i18n="options.html.calls.panel_position_label">Panel Position</label>
             <select id="panel-layout-select" class="select-input">
-              <option value="floating">Floating</option>
-              <option value="dock-left">Sidebar Left</option>
-              <option value="dock-right">Sidebar Right</option>
+              <option value="floating" data-i18n="options.html.calls.position_floating">Floating</option>
+              <option value="dock-left" data-i18n="options.html.calls.position_dock_left">Sidebar Left</option>
+              <option value="dock-right" data-i18n="options.html.calls.position_dock_right">Sidebar Right</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="display-mode-select" class="input-label">Display Mode</label>
+            <label for="display-mode-select" class="input-label" data-i18n="options.html.calls.display_mode_label">Display Mode</label>
             <select id="display-mode-select" class="select-input">
-              <option value="full">Full transcript + suggestions</option>
-              <option value="suggestions-only">Suggestions only</option>
+              <option value="full" data-i18n="options.html.calls.display_full">Full transcript + suggestions</option>
+              <option value="suggestions-only" data-i18n="options.html.calls.display_suggestions_only">Suggestions only</option>
             </select>
           </div>
         </div>
 
         <!-- Call Summary Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Call Summary</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.calls.call_summary_title">Call Summary</h2>
+          <p class="form-section-description" data-i18n="options.html.calls.call_summary_description">
             Get an AI-generated summary with action items when your calls end.
           </p>
 
           <div class="toggle-row" id="summary-enabled-row">
             <div class="toggle-info">
-              <label for="summary-enabled-toggle" class="toggle-label">Auto-generate call summary</label>
-              <p class="toggle-description">
+              <label for="summary-enabled-toggle" class="toggle-label" data-i18n="options.html.calls.auto_summary_label">Auto-generate call summary</label>
+              <p class="toggle-description" data-i18n="options.html.calls.auto_summary_hint">
                 Uses one additional AI API call per session.
               </p>
             </div>
@@ -551,8 +556,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="toggle-row" id="summary-moments-row">
             <div class="toggle-info">
-              <label for="summary-moments-toggle" class="toggle-label">Include key moments</label>
-              <p class="toggle-description">
+              <label for="summary-moments-toggle" class="toggle-label" data-i18n="options.html.calls.include_key_moments_label">Include key moments</label>
+              <p class="toggle-description" data-i18n="options.html.calls.moments_hint">
                 Surfaces notable quotes and buying signals.
               </p>
             </div>
@@ -569,8 +574,8 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card">
           <div class="persona-header-row">
             <div>
-              <h2 class="form-section-title">Personas</h2>
-              <p class="form-section-description">
+              <h2 class="form-section-title" data-i18n="options.html.personas.personas_title">Personas</h2>
+              <p class="form-section-description" data-i18n="options.html.personas.personas_description">
                 Bundle a system prompt with specific Knowledge Base documents into switchable presets.
               </p>
             </div>
@@ -589,19 +594,19 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="persona-list" class="persona-list"></div>
 
           <!-- Empty state -->
-          <div id="persona-empty" class="persona-empty">
+          <div id="persona-empty" class="persona-empty" data-i18n="options.html.personas.empty_state">
             <p>Create your first persona to bundle a system prompt with specific Knowledge Base documents.</p>
           </div>
         </div>
 
         <!-- Persona editor (hidden until editing) -->
         <div id="persona-editor" class="options-card persona-editor" hidden>
-          <h2 class="form-section-title" id="persona-editor-title">Edit Persona</h2>
+          <h2 class="form-section-title" id="persona-editor-title" data-i18n="options.html.personas.editor_title">Edit Persona</h2>
 
           <!-- Name -->
           <div class="form-group">
-            <label for="persona-name-input" class="input-label">Name</label>
-            <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" maxlength="60">
+            <label for="persona-name-input" class="input-label" data-i18n="options.html.personas.name_label">Name</label>
+            <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" data-i18n="options.html.personas.name_placeholder" data-i18n-attr="placeholder" maxlength="60">
           </div>
 
           <!-- Icon picker -->
@@ -610,7 +615,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             <div id="persona-icon-picker" class="icon-picker">
               <div class="icon-search-wrapper">
                 <span class="icon-search-icon">&#128269;</span>
-                <input type="text" id="persona-icon-search" class="text-input icon-search-input" placeholder="Search 4,000+ icons...">
+                <input type="text" id="persona-icon-search" class="text-input icon-search-input" placeholder="Search 4,000+ icons..." data-i18n="options.html.personas.icon_search_placeholder" data-i18n-attr="placeholder">
                 <button id="persona-icon-search-clear" class="icon-search-clear" hidden>&times;</button>
               </div>
               <div id="persona-icon-selected" class="icon-selected-row" hidden>
@@ -618,27 +623,27 @@ LANGBUILDER_FLOW_ID=...</pre>
                 <img id="persona-icon-selected-img" class="icon-selected-img" width="32" height="32" alt="">
                 <button id="persona-icon-clear-btn" class="link-btn link-btn--danger">Clear</button>
               </div>
-              <div id="persona-icon-grid-label" class="icon-grid-label">Quick picks</div>
+              <div id="persona-icon-grid-label" class="icon-grid-label" data-i18n="options.html.personas.icon_quick_picks">Quick picks</div>
               <div id="persona-icon-grid" class="icon-grid"></div>
-              <div id="persona-icon-loading" class="icon-loading" hidden>Loading icons...</div>
-              <div id="persona-icon-empty" class="icon-empty" hidden>No icons found. Try different keywords like "face", "work", "animal".</div>
+              <div id="persona-icon-loading" class="icon-loading" hidden data-i18n="options.html.personas.icon_loading">Loading icons...</div>
+              <div id="persona-icon-empty" class="icon-empty" hidden data-i18n="options.html.personas.icon_no_results">No icons found. Try different keywords like "face", "work", "animal".</div>
             </div>
           </div>
 
           <!-- Color picker -->
           <div class="form-group">
-            <label class="input-label">Color tag</label>
+            <label class="input-label" data-i18n="options.html.personas.color_label">Color tag</label>
             <div id="persona-color-picker" class="persona-color-picker"></div>
           </div>
 
           <!-- System prompt -->
           <div class="form-group">
-            <label for="persona-prompt-textarea" class="input-label">System Prompt</label>
+            <label for="persona-prompt-textarea" class="input-label" data-i18n="options.html.personas.system_prompt_label">System Prompt</label>
             <div class="prompt-container">
               <textarea
                 id="persona-prompt-textarea"
                 class="prompt-textarea"
-                placeholder="Enter your system prompt..."
+                placeholder="Enter your system prompt..." data-i18n="options.html.personas.prompt_placeholder" data-i18n-attr="placeholder"
                 spellcheck="false"
               ></textarea>
               <div class="char-count" id="persona-char-count">
@@ -649,41 +654,41 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Prompt Setup Assistant Actions -->
           <div class="prompt-actions" id="persona-prompt-actions">
-            <button id="btn-prompt-assistant" class="btn-primary btn-small" type="button">Prompt Setup Assistant</button>
-            <button id="btn-test-prompt" class="btn-secondary btn-small btn-hover-success" type="button">Test Current Prompts</button>
-            <button id="btn-version-history" class="btn-secondary btn-small" type="button">Version History <span id="version-history-badge" class="persona-card-badge" hidden></span></button>
+            <button id="btn-prompt-assistant" class="btn-primary btn-small" type="button" data-i18n="options.html.personas.prompt_assistant_button">Prompt Setup Assistant</button>
+            <button id="btn-test-prompt" class="btn-secondary btn-small btn-hover-success" type="button" data-i18n="options.html.personas.test_prompts_button">Test Current Prompts</button>
+            <button id="btn-version-history" class="btn-secondary btn-small" type="button" data-i18n="options.html.personas.version_history_button">Version History <span id="version-history-badge" class="persona-card-badge" hidden></span></button>
           </div>
 
           <!-- Knowledge Base Section -->
           <div class="form-group">
-            <label class="input-label">Knowledge Base</label>
+            <label class="input-label" data-i18n="options.html.personas.kb_label">Knowledge Base</label>
 
             <!-- Drop Zone -->
             <div id="persona-kb-drop-zone" class="kb-drop-zone">
               <span class="kb-drop-icon"><svg width="32" height="32" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
-              <span class="kb-drop-text">Drop files here or click to browse</span>
-              <span class="kb-drop-hint">PDF, Markdown, or Text (max 10MB)</span>
+              <span class="kb-drop-text" data-i18n="options.html.personas.kb_drop_text">Drop files here or click to browse</span>
+              <span class="kb-drop-hint" data-i18n="options.html.personas.kb_drop_hint">PDF, Markdown, or Text (max 10MB)</span>
               <input type="file" id="persona-kb-file-input" multiple accept=".pdf,.md,.txt,.markdown" hidden>
             </div>
 
             <!-- Progress (hidden by default) -->
             <div id="persona-kb-progress" class="kb-progress" hidden>
               <div class="kb-progress-bar"><div id="persona-kb-progress-fill" class="kb-progress-fill"></div></div>
-              <span id="persona-kb-progress-text" class="kb-progress-text">Processing...</span>
+              <span id="persona-kb-progress-text" class="kb-progress-text" data-i18n="options.html.personas.kb_processing">Processing...</span>
             </div>
 
             <!-- Document List (populated by JS) -->
             <div id="persona-kb-doc-list" class="kb-doc-list"></div>
 
             <!-- Empty State -->
-            <div id="persona-kb-empty" class="persona-kb-empty">No documents uploaded yet. Drag files above to add knowledge.</div>
+            <div id="persona-kb-empty" class="persona-kb-empty" data-i18n="options.html.personas.kb_empty_state">No documents uploaded yet. Drag files above to add knowledge.</div>
 
             <!-- Stats -->
             <div id="persona-kb-stats" class="kb-stats"></div>
 
             <!-- Test Query (hidden until docs exist) -->
             <div id="persona-kb-test-section" class="kb-test-section" hidden>
-              <label class="input-label">Test Knowledge Base</label>
+              <label class="input-label" data-i18n="options.html.personas.kb_test_label">Test Knowledge Base</label>
               <div class="kb-test-row">
                 <input type="text" id="persona-kb-test-input" class="text-input kb-test-input" placeholder="e.g. What security certifications do we have?">
                 <button id="persona-kb-test-btn" class="btn-secondary btn-small" type="button">Test</button>
@@ -694,12 +699,12 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Action buttons -->
           <div class="button-row">
-            <button id="persona-cancel-btn" class="btn-secondary" type="button">Cancel</button>
+            <button id="persona-cancel-btn" class="btn-secondary" type="button" data-i18n="options.html.personas.cancel_button">Cancel</button>
             <div class="button-group">
-              <button id="persona-export-btn" class="btn-secondary" type="button">Export</button>
-              <button id="persona-duplicate-btn" class="btn-secondary" type="button">Duplicate</button>
-              <button id="persona-delete-btn" class="btn-secondary btn-danger" type="button">Delete</button>
-              <button id="persona-save-btn" class="btn-primary" type="button">Save</button>
+              <button id="persona-export-btn" class="btn-secondary" type="button" data-i18n="options.html.personas.export_button">Export</button>
+              <button id="persona-duplicate-btn" class="btn-secondary" type="button" data-i18n="options.html.personas.duplicate_button">Duplicate</button>
+              <button id="persona-delete-btn" class="btn-secondary btn-danger" type="button" data-i18n="options.html.personas.delete_button">Delete</button>
+              <button id="persona-save-btn" class="btn-primary" type="button" data-i18n="options.html.personas.save_button">Save</button>
             </div>
           </div>
         </div>
@@ -717,27 +722,27 @@ LANGBUILDER_FLOW_ID=...</pre>
       <!-- ==================== CONCLAVE TAB ==================== -->
       <div class="tab-panel" id="panel-conclave" data-panel="conclave" role="tabpanel" aria-labelledby="tab-conclave">
         <div class="options-card">
-          <h2 class="form-section-title">Conclave Settings</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.conclave.settings_title">Conclave Settings</h2>
+          <p class="form-section-description" data-i18n="options.html.conclave.settings_description">
             Configure how multiple personas work together during calls. The conclave leader guides post-call summaries.
           </p>
 
           <!-- Conclave Leader Picker -->
           <div class="api-key-section">
-            <label for="conclave-leader-select" class="input-label">Conclave Leader</label>
+            <label for="conclave-leader-select" class="input-label" data-i18n="options.html.conclave.leader_label">Conclave Leader</label>
             <div class="input-with-hint">
               <select id="conclave-leader-select" class="select-input">
                 <option value="">Loading...</option>
               </select>
-              <p class="input-hint">The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective.</p>
+              <p class="input-hint" data-i18n="options.html.conclave.leader_hint">The conclave leader's expertise guides the post-call summary. Choose which persona should shape the summary's perspective.</p>
             </div>
           </div>
         </div>
 
         <!-- Presets Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Presets</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.conclave.presets_title">Presets</h2>
+          <p class="form-section-description" data-i18n="options.html.conclave.presets_description">
             Save persona combinations for quick activation. Click a preset to instantly switch to that persona group.
           </p>
 
@@ -754,49 +759,49 @@ LANGBUILDER_FLOW_ID=...</pre>
       <!-- ==================== LANGBUILDER TAB ==================== -->
       <div class="tab-panel" id="panel-langbuilder" data-panel="langbuilder" role="tabpanel" aria-labelledby="tab-langbuilder">
         <div class="options-card">
-          <h2 class="form-section-title">LangBuilder Connection</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.langbuilder.connection_title">LangBuilder Connection</h2>
+          <p class="form-section-description" data-i18n="options.html.langbuilder.connection_description">
             Connect to your LangBuilder instance to run AI workflows during meetings.
           </p>
 
           <div class="api-key-section">
-            <label for="langbuilder-url" class="input-label">LangBuilder URL</label>
+            <label for="langbuilder-url" class="input-label" data-i18n="options.html.langbuilder.url_label">LangBuilder URL</label>
             <div class="input-with-hint">
               <input
                 type="text"
                 id="langbuilder-url"
                 class="text-input"
-                placeholder="https://langflow.company.com"
+                placeholder="https://langflow.company.com" data-i18n="options.html.langbuilder.url_placeholder" data-i18n-attr="placeholder"
                 autocomplete="off"
                 style="max-width: 400px;"
               >
-              <p class="input-hint">Base URL of your LangBuilder instance</p>
+              <p class="input-hint" data-i18n="options.html.langbuilder.url_hint">Base URL of your LangBuilder instance</p>
             </div>
           </div>
 
           <div class="api-key-section">
-            <label for="langbuilder-api-key" class="input-label">API Key</label>
+            <label for="langbuilder-api-key" class="input-label" data-i18n="options.html.langbuilder.api_key_label">API Key</label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
                 <input
                   type="password"
                   id="langbuilder-api-key"
                   class="text-input api-key-input"
-                  placeholder="Enter your LangBuilder API key"
+                  placeholder="Enter your LangBuilder API key" data-i18n="options.html.langbuilder.api_key_placeholder" data-i18n-attr="placeholder"
                   autocomplete="off"
                 >
                 <button type="button" class="toggle-visibility-btn" data-target="langbuilder-api-key" title="Show/hide key">
                   <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
-              <p class="input-hint">x-api-key token from your LangBuilder settings</p>
+              <p class="input-hint" data-i18n="options.html.langbuilder.api_key_hint">x-api-key token from your LangBuilder settings</p>
             </div>
           </div>
 
           <div class="button-row">
             <div class="api-status" id="langbuilder-status">
               <span class="status-dot status-unconfigured"></span>
-              <span class="status-text">Not configured</span>
+              <span class="status-text" data-i18n="options.html.langbuilder.status_unconfigured">Not configured</span>
             </div>
             <div class="button-group">
               <button id="langbuilder-test-btn" class="btn-secondary" type="button">
@@ -811,8 +816,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Flow preview (hidden until configured) -->
         <div class="options-card" id="langbuilder-flows-card" style="display: none;">
-          <h2 class="form-section-title">Available Flows</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.langbuilder.flows_title">Available Flows</h2>
+          <p class="form-section-description" data-i18n="options.html.langbuilder.flows_description">
             Flows from your LangBuilder instance. Select a flow during meetings from the overlay panel.
           </p>
           <select id="langbuilder-flow-preview" class="select-input">
@@ -825,22 +830,22 @@ LANGBUILDER_FLOW_ID=...</pre>
       <div class="tab-panel" id="panel-websearch" data-panel="websearch" role="tabpanel" aria-labelledby="tab-websearch">
         <!-- API Key Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Web Search Provider</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.websearch.provider_title">Web Search Provider</h2>
+          <p class="form-section-description" data-i18n="options.html.websearch.provider_description">
             Enable live web search during meetings. Results are injected into the assistant's context for up-to-date answers.
           </p>
 
           <div class="form-group">
             <label class="form-label" for="web-search-provider">Provider</label>
             <select id="web-search-provider" class="select-input">
-              <option value="brave" selected>Brave Search</option>
+              <option value="brave" selected data-i18n="options.html.websearch.provider_brave">Brave Search</option>
             </select>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="web-search-api-key">API Key</label>
             <div class="input-with-toggle">
-              <input type="password" id="web-search-api-key" class="text-input" placeholder="Enter your Brave Search API key" autocomplete="off">
+              <input type="password" id="web-search-api-key" class="text-input" placeholder="Enter your Brave Search API key" data-i18n="options.html.websearch.api_key_placeholder" data-i18n-attr="placeholder" autocomplete="off">
               <button type="button" class="toggle-visibility-btn" data-target="web-search-api-key" title="Toggle visibility">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
@@ -849,7 +854,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           </div>
 
           <div class="form-group">
-            <button id="web-search-test-btn" class="btn-secondary" type="button">Test Connection</button>
+            <button id="web-search-test-btn" class="btn-secondary" type="button" data-i18n="options.html.websearch.test_button">Test Connection</button>
             <span id="web-search-test-status" class="web-search-test-status"></span>
             <p class="form-hint">Uses 1 query from your Brave quota but does not count against your daily cap here.</p>
           </div>
@@ -857,8 +862,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
         <!-- Daily Cap Card -->
         <div class="options-card">
-          <h2 class="form-section-title">Daily Query Budget</h2>
-          <p class="form-section-description">
+          <h2 class="form-section-title" data-i18n="options.html.websearch.budget_title">Daily Query Budget</h2>
+          <p class="form-section-description" data-i18n="options.html.websearch.budget_description">
             Limit the number of web searches per day to control costs. You'll be warned at 80% and blocked at 100%.
           </p>
 
@@ -885,8 +890,8 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card support-card" style="text-align: center; margin-bottom: 20px;">
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-            <h2 class="form-section-title">Support Wingman</h2>
-            <p class="form-section-description">
+            <h2 class="form-section-title" data-i18n="options.html.support.support_wingman_title">Support Wingman</h2>
+            <p class="form-section-description" data-i18n="options.html.support.support_wingman_description">
               Enjoying Wingman? Your support helps fund new features and improvements.
             </p>
           </div>
@@ -900,8 +905,8 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card support-card" style="text-align: center; margin-bottom: 20px;">
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="12" y1="6" x2="12" y2="10"/><line x1="12" y1="14" x2="12.01" y2="14"/></svg>
-            <h2 class="form-section-title">Tutorials &amp; Guides</h2>
-            <p class="form-section-description">
+            <h2 class="form-section-title" data-i18n="options.html.support.tutorials_title">Tutorials &amp; Guides</h2>
+            <p class="form-section-description" data-i18n="options.html.support.tutorials_description">
               Learn how to get the most out of Wingman with step-by-step tutorials.
             </p>
           </div>
@@ -915,8 +920,8 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card" style="text-align: center;">
           <div class="support-hero">
             <svg width="48" height="48" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <h2 class="form-section-title">Feature Requests & Bug Reports</h2>
-            <p class="form-section-description">
+            <h2 class="form-section-title" data-i18n="options.html.support.feature_requests_title">Feature Requests & Bug Reports</h2>
+            <p class="form-section-description" data-i18n="options.html.support.feature_requests_description">
               Have an idea for a new feature? Found a bug? We'd love to hear from you.
             </p>
           </div>
@@ -930,8 +935,8 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card" style="text-align: center; margin-top: 20px;">
           <div class="support-hero">
             <img src="../assets/langbuilder-logo.png" alt="LangBuilder" width="64" height="64" style="margin-bottom: 8px;">
-            <h2 class="form-section-title">Built with LangBuilder</h2>
-            <p class="form-section-description">
+            <h2 class="form-section-title" data-i18n="options.html.support.langbuilder_title">Built with LangBuilder</h2>
+            <p class="form-section-description" data-i18n="options.html.support.langbuilder_description">
               Wingman's AI workflows are powered by <strong>LangBuilder</strong> — CloudGeometry's open-source AI agent platform. Build visual AI workflows with no vendor lock-in, supporting GPT, Claude, Gemini, and more.
             </p>
           </div>
@@ -945,11 +950,11 @@ LANGBUILDER_FLOW_ID=...</pre>
         <div class="options-card" style="text-align: center; margin-top: 20px;">
           <div class="support-hero">
             <img src="../assets/linkedin-profile.png" alt="Antoine Dubuc" style="max-width: 100%; height: auto; border-radius: 12px; margin-bottom: 12px; border: 3px solid #e67e22;">
-            <h2 class="form-section-title">Connect with the Creator</h2>
-            <p class="form-section-description">
+            <h2 class="form-section-title" data-i18n="options.html.support.connect_title">Connect with the Creator</h2>
+            <p class="form-section-description" data-i18n="options.html.support.connect_intro">
               Hi, I'm Antoine Dubuc — Senior Technical Product Manager for LangBuilder at CloudGeometry.
             </p>
-            <p class="form-section-description" style="margin-top: 8px;">
+            <p class="form-section-description" style="margin-top: 8px;" data-i18n="options.html.support.connect_cta">
               I'd love to hear how you're using Wingman! Also happy to chat if you're curious about LangBuilder.
             </p>
           </div>
@@ -977,7 +982,7 @@ LANGBUILDER_FLOW_ID=...</pre>
     <!-- Confirmation modal component -->
     <div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal">
-        <h3 class="modal-title" id="modal-title">Reset to Default?</h3>
+        <h3 class="modal-title" id="modal-title" data-i18n="options.html.modals.reset_title">Reset to Default?</h3>
         <p class="modal-body" id="modal-body">
           This will replace your custom prompt with the original Wingman prompt.
           This action cannot be undone.
@@ -1008,7 +1013,7 @@ LANGBUILDER_FLOW_ID=...</pre>
         </div>
         <div class="assistant-chat-input-row" id="chat-input-row">
           <textarea id="chat-input" class="chat-input" placeholder="Describe your use case..." rows="1"></textarea>
-          <button id="chat-send-btn" class="btn-primary btn-small chat-send-btn" type="button">Send</button>
+          <button id="chat-send-btn" class="btn-primary btn-small chat-send-btn" type="button" data-i18n="options.html.modals.send_button">Send</button>
         </div>
         <div class="assistant-chat-footer" id="chat-footer">
           <!-- Footer buttons injected by JS depending on state -->

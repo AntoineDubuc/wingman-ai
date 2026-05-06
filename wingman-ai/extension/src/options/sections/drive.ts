@@ -89,10 +89,16 @@ export class DriveSection {
         transcriptFormat,
       });
 
-      this.ctx.showToast('Drive settings saved', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_settings_saved') ?? 'Drive settings saved',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to save Drive settings:', error);
-      this.ctx.showToast('Failed to save settings', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.settings_save_failed') ?? 'Failed to save settings',
+        'error',
+      );
     }
   }
 
@@ -110,7 +116,7 @@ export class DriveSection {
   private async connect(): Promise<void> {
     if (this.connectBtn) {
       this.connectBtn.disabled = true;
-      this.connectBtn.textContent = 'Connecting...';
+      this.connectBtn.textContent = this.ctx.t?.('options.drive.connecting') ?? 'Connecting...';
     }
 
     try {
@@ -118,13 +124,26 @@ export class DriveSection {
 
       if (result.success && result.email) {
         this.updateConnectionUI(true, result.email);
-        this.ctx.showToast('Google Drive connected!', 'success');
+        this.ctx.showToast(
+          this.ctx.t?.('options.toasts.drive_connected') ?? 'Google Drive connected!',
+          'success',
+        );
       } else {
-        this.ctx.showToast(result.error || 'Connection failed', 'error');
+        // Plan 10 FR-017: localized primary message + raw drive error in monospace
+        this.ctx.showToast(
+          this.ctx.t?.('errors.drive.oauth_failed') ?? 'Google Drive sign-in failed. Please try again.',
+          'error',
+          result.error,
+        );
       }
     } catch (error) {
       console.error('Failed to connect Google Drive:', error);
-      this.ctx.showToast('Failed to connect', 'error');
+      const raw = error instanceof Error ? error.message : String(error);
+      this.ctx.showToast(
+        this.ctx.t?.('errors.drive.oauth_failed') ?? 'Google Drive sign-in failed. Please try again.',
+        'error',
+        raw,
+      );
     } finally {
       if (this.connectBtn) {
         this.connectBtn.disabled = false;
@@ -138,10 +157,16 @@ export class DriveSection {
     try {
       await driveService.disconnect();
       this.updateConnectionUI(false);
-      this.ctx.showToast('Google Drive disconnected', 'success');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_disconnected') ?? 'Google Drive disconnected',
+        'success',
+      );
     } catch (error) {
       console.error('Failed to disconnect Google Drive:', error);
-      this.ctx.showToast('Failed to disconnect', 'error');
+      this.ctx.showToast(
+        this.ctx.t?.('options.toasts.drive_disconnect_failed') ?? 'Failed to disconnect',
+        'error',
+      );
     }
   }
 }

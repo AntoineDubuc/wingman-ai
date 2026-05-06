@@ -23,6 +23,40 @@ import { costTracker } from '../services/cost-tracker';
 import { humeClient, HumeClient } from '../services/hume-client';
 import { searchKB } from '../services/kb/kb-search';
 import type { EmotionUpdate } from '../shared/constants';
+import { createI18nInstance } from '../shared/i18n-init';
+import { getActiveLocale } from './sw-locale';
+
+/** Plan-final: localized SW error string. Creates a fresh i18n instance per
+ * call (cheap; bundles are static-imported). The active locale is pulled from
+ * sw-locale's getActiveLocale(). */
+function swErr(key: string, opts?: Record<string, unknown>): string {
+  const i18n = createI18nInstance(getActiveLocale());
+  return i18n.t(key, opts) as string;
+}
+import { installationStateService } from '../services/installation-state';
+
+// Locale rehydration — RISK-T02: activeLocale must be set before any LLM call.
+// registerLocaleOnChanged() is called once at module level for live preference updates.
+import { rehydrateActiveLocale, registerLocaleOnChanged } from './sw-locale';
+export { getActiveLocale } from './sw-locale';
+
+// Register onChanged listener at module level (once per SW lifetime)
+registerLocaleOnChanged();
+
+// Immediately begin locale rehydration. This promise is awaited inside the first
+// message handler via ensureLocaleRehydrated() — guaranteeing RISK-T02 safety.
+let localeRehydrationPromise: Promise<void> | null = rehydrateActiveLocale();
+
+/**
+ * Ensures locale rehydration has completed before processing any message.
+ * After first resolution, subsequent calls return immediately (null guard).
+ */
+async function ensureLocaleRehydrated(): Promise<void> {
+  if (localeRehydrationPromise) {
+    await localeRehydrationPromise;
+    localeRehydrationPromise = null;
+  }
+}
 
 // Session state
 let isSessionActive = false;
@@ -47,9 +81,27 @@ const suggestionCountByPersona = new Map<string, number>();
 let speakerFilterEnabled = false;
 let autoSuggestionsEnabled = true;
 
+// Last transcript received — used to re-trigger suggestion on RETRY_SUGGESTION
+let lastTranscript: import('../services/deepgram-client').Transcript | null = null;
+
 // Extension lifecycle
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('[ServiceWorker] Extension installed:', details.reason);
+
+  // Dispatch on details.reason — Plan 1 Task 4 (FR-032 FRESH_INSTALL branch).
+  // chrome.runtime.onInstalled has 4 documented reasons:
+  //   'install'              → brand-new installer (FR-032 FRESH_INSTALL path)
+  //   'update'               → existing user upgrading (FR-034 UPGRADE_PENDING path)
+  //   'chrome_update'        → browser update (no-op for our state machine)
+  //   'shared_module_update' → declarative-net-request etc. update (no-op)
+  if (details.reason === 'install') {
+    await installationStateService.recordInstall('install');
+  } else if (details.reason === 'update') {
+    await installationStateService.recordInstall('update');
+  } else {
+    // chrome_update or shared_module_update — explicit no-op
+    console.log('[ServiceWorker] onInstalled: no-op for reason', details.reason);
+  }
 });
 
 // Tab close detection - stop session if active tab is closed
@@ -85,7 +137,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   switch (message.type) {
     case 'START_SESSION':
-      handleStartSession().then(sendResponse);
+      ensureLocaleRehydrated().then(() => handleStartSession()).then(sendResponse);
       return true; // Keep channel open for async response
 
     case 'STOP_SESSION':
@@ -135,7 +187,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         })();
         return true; // Keep channel open for async
       }
-      sendResponse({ success: false, error: 'Validation tests not available in production' });
+      sendResponse({ success: false, error: swErr('errors.generic') });
       return false;
 
     case 'RUN_LANGBUILDER_FLOW':
@@ -144,7 +196,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const storage = await chrome.storage.local.get(['langbuilderUrl', 'langbuilderApiKey', 'langbuilderFlows']);
           if (!storage.langbuilderUrl || !storage.langbuilderApiKey) {
             console.warn('[ServiceWorker] LangBuilder not configured');
-            sendResponse({ success: false, error: 'LangBuilder not configured' });
+            sendResponse({ success: false, error: swErr('errors.langbuilder_not_configured') });
             return;
           }
           // Look up cached inputType for this flow (chat vs text)
@@ -190,7 +242,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         try {
           const text = message.text as string | undefined;
           if (!text) {
-            sendResponse({ error: 'No query text provided.' });
+            sendResponse({ error: swErr('errors.no_query_text') });
             return;
           }
 
@@ -202,7 +254,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           // Check Gemini API key (needed for embeddings)
           const storage = await chrome.storage.local.get(['geminiApiKey']);
           if (!storage.geminiApiKey) {
-            sendResponse({ error: 'Gemini API key required for Knowledge Base search. Configure in Settings.' });
+            sendResponse({ error: swErr('errors.kb_gemini_required') });
             return;
           }
 
@@ -219,7 +271,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const kbResults = await searchKB(text, 5, 0.40, personaDocIds.length > 0 ? personaDocIds : undefined);
 
           if (kbResults.length === 0) {
-            sendResponse({ error: 'No relevant information found in your Knowledge Base for this topic.' });
+            sendResponse({ error: swErr('errors.kb_no_results') });
             return;
           }
 
@@ -233,7 +285,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           const result = await geminiClient.generateKBAnswer(text, chunks, personaRole);
 
           if (!result) {
-            sendResponse({ error: 'Could not generate answer. Check your API keys.' });
+            sendResponse({ error: swErr('errors.kb_answer_failed') });
             return;
           }
 
@@ -245,13 +297,36 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           });
         } catch (err) {
           console.error('[ServiceWorker] KB_QUERY error:', err);
-          sendResponse({ error: 'Network error. Check your connection.' });
+          sendResponse({ error: swErr('errors.network') });
         }
       })();
       return true; // Keep channel open for async response
 
+    case 'RETRY_SUGGESTION':
+      // Re-trigger the suggestion pipeline using the last received transcript (F5-T1 AC5)
+      if (isSessionActive && lastTranscript) {
+        handleTranscript(lastTranscript).catch((err) => {
+          console.error('[ServiceWorker] RETRY_SUGGESTION: handleTranscript failed:', err);
+        });
+      } else {
+        console.warn('[ServiceWorker] RETRY_SUGGESTION: no active session or no last transcript');
+      }
+      return false;
+
     case 'MIC_PERMISSION_RESULT':
       // Handled by requestMicPermission() temporary listener
+      return false;
+
+    case 'MIC_REVOKED':
+      // Plan 10 FR-029: mic permission revoked mid-call. Stop the session
+      // gracefully and notify the content script so the overlay can show
+      // the recovery banner.
+      if (isSessionActive && activeTabId !== null) {
+        const targetTab = activeTabId;
+        chrome.tabs.sendMessage(targetTab, { type: 'mic_revoked' }).catch(() => {});
+        // Stop session — STOP_SESSION handler does the cleanup
+        chrome.runtime.sendMessage({ type: 'STOP_SESSION' }).catch(() => {});
+      }
       return false;
 
     default:
@@ -295,7 +370,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     if (!storage.deepgramApiKey) {
       return {
         success: false,
-        error: 'Deepgram API key not configured. Go to Options to add your key.',
+        error: swErr('errors.deepgram_key_missing'),
       };
     }
 
@@ -325,7 +400,7 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
     });
 
     if (!tab?.id) {
-      return { success: false, error: 'No active Google Meet tab found' };
+      return { success: false, error: swErr('errors.no_active_meet_tab') };
     }
 
     // Close any existing offscreen documents first
@@ -398,12 +473,20 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
       handleTranscript(transcript);
     });
 
+    // Plan 10 FR-018: broadcast connection-status changes to the active tab so
+    // the overlay can show/hide the connection-lost banner.
+    deepgramClient.setConnectionStatusCallback((state) => {
+      if (activeTabId !== null) {
+        chrome.tabs.sendMessage(activeTabId, { type: 'connection_status', state }).catch(() => {});
+      }
+    });
+
     // Step 4: Connect to Deepgram
     const connected = await deepgramClient.connect();
     if (!connected) {
       return {
         success: false,
-        error: 'Failed to connect to Deepgram. Check your API key.',
+        error: swErr('errors.deepgram_connect_failed'),
       };
     }
     // Connected to Deepgram
@@ -516,6 +599,9 @@ async function handleStartSession(): Promise<{ success: boolean; error?: string 
  * Handle transcript from Deepgram and process through Gemini
  */
 async function handleTranscript(transcript: Transcript): Promise<void> {
+  // Track last transcript for RETRY_SUGGESTION replays
+  lastTranscript = transcript;
+
   // Add to transcript collector
   transcriptCollector.addTranscript({
     text: transcript.text,

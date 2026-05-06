@@ -9,6 +9,9 @@
  */
 
 import { DEFAULT_SYSTEM_PROMPT } from '../shared/default-prompt';
+import { addLanguageInstruction } from '../shared/language-injection';
+import { getActiveLocale } from '../background/sw-locale';
+import { recordLlmResponse } from '../shared/language-compliance';
 import type { CollectedTranscript } from './transcript-collector';
 import {
   type CallSummary,
@@ -483,6 +486,9 @@ export class GeminiClient {
         suggestionTemp = profile.suggestionTemperature;
       }
 
+      // Inject language instruction into system prompt (no-op for English)
+      tunedSystemPrompt = addLanguageInstruction(tunedSystemPrompt, getActiveLocale());
+
       // Build conversation messages and provider-formatted request
       const contents = this.buildConversationMessages(text, speaker);
       const req = this.buildRequest({
@@ -522,6 +528,9 @@ export class GeminiClient {
         console.debug(`[GeminiClient] [${persona.name}] Empty response from LLM`);
         return null;
       }
+
+      // Plan 11 FR-031: record compliance for the per-persona suggestion path.
+      void recordLlmResponse(responseText, getActiveLocale());
 
       // Check if LLM chose to stay silent
       if (responseText === '---' || responseText === '-') {
@@ -607,6 +616,9 @@ export class GeminiClient {
         }
         suggestionTemp = profile.suggestionTemperature;
       }
+
+      // Inject language instruction into system prompt (no-op for English)
+      tunedSystemPrompt = addLanguageInstruction(tunedSystemPrompt, getActiveLocale());
 
       // Build conversation messages and provider-formatted request
       const contents = this.buildConversationMessages(currentText, currentSpeaker);
@@ -1114,7 +1126,7 @@ export class GeminiClient {
     }
 
     try {
-      let prompt = buildSummaryPrompt(transcripts, metadata, options);
+      let prompt = buildSummaryPrompt(transcripts, metadata, options, getActiveLocale());
 
       // Apply model tuning to summary prompt (auto mode only)
       if (this.tuningMode === 'auto') {
@@ -1157,6 +1169,9 @@ export class GeminiClient {
         console.error(`[GeminiClient] Empty summary response from ${this.provider}`);
         return null;
       }
+
+      // Plan 11 FR-031: record compliance for the call-summary generation path.
+      void recordLlmResponse(rawText, getActiveLocale());
 
       // Parse JSON response — strip markdown fencing for OpenRouter models
       let parsed: unknown;
@@ -1235,7 +1250,7 @@ export class GeminiClient {
       .map((c, i) => `[Source ${i + 1}: ${c.documentName} (relevance: ${(c.score * 100).toFixed(0)}%)]\n${c.text}`)
       .join('\n\n');
 
-    const prompt =
+    const basePrompt =
       `You are ${role}. A user asked a question during a live call and wants an answer from their Knowledge Base.\n\n` +
       `USER QUESTION: ${query}\n\n` +
       `KNOWLEDGE BASE CONTEXT:\n${chunksContext}\n\n` +
@@ -1243,6 +1258,8 @@ export class GeminiClient {
       `If the context does not contain enough information, say so.\n\n` +
       `Format your response EXACTLY as:\nANSWER: <your primary answer>\nALT 1: <alternative phrasing>\nALT 2: <another alternative phrasing>\n\n` +
       `If the context has no relevant information, respond with: NO_DATA`;
+    // Plan 11 FR-011: ensure KB answers honor the user's selected locale.
+    const prompt = addLanguageInstruction(basePrompt, getActiveLocale());
 
     // Determine providers to try: Groq first if available, then active provider
     const providers: LLMProvider[] = [];
@@ -1279,6 +1296,9 @@ export class GeminiClient {
           console.warn('[GeminiClient] KB answer: empty response text');
           continue;
         }
+
+        // Plan 11 FR-031: record compliance for the KB answer path.
+        void recordLlmResponse(text, getActiveLocale());
 
         // Check for NO_DATA sentinel
         if (text.trim() === 'NO_DATA' || text.trim().startsWith('NO_DATA')) {

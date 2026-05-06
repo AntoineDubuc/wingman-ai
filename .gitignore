@@ -50,3 +50,4 @@ Thumbs.db
 !docs/FILE-STRUCTURE-MAP.md
 !docs/flows/*.md
 !docs/diagrams/*.md
+!wingman-ai/extension/docs/*.md

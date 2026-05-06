@@ -26,6 +26,7 @@ export function renderLanguagePicker(
 ): void {
   const container = document.querySelector('#language-picker-container');
   if (!container) return;
+  container.replaceChildren();
 
   const label = document.createElement('label');
   label.textContent = i18n.t('options.setup.language_picker_label');

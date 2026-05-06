@@ -226,6 +226,31 @@ describe('renderLanguagePicker', () => {
     expect(label).not.toBeNull();
     expect(label!.textContent).toBe('Language');
   });
+
+  it('AC-T2-1: idempotent — calling renderLanguagePicker twice produces exactly one select and one label', () => {
+    const mockI18n = {
+      t: (key: string) => {
+        const map: Record<string, string> = {
+          'options.setup.language_picker_label': 'Language',
+          'options.setup.language_locked_tooltip': 'Language locked during active session',
+        };
+        return map[key] ?? key;
+      },
+    };
+
+    renderLanguagePicker(mockI18n as any, 'en', false);
+    renderLanguagePicker(mockI18n as any, 'fr', true);
+
+    const selects = container.querySelectorAll('#language-picker');
+    const labels = container.querySelectorAll('label');
+    expect(selects).toHaveLength(1);
+    expect(labels).toHaveLength(1);
+
+    // The visible state reflects the SECOND call (fr, sessionActive=true).
+    const select = selects[0] as HTMLSelectElement;
+    expect(select.value).toBe('fr');
+    expect(select.disabled).toBe(true);
+  });
 });
 
 describe('initOptionsI18n', () => {

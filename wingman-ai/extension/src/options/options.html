@@ -107,8 +107,8 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <div class="api-key-section">
             <label for="deepgram-api-key" class="input-label">
-              Deepgram API Key
-              <a href="https://console.deepgram.com/" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+              <span data-i18n="options.html.setup.deepgram_label">Deepgram API Key</span>
+              <a href="https://console.deepgram.com/" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
             </label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
@@ -129,7 +129,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- AI Provider Toggle -->
           <div class="api-key-section">
-            <label class="input-label">AI Provider</label>
+            <label class="input-label" data-i18n="options.html.setup.ai_provider_label">AI Provider</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="llm-provider" value="gemini" checked>
@@ -150,8 +150,8 @@ LANGBUILDER_FLOW_ID=...</pre>
           <!-- Gemini Key (visible when provider=gemini) -->
           <div id="gemini-key-section" class="api-key-section">
             <label for="gemini-api-key" class="input-label">
-              Google Gemini API Key
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+              <span data-i18n="options.html.setup.gemini_label">Google Gemini API Key</span>
+              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
             </label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
@@ -174,8 +174,8 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="openrouter-section" style="display: none;">
             <div class="api-key-section">
               <label for="openrouter-api-key" class="input-label">
-                OpenRouter API Key
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one)</a>
+                <span data-i18n="options.html.setup.openrouter_label">OpenRouter API Key</span>
+                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one)</a>
               </label>
               <div class="input-with-hint">
                 <div class="password-input-wrapper">
@@ -195,7 +195,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             </div>
 
             <div class="api-key-section">
-              <label for="openrouter-model-select" class="input-label">Model</label>
+              <label for="openrouter-model-select" class="input-label" data-i18n="options.html.setup.model_label">Model</label>
               <div class="input-with-hint">
                 <select id="openrouter-model-select" class="select-input"></select>
                 <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
@@ -207,8 +207,8 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div id="groq-section" style="display: none;">
             <div class="api-key-section">
               <label for="groq-api-key" class="input-label">
-                Groq API Key
-                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="key-link">(Get one free)</a>
+                <span data-i18n="options.html.setup.groq_label">Groq API Key</span>
+                <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="key-link" data-i18n="options.html.setup.get_one_free">(Get one free)</a>
               </label>
               <div class="input-with-hint">
                 <div class="password-input-wrapper">
@@ -228,7 +228,7 @@ LANGBUILDER_FLOW_ID=...</pre>
             </div>
 
             <div class="api-key-section">
-              <label for="groq-model-select" class="input-label">Model</label>
+              <label for="groq-model-select" class="input-label" data-i18n="options.html.setup.model_label">Model</label>
               <div class="input-with-hint">
                 <select id="groq-model-select" class="select-input"></select>
                 <p class="input-hint">Choose which AI model to use for suggestions and summaries</p>
@@ -239,7 +239,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <!-- Hume AI (Emotion Detection) - Optional -->
           <div id="hume-section" class="api-key-section hume-optional-section">
             <div class="section-header-with-badge">
-              <label class="input-label">Hume AI (Emotion Detection)</label>
+              <label class="input-label" data-i18n="options.html.setup.hume_label">Hume AI (Emotion Detection)</label>
               <span class="optional-badge">Optional</span>
             </div>
             <p class="input-hint" style="margin-bottom: 12px;">
@@ -346,7 +346,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           </div>
 
           <div class="drive-folder-section">
-            <label for="drive-folder-name" class="input-label">Folder Name</label>
+            <label for="drive-folder-name" class="input-label" data-i18n="options.html.setup.folder_name_label">Folder Name</label>
             <div class="input-with-hint">
               <input
                 type="text"
@@ -360,23 +360,23 @@ LANGBUILDER_FLOW_ID=...</pre>
           </div>
 
           <div class="drive-format-section">
-            <label class="input-label">Transcript Format</label>
+            <label class="input-label" data-i18n="options.html.setup.transcript_format_label">Transcript Format</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="googledoc" checked>
-                <span class="radio-label">Google Doc (formatted)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_googledoc">Google Doc (formatted)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="markdown">
-                <span class="radio-label">Markdown (.md)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_markdown">Markdown (.md)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="text">
-                <span class="radio-label">Plain Text (.txt)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_plaintext">Plain Text (.txt)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="transcript-format" value="json">
-                <span class="radio-label">JSON (.json)</span>
+                <span class="radio-label" data-i18n="options.html.setup.format_json">JSON (.json)</span>
               </label>
             </div>
           </div>
@@ -474,15 +474,15 @@ LANGBUILDER_FLOW_ID=...</pre>
           </p>
 
           <div class="api-key-section">
-            <label class="input-label">Tuning Mode</label>
+            <label class="input-label" data-i18n="options.html.calls.tuning_mode_label">Tuning Mode</label>
             <div class="radio-group">
               <label class="radio-option">
                 <input type="radio" name="prompt-tuning-mode" value="auto" checked>
-                <span class="radio-label">Auto (recommended)</span>
+                <span class="radio-label" data-i18n="options.html.calls.tuning_mode_auto">Auto (recommended)</span>
               </label>
               <label class="radio-option">
                 <input type="radio" name="prompt-tuning-mode" value="off">
-                <span class="radio-label">Off</span>
+                <span class="radio-label" data-i18n="options.html.calls.tuning_mode_off">Off</span>
               </label>
             </div>
             <p class="input-hint" style="margin-top: 6px;">Auto applies model-specific adjustments at runtime without modifying your saved prompts.</p>
@@ -518,18 +518,18 @@ LANGBUILDER_FLOW_ID=...</pre>
             Controls where the Wingman panel appears during calls. Sidebar modes attach the panel to the browser edge.
           </p>
           <div class="form-group">
-            <label for="panel-layout-select" class="input-label">Panel Position</label>
+            <label for="panel-layout-select" class="input-label" data-i18n="options.html.calls.panel_position_label">Panel Position</label>
             <select id="panel-layout-select" class="select-input">
-              <option value="floating">Floating</option>
-              <option value="dock-left">Sidebar Left</option>
-              <option value="dock-right">Sidebar Right</option>
+              <option value="floating" data-i18n="options.html.calls.position_floating">Floating</option>
+              <option value="dock-left" data-i18n="options.html.calls.position_dock_left">Sidebar Left</option>
+              <option value="dock-right" data-i18n="options.html.calls.position_dock_right">Sidebar Right</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="display-mode-select" class="input-label">Display Mode</label>
+            <label for="display-mode-select" class="input-label" data-i18n="options.html.calls.display_mode_label">Display Mode</label>
             <select id="display-mode-select" class="select-input">
-              <option value="full">Full transcript + suggestions</option>
-              <option value="suggestions-only">Suggestions only</option>
+              <option value="full" data-i18n="options.html.calls.display_full">Full transcript + suggestions</option>
+              <option value="suggestions-only" data-i18n="options.html.calls.display_suggestions_only">Suggestions only</option>
             </select>
           </div>
         </div>
@@ -605,7 +605,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Name -->
           <div class="form-group">
-            <label for="persona-name-input" class="input-label">Name</label>
+            <label for="persona-name-input" class="input-label" data-i18n="options.html.personas.name_label">Name</label>
             <input type="text" id="persona-name-input" class="text-input" placeholder="e.g. Cloud Security Demo" maxlength="60">
           </div>
 
@@ -632,13 +632,13 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Color picker -->
           <div class="form-group">
-            <label class="input-label">Color tag</label>
+            <label class="input-label" data-i18n="options.html.personas.color_label">Color tag</label>
             <div id="persona-color-picker" class="persona-color-picker"></div>
           </div>
 
           <!-- System prompt -->
           <div class="form-group">
-            <label for="persona-prompt-textarea" class="input-label">System Prompt</label>
+            <label for="persona-prompt-textarea" class="input-label" data-i18n="options.html.personas.system_prompt_label">System Prompt</label>
             <div class="prompt-container">
               <textarea
                 id="persona-prompt-textarea"
@@ -661,7 +661,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Knowledge Base Section -->
           <div class="form-group">
-            <label class="input-label">Knowledge Base</label>
+            <label class="input-label" data-i18n="options.html.personas.kb_label">Knowledge Base</label>
 
             <!-- Drop Zone -->
             <div id="persona-kb-drop-zone" class="kb-drop-zone">
@@ -688,7 +688,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
             <!-- Test Query (hidden until docs exist) -->
             <div id="persona-kb-test-section" class="kb-test-section" hidden>
-              <label class="input-label">Test Knowledge Base</label>
+              <label class="input-label" data-i18n="options.html.personas.kb_test_label">Test Knowledge Base</label>
               <div class="kb-test-row">
                 <input type="text" id="persona-kb-test-input" class="text-input kb-test-input" placeholder="e.g. What security certifications do we have?">
                 <button id="persona-kb-test-btn" class="btn-secondary btn-small" type="button">Test</button>
@@ -729,7 +729,7 @@ LANGBUILDER_FLOW_ID=...</pre>
 
           <!-- Conclave Leader Picker -->
           <div class="api-key-section">
-            <label for="conclave-leader-select" class="input-label">Conclave Leader</label>
+            <label for="conclave-leader-select" class="input-label" data-i18n="options.html.conclave.leader_label">Conclave Leader</label>
             <div class="input-with-hint">
               <select id="conclave-leader-select" class="select-input">
                 <option value="">Loading...</option>
@@ -765,7 +765,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           </p>
 
           <div class="api-key-section">
-            <label for="langbuilder-url" class="input-label">LangBuilder URL</label>
+            <label for="langbuilder-url" class="input-label" data-i18n="options.html.langbuilder.url_label">LangBuilder URL</label>
             <div class="input-with-hint">
               <input
                 type="text"
@@ -780,7 +780,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           </div>
 
           <div class="api-key-section">
-            <label for="langbuilder-api-key" class="input-label">API Key</label>
+            <label for="langbuilder-api-key" class="input-label" data-i18n="options.html.langbuilder.api_key_label">API Key</label>
             <div class="input-with-hint">
               <div class="password-input-wrapper">
                 <input
@@ -838,7 +838,7 @@ LANGBUILDER_FLOW_ID=...</pre>
           <div class="form-group">
             <label class="form-label" for="web-search-provider">Provider</label>
             <select id="web-search-provider" class="select-input">
-              <option value="brave" selected>Brave Search</option>
+              <option value="brave" selected data-i18n="options.html.websearch.provider_brave">Brave Search</option>
             </select>
           </div>
 

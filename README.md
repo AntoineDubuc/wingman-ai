@@ -88,6 +88,15 @@ The overlay badge updates live so you can adjust your approach before it's too l
 <img src="docs/images/overlay-emotions.png" alt="Emotion Detection" width="100%">
 
 </td>
+<td width="50%" valign="top">
+
+### 🌍 Speaks Your Language <sub>NEW</sub>
+
+The UI, AI suggestions, call summaries, and Assistant chat localize into **5 languages**: English, French, Spanish, Romanian, Russian.
+
+Selling in Quebec? Pitching in Madrid? Discovery call in Bucharest? Same product, same private overlay — in your customer's language. Pick once in Settings, Wingman remembers.
+
+</td>
 </tr>
 <tr>
 <td width="50%" valign="top">

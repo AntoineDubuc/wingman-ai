@@ -10,6 +10,7 @@ Real-time AI assistant for sales professionals during Google Meet calls. Wingman
 - **Live Transcription**: Deepgram Nova-3 provides accurate speech-to-text with speaker diarization
 - **AI-Powered Suggestions**: Gemini generates contextual response suggestions based on customer questions
 - **In-Meeting Assistant** *(NEW)*: Switch the overlay to Assistant mode to ask the AI a question mid-call. Answers stream back grounded in the live transcript, persona Knowledge Bases, and (optionally) Brave Search results
+- **Multi-Language UI** *(NEW)*: Full localization in 5 languages — English, French, Spanish, Romanian, Russian. UI, AI suggestions, call summaries, and Assistant chat all localize. Pick your language in Options; Wingman remembers across sessions and devices (chrome.storage.sync)
 - **Multi-Persona System**: Switch between expert personas mid-call; activate up to 4 simultaneously in Conclave Mode
 - **Knowledge Base**: Upload PDF, Markdown, or text docs per persona; semantic search during calls
 - **Speaker Identification**: Automatically identifies customer vs. consultant roles
@@ -111,6 +112,9 @@ Both APIs offer generous free tiers:
 ## Configuration Options
 
 Access settings by clicking the extension icon and selecting "Options":
+
+### Language
+- **UI Language**: Choose between English, French, Spanish, Romanian, and Russian. Affects all UI, AI suggestions, call summaries, and the Assistant chat. The picker is on the Setup tab and is disabled while a session is active (changes take effect on the next session start). Preference syncs across your Chrome devices via `chrome.storage.sync`, with `chrome.storage.local` fallback if sync is disabled.
 
 ### API Keys
 - **Deepgram API Key**: Required for speech-to-text
